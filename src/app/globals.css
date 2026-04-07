@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+/* =========================
+   CSS VARIABLES BASE
+========================= */
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 8%;
+
+  --card: 0 0% 98%;
+  --card-foreground: 0 0% 10%;
+
+  --popover: 0 0% 98%;
+  --popover-foreground: 0 0% 10%;
+
+  /* 🔥 AMBER como protagonista */
+  --primary: 38 92% 50%;
+  --primary-foreground: 0 0% 10%;
+
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 20%;
+
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 38 85% 55%;
+  --accent-foreground: 0 0% 10%;
+
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 85%;
+  --input: 0 0% 96%;
+  --ring: 38 92% 50%;
+
+  --radius: 0.75rem;
+
+  /* 🔥 NUEVOS TOKENS */
+  --amber: 38 92% 50%;
+  --amber-soft: 38 100% 65%;
+  --amber-dark: 32 85% 40%;
+
+  --black: 0 0% 5%;
+  --black-soft: 0 0% 12%;
+  --white-soft: 0 0% 96%;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    135deg,
+    hsl(38 92% 50%),
+    hsl(38 100% 65%)
+  );
+
+  --gradient-dark: linear-gradient(
+    180deg,
+    hsl(0 0% 8%),
+    hsl(0 0% 4%)
+  );
+
+  --gradient-card: linear-gradient(
+    145deg,
+    hsl(0 0% 100%),
+    hsl(0 0% 96%)
+  );
+
+  /* Shadows */
+  --shadow-amber: 0 10px 40px -10px hsl(38 92% 50% / 0.35);
+  --shadow-dark: 0 20px 60px -20px hsl(0 0% 0% / 0.6);
+  --shadow-card: 0 8px 30px -10px hsl(0 0% 0% / 0.15);
+}
+/* =========================
+   DARK MODE
+========================= */
+.dark {
+  --background: 0 0% 6%;
+  --foreground: 0 0% 95%;
+
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 95%;
+
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 95%;
+
+  --primary: 38 92% 55%;
+  --primary-foreground: 0 0% 5%;
+
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 90%;
+
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 65%;
+
+  --accent: 38 92% 55%;
+  --accent-foreground: 0 0% 5%;
+
+  --border: 0 0% 18%;
+  --input: 0 0% 16%;
+  --ring: 38 92% 55%;
+}
+
+.glass-dark {
+  background: hsl(0 0% 10% / 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(0 0% 100% / 0.08);
+}
+
+/* =========================
+   BASE STYLES
+========================= */
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings */
+h1,
+h2,
+h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* =========================
+   UTILITIES
+========================= */
+
+@layer utilities {
+  .text-gradient-celeste {
+    background-image: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-celeste {
+    background-image: var(--gradient-primary);
+  }
+
+  .bg-gradient-beige {
+    background-image: var(--gradient-beige);
+  }
+
+  .shadow-celeste {
+    box-shadow: var(--shadow-celeste);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .glass {
+    background-color: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
+/* Scrollbar minimalista */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 10px;
+}
