@@ -1,11 +1,12 @@
 generator client {
-  provider     = "prisma-client-js"
-  output       = "../generated/prisma"
-  relationMode = "prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  relationMode  = "prisma"
 }
 
 datasource db {
   provider     = "mysql"
+  url          = env("DATABASE_URL") // Asegúrate de tener esto en tu .env
   relationMode = "prisma"
 }
 
@@ -66,37 +67,64 @@ model Provider {
   name        String    @unique
   contactInfo String?
   active      Boolean   @default(true)
-  // Un proveedor puede tener muchas prendas (1:N)
   garments    Garment[] 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
+// 1. Catálogo Base (El producto en general)
 model Garment {
-  id          String     @id @default(cuid())
-  sku         String?    @unique
+  id          String    @id @default(cuid())
   name        String
-  price       Decimal    @db.Decimal(10, 2)
-  stock       Int        @default(0)
+  price       Decimal   @db.Decimal(10, 2) // Precio base
   description String?
-  active      Boolean    @default(true)
+  active      Boolean   @default(true)
   
-  // Relación con Categoría
   categoryId  String
-  category    Category   @relation(fields: [categoryId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
   
-  // Relación con Proveedor (Muchos productos a un mismo proveedor)
-  // Se usa 'supplier' como nombre de relación para evitar conflictos con la palabra 'provider'
   supplierId  String?
-  supplier    Provider?  @relation(fields: [supplierId], references: [id])
+  supplier    Provider? @relation(fields: [supplierId], references: [id])
   
-  movements   Movement[]
+  // Relación con sus variantes de talle
+  variants    GarmentVariant[]
   
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([categoryId])
   @@index([supplierId])
+}
+
+// 2. Catálogo de Talles
+model Size {
+  id          String    @id @default(cuid())
+  code        String    @unique // Ej: "S", "M", "L", "42"
+  active      Boolean   @default(true)
+  
+  variants    GarmentVariant[]
+}
+
+// 3. Tabla Puente / Inventario Real (La variante física)
+model GarmentVariant {
+  id          String    @id @default(cuid())
+  sku         String?   @unique // El SKU va aquí, es único por talle/color
+  stock       Int       @default(0)
+  
+  garmentId   String
+  garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  
+  sizeId      String
+  size        Size      @relation(fields: [sizeId], references: [id])
+  
+  // Los movimientos de stock ahora apuntan a la variante específica
+  movements   Movement[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([garmentId])
+  @@index([sizeId])
 }
 
 enum MovementType {
@@ -104,17 +132,19 @@ enum MovementType {
   OUT
 }
 
+// 4. Movimientos (Entradas y Salidas vinculadas a la variante)
 model Movement {
-  id          String       @id @default(cuid())
-  type        MovementType
-  quantity    Int
-  priceAtTime Decimal      @db.Decimal(10, 2)
-  note        String?
+  id               String         @id @default(cuid())
+  type             MovementType
+  quantity         Int
+  priceAtTime      Decimal        @db.Decimal(10, 2)
+  note             String?
   
-  garmentId   String
-  garment     Garment      @relation(fields: [garmentId], references: [id], onDelete: Cascade) 
+  // Relacionado a la variante (talle específico), no al producto general
+  variantId        String
+  garmentVariant   GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade) 
   
-  createdAt   DateTime     @default(now())
+  createdAt        DateTime       @default(now())
 
-  @@index([garmentId])
+  @@index([variantId])
 }
