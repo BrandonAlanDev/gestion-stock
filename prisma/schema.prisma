@@ -1,13 +1,15 @@
 generator client {
-  provider     = "prisma-client-js"
-  output       = "../generated/prisma"
-  relationMode = "prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  relationMode  = "prisma"
 }
 
 datasource db {
   provider     = "mysql"
   relationMode = "prisma"
 }
+
+// --- Autenticación ---
 
 model account {
   id                String  @id @default(cuid())
@@ -28,34 +30,6 @@ model account {
   @@index([userId])
 }
 
-model servicio {
-  id                String              @id
-  nombre            String?
-  srcImage          String?
-  estado            Boolean
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  vehiculo_servicio vehiculo_servicio[]
-}
-
-model turno {
-  id                 String            @id
-  vehiculoServicioId String
-  userId             String
-  horarioReservado   DateTime
-  precioCongelado    Decimal
-  seniaCongelada     Decimal
-  patente            String
-  estado             Int
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime
-  user               user              @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Turno_userId_fkey")
-  vehiculo_servicio  vehiculo_servicio @relation(fields: [vehiculoServicioId], references: [id], onDelete: Cascade, map: "Turno_vehiculoServicioId_fkey")
-
-  @@index([userId], map: "Turno_userId_fkey")
-  @@index([vehiculoServicioId], map: "Turno_vehiculoServicioId_fkey")
-}
-
 model user {
   id            String    @id @default(cuid())
   name          String?
@@ -68,68 +42,6 @@ model user {
   updatedAt     DateTime  @updatedAt
   telefono      String?
   account       account[]
-  turno         turno[]
-}
-
-model vehiculo {
-  id                String              @id
-  nombre            String?
-  srcImage          String?
-  estado            Boolean
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  vehiculo_servicio vehiculo_servicio[]
-}
-
-model vehiculo_servicio {
-  id         String   @id
-  vehiculoId String
-  servicioId String
-  duracion   Int
-  precio     Decimal
-  descuento  Decimal
-  senia      Decimal
-  estado     Boolean
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime
-  turno      turno[]
-  servicio   servicio @relation(fields: [servicioId], references: [id], onDelete: Cascade, map: "Vehiculo_Servicio_servicioId_fkey")
-  vehiculo   vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade, map: "Vehiculo_Servicio_vehiculoId_fkey")
-
-  @@index([servicioId], map: "Vehiculo_Servicio_servicioId_fkey")
-  @@index([vehiculoId], map: "Vehiculo_Servicio_vehiculoId_fkey")
-}
-
-model expeciones_laborales {
-  id        String   @id
-  motivo    String
-  desde     DateTime
-  hasta     DateTime
-  estado    Boolean
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-}
-
-model dia_laboral {
-  id        String               @id @default(cuid())
-  estado    Boolean
-  dia       Int
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  margenes  margenes_laborales[]
-}
-
-model margenes_laborales {
-  id        String      @id @default(cuid())
-  diaId     String
-  estado    Boolean
-  desde     String
-  hasta     String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  dia       dia_laboral @relation(fields: [diaId], references: [id], onDelete: Cascade)
-
-  @@index([diaId])
 }
 
 enum user_role {
@@ -137,52 +49,101 @@ enum user_role {
   ADMIN
 }
 
+// --- Lógica de Negocio ---
+
 model Category {
   id          String    @id @default(cuid())
   name        String    @unique
   description String?
-  active      Boolean   @default(true) // Soft delete
+  active      Boolean   @default(true)
   garments    Garment[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
+model Provider {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  contactInfo String?
+  active      Boolean   @default(true)
+  garments    Garment[] 
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// 1. Catálogo Base (El producto en general)
 model Garment {
-  id          String     @id @default(cuid())
-  sku         String?    @unique
+  id          String    @id @default(cuid())
   name        String
-  price       Decimal    @db.Decimal(10, 2)
-  stock       Int        @default(0)
+  price       Decimal   @db.Decimal(10, 2) // Precio base
   description String?
-  active      Boolean    @default(true) // Soft delete
+  active      Boolean   @default(true)
   
   categoryId  String
-  category    Category   @relation(fields: [categoryId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
   
-  movements   Movement[]
+  supplierId  String?
+  supplier    Provider? @relation(fields: [supplierId], references: [id])
   
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  // Relación con sus variantes de talle
+  variants    GarmentVariant[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([categoryId])
+  @@index([supplierId])
+}
+
+// 2. Catálogo de Talles
+model Size {
+  id          String    @id @default(cuid())
+  code        String    @unique // Ej: "S", "M", "L", "42"
+  active      Boolean   @default(true)
+  
+  variants    GarmentVariant[]
+}
+
+// 3. Tabla Puente / Inventario Real (La variante física)
+model GarmentVariant {
+  id          String    @id @default(cuid())
+  sku         String?   @unique // El SKU va aquí, es único por talle/color
+  stock       Int       @default(0)
+  
+  garmentId   String
+  garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  
+  sizeId      String
+  size        Size      @relation(fields: [sizeId], references: [id])
+  
+  // Los movimientos de stock ahora apuntan a la variante específica
+  movements   Movement[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([garmentId])
+  @@index([sizeId])
 }
 
 enum MovementType {
-  IN   // Ingreso de stock
-  OUT  // Egreso/Venta
+  IN
+  OUT
 }
 
+// 4. Movimientos (Entradas y Salidas vinculadas a la variante)
 model Movement {
-  id          String       @id @default(cuid())
-  type        MovementType
-  quantity    Int
-  priceAtTime Decimal      @db.Decimal(10, 2) // Precio histórico guardado en el momento tipo snapshot
-  note        String?      // Opcional: "Venta", "Devolución", "Proveedor"
+  id               String         @id @default(cuid())
+  type             MovementType
+  quantity         Int
+  priceAtTime      Decimal        @db.Decimal(10, 2)
+  note             String?
   
-  garmentId   String
-  garment     Garment      @relation(fields: [garmentId], references: [id], onDelete: Cascade) 
+  // Relacionado a la variante (talle específico), no al producto general
+  variantId        String
+  garmentVariant   GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade) 
   
-  createdAt   DateTime     @default(now())
+  createdAt        DateTime       @default(now())
 
-  @@index([garmentId])
+  @@index([variantId])
 }
