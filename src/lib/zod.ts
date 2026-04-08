@@ -40,18 +40,6 @@ export const categorySchema = z.object({
 });
 
 // ==========================================
-// PRENDAS (GARMENTS)
-// ==========================================
-export const garmentSchema = z.object({
-  sku: z.string().min(3, "SKU requerido").optional().or(z.literal("")),
-  name: z.string().min(2, "Nombre requerido"),
-  categoryId: z.string().min(1, "Debes seleccionar una categoría"), // Relación con Category
-  price: z.coerce.number().positive("El precio debe ser mayor a 0"),
-  stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
-  description: z.string().optional(),
-});
-
-// ==========================================
 // MOVIMIENTOS DE STOCK
 // ==========================================
 const MOVEMENT_TYPES = ["IN", "OUT"] as const;
@@ -65,6 +53,24 @@ export const movementSchema = z.object({
     .positive("La cantidad debe ser mayor a 0"),
   note: z.string().optional(),
 });
+
+
+export const variantSchema = z.object({
+  sizeId: z.string().min(1, "Selecciona un talle"),
+  sku: z.string().optional(),
+  stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
+});
+
+export const garmentSchema = z.object({
+  name: z.string().min(2, "Nombre requerido"),
+  price: z.coerce.number().positive("El precio debe ser mayor a 0"),
+  description: z.string().optional(),
+  categoryId: z.string().min(1, "Selecciona una categoría"),
+  supplierId: z.string().optional().nullable(),
+  // Aquí está el cambio clave:
+  variants: z.array(variantSchema).min(1, "Debes agregar al menos un talle"),
+});
+
 
 // Tipos para TypeScript
 export type MovementInput = z.infer<typeof movementSchema>;
