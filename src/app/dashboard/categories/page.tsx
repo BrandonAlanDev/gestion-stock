@@ -6,22 +6,17 @@ import {
   createCategory, 
   updateCategory, 
   deleteCategory 
-} from "../../../actions/garments";
-import { CategoryInput, categorySchema } from "@/lib/zod";
-import { cn } from "@/lib/utils";
+} from "@/actions/garments"; 
+import { type CategoryInput, categorySchema } from "@/lib/zod";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
-  // Estado del formulario
-  const [formData, setFormData] = useState<CategoryInput>({
-    name: "",
-    description: "",
-  });
+  const [formData, setFormData] = useState<CategoryInput>({ name: "", description: "" });
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -30,146 +25,78 @@ export default function CategoriesPage() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     const result = categorySchema.safeParse(formData);
     if (!result.success) {
-        alert("Error: " + result.error.message);
-        return;
+      toast.error("Datos inválidos");
+      return;
     }
 
-    try {
-        if (editingId) {
-        // USANDO LA FUNCIÓN UPDATE
-        const response = await updateCategory(editingId, formData);
-        if (response.error) throw new Error("No se pudo actualizar");
-        setEditingId(null);
-        } else {
-        // USANDO LA FUNCIÓN CREATE
-        const response = await createCategory(formData);
-        if (response.error) throw new Error("No se pudo crear");
-        }
+    const res = editingId 
+      ? await updateCategory(editingId, formData) 
+      : await createCategory(formData);
 
-        // Limpiar y refrescar
-        setFormData({ name: "", description: "" });
-        fetchCategories();
-        alert(editingId ? "Categoría actualizada" : "Categoría creada");
-        
-    } catch (error: any) {
-        alert(error.message);
-    }
-    };
-
-  const handleEdit = (cat: any) => {
-    setEditingId(cat.id);
-    setFormData({ name: cat.name, description: cat.description || "" });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta categoría?")) {
-      await deleteCategory(id);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(editingId ? "Actualizado" : "Creado");
+      setFormData({ name: "", description: "" });
+      setEditingId(null);
       fetchCategories();
     }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8 pt-20 ">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Gestión de Stock</h1>
-        <div className="flex flex-row gap-4">
-          <Link href="/dashboard" >
-            <Button variant={"blanco"} className="px-4 py-2 rounded-lg text-sm font-medium">
-              Productos
-            </Button>
-          </Link>
-        </div>
+    <div className="p-8 max-w-4xl mx-auto space-y-6 pt-24">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Gestión de Categorías</h1>
+        <Link href="/dashboard"><Button variant="ghost">Volver</Button></Link>
       </div>
 
-      {/* Formulario */}
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+      <form onSubmit={handleSubmit} className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Nombre</label>
-            <input
-              type="text"
-              className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ej: Remeras, Pantalones..."
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Descripción (Opcional)</label>
-            <input
-              type="text"
-              className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
+          <input 
+            className="bg-neutral-950 border border-neutral-800 rounded-md p-2 text-white outline-none focus:ring-1 focus:ring-yellow-400"
+            placeholder="Nombre"
+            value={formData.name}
+            onChange={e => setFormData({...formData, name: e.target.value})}
+          />
+          <input 
+            className="bg-neutral-950 border border-neutral-800 rounded-md p-2 text-white outline-none focus:ring-1 focus:ring-yellow-400"
+            placeholder="Descripción"
+            value={formData.description || ""}
+            onChange={e => setFormData({...formData, description: e.target.value})}
+          />
         </div>
         <div className="flex gap-2">
-          <Button
-            variant={"amarillo"}
-            type="submit"
-            className="px-4 py-2"
-          >
-            {editingId ? "Actualizar Categoría" : "Crear Categoría"}
-          </Button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={() => { setEditingId(null); setFormData({ name: "", description: "" }); }}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-          )}
+          <Button type="submit" variant="amarillo">{editingId ? "Actualizar" : "Crear Categoría"}</Button>
+          {editingId && <Button type="button" variant="ghost" onClick={() => {setEditingId(null); setFormData({name:"", description:""})}}>Cancelar</Button>}
         </div>
       </form>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50 border-b">
+      <div className="border border-neutral-800 rounded-xl overflow-hidden">
+        <table className="w-full text-left text-sm text-neutral-300">
+          <thead className="bg-neutral-900 text-neutral-500 uppercase text-[10px] tracking-wider">
             <tr>
-              <th className="px-6 py-3 text-sm font-semibold text-gray-600">Nombre</th>
-              <th className="px-6 py-3 text-sm font-semibold text-gray-600">Descripción</th>
-              <th className="px-6 py-3 text-sm font-right text-gray-600 text-right">Acciones</th>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3">Descripción</th>
+              <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {loading ? (
-              <tr><td colSpan={3} className="px-6 py-4 text-center text-gray-400">Cargando...</td></tr>
-            ) : categories.length === 0 ? (
-              <tr><td colSpan={3} className="px-6 py-4 text-center text-gray-400">No hay categorías registradas.</td></tr>
-            ) : (
-              categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{cat.name}</td>
-                  <td className="px-6 py-4 text-gray-600">{cat.description || "-"}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => handleEdit(cat)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium"
-                    >
-                      Borrar
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+          <tbody className="divide-y divide-neutral-800 bg-neutral-950">
+            {categories.map(cat => (
+              <tr key={cat.id}>
+                <td className="px-6 py-4 font-medium text-white">{cat.name}</td>
+                <td className="px-6 py-4">{cat.description || "-"}</td>
+                <td className="px-6 py-4 text-right space-x-3">
+                  <button onClick={() => {setEditingId(cat.id); setFormData({name: cat.name, description: cat.description || ""})}} className="text-yellow-500 hover:underline">Editar</button>
+                  <button onClick={async () => { if(confirm("¿Borrar?")) { await deleteCategory(cat.id); fetchCategories(); } }} className="text-red-500 hover:underline">Borrar</button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
