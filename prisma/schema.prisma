@@ -56,6 +56,10 @@ model Category {
   name        String    @unique
   description String?
   active      Boolean   @default(true)
+
+  sizeTypeId  String?
+  sizeType    SizeType? @relation(fields: [sizeTypeId], references: [id])
+
   garments    Garment[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -95,36 +99,50 @@ model Garment {
   @@index([supplierId])
 }
 
-// 2. Catálogo de Talles
+// 2. Catálogo de Talles CAMBIOS!
+model SizeType {
+  id        String   @id @default(cuid())
+  name      String   @unique // "Ropa (S-M-L)", "Calzado EU", etc.
+  active    Boolean  @default(true)
+
+  sizes     Size[]
+  categories Category[] // Las categorías que usan este tipo de talle
+}
+
 model Size {
-  id          String    @id @default(cuid())
-  code        SizeCode    @unique // Ej: "S", "M", "L", "42"
-  active      Boolean   @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  value       String   // "S", "M", "40", "40.5"
+  order       Int      // para ordenar correctamente
+  sizeTypeId  String
+  sizeType    SizeType @relation(fields: [sizeTypeId], references: [id])
+
+  active      Boolean  @default(true)
   variants    GarmentVariant[]
 }
 
 // 3. Tabla Puente / Inventario Real (La variante física)
 model GarmentVariant {
   id          String    @id @default(cuid())
-  sku         String?   @unique // El SKU va aquí, es único por talle/color
+  sku         String?   @unique
   stock       Int       @default(0)
-  
+
   garmentId   String
-  garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
-  
   sizeId      String
+
+  garment     Garment   @relation(fields: [garmentId], references: [id], onDelete: Cascade)
   size        Size      @relation(fields: [sizeId], references: [id])
-  
-  // Los movimientos de stock ahora apuntan a la variante específica
+
+  colorId   String?
+  color     Color? @relation(fields: [colorId], references: [id])
+
   movements   Movement[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@index([garmentId])
-  @@index([sizeId])
+
+
+  @@unique([garmentId, sizeId, colorId])
 }
 
 enum MovementType {
@@ -149,10 +167,11 @@ model Movement {
   @@index([variantId])
 }
 
-enum SizeCode {
-  S
-  M
-  L
-  XL
-  XXL
+model Color {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  hex     String?  // opcional por si guardamos el color para mostrar en la UI
+  active  Boolean  @default(true)
+
+  variants GarmentVariant[]
 }
