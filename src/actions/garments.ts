@@ -163,7 +163,7 @@ export async function deleteMovement(id: string) {
 export async function getSizes() {
   const sizes = await prisma.size.findMany({
     where: { active: true },
-    orderBy: { code: 'asc' }
+    orderBy: { order: 'asc' }
   });
   return serializeData(sizes);
 }
