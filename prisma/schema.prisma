@@ -98,9 +98,10 @@ model Garment {
 // 2. Catálogo de Talles
 model Size {
   id          String    @id @default(cuid())
-  code        String    @unique // Ej: "S", "M", "L", "42"
+  code        SizeCode    @unique // Ej: "S", "M", "L", "42"
   active      Boolean   @default(true)
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   variants    GarmentVariant[]
 }
 
@@ -146,4 +147,12 @@ model Movement {
   createdAt        DateTime       @default(now())
 
   @@index([variantId])
+}
+
+enum SizeCode {
+  S
+  M
+  L
+  XL
+  XXL
 }

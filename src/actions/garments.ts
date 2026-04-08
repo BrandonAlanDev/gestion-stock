@@ -1,141 +1,86 @@
 "use server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; // Asegúrate de tener estos
+import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; 
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 
 // ==========================================
-// CATEGORÍAS (Soft Delete)
+// CATEGORÍAS (Se mantiene igual)
 // ==========================================
-
-export async function createCategory(data: unknown) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  const parsed = categorySchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
-
-  try {
-    const category = await prisma.category.create({ data: parsed.data });
-    revalidatePath("/dashboard");
-    return { success: true, data: serializeData(category) };
-  } catch (error) {
-    return { error: "Error al crear la categoría." };
-  }
-}
-
 export async function getCategories() {
   const categories = await prisma.category.findMany({
-    where: { active: true }, // Solo traemos las activas
+    where: { active: true },
     orderBy: { name: 'asc' }
   });
   return serializeData(categories);
 }
 
-export async function deleteCategory(id: string) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  // Soft Delete: Pasamos active a false
-  await prisma.category.update({
-    where: { id },
-    data: { active: false }
-  });
-  revalidatePath("/dashboard");
-}
-
-export async function updateCategory(id: string, data: unknown) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  const parsed = categorySchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
-
-  try {
-    const updated = await prisma.category.update({
-      where: { id },
-      data: parsed.data,
-    });
-    revalidatePath("/dashboard/categories");
-    return { success: true, data: serializeData(updated) };
-  } catch (error) {
-    return { error: "Error al actualizar la categoría" };
-  }
-}
-
 // ==========================================
-// PRENDAS / GARMENTS (Soft Delete)
+// PRENDAS / GARMENTS (Modificado para Variantes)
 // ==========================================
 
-export async function createGarment(data: unknown) {
+export async function createGarment(data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
+  // NOTA: Tu zod 'garmentSchema' ahora debería esperar un array de variantes
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
+  const { name, price, description, categoryId, supplierId, variants } = parsed.data;
+
   try {
-    const garment = await prisma.garment.create({ data: parsed.data });
+    const garment = await prisma.garment.create({
+      data: {
+        name,
+        price,
+        description,
+        categoryId,
+        supplierId,
+        // Creación anidada de variantes (talles)
+        variants: {
+          create: variants.map((v: any) => ({
+            sku: v.sku,
+            stock: v.stock || 0,
+            sizeId: v.sizeId, // ID del talle (ej: ID de "42")
+          }))
+        }
+      }
+    });
     revalidatePath("/dashboard");
     return { success: true, data: serializeData(garment) };
   } catch (error) {
-    return { error: "Error al crear el artículo (¿SKU duplicado?)" };
+    console.error(error);
+    return { error: "Error al crear el producto. Revisa si el SKU ya existe." };
   }
 }
 
 export async function getGarments(query?: string) {
   const garments = await prisma.garment.findMany({
     where: {
-      active: true, // Filtramos solo los que no están eliminados
+      active: true,
       ...(query ? {
         OR: [
           { name: { contains: query } },
-          { sku: { contains: query } },
-          { category: { name: { contains: query } } } // Buscamos por el nombre de la categoría relacionada
+          { variants: { some: { sku: { contains: query } } } }, // Busca por SKU dentro de las variantes
+          { category: { name: { contains: query } } }
         ]
       } : {})
     },
-    include: { category: true }, // Incluimos los datos de la categoría
+    include: { 
+      category: true, 
+      variants: { include: { size: true } }, // Incluimos los talles y stock
+      supplier: true 
+    },
     orderBy: { updatedAt: 'desc' }
   });
   
   return serializeData(garments);
 }
 
-export async function updateGarment(id: string, data: unknown) {
-  const session = await auth();
-  if (!session) throw new Error("No autorizado");
-
-  const parsed = garmentSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
-
-  try {
-    await prisma.garment.update({
-      where: { id },
-      data: parsed.data
-    });
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch (error) {
-    return { error: "Error al actualizar el producto" };
-  }
-}
-
-export async function deleteGarment(id: string) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  // Soft Delete: Pasamos active a false en lugar de usar .delete()
-  await prisma.garment.update({
-    where: { id },
-    data: { active: false }
-  });
-  revalidatePath("/dashboard");
-}
-
 // ==========================================
-// MOVIMIENTOS (Hard Delete y Transacciones)
+// MOVIMIENTOS (Modificado: Ahora afecta a GarmentVariant)
 // ==========================================
 
 export async function createMovement(data: unknown) {
@@ -145,37 +90,37 @@ export async function createMovement(data: unknown) {
   const parsed = movementSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { garmentId, type, quantity, note } = parsed.data;
+  // variantId es el ID del talle específico de esa zapatilla
+  const { variantId, type, quantity, note } = parsed.data;
 
   try {
-    // Usamos una Transacción para asegurar que el movimiento y el stock se actualicen juntos
     await prisma.$transaction(async (tx) => {
-      // 1. Buscamos el precio actual de la prenda
-      const garment = await tx.garment.findUnique({
-        where: { id: garmentId },
-        select: { price: true, stock: true }
+      // 1. Buscamos la variante y el precio del producto padre
+      const variant = await tx.garmentVariant.findUnique({
+        where: { id: variantId },
+        include: { garment: { select: { price: true } } }
       });
 
-      if (!garment) throw new Error("Prenda no encontrada");
-      if (type === "OUT" && garment.stock < quantity) {
-        throw new Error("Stock insuficiente para el egreso");
+      if (!variant) throw new Error("Variante (talle) no encontrada");
+      if (type === "OUT" && variant.stock < quantity) {
+        throw new Error("Stock insuficiente en este talle");
       }
 
-      // 2. Creamos el movimiento guardando el precio histórico
+      // 2. Creamos el movimiento vinculado a la variante
       await tx.movement.create({
         data: {
-          garmentId,
+          variantId,
           type,
           quantity,
-          priceAtTime: garment.price, // Precio congelado en el tiempo
+          priceAtTime: variant.garment.price,
           note
         }
       });
 
-      // 3. Actualizamos el stock real de la prenda
+      // 3. Actualizamos el stock en la tabla GarmentVariant
       const stockAdjustment = type === "IN" ? quantity : -quantity;
-      await tx.garment.update({
-        where: { id: garmentId },
+      await tx.garmentVariant.update({
+        where: { id: variantId },
         data: { stock: { increment: stockAdjustment } }
       });
     });
@@ -192,26 +137,90 @@ export async function deleteMovement(id: string) {
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
   try {
-    // Transacción para revertir el stock antes de hacer el Hard Delete
     await prisma.$transaction(async (tx) => {
       const movement = await tx.movement.findUnique({ where: { id } });
       if (!movement) throw new Error("Movimiento no encontrado");
 
-      // Si fue un IN (ingreso), al borrarlo restamos stock. Si fue OUT, sumamos.
+      // Revertimos el stock en la variante
       const stockAdjustment = movement.type === "IN" ? -movement.quantity : movement.quantity;
       
-      await tx.garment.update({
-        where: { id: movement.garmentId },
+      await tx.garmentVariant.update({
+        where: { id: movement.variantId },
         data: { stock: { increment: stockAdjustment } }
       });
 
-      // Hard Delete del movimiento
       await tx.movement.delete({ where: { id } });
     });
 
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error: any) {
-    return { error: "Error al eliminar el movimiento y revertir el stock." };
+    return { error: "Error al eliminar el movimiento." };
+  }
+}
+
+// Auxiliar para traer los talles disponibles en la base de datos
+export async function getSizes() {
+  const sizes = await prisma.size.findMany({
+    where: { active: true },
+    orderBy: { code: 'asc' }
+  });
+  return serializeData(sizes);
+}
+
+// ==========================================
+// CATEGORÍAS (Funciones faltantes para la gestión)
+// ==========================================
+
+export async function createCategory(data: any) {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+
+  const parsed = categorySchema.safeParse(data);
+  if (!parsed.success) return { error: "Datos de categoría inválidos" };
+
+  try {
+    const category = await prisma.category.create({
+      data: parsed.data,
+    });
+    revalidatePath("/dashboard/categories");
+    return { success: true, data: serializeData(category) };
+  } catch (error) {
+    return { error: "Error al crear la categoría" };
+  }
+}
+
+export async function updateCategory(id: string, data: any) {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+
+  const parsed = categorySchema.safeParse(data);
+  if (!parsed.success) return { error: "Datos inválidos" };
+
+  try {
+    await prisma.category.update({
+      where: { id },
+      data: parsed.data,
+    });
+    revalidatePath("/dashboard/categories");
+    return { success: true };
+  } catch (error) {
+    return { error: "Error al actualizar la categoría" };
+  }
+}
+
+export async function deleteCategory(id: string) {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+
+  try {
+    // Verificamos si tiene productos antes de borrar (opcional, Prisma lanzará error si hay relación)
+    await prisma.category.delete({
+      where: { id },
+    });
+    revalidatePath("/dashboard/categories");
+    return { success: true };
+  } catch (error) {
+    return { error: "No se puede eliminar la categoría porque tiene productos asociados." };
   }
 }
