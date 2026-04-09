@@ -32,19 +32,19 @@ export async function createGarment(data: any) {
 
   try {
     const garment = await prisma.garment.create({
-      data: {
-        name,
-        price,
-        description,
-        categoryId,
-        supplierId,
-        // Creación anidada de variantes (talles)
+     data: {
+        name: data.name,
+        price: data.price,
+        cost: data.cost, // <-- Guardamos el costo
+        description: data.description,
+        categoryId: data.categoryId,
+        supplierId: data.supplierId || null,
         variants: {
-          create: variants.map((v: any) => ({
+          create: data.variants.map((v: any) => ({
             sku: v.sku,
-            stock: v.stock || 0,
-            sizeId: v.sizeId, // ID del talle (ej: ID de "42")
-          }))
+            stock: v.stock,
+            sizeId: v.sizeId,
+          })),
         }
       }
     });
