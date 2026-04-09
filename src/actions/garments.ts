@@ -6,17 +6,6 @@ import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 
 // ==========================================
-// CATEGORÍAS (Se mantiene igual)
-// ==========================================
-export async function getCategories() {
-  const categories = await prisma.category.findMany({
-    where: { active: true },
-    orderBy: { name: 'asc' }
-  });
-  return serializeData(categories);
-}
-
-// ==========================================
 // PRENDAS / GARMENTS (Modificado para Variantes)
 // ==========================================
 
@@ -32,19 +21,19 @@ export async function createGarment(data: any) {
 
   try {
     const garment = await prisma.garment.create({
-      data: {
-        name,
-        price,
-        description,
-        categoryId,
-        supplierId,
-        // Creación anidada de variantes (talles)
+     data: {
+        name: data.name,
+        price: data.price,
+        cost: data.cost, // <-- Guardamos el costo
+        description: data.description,
+        categoryId: data.categoryId,
+        supplierId: data.supplierId || null,
         variants: {
-          create: variants.map((v: any) => ({
+          create: data.variants.map((v: any) => ({
             sku: v.sku,
-            stock: v.stock || 0,
-            sizeId: v.sizeId, // ID del talle (ej: ID de "42")
-          }))
+            stock: v.stock,
+            sizeId: v.sizeId,
+          })),
         }
       }
     });
@@ -56,21 +45,25 @@ export async function createGarment(data: any) {
   }
 }
 
-export async function getGarments(query?: string) {
+export async function getGarments(query?: string, categoryId?: string) {
   const garments = await prisma.garment.findMany({
     where: {
       active: true,
-      ...(query ? {
-        OR: [
-          { name: { contains: query } },
-          { variants: { some: { sku: { contains: query } } } }, // Busca por SKU dentro de las variantes
-          { category: { name: { contains: query } } }
-        ]
-      } : {})
+      AND: [
+        // Filtro por búsqueda de texto
+        query ? {
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { variants: { some: { sku: { contains: query, mode: 'insensitive' } } } },
+          ]
+        } : {},
+        // Filtro por categoría (NUEVO)
+        categoryId ? { categoryId: categoryId } : {},
+      ]
     },
     include: { 
       category: true, 
-      variants: { include: { size: true } }, // Incluimos los talles y stock
+      variants: { include: { size: true } },
       supplier: true 
     },
     orderBy: { updatedAt: 'desc' }
@@ -163,7 +156,7 @@ export async function deleteMovement(id: string) {
 export async function getSizes() {
   const sizes = await prisma.size.findMany({
     where: { active: true },
-    orderBy: { code: 'asc' }
+    orderBy: { order: 'asc' }
   });
   return serializeData(sizes);
 }
@@ -172,55 +165,85 @@ export async function getSizes() {
 // CATEGORÍAS (Funciones faltantes para la gestión)
 // ==========================================
 
-export async function createCategory(data: any) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  const parsed = categorySchema.safeParse(data);
-  if (!parsed.success) return { error: "Datos de categoría inválidos" };
-
-  try {
-    const category = await prisma.category.create({
-      data: parsed.data,
-    });
-    revalidatePath("/dashboard/categories");
-    return { success: true, data: serializeData(category) };
-  } catch (error) {
-    return { error: "Error al crear la categoría" };
-  }
+export async function getCategories() {
+  return await prisma.category.findMany({
+    // Incluimos el sizeType para saber qué talles tiene asignados
+    include: { sizeType: true },
+    orderBy: { name: "asc" },
+  });
 }
 
-export async function updateCategory(id: string, data: any) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  const parsed = categorySchema.safeParse(data);
-  if (!parsed.success) return { error: "Datos inválidos" };
-
+export async function createCategory(formData: { name: string; description?: string; sizeTypeId?: string }) {
   try {
-    await prisma.category.update({
-      where: { id },
-      data: parsed.data,
+    await prisma.category.create({
+      data: {
+        name: formData.name,
+        description: formData.description,
+        sizeTypeId: formData.sizeTypeId || null, // Asignamos el ID del talle
+      },
     });
     revalidatePath("/dashboard/categories");
     return { success: true };
   } catch (error) {
-    return { error: "Error al actualizar la categoría" };
+    return { error: "Error al crear categoría" };
+  }
+}
+
+export async function updateCategory(id: string, data: { name: string; description?: string; sizeTypeId?: string }) {
+  try {
+    const updated = await prisma.category.update({
+      where: { id },
+      data: {
+        name: data.name,
+        description: data.description,
+        // Permitimos actualizar el grupo de talles o quitarlo
+        sizeTypeId: data.sizeTypeId || null,
+      },
+    });
+    revalidatePath("/dashboard");
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Error al actualizar categoría:", error);
+    return { error: "Error al actualizar los datos." };
   }
 }
 
 export async function deleteCategory(id: string) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
   try {
-    // Verificamos si tiene productos antes de borrar (opcional, Prisma lanzará error si hay relación)
     await prisma.category.delete({
       where: { id },
     });
-    revalidatePath("/dashboard/categories");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     return { error: "No se puede eliminar la categoría porque tiene productos asociados." };
+  }
+}
+// ==========================================
+// PROVEEDORES
+// ==========================================
+
+export async function getProviders() {
+  try {
+    const providers = await prisma.provider.findMany({
+      where: { 
+        active: true 
+      },
+      orderBy: { 
+        name: 'asc' 
+      },
+      // Si solo necesitas el ID y el Nombre para el modal, 
+      // puedes usar select para que la consulta sea más liviana:
+      select: {
+        id: true,
+        name: true,
+        contactInfo: true,
+      }
+    });
+
+    return serializeData(providers);
+  } catch (error) {
+    console.error("Error al obtener proveedores:", error);
+    return []; // Retornamos un array vacío para que el modal no rompa
   }
 }

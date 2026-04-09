@@ -35,8 +35,9 @@ export const updateProfileSchema = z.object({
 // CATEGORÍAS
 // ==========================================
 export const categorySchema = z.object({
-  name: z.string().min(2, "El nombre de la categoría es requerido"),
+  name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().optional(),
+  sizeTypeId: z.string().optional().nullable(), // AGREGAR ESTA LÍNEA
 });
 
 // ==========================================
@@ -45,13 +46,10 @@ export const categorySchema = z.object({
 const MOVEMENT_TYPES = ["IN", "OUT"] as const;
 
 export const movementSchema = z.object({
-  garmentId: z.string().min(1, "Debes seleccionar una prenda"),
-  type: z.enum(MOVEMENT_TYPES),
-  quantity: z.coerce
-    .number()
-    .int("Debe ser un número entero")
-    .positive("La cantidad debe ser mayor a 0"),
-  note: z.string().optional(),
+  variantId: z.string(),
+  type: z.enum(["IN", "OUT"]),
+  quantity: z.number().int().positive(),
+  note: z.string().optional()
 });
 
 
@@ -64,6 +62,7 @@ export const variantSchema = z.object({
 export const garmentSchema = z.object({
   name: z.string().min(2, "Nombre requerido"),
   price: z.coerce.number().positive("El precio debe ser mayor a 0"),
+  cost: z.coerce.number().min(0),
   description: z.string().optional(),
   categoryId: z.string().min(1, "Selecciona una categoría"),
   supplierId: z.string().optional().nullable(),

@@ -1,5 +1,5 @@
 "use client";
-import { Header } from "@/components/Header";
+import  Header  from "@/components/Header";
 import SessionWrapper from "./providers/SessionWrapper";
 
 export default function LayoutComponent({

@@ -1,125 +1,98 @@
-import { getGarments, getSizes, getCategories } from "@/actions/garments";
+import { getGarments, getCategories, getProviders } from "@/actions/garments";
+import { getSizeTypes } from "@/actions/sizes";
 import Search from "@/components/Search";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import ProductModal from "@/components/garment/productModal"; // Ajusta la ruta a tu componente
+import CategoryFilter from "@/components/garment/CategoryFilter";
+import ProductModal from "@/components/garment/productModal";
+import CategoryModal from "@/components/garment/CategoryModal";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ query?: string }>;
+  searchParams?: Promise<{ query?: string; category?: string }>;
 }) {
   const params = await searchParams;
   const query = params?.query || "";
+  const category = params?.category || "";
 
-  // Traemos todos los datos necesarios en paralelo para optimizar la carga
-  const [garments, sizes, categories] = await Promise.all([
-    getGarments(query),
-    getSizes(),
+  const [garments, sizeTypes, categories, providers] = await Promise.all([
+    getGarments(query, category),
+    getSizeTypes(), 
     getCategories(),
+    getProviders(),
   ]);
 
   return (
     <div className="p-8 bg-neutral-950 min-h-screen text-neutral-100 pt-20">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestión de Inventario</h1>
-          <p className="text-neutral-500 text-sm">Control de stock por talles y variantes</p>
+          <h1 className="text-2xl font-bold tracking-tight uppercase italic">Gestión de Inventario</h1>
+          <p className="text-neutral-500 text-sm font-light uppercase tracking-widest">Control de Stock y Rentabilidad</p>
         </div>
+        
         <div className="flex flex-row gap-4">
-          <Link href="/dashboard/categories">
-            <Button variant={"blanco"} className="px-4 py-2 rounded-lg text-sm font-medium">
-              Categorías
-            </Button>
-          </Link>
+          {/* Pasamos sizeTypes al CategoryModal para que pueda asignar curvas de talles */}
+          <CategoryModal sizeTypes={sizeTypes} /> 
           
-          {/* Nuevo Modal Adaptado */}
-          <ProductModal categories={categories} sizes={sizes} />
+          {/* Pasamos todos los datos necesarios al ProductModal */}
+          <ProductModal 
+            categories={categories} 
+            sizes={sizeTypes} 
+            providers={providers} 
+          />
         </div>
       </div>
 
-      <div className="mb-6">
-        <Search />
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Search className="w-full" />
+        </div>
+        <div className="w-full md:w-64">
+          <CategoryFilter categories={categories} />
+        </div>
       </div>
 
-      <div className="overflow-x-auto border border-neutral-800 rounded-xl bg-neutral-900/30">
+      <div className="overflow-x-auto border border-neutral-800 rounded-2xl bg-neutral-900/30 backdrop-blur-md">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-neutral-800 text-neutral-400 text-sm uppercase">
-              <th className="px-6 py-4 font-medium">SKU (Ref)</th>
-              <th className="px-6 py-4 font-medium">Producto</th>
-              <th className="px-6 py-4 font-medium">Categoría</th>
-              <th className="px-6 py-4 font-medium">Precio</th>
-              <th className="px-6 py-4 font-medium">Stock Total</th>
-              <th className="px-6 py-4 font-medium text-right">Acciones</th>
+            <tr className="border-b border-neutral-800 text-neutral-500 text-[10px] uppercase tracking-[0.2em]">
+              <th className="px-6 py-5 font-black">SKU Ref.</th>
+              <th className="px-6 py-5 font-black">Producto</th>
+              <th className="px-6 py-5 font-black">Categoría</th>
+              <th className="px-6 py-5 font-black">Finanzas</th>
+              <th className="px-6 py-5 font-black">Stock Total</th>
+              <th className="px-6 py-5 font-black text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-800">
+          <tbody className="divide-y divide-neutral-800/50">
             {garments.map((item: any) => {
-              // Calculamos el stock total sumando todas sus variantes
-              const totalStock = item.variants?.reduce(
-                (acc: number, v: any) => acc + v.stock,
-                0
-              ) || 0;
-
+              const totalStock = item.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
               return (
-                <tr key={item.id} className="hover:bg-neutral-800/50 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-xs text-blue-400">
-                    {item.variants?.[0]?.sku || "SIN SKU"}
+                <tr key={item.id} className="hover:bg-amber-500/[0.02] transition-colors group text-sm">
+                  <td className="px-6 py-4 font-mono text-[10px] text-amber-500/50">
+                    {item.variants?.[0]?.sku || "---"}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium">{item.name}</div>
-                    {item.description && (
-                      <div className="text-xs text-neutral-500 truncate max-w-[200px]">
-                        {item.description}
-                      </div>
-                    )}
+                    <div className="font-bold text-white uppercase tracking-tighter italic">{item.name}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 rounded-md bg-neutral-800 text-neutral-300 text-xs">
+                    <span className="px-2 py-1 rounded bg-neutral-800 text-neutral-400 text-[9px] font-black uppercase">
                       {item.category.name}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-green-400 font-semibold">
-                    ${Number(item.price).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  <td className="px-6 py-4">
+                    <div className="text-emerald-500 font-mono font-bold">${Number(item.price).toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className={`font-bold ${totalStock < 5 ? 'text-red-400' : 'text-neutral-100'}`}>
-                      {totalStock} <span className="text-[10px] font-normal text-neutral-500">U.</span>
-                    </div>
-                    {/* Desglose de talles */}
-                    <div className="flex gap-1 mt-1">
-                      {item.variants?.map((v: any) => (
-                        <span 
-                          key={v.id} 
-                          title={`Talle ${v.size.code}`}
-                          className="text-[9px] px-1 bg-neutral-800 border border-neutral-700 text-neutral-400 rounded"
-                        >
-                          {v.size.code}:{v.stock}
-                        </span>
-                      ))}
-                    </div>
+                    <div className="font-black text-lg">{totalStock}</div>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-3">
-                    <button className="text-neutral-400 hover:text-white text-sm transition-colors">
-                      Editar
-                    </button>
-                    <button className="text-neutral-400 hover:text-red-400 text-sm transition-colors">
-                      Eliminar
-                    </button>
+                  <td className="px-6 py-4 text-right">
+                    <button className="text-[10px] font-bold text-neutral-600 hover:text-white uppercase">Editar</button>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-
-        {garments.length === 0 && (
-          <div className="p-20 text-center">
-            <p className="text-neutral-500">No se encontraron productos.</p>
-            <p className="text-neutral-600 text-sm">Intenta ajustar los filtros de búsqueda.</p>
-          </div>
-        )}
       </div>
     </div>
   );
