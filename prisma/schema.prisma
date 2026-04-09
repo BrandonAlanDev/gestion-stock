@@ -63,6 +63,7 @@ model Category {
   garments    Garment[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  @@index([sizeTypeId])
 }
 
 model Provider {

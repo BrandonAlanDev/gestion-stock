@@ -35,8 +35,9 @@ export const updateProfileSchema = z.object({
 // CATEGORÍAS
 // ==========================================
 export const categorySchema = z.object({
-  name: z.string().min(2, "El nombre de la categoría es requerido"),
+  name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().optional(),
+  sizeTypeId: z.string().optional().nullable(), // AGREGAR ESTA LÍNEA
 });
 
 // ==========================================

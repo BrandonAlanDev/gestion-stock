@@ -1,19 +1,22 @@
-import { getGarments, getSizes, getCategories, getProviders } from "@/actions/garments";
+import { getGarments, getCategories, getProviders } from "@/actions/garments";
+import { getSizeTypes } from "@/actions/sizes";
 import Search from "@/components/Search";
+import CategoryFilter from "@/components/garment/CategoryFilter";
 import ProductModal from "@/components/garment/productModal";
 import CategoryModal from "@/components/garment/CategoryModal";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ query?: string }>;
+  searchParams?: Promise<{ query?: string; category?: string }>;
 }) {
   const params = await searchParams;
   const query = params?.query || "";
+  const category = params?.category || "";
 
-  const [garments, sizes, categories, providers] = await Promise.all([
-    getGarments(query),
-    getSizes(),
+  const [garments, sizeTypes, categories, providers] = await Promise.all([
+    getGarments(query, category),
+    getSizeTypes(), 
     getCategories(),
     getProviders(),
   ]);
@@ -27,17 +30,25 @@ export default async function DashboardPage({
         </div>
         
         <div className="flex flex-row gap-4">
-          <CategoryModal /> 
+          {/* Pasamos sizeTypes al CategoryModal para que pueda asignar curvas de talles */}
+          <CategoryModal sizeTypes={sizeTypes} /> 
+          
+          {/* Pasamos todos los datos necesarios al ProductModal */}
           <ProductModal 
             categories={categories} 
-            sizes={sizes} 
+            sizes={sizeTypes} 
             providers={providers} 
           />
         </div>
       </div>
 
-      <div className="mb-6">
-        <Search className="w-full" />
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Search className="w-full" />
+        </div>
+        <div className="w-full md:w-64">
+          <CategoryFilter categories={categories} />
+        </div>
       </div>
 
       <div className="overflow-x-auto border border-neutral-800 rounded-2xl bg-neutral-900/30 backdrop-blur-md">
@@ -47,7 +58,7 @@ export default async function DashboardPage({
               <th className="px-6 py-5 font-black">SKU Ref.</th>
               <th className="px-6 py-5 font-black">Producto</th>
               <th className="px-6 py-5 font-black">Categoría</th>
-              <th className="px-6 py-5 font-black">Finanzas (Venta/Costo)</th>
+              <th className="px-6 py-5 font-black">Finanzas</th>
               <th className="px-6 py-5 font-black">Stock Total</th>
               <th className="px-6 py-5 font-black text-right">Acciones</th>
             </tr>
@@ -55,52 +66,27 @@ export default async function DashboardPage({
           <tbody className="divide-y divide-neutral-800/50">
             {garments.map((item: any) => {
               const totalStock = item.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
-              const margin = item.price > 0 ? ((Number(item.price) - Number(item.cost)) / Number(item.price)) * 100 : 0;
-
               return (
                 <tr key={item.id} className="hover:bg-amber-500/[0.02] transition-colors group text-sm">
                   <td className="px-6 py-4 font-mono text-[10px] text-amber-500/50">
                     {item.variants?.[0]?.sku || "---"}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-bold text-white group-hover:text-amber-500 transition-colors uppercase tracking-tighter italic">
-                      {item.name}
-                    </div>
-                    <div className="text-[10px] text-neutral-600 truncate max-w-[150px]">{item.description || "Sin descripción"}</div>
+                    <div className="font-bold text-white uppercase tracking-tighter italic">{item.name}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 rounded bg-neutral-800 text-neutral-400 text-[9px] font-black uppercase tracking-tighter">
+                    <span className="px-2 py-1 rounded bg-neutral-800 text-neutral-400 text-[9px] font-black uppercase">
                       {item.category.name}
                     </span>
                   </td>
-                  <td className="px-6 py-4 space-y-1">
-                    <div className="text-emerald-500 font-mono font-bold">
-                      ${Number(item.price).toLocaleString("es-AR")}
-                    </div>
-                    <div className="text-[10px] text-neutral-500 font-mono">
-                      Costo: ${Number(item.cost).toLocaleString("es-AR")}
-                    </div>
-                    <div className={`text-[9px] font-bold ${margin > 30 ? 'text-blue-400' : 'text-neutral-600'}`}>
-                      Margen: {margin.toFixed(0)}%
-                    </div>
+                  <td className="px-6 py-4">
+                    <div className="text-emerald-500 font-mono font-bold">${Number(item.price).toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className={`font-black text-lg ${totalStock < 5 ? 'text-red-500' : 'text-neutral-100'}`}>
-                      {totalStock} <span className="text-[10px] font-normal text-neutral-500">U.</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {item.variants?.map((v: any) => (
-                        <span key={v.id} className="text-[9px] px-1.5 py-0.5 bg-black border border-neutral-800 text-neutral-500 rounded font-mono">
-                          {v.size.value}:<span className={v.stock > 0 ? "text-amber-500" : "text-red-900"}>{v.stock}</span>
-                        </span>
-                      ))}
-                    </div>
+                    <div className="font-black text-lg">{totalStock}</div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button className="text-[10px] uppercase font-bold text-neutral-600 hover:text-white transition-all">Editar</button>
-                      <button className="text-[10px] uppercase font-bold text-neutral-600 hover:text-red-500 transition-all">Borrar</button>
-                    </div>
+                    <button className="text-[10px] font-bold text-neutral-600 hover:text-white uppercase">Editar</button>
                   </td>
                 </tr>
               );
