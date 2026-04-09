@@ -163,7 +163,7 @@ export async function deleteMovement(id: string) {
 export async function getSizes() {
   const sizes = await prisma.size.findMany({
     where: { active: true },
-    orderBy: { code: 'asc' }
+    orderBy: { order: 'asc' }
   });
   return serializeData(sizes);
 }
@@ -222,5 +222,33 @@ export async function deleteCategory(id: string) {
     return { success: true };
   } catch (error) {
     return { error: "No se puede eliminar la categoría porque tiene productos asociados." };
+  }
+}
+// ==========================================
+// PROVEEDORES
+// ==========================================
+
+export async function getProviders() {
+  try {
+    const providers = await prisma.provider.findMany({
+      where: { 
+        active: true 
+      },
+      orderBy: { 
+        name: 'asc' 
+      },
+      // Si solo necesitas el ID y el Nombre para el modal, 
+      // puedes usar select para que la consulta sea más liviana:
+      select: {
+        id: true,
+        name: true,
+        contactInfo: true,
+      }
+    });
+
+    return serializeData(providers);
+  } catch (error) {
+    console.error("Error al obtener proveedores:", error);
+    return []; // Retornamos un array vacío para que el modal no rompa
   }
 }
