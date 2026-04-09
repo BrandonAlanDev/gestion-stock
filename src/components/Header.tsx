@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { DoorOpen, Menu, X, Shirt, UserCircle } from "lucide-react";
+import { DoorOpen, Menu, X, Shirt, UserCircle, Truck } from "lucide-react";
 import Link from "next/link";
 import { handleSignOut } from "@/actions/auth-actions";
 
@@ -40,8 +40,9 @@ export function Header({ session }: HeaderProps) {
             <Link href="/dashboard/categories" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
               Categorias
             </Link>
-            <Link href="/" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
-              Proximamente en mp3
+            {/* TEXTO ACTUALIZADO AQUÍ */}
+            <Link href="/provider" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
+              Proveedores
             </Link>
           </nav>
 
@@ -51,7 +52,6 @@ export function Header({ session }: HeaderProps) {
               <>
                 <Link className="flex flex-row items-center gap-2 text-md font-bold hover:text-amber-300 transition-colors duration-300" href="/dashboard">
                   <UserCircle className="text-white" width={'32'} height={'32'}/>
-                  {/* CORRECCIÓN: Doble ? para evitar el crash si user es null */}
                   {session?.user?.name || "Mi Perfil"}
                 </Link>
                 <form action={handleSignOut}>
@@ -106,9 +106,18 @@ export function Header({ session }: HeaderProps) {
               </div>
 
               <nav className="flex flex-col gap-4 overflow-y-auto mb-6 flex-1 bg-black">
-                <Link href="/dashboard" onClick={closeMenu}><Button variant="outline" className="w-full justify-start border-neutral-800">Panel de productos</Button></Link>
-                <Link href="/dashboard/categories" onClick={closeMenu}><Button variant="outline" className="w-full justify-start border-neutral-800">Categorias</Button></Link>
-                <Link href="/" onClick={closeMenu}><Button variant="outline" className="w-full justify-start border-neutral-800">Proximamente en mp3</Button></Link>
+                <Link href="/dashboard" onClick={closeMenu}>
+                  <Button variant="outline" className="w-full justify-start border-neutral-800">Panel de productos</Button>
+                </Link>
+                <Link href="/dashboard/categories" onClick={closeMenu}>
+                  <Button variant="outline" className="w-full justify-start border-neutral-800">Categorias</Button>
+                </Link>
+                {/* TEXTO ACTUALIZADO EN MOBILE TAMBIÉN */}
+                <Link href="/dashboard/providers" onClick={closeMenu}>
+                  <Button variant="outline" className="w-full justify-start border-neutral-800">
+                    <Truck className="w-4 h-4 mr-2" /> Proveedores
+                  </Button>
+                </Link>
               </nav>
 
               <div className="mt-auto border-t border-neutral-800 pt-6 flex flex-col gap-4 pb-4">
@@ -116,7 +125,6 @@ export function Header({ session }: HeaderProps) {
                   <>
                     <Link href="/dashboard" onClick={closeMenu} className="flex items-center gap-3">
                       <UserCircle className="text-white" width={'40'} height={'40'}/>
-                      {/* CORRECCIÓN: Doble ? también en la versión Mobile */}
                       <span className="font-medium text-sm truncate">{session?.user?.name || "Mi Perfil"}</span>
                     </Link>
                     <form action={handleSignOut} onSubmit={closeMenu}>
