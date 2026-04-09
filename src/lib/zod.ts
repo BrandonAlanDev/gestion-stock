@@ -46,13 +46,10 @@ export const categorySchema = z.object({
 const MOVEMENT_TYPES = ["IN", "OUT"] as const;
 
 export const movementSchema = z.object({
-  garmentId: z.string().min(1, "Debes seleccionar una prenda"),
-  type: z.enum(MOVEMENT_TYPES),
-  quantity: z.coerce
-    .number()
-    .int("Debe ser un número entero")
-    .positive("La cantidad debe ser mayor a 0"),
-  note: z.string().optional(),
+  variantId: z.string(),
+  type: z.enum(["IN", "OUT"]),
+  quantity: z.number().int().positive(),
+  note: z.string().optional()
 });
 
 
