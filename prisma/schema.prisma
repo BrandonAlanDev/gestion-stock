@@ -80,6 +80,7 @@ model Garment {
   id          String    @id @default(cuid())
   name        String
   price       Decimal   @db.Decimal(10, 2) // Precio base
+  cost       Decimal   @db.Decimal(10, 2) // Precio de costo
   description String?
   active      Boolean   @default(true)
   
@@ -118,6 +119,7 @@ model Size {
 
   active      Boolean  @default(true)
   variants    GarmentVariant[]
+  @@unique([value, sizeTypeId]) // Evita duplicar "S" en el mismo tipo de talle
 }
 
 // 3. Tabla Puente / Inventario Real (La variante física)
