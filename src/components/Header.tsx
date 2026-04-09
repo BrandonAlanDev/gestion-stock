@@ -37,9 +37,6 @@ export function Header({ session }: HeaderProps) {
             <Link href="/dashboard" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
               Productos
             </Link>
-            <Link href="/dashboard/categories" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
-              Categorias
-            </Link>
             {/* TEXTO ACTUALIZADO AQUÍ */}
             <Link href="/provider" className="text-md font-bold hover:text-amber-300 transition-colors duration-300">
               Proveedores
