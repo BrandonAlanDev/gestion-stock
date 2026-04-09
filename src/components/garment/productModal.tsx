@@ -12,8 +12,9 @@ import { toast } from "sonner";
 
 interface Props {
   categories: { id: string; name: string }[];
-  sizes: { id: string; code: string }[];
-  providers?: { id: string; name: string }[]; // Agregado para soportar supplierId
+  // CAMBIO: Aquí usamos 'value' en lugar de 'code' para que coincida con el Schema
+  sizes: { id: string; value: string }[]; 
+  providers?: { id: string; name: string }[];
 }
 
 export default function ProductModal({ categories, sizes, providers = [] }: Props) {
@@ -42,7 +43,6 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
     name: "variants",
   });
 
-  // Solución al error de tipos ts(2345) de Field Arrays
   const variantsErrorMessage = errors.variants 
     ? (typeof errors.variants.message === "string" 
         ? errors.variants.message 
@@ -57,7 +57,8 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
   const onSubmit = async (data: GarmentInput) => {
     const res = await createGarment(data);
     if (res?.error) {
-      toast.error(res.error);
+      // Manejo de error si el SKU ya existe o falla la DB
+      toast.error(typeof res.error === 'string' ? res.error : "Error al crear");
     } else {
       toast.success("Producto creado con éxito");
       handleClose();
@@ -76,31 +77,32 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
       <div className="bg-neutral-900 border border-neutral-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
         
         <div className="sticky top-0 bg-neutral-900 z-10 flex justify-between items-center p-6 border-b border-neutral-800">
-          <h2 className="text-xl font-bold text-white">Nuevo Producto</h2>
-          <button onClick={handleClose} className="text-neutral-400 hover:text-white">
+          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Nuevo Producto</h2>
+          <button onClick={handleClose} className="text-neutral-400 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Información General */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-400 uppercase">Nombre</label>
-              <Input {...register("name")} className="bg-neutral-950 border-neutral-800 text-white" />
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Nombre del Modelo</label>
+              <Input {...register("name")} placeholder="Ej: Zapatilla Running" className="bg-neutral-950 border-neutral-800 text-white" />
               {errors.name?.message && <p className="text-[10px] text-red-500">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-400 uppercase">Precio Base</label>
-              <Input type="number" step="0.01" {...register("price")} className="bg-neutral-950 border-neutral-800 text-white" />
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Precio de Venta</label>
+              <Input type="number" step="0.01" {...register("price", { valueAsNumber: true })} className="bg-neutral-950 border-neutral-800 text-white" />
               {errors.price?.message && <p className="text-[10px] text-red-500">{errors.price.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-400 uppercase">Categoría</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Categoría</label>
               <select
                 {...register("categoryId")}
-                className="w-full h-10 px-3 rounded-md bg-neutral-950 border border-neutral-800 text-sm text-white outline-none"
+                className="w-full h-10 px-3 rounded-md bg-neutral-950 border border-neutral-800 text-sm text-white outline-none focus:border-amber-500 transition-colors"
               >
                 <option value="">Seleccionar...</option>
                 {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
@@ -109,7 +111,7 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-400 uppercase">Proveedor (Opcional)</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Proveedor</label>
               <select
                 {...register("supplierId")}
                 className="w-full h-10 px-3 rounded-md bg-neutral-950 border border-neutral-800 text-sm text-white outline-none"
@@ -121,37 +123,55 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
           </div>
 
           <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-400 uppercase">Descripción</label>
-              <Input {...register("description")} className="bg-neutral-950 border-neutral-800 text-white" />
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Descripción corta</label>
+              <Input {...register("description")} className="bg-neutral-950 border-neutral-800 text-white" placeholder="Opcional..." />
           </div>
 
+          {/* Gestión de Variantes (Talles y Stock) */}
           <div className="space-y-4">
-            <div className="flex justify-between items-center border-t border-neutral-800 pt-4">
-              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Stock por Talles</h3>
+            <div className="flex justify-between items-center border-t border-neutral-800 pt-6">
+              <h3 className="text-xs font-black text-amber-500 uppercase tracking-[0.2em]">Variantes de Inventario</h3>
               <Button type="button" variant="blanco" size="sm" onClick={() => append({ sizeId: "", sku: "", stock: 0 })}>
-                <Plus size={14} className="mr-1" /> Talle
+                <Plus size={14} className="mr-1" /> Añadir Talle
               </Button>
             </div>
 
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-3 items-start bg-neutral-950/50 p-3 rounded-xl border border-neutral-800">
-                  <div className="flex-1">
+                <div key={field.id} className="flex gap-3 items-start bg-neutral-950/30 p-4 rounded-2xl border border-neutral-800/50">
+                  <div className="w-1/4">
                     <select
                       {...register(`variants.${index}.sizeId` as const)}
-                      className="w-full h-9 px-2 rounded bg-neutral-900 border border-neutral-800 text-xs text-white outline-none"
+                      className="w-full h-10 px-2 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-white outline-none focus:border-amber-500"
                     >
                       <option value="">Talle</option>
-                      {sizes.map((s) => (<option key={s.id} value={s.id}>{s.code}</option>))}
+                      {/* CAMBIO: Aquí usamos s.value en lugar de s.code */}
+                      {sizes.map((s) => (<option key={s.id} value={s.id}>{s.value}</option>))}
                     </select>
                   </div>
-                  <div className="flex-[2]">
-                    <Input {...register(`variants.${index}.sku` as const)} placeholder="SKU (Opcional)" className="h-9 bg-neutral-900 border-neutral-800 text-xs text-white" />
-                  </div>
+                  
                   <div className="flex-1">
-                    <Input type="number" {...register(`variants.${index}.stock` as const)} className="h-9 bg-neutral-900 border-neutral-800 text-xs text-white" />
+                    <Input 
+                      {...register(`variants.${index}.sku` as const)} 
+                      placeholder="SKU / Código" 
+                      className="h-10 bg-neutral-900 border-neutral-800 text-xs text-white" 
+                    />
                   </div>
-                  <button type="button" onClick={() => remove(index)} className="text-neutral-500 hover:text-red-400 p-1">
+
+                  <div className="w-24">
+                    <Input 
+                      type="number" 
+                      placeholder="Stock"
+                      {...register(`variants.${index}.stock` as const, { valueAsNumber: true })} 
+                      className="h-10 bg-neutral-900 border-neutral-800 text-xs text-white text-center" 
+                    />
+                  </div>
+
+                  <button 
+                    type="button" 
+                    onClick={() => remove(index)} 
+                    className="text-neutral-600 hover:text-red-500 p-2 transition-colors"
+                  >
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -159,16 +179,19 @@ export default function ProductModal({ categories, sizes, providers = [] }: Prop
             </div>
 
             {variantsErrorMessage && (
-              <div className="text-xs text-red-500 text-center bg-red-500/10 py-2 rounded-lg">
+              <div className="text-[10px] text-red-500 text-center bg-red-500/5 py-2 rounded-lg border border-red-500/20 uppercase font-bold">
                 {variantsErrorMessage}
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800">
-            <Button type="button" variant="ghost" onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" variant="amarillo" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando..." : "Crear Producto"}
+          {/* Botones de Acción */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-neutral-800">
+            <Button type="button" variant="ghost" onClick={handleClose} className="text-neutral-400 hover:text-white">
+              Cancelar
+            </Button>
+            <Button type="submit" variant="amarillo" disabled={isSubmitting} className="min-w-[140px]">
+              {isSubmitting ? "Procesando..." : "Registrar Producto"}
             </Button>
           </div>
         </form>
