@@ -75,3 +75,49 @@ export const garmentSchema = z.object({
 export type MovementInput = z.infer<typeof movementSchema>;
 export type GarmentInput = z.infer<typeof garmentSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
+
+
+// Providers
+
+export const providerNameSchema = z
+  .string()
+  .min(2, "Nombre muy corto")
+  .max(100, "Nombre demasiado largo");
+
+export const providerDetailsSchema = z
+  .string()
+  .max(255, "Detalle demasiado largo")
+  .optional();
+
+const emailSchema = z.string().email();
+const phoneSchema = z.string().regex(/^[0-9+\-\s()]+$/);
+
+export const contactSchema = z
+  .string()
+  .min(3, "Contacto muy corto")
+  .refine(
+    (val) =>
+      emailSchema.safeParse(val).success ||
+      phoneSchema.safeParse(val).success,
+    "Debe ser un email o teléfono válido"
+  );
+
+export const normalizeContact = (c: string) => c.trim();
+
+export const getContactType = (c: string) =>
+  emailSchema.safeParse(c).success ? "EMAIL" : "PHONE";
+
+export const createProviderSchema = z.object({
+  name: providerNameSchema,
+  details: providerDetailsSchema,
+  contacts: z.array(contactSchema).min(1, "Agregá al menos un contacto"),
+});
+
+export const updateProviderSchema = z.object({
+  id: z.string().cuid(),
+  name: providerNameSchema,
+  details: providerDetailsSchema,
+  contacts: z.array(contactSchema).min(1),
+});
+
+export const idSchema = z.string().cuid();
