@@ -1,91 +1,129 @@
 "use server";
 
-import prisma from "@/lib/prisma"; // Asegúrate de que la ruta a tu cliente de prisma sea correcta
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import {
+  createProviderSchema,
+  updateProviderSchema,
+  idSchema,
+  normalizeContact,
+  getContactType,
+} from "@/lib/zod";
 
-/**
- * Obtener todos los proveedores
- */
 export async function getProviders() {
-  try {
-    const providers = await prisma.provider.findMany({
-      orderBy: {
-        name: "asc",
-      },
-    });
-    return providers;
-  } catch (error) {
-    console.error("Error al obtener proveedores:", error);
-    return [];
-  }
+  return prisma.provider.findMany({
+    where: { active: true },
+    orderBy: { name: "asc" },
+    include: {
+      contacts: { where: { active: true } },
+    },
+  });
 }
 
-/**
- * Crear un nuevo proveedor
- */
-export async function createProvider(data: { name: string; contactInfo?: string }) {
-  try {
-    if (!data.name) return { error: "el nombre es obligatorio" };
+export async function createProvider(raw: unknown) {
+  const parsed = createProviderSchema.safeParse(raw);
 
-    const newProvider = await prisma.provider.create({
-      data: {
-        name: data.name,
-        contactInfo: data.contactInfo,
-        active: true,
-      },
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const { name, details, contacts } = parsed.data;
+
+  try {
+    const provider = await prisma.$transaction(async (tx) => {
+      return tx.provider.create({
+        data: {
+          name,
+          details,
+          contacts: {
+            create: contacts.map((c) => {
+              const contact = normalizeContact(c);
+              return {
+                contact,
+                type: getContactType(contact),
+              };
+            }),
+          },
+        },
+        include: { contacts: true },
+      });
     });
 
     revalidatePath("/dashboard/providers");
-    revalidatePath("/dashboard"); // Para actualizar el select en el modal de productos
-    return { success: true, provider: newProvider };
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { error: "Ya existe un proveedor con ese nombre" };
+    return { success: true, provider };
+  } catch (e: any) {
+    if (e.code === "P2002") {
+      return { error: "Proveedor o contacto duplicado" };
     }
-    return { error: "Error al crear el proveedor" };
+    return { error: "Error al crear" };
   }
 }
 
-/**
- * Actualizar un proveedor existente
- */
-export async function updateProvider(id: string, data: { name: string; contactInfo?: string }) {
+export async function updateProvider(raw: unknown) {
+  const parsed = updateProviderSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const { id, name, details, contacts } = parsed.data;
+
   try {
-    const updatedProvider = await prisma.provider.update({
-      where: { id },
-      data: {
-        name: data.name,
-        contactInfo: data.contactInfo,
-      },
+    const provider = await prisma.$transaction(async (tx) => {
+      await tx.provider.update({
+        where: { id },
+        data: { name, details },
+      });
+
+      const normalized = contacts.map(normalizeContact);
+
+      for (const contact of normalized) {
+        await tx.contactProvider.upsert({
+          where: {
+            contact_provider_unique: {
+              contact,
+              idProvider: id,
+            },
+          },
+          update: { active: true },
+          create: {
+            contact,
+            idProvider: id,
+            type: getContactType(contact),
+          },
+        });
+      }
+
+      await tx.contactProvider.updateMany({
+        where: {
+          idProvider: id,
+          contact: { notIn: normalized },
+        },
+        data: { active: false },
+      });
+
+      return tx.provider.findUnique({
+        where: { id },
+        include: { contacts: true },
+      });
     });
 
     revalidatePath("/dashboard/providers");
-    revalidatePath("/dashboard");
-    return { success: true, provider: updatedProvider };
-  } catch (error) {
-    return { error: "Error al actualizar el proveedor" };
+    return { success: true, provider };
+  } catch {
+    return { error: "Error al actualizar" };
   }
 }
 
-/**
- * Eliminar (o desactivar) un proveedor
- */
-export async function deleteProvider(id: string) {
-  try {
-    // Nota: Si el proveedor tiene productos asociados, Prisma dará error por la relación.
-    // Podrías usar un delete o un update para marcar como active: false.
-    await prisma.provider.delete({
-      where: { id },
-    });
+export async function deleteProvider(id: unknown) {
+  const parsed = idSchema.safeParse(id);
+  if (!parsed.success) return { error: "ID inválido" };
 
-    revalidatePath("/dashboard/providers");
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch (error: any) {
-    // Error P2003 es restricción de llave foránea (tiene productos)
-    if (error.code === 'P2003') {
-      return { error: "No se puede eliminar: este proveedor tiene productos asociados" };
-    }
-    return { error: "Error al eliminar el proveedor" };
-  }
+  await prisma.provider.update({
+    where: { id: parsed.data },
+    data: { active: false },
+  });
+
+  revalidatePath("/dashboard/providers");
+  return { success: true };
 }
