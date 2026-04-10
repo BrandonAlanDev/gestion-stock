@@ -4,11 +4,11 @@ import { Shirt } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="py-8 border-t border-celeste/20 mx-auto  bg-white">
+    <footer className="py-8 border-t border-celeste/20 mx-auto  bg-black text-gray-300/50 w-dvw max-w-dvw">
       <div className="container mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Shirt width={'32'} height={'32'}/>
+            <Shirt width={'24'} height={'24'}/>
             <span className="font-semibold text-foreground">
               Gestion{" "}<span className="text-primary">OK</span>
             </span>

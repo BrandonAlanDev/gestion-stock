@@ -22,14 +22,14 @@ export default async function DashboardPage({
   ]);
 
   return (
-    <div className="p-8 bg-neutral-950 min-h-screen text-neutral-100 pt-20">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-8 bg-neutral-950 min-h-screen text-neutral-100 pt-24">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight uppercase italic">Gestión de Inventario</h1>
           <p className="text-neutral-500 text-sm font-light uppercase tracking-widest">Control de Stock y Rentabilidad</p>
         </div>
         
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row flex-wrap gap-4">
           {/* Pasamos sizeTypes al CategoryModal para que pueda asignar curvas de talles */}
           <CategoryModal sizeTypes={sizeTypes} /> 
           
