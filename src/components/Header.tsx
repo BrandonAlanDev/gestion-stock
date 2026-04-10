@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { 
-  LayoutDashboard, 
+  Shirt, 
   Package, 
   Tags, 
   Truck, 
@@ -27,16 +27,16 @@ export default function Header({ session }: { session: any }) {
   `;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/80 backdrop-blur-md border-b border-neutral-900">
+    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/80 backdrop-blur-md border-b border-neutral-900  w-dvw max-w-dvw">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         
         {/* Logo / Título */}
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="bg-amber-500 p-1.5 rounded-lg">
-            <LayoutDashboard size={20} className="text-black" />
+            <Shirt size={20} className="text-black" />
           </div>
           <span className="text-xl font-black uppercase italic tracking-tighter text-white">
-            STOCK<span className="text-amber-500 text-xs not-italic ml-1">PRO</span>
+            GESTION<span className="text-amber-500 text-xs not-italic ml-1">OK</span>
           </span>
         </Link>
 
