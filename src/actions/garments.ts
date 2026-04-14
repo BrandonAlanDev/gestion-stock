@@ -72,6 +72,81 @@ export async function getGarments(query?: string, categoryId?: string) {
   return serializeData(garments);
 }
 
+export async function updateGarment(id: string, data: any) {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+
+  const { name, price, cost, description, categoryId, supplierId, variants } = data;
+
+  try {
+    const updatedGarment = await prisma.$transaction(async (tx) => {
+      // 1. Actualización de datos básicos (Prisma castea strings a Decimal automáticamente)
+      const garment = await tx.garment.update({
+        where: { id },
+        data: {
+          name,
+          price: price,
+          cost: cost,
+          description,
+          categoryId,
+          supplierId: supplierId || null,
+        },
+      });
+
+      // 2. Sincronización de Variantes
+      const currentVariants = await tx.garmentVariant.findMany({
+        where: { garmentId: id },
+      });
+
+      const currentVariantIds = currentVariants.map((v) => v.id);
+      const incomingVariantIds = variants
+        .filter((v: any) => v.id)
+        .map((v: any) => v.id);
+
+      // A. Eliminar las que ya no están
+      const idsToDelete = currentVariantIds.filter(
+        (vid) => !incomingVariantIds.includes(vid)
+      );
+      if (idsToDelete.length > 0) {
+        await tx.garmentVariant.deleteMany({
+          where: { id: { in: idsToDelete } },
+        });
+      }
+
+      // B. Actualizar existentes o Crear nuevas
+      for (const v of variants) {
+        if (v.id) {
+          await tx.garmentVariant.update({
+            where: { id: v.id },
+            data: {
+              sku: v.sku,
+              stock: Number(v.stock),
+              sizeId: v.sizeId,
+            },
+          });
+        } else {
+          await tx.garmentVariant.create({
+            data: {
+              garmentId: id,
+              sku: v.sku,
+              stock: Number(v.stock),
+              sizeId: v.sizeId,
+            },
+          });
+        }
+      }
+      return garment;
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true, data: serializeData(updatedGarment) };
+  } catch (error: any) {
+    console.error("Error:", error);
+    if (error.code === 'P2002') return { error: "El SKU ya existe." };
+    return { error: "Error al actualizar el producto." };
+  }
+}
+
 // ==========================================
 // MOVIMIENTOS (Modificado: Ahora afecta a GarmentVariant)
 // ==========================================
@@ -237,7 +312,7 @@ export async function getProviders() {
       select: {
         id: true,
         name: true,
-        contactInfo: true,
+        details: true,
       }
     });
 
