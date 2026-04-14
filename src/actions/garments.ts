@@ -50,7 +50,6 @@ export async function getGarments(query?: string, categoryId?: string) {
     where: {
       active: true,
       AND: [
-        // Filtro por búsqueda de texto
         query ? {
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
@@ -147,85 +146,6 @@ export async function updateGarment(id: string, data: any) {
   }
 }
 
-// ==========================================
-// MOVIMIENTOS (Modificado: Ahora afecta a GarmentVariant)
-// ==========================================
-
-export async function createMovement(data: unknown) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  const parsed = movementSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
-
-  // variantId es el ID del talle específico de esa zapatilla
-  const { variantId, type, quantity, note } = parsed.data;
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      // 1. Buscamos la variante y el precio del producto padre
-      const variant = await tx.garmentVariant.findUnique({
-        where: { id: variantId },
-        include: { garment: { select: { price: true } } }
-      });
-
-      if (!variant) throw new Error("Variante (talle) no encontrada");
-      if (type === "OUT" && variant.stock < quantity) {
-        throw new Error("Stock insuficiente en este talle");
-      }
-
-      // 2. Creamos el movimiento vinculado a la variante
-      await tx.movement.create({
-        data: {
-          variantId,
-          type,
-          quantity,
-          priceAtTime: variant.garment.price,
-          note
-        }
-      });
-
-      // 3. Actualizamos el stock en la tabla GarmentVariant
-      const stockAdjustment = type === "IN" ? quantity : -quantity;
-      await tx.garmentVariant.update({
-        where: { id: variantId },
-        data: { stock: { increment: stockAdjustment } }
-      });
-    });
-
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message || "Error al registrar el movimiento" };
-  }
-}
-
-export async function deleteMovement(id: string) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      const movement = await tx.movement.findUnique({ where: { id } });
-      if (!movement) throw new Error("Movimiento no encontrado");
-
-      // Revertimos el stock en la variante
-      const stockAdjustment = movement.type === "IN" ? -movement.quantity : movement.quantity;
-      
-      await tx.garmentVariant.update({
-        where: { id: movement.variantId },
-        data: { stock: { increment: stockAdjustment } }
-      });
-
-      await tx.movement.delete({ where: { id } });
-    });
-
-    revalidatePath("/dashboard");
-    return { success: true };
-  } catch (error: any) {
-    return { error: "Error al eliminar el movimiento." };
-  }
-}
 
 // Auxiliar para traer los talles disponibles en la base de datos
 export async function getSizes() {
