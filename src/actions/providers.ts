@@ -53,9 +53,9 @@ export async function createProvider(raw: unknown) {
     return { success: true, provider };
   } catch (e: any) {
     if (e.code === "P2002") {
-      return { error: "Proveedor o contacto duplicado" };
+      return { error: "El nombre o un contacto ya existen" };
     }
-    return { error: "Error al crear" };
+    return { error: "Error al crear el proveedor" };
   }
 }
 
@@ -111,7 +111,7 @@ export async function updateProvider(raw: unknown) {
     revalidatePath("/dashboard/providers");
     return { success: true, provider };
   } catch {
-    return { error: "Error al actualizar" };
+    return { error: "Error al actualizar el proveedor" };
   }
 }
 
