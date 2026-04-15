@@ -49,13 +49,13 @@ export async function createProvider(raw: unknown) {
       });
     });
 
-    revalidatePath("/dashboard/providers");
+    revalidatePath("provider");
     return { success: true, provider };
   } catch (e: any) {
     if (e.code === "P2002") {
-      return { error: "El nombre o un contacto ya existen" };
+      return { error: "Proveedor o contacto duplicado" };
     }
-    return { error: "Error al crear el proveedor" };
+    return { error: "Error al crear" };
   }
 }
 
@@ -108,10 +108,10 @@ export async function updateProvider(raw: unknown) {
       });
     });
 
-    revalidatePath("/dashboard/providers");
+    revalidatePath("provider");
     return { success: true, provider };
   } catch {
-    return { error: "Error al actualizar el proveedor" };
+    return { error: "Error al actualizar" };
   }
 }
 
@@ -124,6 +124,6 @@ export async function deleteProvider(id: unknown) {
     data: { active: false },
   });
 
-  revalidatePath("/dashboard/providers");
+  revalidatePath("provider");
   return { success: true };
 }

@@ -63,7 +63,9 @@ export async function getGarments(query?: string, categoryId?: string) {
     include: { 
       category: true, 
       variants: { include: { size: true } },
-      supplier: true 
+      supplier: {
+        include: {contacts: {where: {active:true}}}
+      }
     },
     orderBy: { updatedAt: 'desc' }
   });
@@ -227,12 +229,10 @@ export async function getProviders() {
       orderBy: { 
         name: 'asc' 
       },
-      // Si solo necesitas el ID y el Nombre para el modal, 
-      // puedes usar select para que la consulta sea más liviana:
-      select: {
-        id: true,
-        name: true,
-        details: true,
+      include: {
+        contacts: {
+          where: { active: true }
+        }
       }
     });
 
