@@ -18,16 +18,29 @@ export default function SizesPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchSizes(); }, []);
+  useEffect(() => {
+    fetchSizes();
+  }, []);
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTypeName) return;
+
+    // Validación local rápida
+    if (!newTypeName.trim()) {
+      return toast.error("Ingresa un nombre para el grupo");
+    }
+
     const res = await createSizeType(newTypeName);
+
+    if (res.error) {
+      // Aquí se disparará el error de Zod (ej: "Solo se permiten letras")
+      return toast.error(res.error);
+    }
+
     if (res.success) {
       setNewTypeName("");
       fetchSizes();
-      toast.success("Grupo de talles creado");
+      toast.success("Grupo de talles creado con éxito");
     }
   };
 
@@ -35,7 +48,7 @@ export default function SizesPage() {
     <div className="min-h-screen bg-black text-white selection:bg-amber-500/30">
       <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
         
-        {/* Cabecera Estilo Dashboard */}
+        {/* Cabecera */}
         <div className="flex justify-between items-end border-b border-neutral-900 pb-6">
           <div>
             <h1 className="text-3xl font-black uppercase italic tracking-tighter flex items-center gap-3">
@@ -60,7 +73,7 @@ export default function SizesPage() {
           <div className="flex gap-3">
             <input 
               className="flex-1 bg-black border border-neutral-800 rounded-xl p-3 text-sm text-white outline-none focus:border-amber-500 transition-all placeholder:text-neutral-700"
-              placeholder="Nombre del grupo..."
+              placeholder="Nombre del grupo (solo letras)..."
               value={newTypeName}
               onChange={e => setNewTypeName(e.target.value)}
             />
@@ -85,7 +98,13 @@ export default function SizesPage() {
                   {type.name}
                 </h3>
                 <button 
-                  onClick={async () => { if(confirm("¿Borrar grupo completo?")) { await deleteSizeType(type.id); fetchSizes(); } }}
+                  onClick={async () => { 
+                    if(confirm(`¿Borrar el grupo "${type.name}"?`)) { 
+                      await deleteSizeType(type.id); 
+                      fetchSizes(); 
+                      toast.info("Grupo eliminado");
+                    } 
+                  }}
                   className="text-neutral-700 hover:text-red-500 transition-colors p-2"
                 >
                   <Trash2 size={16} />
@@ -101,7 +120,11 @@ export default function SizesPage() {
                       <span className="text-sm font-black font-mono text-white leading-tight">{s.value}</span>
                     </div>
                     <button 
-                      onClick={async () => { await deleteSize(s.id); fetchSizes(); }}
+                      onClick={async () => { 
+                        await deleteSize(s.id); 
+                        fetchSizes(); 
+                        toast.success("Talle eliminado");
+                      }}
                       className="text-neutral-800 hover:text-red-500 transition-colors ml-2"
                     >
                       <Trash2 size={14} />
@@ -118,10 +141,16 @@ export default function SizesPage() {
                   const form = e.target as HTMLFormElement;
                   const val = (form.elements[0] as HTMLInputElement).value;
                   const ord = (form.elements[1] as HTMLInputElement).value;
+                  
                   const res = await addSizeToType(type.id, val, parseInt(ord));
-                  if (res.error) toast.error(res.error);
-                  form.reset();
-                  fetchSizes();
+                  
+                  if (res?.error) {
+                    toast.error(res.error);
+                  } else {
+                    toast.success(`Talle ${val} agregado`);
+                    form.reset();
+                    fetchSizes();
+                  }
                 }}
               >
                 <div className="col-span-6 relative">
