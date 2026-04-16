@@ -13,7 +13,6 @@ export default auth((req) => {
   const isAuthRoute = ["/login", "/register"].includes(nextUrl.pathname);
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
   const isGestionRoute = ["/dashboard", "/provider", "/sizes", "/movements"].includes(nextUrl.pathname);
-  
   const isProtectedRoute = [].some((route) => 
     nextUrl.pathname.startsWith(route)
   );
