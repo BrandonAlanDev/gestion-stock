@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { handleSignOut } from "@/actions/auth-actions";
 import {
   Shirt,
   Package,
@@ -11,7 +11,8 @@ import {
   Ruler,
   LogOut,
   Menu,
-  X
+  X,
+  User
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default function Header({ session }: { session: any }) {
             </div>)}
 
         {/* Acciones / Sesión */}
+        {session?.user?.name ? (
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex flex-col items-end mr-2">
             <span className="text-[10px] font-black text-amber-500 uppercase leading-none">Usuario</span>
@@ -72,7 +74,7 @@ export default function Header({ session }: { session: any }) {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => signOut()}
+            onClick={() => handleSignOut()}
             className="border-neutral-800 bg-neutral-900 hover:bg-red-500/10 hover:border-red-500/50 text-neutral-400 hover:text-red-500 rounded-xl transition-all"
           >
             <LogOut size={18} />
@@ -86,6 +88,11 @@ export default function Header({ session }: { session: any }) {
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+        ) : (
+            <Link href="/login" className="text-sm font-medium flex items-center gap-4 p-2 bg-slate-950/50 border border-neutral-800 rounded-lg hover:bg-amber-500 text-gray-400 hover:text-black transition-colors duration-300">
+              <User size={16} /> Iniciar Sesión
+            </Link>
+        )}
       </div>
 
       {/* Navegación Mobile */}
