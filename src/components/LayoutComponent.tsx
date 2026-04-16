@@ -1,6 +1,7 @@
 "use client";
-import  Header  from "@/components/Header";
+import Header from "@/components/Header";
 import SessionWrapper from "./providers/SessionWrapper";
+import { Toaster } from "sonner";
 
 export default function LayoutComponent({
   children,
@@ -11,8 +12,8 @@ export default function LayoutComponent({
 }) {
   return (
     <SessionWrapper>
-         <Header session={session} />
-         {children}
-    </SessionWrapper>
+      <Header session={session} />
+      {children}
+      <Toaster richColors position="top-right" closeButton />    </SessionWrapper>
   );
 }

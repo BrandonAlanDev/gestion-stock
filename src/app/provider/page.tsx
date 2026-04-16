@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   getProviders,
   createProvider,
@@ -9,29 +10,19 @@ import {
 } from "@/actions/providers";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Truck,
-  X,
-  Edit2,
-  Trash2,
-  Phone,
-  Mail,
-  ChevronRight,
-  Plus,
-} from "lucide-react";
+import { Truck, X, Edit2, Trash2, Phone, Mail, Plus, ExternalLink, Layers } from "lucide-react";
 
-export default function ProvidersPage() {
+function ProvidersContent() {
   const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [viewProvider, setViewProvider] = useState<any | null>(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    details: "",
-    contacts: [] as string[],
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const selectedId = searchParams.get("id");
 
+  const [form, setForm] = useState({ name: "", details: "", contacts: [] as string[] });
   const [newContact, setNewContact] = useState("");
 
   const fetchData = async () => {
@@ -41,247 +32,254 @@ export default function ProvidersPage() {
     setLoading(false);
   };
 
+  useEffect(() => { fetchData(); }, []);
+
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  // 👉 agregar contacto
-  const addContact = () => {
-    if (!newContact.trim()) return;
-
-    if (form.contacts.includes(newContact.trim())) {
-      toast.error("Contacto duplicado");
-      return;
+    if (!loading && selectedId && providers.length > 0) {
+      const found = providers.find(p => p.id === selectedId);
+      if (found) setViewProvider(found);
     }
+  }, [loading, selectedId, providers]);
 
-    setForm({
-      ...form,
-      contacts: [...form.contacts, newContact.trim()],
-    });
-
+  const addContact = () => {
+    const contact = newContact.trim();
+    if (!contact) return;
+    if (form.contacts.includes(contact)) {
+      return toast.error("Este contacto ya está en la lista");
+    }
+    setForm({ ...form, contacts: [...form.contacts, contact] });
     setNewContact("");
   };
 
-  const removeContact = (c: string) => {
-    setForm({
-      ...form,
-      contacts: form.contacts.filter((x) => x !== c),
-    });
-  };
-
-  const resetForm = () => {
-    setEditingId(null);
-    setForm({ name: "", details: "", contacts: [] });
-    setError("");
+  const removeContact = (index: number) => {
+    setForm({ ...form, contacts: form.contacts.filter((_, i) => i !== index) });
   };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setError("");
-
-    const res = editingId
-      ? await updateProvider({ ...form, id: editingId })
-      : await createProvider(form);
-
-    if (res.error) {
-      setError(res.error);
-      toast.error(res.error);
-      return;
+    
+    let currentContacts = [...form.contacts];
+    if (newContact.trim() && !currentContacts.includes(newContact.trim())) {
+      currentContacts.push(newContact.trim());
     }
 
-    toast.success(editingId ? "Proveedor actualizado" : "Proveedor creado");
+    if (!form.name.trim()) return toast.error("El nombre es obligatorio");
 
-    resetForm();
+    const payload = { ...form, contacts: currentContacts };
+    const res = editingId 
+      ? await updateProvider({ ...payload, id: editingId }) 
+      : await createProvider(payload);
+
+    if (res.error) return toast.error(res.error);
+
+    toast.success(editingId ? "Proveedor actualizado" : "Proveedor creado");
+    setEditingId(null);
+    setForm({ name: "", details: "", contacts: [] });
+    setNewContact("");
     fetchData();
   };
 
+  const handleCloseModal = () => {
+    setViewProvider(null);
+    router.push("/provider");
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-amber-500/30">
-      <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
+    <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24 min-h-screen bg-black text-white selection:bg-amber-500/30">
+      
+      {/* HEADER */}
+      <div className="flex justify-between items-end border-b border-neutral-900 pb-6 font-black italic uppercase tracking-tighter">
+        <h1 className="text-3xl flex items-center gap-3">
+          <Truck className="text-amber-500" size={32} /> 
+          Gestión de Proveedores
+        </h1>
+      </div>
+
+      {/* FORMULARIO */}
+      <form onSubmit={handleSubmit} className="bg-neutral-950 border border-neutral-900 p-6 rounded-3xl relative space-y-4 shadow-2xl overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50" />
+        <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
+          <Layers size={14} /> {editingId ? "Modificar Registro" : "Nuevo Ingreso"}
+        </h3>
         
-        {/* HEADER */}
-        <div className="flex justify-between items-end border-b border-neutral-900 pb-6">
-          <div>
-            <h1 className="text-3xl font-black uppercase italic tracking-tighter flex items-center gap-3">
-              <Truck className="text-amber-500" size={32} />
-              Gestión de Proveedores
-            </h1>
-            <p className="text-neutral-500 text-xs uppercase tracking-[0.3em] mt-2 font-light">
-              Control de proveedores y contactos
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input 
+            className="w-full bg-black border border-neutral-800 rounded-xl p-3 text-sm outline-none focus:border-amber-500 transition-all placeholder:text-neutral-700" 
+            placeholder="Nombre de la Empresa / Proveedor" 
+            value={form.name} 
+            onChange={e => setForm({...form, name: e.target.value})} 
+          />
+          <input 
+            className="w-full bg-black border border-neutral-800 rounded-xl p-3 text-sm outline-none focus:border-amber-500 transition-all placeholder:text-neutral-700" 
+            placeholder="Detalles, dirección o rubro..." 
+            value={form.details} 
+            onChange={e => setForm({...form, details: e.target.value})} 
+          />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input 
+              className="flex-1 bg-black border border-neutral-800 rounded-xl p-3 text-sm outline-none focus:border-amber-500 transition-all placeholder:text-neutral-700" 
+              placeholder="Añadir contacto (WhatsApp, Email...)" 
+              value={newContact} 
+              onChange={e => setNewContact(e.target.value)} 
+              onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addContact(); } }}
+            />
+            <button 
+              type="button" 
+              onClick={addContact} 
+              className="bg-neutral-900 text-amber-500 px-6 rounded-xl hover:bg-amber-500 hover:text-black transition-all border border-neutral-800"
+            >
+              <Plus size={20} />
+            </button>
+          </div>
+
+          {/* TAGS DE CONTACTOS TEMPORALES */}
+          <div className="flex flex-wrap gap-2">
+            {form.contacts.map((c, index) => (
+              <div key={index} className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-lg text-[10px] font-black text-amber-500 italic uppercase tracking-tighter">
+                {c}
+                <button type="button" onClick={() => removeContact(index)} className="text-neutral-500 hover:text-red-500 transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* FORM */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-neutral-950 border border-neutral-900 p-6 rounded-3xl shadow-2xl relative overflow-hidden space-y-4"
-        >
-          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50" />
+        <div className="flex gap-2 pt-2">
+          <Button variant="amarillo" type="submit" className="font-bold uppercase tracking-tighter px-8 rounded-xl">
+            {editingId ? "Actualizar Datos" : "Registrar Proveedor"}
+          </Button>
+          {editingId && (
+            <Button variant="ghost" type="button" className="rounded-xl border border-neutral-900" onClick={() => {
+              setEditingId(null);
+              setForm({ name: "", details: "", contacts: [] });
+              setNewContact("");
+            }}>
+              Cancelar
+            </Button>
+          )}
+        </div>
+      </form>
 
-          <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
-            <ChevronRight size={14} />
-            {editingId
-              ? `Actualizando "${form.name || "Proveedor"}"`
-              : "Crear proveedor nuevo"}
-          </h3>
-
-          <input
-            className="w-full bg-black border border-neutral-800 rounded-xl p-3 text-sm text-white outline-none focus:border-amber-500"
-            placeholder="Nombre del proveedor"
-            value={form.name}
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
-          />
-
-          <input
-            className="w-full bg-black border border-neutral-800 rounded-xl p-3 text-sm text-white outline-none focus:border-amber-500"
-            placeholder="Detalles (ej: Calzados, pantalones)"
-            value={form.details}
-            onChange={(e) =>
-              setForm({ ...form, details: e.target.value })
-            }
-          />
-
-          {/* CONTACTOS */}
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                className="flex-1 bg-black border border-neutral-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-500"
-                placeholder="Agregar contacto"
-                value={newContact}
-                onChange={(e) => setNewContact(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={addContact}
-                className="bg-neutral-900 text-amber-500 hover:bg-amber-500 hover:text-black rounded-xl px-4 flex items-center justify-center transition-all"
+      {/* LISTADO DE PROVEEDORES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {loading ? (
+           <div className="col-span-full text-center py-20 text-neutral-800 uppercase text-[10px] font-black tracking-[0.5em] animate-pulse">
+             Sincronizando base de datos...
+           </div>
+        ) : providers.map((p) => (
+          <div key={p.id} className="bg-neutral-950 border border-neutral-900 rounded-[2.5rem] p-6 space-y-4 group relative hover:border-neutral-700 transition-all shadow-xl">
+            
+            {/* GRUPO DE ACCIONES (Sin superposición) */}
+            <div className="absolute top-6 right-6 flex items-center gap-1.5">
+              <button 
+                onClick={() => setViewProvider(p)} 
+                className="text-neutral-600 hover:text-amber-500 transition-colors p-2 bg-black border border-neutral-900 rounded-xl hover:border-amber-500/50"
+                title="Ver Ficha"
               >
-                <Plus size={16} />
+                <ExternalLink size={16} />
+              </button>
+              <button 
+                onClick={() => { 
+                  setEditingId(p.id); 
+                  setForm({ name: p.name, details: p.details || "", contacts: p.contacts.map((c: any) => c.contact) }); 
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }} 
+                className="text-neutral-600 hover:text-amber-500 transition-colors p-2 bg-black border border-neutral-900 rounded-xl hover:border-amber-500/50"
+                title="Editar"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={async () => { 
+                  if(confirm(`¿Eliminar a ${p.name}?`)) { 
+                    await deleteProvider(p.id); 
+                    toast.info("Proveedor archivado");
+                    fetchData(); 
+                  } 
+                }} 
+                className="text-neutral-600 hover:text-red-500 transition-colors p-2 bg-black border border-neutral-900 rounded-xl hover:border-red-500/50"
+                title="Eliminar"
+              >
+                <Trash2 size={16} />
               </button>
             </div>
 
-            {/* chips */}
-            <div className="flex flex-wrap gap-2 min-h-[40px]">
-              {form.contacts.map((c) => (
-                <div
-                  key={c}
-                  className="flex items-center gap-2 bg-black px-3 py-1 rounded-xl border border-neutral-800 hover:border-amber-500/30 transition-all text-xs"
-                >
-                  {c.includes("@") ? (
-                    <Mail size={12} />
-                  ) : (
-                    <Phone size={12} />
-                  )}
-                  {c}
-                  <button onClick={() => removeContact(c)}>
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
+            <div className="border-b border-neutral-900 pb-4 pr-32">
+              <h3 className="font-black text-lg italic uppercase text-neutral-200 group-hover:text-amber-500 transition-colors truncate">
+                {p.name}
+              </h3>
             </div>
-          </div>
-
-          {error && (
-            <p className="text-red-500 text-xs uppercase tracking-wider">
-              {error}
+            
+            <p className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] font-medium line-clamp-2 min-h-[32px]">
+              {p.details || "Sin información adicional"}
             </p>
-          )}
 
-          <div className="flex gap-2">
-            <Button variant="amarillo" className="px-6">
-              {editingId ? "Actualizar" : "Crear"}
-            </Button>
-
-            {editingId && (
-              <Button variant="ghost" onClick={resetForm}>
-                Cancelar
-              </Button>
-            )}
-          </div>
-        </form>
-
-        {/* LISTADO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {loading ? (
-            <div className="col-span-full text-center py-20 text-neutral-800 uppercase text-[10px] tracking-[0.5em] animate-pulse">
-              Cargando proveedores...
+            <div className="flex gap-2">
+               <div className="text-[9px] bg-neutral-900 text-neutral-400 px-3 py-1 rounded-full border border-neutral-800 font-bold uppercase tracking-widest">
+                  {p.contacts.length} Contactos
+               </div>
             </div>
-          ) : providers.map((p) => (
-            <div
-              key={p.id}
-              className="bg-neutral-950 border border-neutral-900 rounded-[2.5rem] p-6 space-y-4 hover:border-neutral-800 transition-all group"
-            >
-              <div className="flex justify-between items-center border-b border-neutral-900 pb-4">
-                <h3 className="font-black text-lg italic uppercase tracking-tighter group-hover:text-amber-500 transition-colors flex items-center gap-2">
-                  <ChevronRight size={18} className="text-amber-500" />
-                  {p.name}
-                </h3>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingId(p.id);
-                      setForm({
-                        name: p.name,
-                        details: p.details || "",
-                        contacts: p.contacts.map((c: any) => c.contact),
-                      });
-
-                      window.scrollTo({
-                        top: 0,
-                        behavior: "smooth",
-                      });
-                    }}
-                    className="text-neutral-700 hover:text-amber-500"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (confirm("¿Eliminar proveedor?")) {
-                        await deleteProvider(p.id);
-                        fetchData();
-                      }
-                    }}
-                    className="text-neutral-700 hover:text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-xs text-neutral-500">{p.details}</p>
-
-              <div className="flex flex-wrap gap-2">
-                {p.contacts.map((c: any) => (
-                  <div
-                    key={c.id}
-                    className="flex items-center gap-2 bg-black px-3 py-1 rounded-xl border border-neutral-800 text-xs"
-                  >
-                    {c.type === "EMAIL" ? (
-                      <Mail size={12} />
-                    ) : (
-                      <Phone size={12} />
-                    )}
-                    {c.contact}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {!loading && providers.length === 0 && (
-          <div className="text-center py-20 border border-dashed border-neutral-900 rounded-[2rem]">
-            <p className="text-neutral-800 uppercase text-[10px] tracking-[0.3em] font-black">
-              No hay proveedores cargados
-            </p>
           </div>
-        )}
+        ))}
       </div>
+
+      {/* MODAL FICHA TÉCNICA */}
+      {viewProvider && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md transition-all">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />
+            <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-black italic uppercase text-amber-500 tracking-tighter">{viewProvider.name}</h2>
+                <button onClick={handleCloseModal} className="text-neutral-500 hover:text-white p-2"><X size={24} /></button>
+            </div>
+            <div className="space-y-6">
+                <div className="bg-neutral-900/30 p-5 rounded-2xl border border-neutral-900 text-[11px] text-neutral-400 uppercase font-black italic tracking-wider leading-relaxed">
+                  {viewProvider.details || "El proveedor no cuenta con una descripción detallada."}
+                </div>
+                <div className="grid gap-3">
+                    <span className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] pl-1">Canales de Contacto</span>
+                    {viewProvider.contacts?.map((c: any) => (
+                        <div key={c.id} className="flex items-center gap-4 bg-black p-4 rounded-2xl border border-neutral-900 text-xs text-white group hover:border-amber-500/30 transition-all">
+                            <div className="bg-neutral-900 p-2 rounded-xl text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-colors">
+                              {c.type === "EMAIL" ? <Mail size={16}/> : <Phone size={16}/>}
+                            </div>
+                            <span className="font-bold tracking-tight">{c.contact}</span>
+                        </div>
+                    ))}
+                    {(!viewProvider.contacts || viewProvider.contacts.length === 0) && (
+                      <p className="text-center text-neutral-800 text-[10px] uppercase font-black py-4 border border-dashed border-neutral-900 rounded-2xl">
+                        No hay contactos vinculados
+                      </p>
+                    )}
+                </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              className="w-full mt-8 rounded-2xl border border-neutral-900 text-neutral-500 text-[10px] font-black uppercase tracking-[0.2em] hover:text-white" 
+              onClick={handleCloseModal}
+            >
+              Cerrar Ficha Técnica
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function ProvidersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+        <span className="text-white uppercase text-[10px] tracking-[0.5em] font-black animate-pulse">Sincronizando Proveedores</span>
+      </div>
+    }>
+      <ProvidersContent />
+    </Suspense>
   );
 }

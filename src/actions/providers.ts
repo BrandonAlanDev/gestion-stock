@@ -49,7 +49,7 @@ export async function createProvider(raw: unknown) {
       });
     });
 
-    revalidatePath("/dashboard/providers");
+    revalidatePath("provider");
     return { success: true, provider };
   } catch (e: any) {
     if (e.code === "P2002") {
@@ -108,7 +108,7 @@ export async function updateProvider(raw: unknown) {
       });
     });
 
-    revalidatePath("/dashboard/providers");
+    revalidatePath("provider");
     return { success: true, provider };
   } catch {
     return { error: "Error al actualizar" };
@@ -124,6 +124,6 @@ export async function deleteProvider(id: unknown) {
     data: { active: false },
   });
 
-  revalidatePath("/dashboard/providers");
+  revalidatePath("provider");
   return { success: true };
 }

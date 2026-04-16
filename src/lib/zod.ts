@@ -121,3 +121,14 @@ export const updateProviderSchema = z.object({
 });
 
 export const idSchema = z.string().cuid();
+
+// SIZES
+
+export const SizeTypeNameSchema = z.object({
+  name: z.
+  string()
+  .min(2, "El nombre del grupo es obligatorio")
+  .max(50, "El nombre del grupo es demasiado largo")
+  .trim()
+  .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre del grupo solo debe contener letras y espacios")
+});
