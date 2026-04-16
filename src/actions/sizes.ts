@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import {SizeTypeNameSchema} from "@/lib/zod";
 
 export async function getSizeTypes() {
   return await prisma.sizeType.findMany({
@@ -11,8 +12,15 @@ export async function getSizeTypes() {
 }
 
 export async function createSizeType(name: string) {
+
+  const validateFields = SizeTypeNameSchema.safeParse({ name });
+  
+  if (!validateFields.success) {
+    return { error: validateFields.error.flatten().fieldErrors.name?.[0] };
+  }
+
   try {
-    await prisma.sizeType.create({ data: { name } });
+    await prisma.sizeType.create({ data: { name: validateFields.data.name } });
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {

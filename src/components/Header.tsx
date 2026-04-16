@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { 
-  Shirt, 
-  Package, 
-  Tags, 
-  Truck, 
-  Ruler, 
-  LogOut, 
-  Menu, 
-  X 
+import {
+  Shirt,
+  Package,
+  Tags,
+  Truck,
+  Ruler,
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export default function Header({ session }: { session: any }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] bg-black/80 backdrop-blur-md border-b border-neutral-900  w-dvw max-w-dvw">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        
+
         {/* Logo / Título */}
         <Link href="/" className="flex items-center gap-2">
           <div className="bg-amber-500 p-1.5 rounded-lg">
@@ -44,13 +44,17 @@ export default function Header({ session }: { session: any }) {
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/dashboard" className={linkStyle("/dashboard")}>
             <Package size={16} /> Productos
-          </Link>
+          </Link>   
+
           <Link href="/provider" className={linkStyle("/dashboard/providers")}>
             <Truck size={16} /> Proveedores
           </Link>
-          {/* LINK DE TALLES AGREGADO */}
           <Link href="/sizes" className={linkStyle("/dashboard/sizes")}>
             <Ruler size={16} /> Talles
+          </Link>
+
+            <Link href="/movements" className={linkStyle("/dashboard/movements")}>
+            <Ruler size={16} /> Historial
           </Link>
         </nav>
 
@@ -60,9 +64,9 @@ export default function Header({ session }: { session: any }) {
             <span className="text-[10px] font-black text-amber-500 uppercase leading-none">Usuario</span>
             <span className="text-xs text-white font-medium">{session?.user?.name || "Admin"}</span>
           </div>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             size="icon"
             onClick={() => signOut()}
             className="border-neutral-800 bg-neutral-900 hover:bg-red-500/10 hover:border-red-500/50 text-neutral-400 hover:text-red-500 rounded-xl transition-all"
@@ -71,7 +75,7 @@ export default function Header({ session }: { session: any }) {
           </Button>
 
           {/* Botón Mobile Menu */}
-          <button 
+          <button
             className="md:hidden text-white p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
