@@ -129,3 +129,7 @@ export const idSchema = z.string().cuid();
 export const SizeTypeNameSchema = z.object({
   name:providerNameSchema
 });
+
+export const SizeValueSchema = z.string()
+.min(1, "El valor del talle no puede estar vacío")
+.regex(/^[a-zA-Z0-9.]+$/, "Solo se permiten letras, números y puntos (sin espacios)");
