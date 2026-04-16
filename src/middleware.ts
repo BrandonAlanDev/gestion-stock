@@ -12,9 +12,9 @@ export default auth((req) => {
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
   const isAuthRoute = ["/login", "/register"].includes(nextUrl.pathname);
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isGestionRoute = ["/admin", "/excepcionesLaborales", "/diaLaboral"].includes(nextUrl.pathname);
+  const isGestionRoute = ["/dashboard", "/provider", "/sizes", "/movements"].includes(nextUrl.pathname);
   
-  const isProtectedRoute = ["/dashboard", "/turnos", "/admin", "/excepcionesLaborales", "/diaLaboral"].some((route) => 
+  const isProtectedRoute = [].some((route) => 
     nextUrl.pathname.startsWith(route)
   );
 
@@ -23,7 +23,7 @@ export default auth((req) => {
   // 1. .redirect
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+      return NextResponse.redirect(new URL("/", nextUrl));
     }
     return NextResponse.next();
   }
@@ -37,7 +37,7 @@ export default auth((req) => {
     
     if (userRole !== "ADMIN") {
       // Redirigir si no tiene permisos
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+      return NextResponse.redirect(new URL("/", nextUrl));
     }
     
     return NextResponse.next();

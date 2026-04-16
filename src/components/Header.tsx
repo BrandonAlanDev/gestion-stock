@@ -28,7 +28,7 @@ export default function Header({ session }: { session: any }) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] bg-black/80 backdrop-blur-md border-b border-neutral-900  w-dvw max-w-dvw">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-dvw mx-auto px-6 h-20 flex items-center justify-between">
 
         {/* Logo / Título */}
         <Link href="/" className="flex items-center gap-2">
@@ -41,7 +41,8 @@ export default function Header({ session }: { session: any }) {
         </Link>
 
         {/* Navegación Desktop */}
-        <nav className="hidden md:flex items-center gap-8">
+        
+          {session?.user?.role === "ADMIN" ? (<nav className="hidden md:flex items-center gap-8">
           <Link href="/dashboard" className={linkStyle("/dashboard")}>
             <Package size={16} /> Productos
           </Link>   
@@ -56,7 +57,10 @@ export default function Header({ session }: { session: any }) {
             <Link href="/movements" className={linkStyle("/dashboard/movements")}>
             <Ruler size={16} /> Historial
           </Link>
-        </nav>
+        </nav>):(
+            <div className="hidden md:flex p-6 text-center text-sm text-neutral-400">
+              No tienes acceso de administracion.
+            </div>)}
 
         {/* Acciones / Sesión */}
         <div className="flex items-center gap-4">
@@ -87,20 +91,23 @@ export default function Header({ session }: { session: any }) {
       {/* Navegación Mobile */}
       {isMenuOpen && (
         <div className="md:hidden bg-black border-b border-neutral-900 animate-in fade-in slide-in-from-top-4">
-          <nav className="flex flex-col p-6 gap-6">
+          {session?.user?.role === "ADMIN" ? (<nav className="flex flex-col p-6 gap-6">
             <Link onClick={() => setIsMenuOpen(false)} href="/dashboard" className={linkStyle("/dashboard")}>
               <Package size={20} /> Productos
             </Link>
-            <Link onClick={() => setIsMenuOpen(false)} href="/dashboard/categories" className={linkStyle("/dashboard/categories")}>
-              <Tags size={20} /> Categorías
-            </Link>
-            <Link onClick={() => setIsMenuOpen(false)} href="/dashboard/providers" className={linkStyle("/dashboard/providers")}>
+            <Link onClick={() => setIsMenuOpen(false)} href="/provider" className={linkStyle("/dashboard/providers")}>
               <Truck size={20} /> Proveedores
             </Link>
-            <Link onClick={() => setIsMenuOpen(false)} href="/dashboard/sizes" className={linkStyle("/dashboard/sizes")}>
+            <Link onClick={() => setIsMenuOpen(false)} href="/sizes" className={linkStyle("/dashboard/sizes")}>
               <Ruler size={20} /> Talles
             </Link>
-          </nav>
+            <Link onClick={() => setIsMenuOpen(false)} href="/movements" className={linkStyle("/dashboard/movements")}>
+              <Tags size={20} /> Historial
+            </Link>
+          </nav>):(
+            <div className="p-6 text-center text-sm text-neutral-400">
+              No tienes acceso de administracion.
+            </div>)}
         </div>
       )}
     </header>
