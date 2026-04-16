@@ -82,11 +82,13 @@ export type CategoryInput = z.infer<typeof categorySchema>;
 export const providerNameSchema = z
   .string()
   .min(2, "Nombre muy corto")
-  .max(100, "Nombre demasiado largo");
+  .max(100, "Nombre demasiado largo")
+  .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo debe contener letras y espacios");
 
 export const providerDetailsSchema = z
   .string()
   .max(255, "Detalle demasiado largo")
+  .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]+$/, "El detalle puede contener letras, números y espacios")
   .optional();
 
 const emailSchema = z.string().email();
@@ -125,10 +127,5 @@ export const idSchema = z.string().cuid();
 // SIZES
 
 export const SizeTypeNameSchema = z.object({
-  name: z.
-  string()
-  .min(2, "El nombre del grupo es obligatorio")
-  .max(50, "El nombre del grupo es demasiado largo")
-  .trim()
-  .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre del grupo solo debe contener letras y espacios")
+  name:providerNameSchema
 });
