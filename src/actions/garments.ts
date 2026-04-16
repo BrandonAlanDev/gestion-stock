@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; 
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
+import { color } from "framer-motion";
 
 // ==========================================
 // PRENDAS / GARMENTS (Modificado para Variantes)
@@ -33,6 +34,7 @@ export async function createGarment(data: any) {
             sku: v.sku,
             stock: v.stock,
             sizeId: v.sizeId,
+            colorId: v.colorId || null,
           })),
         }
       }
@@ -123,6 +125,7 @@ export async function updateGarment(id: string, data: any) {
               sku: v.sku,
               stock: Number(v.stock),
               sizeId: v.sizeId,
+              colorId: v.colorId || null,
             },
           });
         } else {
@@ -132,6 +135,7 @@ export async function updateGarment(id: string, data: any) {
               sku: v.sku,
               stock: Number(v.stock),
               sizeId: v.sizeId,
+              colorId: v.colorId || null,
             },
           });
         }

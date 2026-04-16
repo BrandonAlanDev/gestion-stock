@@ -2,12 +2,13 @@
 
 import { getGarments, getCategories, getProviders } from "@/actions/garments";
 import { getSizeTypes } from "@/actions/sizes";
+import { getColors } from "@/actions/colors"; // 1. Importamos la nueva acción
 import Search from "@/components/Search";
 import CategoryFilter from "@/components/garment/CategoryFilter";
 import CategoryModal from "@/components/garment/CategoryModal";
 import MovementModal from "@/components/garment/MovementModal";
 import ProductModal from "@/components/garment/productModal";
-import QuickViewTable from "@/components/garment/QuickViewTable"; // El nuevo componente
+import QuickViewTable from "@/components/garment/QuickViewTable";
 
 export default async function DashboardPage({
   searchParams,
@@ -18,11 +19,13 @@ export default async function DashboardPage({
   const query = params?.query || "";
   const category = params?.category || "";
 
-  const [garments, sizeTypes, categories, providers] = await Promise.all([
+  // 2. Agregamos getColors() al Promise.all para cargar los colores de la DB
+  const [garments, sizeTypes, categories, providers, colors] = await Promise.all([
     getGarments(query, category),
     getSizeTypes(),
     getCategories(),
     getProviders(),
+    getColors(), 
   ]);
 
   return (
@@ -42,10 +45,12 @@ export default async function DashboardPage({
         <div className="flex flex-row flex-wrap gap-3">
           <MovementModal garments={garments} /> 
           <CategoryModal sizeTypes={sizeTypes} /> 
+          {/* 3. Pasamos los colores al modal de producto para poder elegirlos al crear/editar */}
           <ProductModal 
             categories={categories} 
             sizes={sizeTypes} 
             providers={providers} 
+            colors={colors}
           />
         </div>
       </div>
@@ -60,12 +65,13 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* TABLA PRINCIPAL CON VISTA RÁPIDA */}
+      {/* 4. Pasamos los colores a la tabla de vista rápida */}
       <QuickViewTable 
         garments={garments} 
         categories={categories} 
         sizeTypes={sizeTypes} 
         providers={providers} 
+        colors={colors}
       />
     </div>
   );

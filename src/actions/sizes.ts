@@ -33,7 +33,6 @@ export async function addSizeToType(sizeTypeId: string, value: string, order: nu
   if (!validateValue.success) {
     // Si falla, extraemos el mensaje de forma ultra-segura
     const firstError = validateValue.error?.issues?.[0]?.message 
-                    || validateValue.error?.errors?.[0]?.message 
                     || "Valor de talle inválido";
                     
     return { error: firstError };

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { X, Phone, Mail, Truck } from "lucide-react";
+import { X, Phone, Mail, Truck, Palette } from "lucide-react";
 import ProductModal from "./productModal";
 
-export default function QuickViewTable({ garments, categories, sizeTypes, providers }: any) {
+// 1. Añadimos 'colors' a las props
+export default function QuickViewTable({ garments, categories, sizeTypes, providers, colors }: any) {
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
 
   return (
@@ -16,7 +17,8 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
               <th className="px-8 py-6">Ref. SKU</th>
               <th className="px-8 py-6 text-white">Producto</th>
               <th className="px-8 py-6">Categoría</th>
-              <th className="px-8 py-6">Talles</th>
+              {/* 2. Nueva columna de Colores / Talles */}
+              <th className="px-8 py-6">Variantes (Talle/Color)</th>
               <th className="px-8 py-6 text-amber-500/80">Proveedor</th>
               <th className="px-8 py-6 text-right">Stock Total</th>
               <th className="px-8 py-6 text-right">Costo</th>
@@ -25,7 +27,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-900/50">
-            {garments.map((item: any) => {
+            {garments?.map((item: any) => {
               const totalStock = item.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
               return (
                 <tr key={item.id} className="hover:bg-amber-500/[0.01] transition-all group text-sm">
@@ -42,15 +44,35 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                       {item.category?.name || "Gral"}
                     </span>
                   </td>
+                  
+                  {/* 3. Visualización de Variantes combinadas */}
                   <td className="px-8 py-5">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-2">
                       {item.variants?.map((v: any) => (
-                        <span key={v.id} className="px-2 py-0.5 rounded bg-neutral-800 border border-neutral-700 text-neutral-400 text-[9px] font-black uppercase">
-                          {v.size?.value || "S/T"}
-                        </span>
+                        <div key={v.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-neutral-900/50 border border-neutral-800">
+                          {/* Talle */}
+                          <span className="text-[9px] font-black text-white uppercase">
+                            {v.size?.value || "S/T"}
+                          </span>
+                          {/* Color (Muestra el nombre o el círculo de color) */}
+                          {v.color && (
+                            <div className="flex items-center gap-1 border-l border-neutral-700 pl-1.5 ml-0.5">
+                              {v.color.hex && (
+                                <div 
+                                  className="w-2 h-2 rounded-full border border-white/10" 
+                                  style={{ backgroundColor: v.color.hex }}
+                                />
+                              )}
+                              <span className="text-[8px] text-neutral-500 font-bold uppercase tracking-tighter">
+                                {v.color.name}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </td>
+
                   <td className="px-8 py-5">
                     {item.supplier ? (
                       <button
@@ -73,7 +95,14 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                     ${Number(item.price).toLocaleString('es-AR')}
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <ProductModal garment={item} categories={categories} sizes={sizeTypes} providers={providers} />
+                    {/* 4. Pasamos los colores al modal para el botón editar */}
+                    <ProductModal 
+                      garment={item} 
+                      categories={categories} 
+                      sizes={sizeTypes} 
+                      providers={providers} 
+                      colors={colors || []} 
+                    />
                   </td>
                 </tr>
               );

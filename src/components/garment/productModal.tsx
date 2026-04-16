@@ -4,17 +4,18 @@ import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { createGarment, updateGarment } from "@/actions/garments";
 import { Button } from "@/components/ui/button";
-import { X, Package, Edit3 } from "lucide-react";
+import { X, Package, Edit3, Palette } from "lucide-react"; // Agregamos Palette
 import { toast } from "sonner";
 
 interface Props {
   categories: any[];
   sizes: any[];
   providers: any[];
+  colors: any[]; // 1. Agregamos colors a las Props
   garment?: any;
 }
 
-export default function ProductModal({ categories, sizes, providers, garment }: Props) {
+export default function ProductModal({ categories, sizes, providers, colors, garment }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -30,7 +31,11 @@ export default function ProductModal({ categories, sizes, providers, garment }: 
     categoryId: garment?.categoryId || "",
     supplierId: garment?.supplierId || "",
     variants: garment?.variants?.map((v: any) => ({
-      id: v.id, sizeId: v.sizeId, stock: v.stock, sku: v.sku || ""
+      id: v.id, 
+      sizeId: v.sizeId, 
+      colorId: v.colorId || "", // 2. Incluimos colorId en el mapeo inicial
+      stock: v.stock, 
+      sku: v.sku || ""
     })) || [],
   });
 
@@ -61,7 +66,8 @@ export default function ProductModal({ categories, sizes, providers, garment }: 
 
   const modal = isOpen && createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-neutral-950 border border-neutral-800 w-full max-w-3xl my-auto rounded-3xl shadow-2xl relative" onClick={e => e.stopPropagation()}>
+      <div className="bg-neutral-950 border border-neutral-800 w-full max-w-4xl my-auto rounded-3xl shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        {/* Cabecera */}
         <div className="p-6 border-b border-neutral-800 flex justify-between items-center sticky top-0 bg-neutral-950 z-10 rounded-t-3xl">
           <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
             {isEdit ? <Edit3 size={20} className="text-amber-500" /> : <Package size={20} className="text-amber-500" />}
@@ -71,6 +77,7 @@ export default function ProductModal({ categories, sizes, providers, garment }: 
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Fila 1: Nombre y Categoría */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Nombre" className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
             <select className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value, variants: []})}>
@@ -79,6 +86,7 @@ export default function ProductModal({ categories, sizes, providers, garment }: 
             </select>
           </div>
 
+          {/* Fila 2: Precios y Proveedor */}
           <div className="grid grid-cols-3 gap-4">
             <input type="number" placeholder="Venta" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-emerald-500" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
             <input type="number" placeholder="Costo" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-amber-500" value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value})} />
@@ -88,31 +96,70 @@ export default function ProductModal({ categories, sizes, providers, garment }: 
             </select>
           </div>
 
+          {/* Sección Variantes (Talle + Color + Stock + SKU) */}
           <div className="space-y-4">
             <div className="flex justify-between border-b border-neutral-800 pb-2">
-              <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Variantes</span>
-              <button type="button" onClick={() => setFormData({...formData, variants: [...formData.variants, {sizeId: "", stock: 0, sku: ""}]})} className="text-amber-500 text-[10px] font-bold uppercase">+ Agregar</button>
+              <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Configuración de Variantes</span>
+              <button 
+                type="button" 
+                onClick={() => setFormData({...formData, variants: [...formData.variants, {sizeId: "", colorId: "", stock: 0, sku: ""}]})} 
+                className="text-amber-500 text-[10px] font-bold uppercase"
+              >
+                + Agregar Variante
+              </button>
             </div>
+
             {formData.variants.map((v, i) => (
-              <div key={i} className="grid grid-cols-3 gap-3 bg-neutral-900/50 p-3 rounded-2xl border border-neutral-800/50">
-                <select className="bg-transparent text-xs text-white outline-none" value={v.sizeId} onChange={e => {
-                  const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({...formData, variants: newV});
-                }}>
-                  <option value="">Talle...</option>
-                  {availableSizes.map(s => <option key={s.id} value={s.id}>{s.value}</option>)}
-                </select>
-                <input type="number" placeholder="Stock" className="bg-transparent text-xs text-white border-l border-neutral-800 pl-3" value={v.stock} onChange={e => {
-                  const newV = [...formData.variants]; newV[i].stock = parseInt(e.target.value); setFormData({...formData, variants: newV});
-                }} />
-                <input placeholder="SKU" className="bg-transparent text-[10px] text-amber-500 border-l border-neutral-800 pl-3 uppercase" value={v.sku} onChange={e => {
-                  const newV = [...formData.variants]; newV[i].sku = e.target.value; setFormData({...formData, variants: newV});
-                }} />
+              <div key={i} className="grid grid-cols-12 gap-3 bg-neutral-900/50 p-3 rounded-2xl border border-neutral-800/50 items-center">
+                {/* Selector Talle */}
+                <div className="col-span-3">
+                  <select className="w-full bg-transparent text-xs text-white outline-none" value={v.sizeId} onChange={e => {
+                    const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({...formData, variants: newV});
+                  }}>
+                    <option value="">Talle...</option>
+                    {availableSizes.map(s => <option key={s.id} value={s.id}>{s.value}</option>)}
+                  </select>
+                </div>
+
+                {/* 3. Selector Color (Nuevo) */}
+                <div className="col-span-3 border-l border-neutral-800 pl-3">
+                  <select className="w-full bg-transparent text-xs text-white outline-none" value={v.colorId} onChange={e => {
+                    const newV = [...formData.variants]; newV[i].colorId = e.target.value; setFormData({...formData, variants: newV});
+                  }}>
+                    <option value="">Color...</option>
+                    {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                {/* Stock */}
+                <div className="col-span-2 border-l border-neutral-800 pl-3">
+                  <input type="number" placeholder="Stock" className="w-full bg-transparent text-xs text-white outline-none" value={v.stock} onChange={e => {
+                    const newV = [...formData.variants]; newV[i].stock = parseInt(e.target.value) || 0; setFormData({...formData, variants: newV});
+                  }} />
+                </div>
+
+                {/* SKU */}
+                <div className="col-span-3 border-l border-neutral-800 pl-3">
+                  <input placeholder="SKU" className="w-full bg-transparent text-[10px] text-amber-500 outline-none uppercase" value={v.sku} onChange={e => {
+                    const newV = [...formData.variants]; newV[i].sku = e.target.value; setFormData({...formData, variants: newV});
+                  }} />
+                </div>
+
+                {/* Botón eliminar variante */}
+                <div className="col-span-1 flex justify-end">
+                  <button type="button" onClick={() => {
+                    const newV = formData.variants.filter((_, idx) => idx !== i);
+                    setFormData({...formData, variants: newV});
+                  }} className="text-neutral-700 hover:text-red-500 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
 
           <Button type="submit" disabled={loading} variant="amarillo" className="w-full py-6 font-black uppercase rounded-2xl">
-            {loading ? "Procesando..." : "Confirmar"}
+            {loading ? "Procesando..." : (isEdit ? "Guardar Cambios" : "Crear Producto")}
           </Button>
         </form>
       </div>
