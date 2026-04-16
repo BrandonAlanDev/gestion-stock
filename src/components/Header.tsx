@@ -31,7 +31,7 @@ export default function Header({ session }: { session: any }) {
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         
         {/* Logo / Título */}
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="bg-amber-500 p-1.5 rounded-lg">
             <Shirt size={20} className="text-black" />
           </div>
