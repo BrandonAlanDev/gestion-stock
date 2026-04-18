@@ -39,26 +39,26 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     })) || [],
   });
 
- const availableSizes = useMemo(() => {
-  if (!formData.categoryId) return [];
+  const availableSizes = useMemo(() => {
+    if (!formData.categoryId) return [];
 
-  // 1. Buscamos la categoría en la lista que bajó del server
-  const selectedCat = categories.find((c) => c.id === formData.categoryId);
-  
-  if (!selectedCat) return [];
+    // 1. Buscamos la categoría en la lista que bajó del server
+    const selectedCat = categories.find((c) => c.id === formData.categoryId);
 
-  // 2. Intentamos sacar los talles directamente de la relación incluida
-  if (selectedCat.sizeType?.sizes && selectedCat.sizeType.sizes.length > 0) {
-    return selectedCat.sizeType.sizes;
-  }
+    if (!selectedCat) return [];
 
-  // 3. Si por alguna razón la relación no vino (caché), buscamos el grupo
-  // en la prop 'sizes' (que en tu page.tsx son los sizeTypes) usando el ID
-  const typeId = selectedCat.sizeTypeId;
-  const globalGroup = sizes.find((st) => st.id === typeId);
+    // 2. Intentamos sacar los talles directamente de la relación incluida
+    if (selectedCat.sizeType?.sizes && selectedCat.sizeType.sizes.length > 0) {
+      return selectedCat.sizeType.sizes;
+    }
 
-  return globalGroup?.sizes || [];
-}, [formData.categoryId, categories, sizes]);
+    // 3. Si por alguna razón la relación no vino (caché), buscamos el grupo
+    // en la prop 'sizes' (que en tu page.tsx son los sizeTypes) usando el ID
+    const typeId = selectedCat.sizeTypeId;
+    const globalGroup = sizes.find((st) => st.id === typeId);
+
+    return globalGroup?.sizes || [];
+  }, [formData.categoryId, categories, sizes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,21 +129,49 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               <div key={i} className="grid grid-cols-12 gap-3 bg-neutral-900/50 p-3 rounded-2xl border border-neutral-800/50 items-center">
                 {/* Selector Talle */}
                 <div className="col-span-3">
-                  <select className="w-full bg-transparent text-xs text-white outline-none" value={v.sizeId} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({ ...formData, variants: newV });
-                  }}>
-                    <option value="">Talle...</option>
-                    {availableSizes.map(s => <option key={s.id} value={s.id}>{s.value}</option>)}
+                  <select
+                    className="w-full bg-transparent text-xs text-white outline-none font-medium cursor-pointer"
+                    value={v.sizeId}
+                    onChange={e => {
+                      const newV = [...formData.variants];
+                      newV[i].sizeId = e.target.value;
+                      setFormData({ ...formData, variants: newV });
+                    }}
+                  >
+                    <option value="" className="bg-neutral-900 text-white">Talle...</option>
+                    {availableSizes.map(s => (
+                      <option
+                        key={s.id}
+                        value={s.id}
+                        className="bg-neutral-900 text-white"
+                      >
+                        {s.value}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* 3. Selector Color (Nuevo) */}
+                {/* Selector Color */}
                 <div className="col-span-3 border-l border-neutral-800 pl-3">
-                  <select className="w-full bg-transparent text-xs text-white outline-none" value={v.colorId} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].colorId = e.target.value; setFormData({ ...formData, variants: newV });
-                  }}>
-                    <option value="">Color...</option>
-                    {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <select
+                    className="w-full bg-transparent text-xs text-white outline-none font-medium cursor-pointer"
+                    value={v.colorId}
+                    onChange={e => {
+                      const newV = [...formData.variants];
+                      newV[i].colorId = e.target.value;
+                      setFormData({ ...formData, variants: newV });
+                    }}
+                  >
+                    <option value="" className="bg-neutral-900 text-white">Color...</option>
+                    {colors.map(c => (
+                      <option
+                        key={c.id}
+                        value={c.id}
+                        className="bg-neutral-900 text-white"
+                      >
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
