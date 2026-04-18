@@ -2,7 +2,7 @@
 
 import { getGarments, getCategories, getProviders } from "@/actions/garments";
 import { getSizeTypes } from "@/actions/sizes";
-import { getColors } from "@/actions/colors"; // 1. Importamos la nueva acción
+import { getColors } from "@/actions/colors";
 import Search from "@/components/Search";
 import CategoryFilter from "@/components/garment/CategoryFilter";
 import CategoryModal from "@/components/garment/CategoryModal";
