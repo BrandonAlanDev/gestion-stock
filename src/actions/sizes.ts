@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import {SizeTypeNameSchema} from "@/lib/zod";
+import {SizeTypeNameSchema,SizeValueSchema} from "@/lib/zod";
 
 export async function getSizeTypes() {
   return await prisma.sizeType.findMany({
@@ -12,7 +12,6 @@ export async function getSizeTypes() {
 }
 
 export async function createSizeType(name: string) {
-
   const validateFields = SizeTypeNameSchema.safeParse({ name });
   
   if (!validateFields.success) {
@@ -29,14 +28,28 @@ export async function createSizeType(name: string) {
 }
 
 export async function addSizeToType(sizeTypeId: string, value: string, order: number) {
+  const validateValue = SizeValueSchema.safeParse(value);
+  
+  if (!validateValue.success) {
+    const firstError = validateValue.error?.issues?.[0]?.message 
+                    || "Valor de talle inválido";
+                    
+    return { error: firstError };
+  }
+
   try {
     await prisma.size.create({
-      data: { value, order, sizeTypeId }
+      data: { 
+        value: validateValue.data.toUpperCase(), 
+        order: Number(order), // Aseguramos que sea número
+        sizeTypeId 
+      }
     });
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
-    return { error: "Error al añadir talle" };
+    console.error("Error Prisma:", error);
+    return { error: "Error al guardar en la base de datos" };
   }
 }
 
