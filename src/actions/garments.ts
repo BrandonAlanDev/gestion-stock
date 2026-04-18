@@ -54,8 +54,8 @@ export async function getGarments(query?: string, categoryId?: string) {
       AND: [
         query ? {
           OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { variants: { some: { sku: { contains: query, mode: 'insensitive' } } } },
+            { name: { contains: query, } },
+            { variants: { some: { sku: { contains: query, } } } },
           ]
         } : {},
         // Filtro por categoría (NUEVO)
@@ -64,7 +64,11 @@ export async function getGarments(query?: string, categoryId?: string) {
     },
     include: { 
       category: true, 
-      variants: { include: { size: true } },
+      variants: { 
+        include: {
+           size: true,
+           color: true
+          } },
       supplier: {
         include: {contacts: {where: {active:true}}}
       }
