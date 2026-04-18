@@ -25,7 +25,7 @@ export async function createGarment(data: any) {
      data: {
         name: data.name,
         price: data.price,
-        cost: data.cost, // <-- Guardamos el costo
+        cost: data.cost,
         description: data.description,
         categoryId: data.categoryId,
         supplierId: data.supplierId || null,
@@ -169,13 +169,32 @@ export async function getSizes() {
 // ==========================================
 // CATEGORÍAS (Funciones faltantes para la gestión)
 // ==========================================
-
 export async function getCategories() {
-  return await prisma.category.findMany({
-    // Incluimos el sizeType para saber qué talles tiene asignados
-    include: { sizeType: true },
-    orderBy: { name: "asc" },
-  });
+  try {
+    const categories = await prisma.category.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        sizeType: {
+          include: {
+            sizes: {
+              orderBy: {
+                order: "asc",
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    return categories;
+  } catch (error) {
+    console.error("Error al obtener categorías:", error);
+    return [];
+  }
 }
 
 export async function createCategory(formData: { name: string; description?: string; sizeTypeId?: string }) {
@@ -184,7 +203,7 @@ export async function createCategory(formData: { name: string; description?: str
       data: {
         name: formData.name,
         description: formData.description,
-        sizeTypeId: formData.sizeTypeId || null, // Asignamos el ID del talle
+        sizeTypeId: formData.sizeTypeId, 
       },
     });
     revalidatePath("/dashboard/categories");
@@ -201,8 +220,7 @@ export async function updateCategory(id: string, data: { name: string; descripti
       data: {
         name: data.name,
         description: data.description,
-        // Permitimos actualizar el grupo de talles o quitarlo
-        sizeTypeId: data.sizeTypeId || null,
+        sizeTypeId: data.sizeTypeId && data.sizeTypeId !== "" ? data.sizeTypeId : null,
       },
     });
     revalidatePath("/dashboard");

@@ -11,7 +11,7 @@ interface Props {
   categories: any[];
   sizes: any[];
   providers: any[];
-  colors: any[]; // 1. Agregamos colors a las Props
+  colors: any[];
   garment?: any;
 }
 
@@ -31,18 +31,34 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     categoryId: garment?.categoryId || "",
     supplierId: garment?.supplierId || "",
     variants: garment?.variants?.map((v: any) => ({
-      id: v.id, 
-      sizeId: v.sizeId, 
+      id: v.id,
+      sizeId: v.sizeId,
       colorId: v.colorId || "", // 2. Incluimos colorId en el mapeo inicial
-      stock: v.stock, 
+      stock: v.stock,
       sku: v.sku || ""
     })) || [],
   });
 
-  const availableSizes = useMemo(() => {
-    const selectedCat = categories.find(c => c.id === formData.categoryId);
-    return sizes.find(g => g.id === selectedCat?.sizeTypeId)?.sizes || [];
-  }, [formData.categoryId, categories, sizes]);
+ const availableSizes = useMemo(() => {
+  if (!formData.categoryId) return [];
+
+  // 1. Buscamos la categoría en la lista que bajó del server
+  const selectedCat = categories.find((c) => c.id === formData.categoryId);
+  
+  if (!selectedCat) return [];
+
+  // 2. Intentamos sacar los talles directamente de la relación incluida
+  if (selectedCat.sizeType?.sizes && selectedCat.sizeType.sizes.length > 0) {
+    return selectedCat.sizeType.sizes;
+  }
+
+  // 3. Si por alguna razón la relación no vino (caché), buscamos el grupo
+  // en la prop 'sizes' (que en tu page.tsx son los sizeTypes) usando el ID
+  const typeId = selectedCat.sizeTypeId;
+  const globalGroup = sizes.find((st) => st.id === typeId);
+
+  return globalGroup?.sizes || [];
+}, [formData.categoryId, categories, sizes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,8 +95,8 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Fila 1: Nombre y Categoría */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Nombre" className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-            <select className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value, variants: []})}>
+            <input placeholder="Nombre" className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            <select className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.categoryId} onChange={e => setFormData({ ...formData, categoryId: e.target.value, variants: [] })}>
               <option value="">Categoría...</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -88,9 +104,9 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
 
           {/* Fila 2: Precios y Proveedor */}
           <div className="grid grid-cols-3 gap-4">
-            <input type="number" placeholder="Venta" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-emerald-500" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
-            <input type="number" placeholder="Costo" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-amber-500" value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value})} />
-            <select className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white" value={formData.supplierId} onChange={e => setFormData({...formData, supplierId: e.target.value})}>
+            <input type="number" placeholder="Venta" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-emerald-500" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
+            <input type="number" placeholder="Costo" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-amber-500" value={formData.cost} onChange={e => setFormData({ ...formData, cost: e.target.value })} />
+            <select className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white" value={formData.supplierId} onChange={e => setFormData({ ...formData, supplierId: e.target.value })}>
               <option value="">Proveedor...</option>
               {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -100,9 +116,9 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
           <div className="space-y-4">
             <div className="flex justify-between border-b border-neutral-800 pb-2">
               <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Configuración de Variantes</span>
-              <button 
-                type="button" 
-                onClick={() => setFormData({...formData, variants: [...formData.variants, {sizeId: "", colorId: "", stock: 0, sku: ""}]})} 
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sizeId: "", colorId: "", stock: 0, sku: "" }] })}
                 className="text-amber-500 text-[10px] font-bold uppercase"
               >
                 + Agregar Variante
@@ -114,7 +130,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 {/* Selector Talle */}
                 <div className="col-span-3">
                   <select className="w-full bg-transparent text-xs text-white outline-none" value={v.sizeId} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({...formData, variants: newV});
+                    const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({ ...formData, variants: newV });
                   }}>
                     <option value="">Talle...</option>
                     {availableSizes.map(s => <option key={s.id} value={s.id}>{s.value}</option>)}
@@ -124,7 +140,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 {/* 3. Selector Color (Nuevo) */}
                 <div className="col-span-3 border-l border-neutral-800 pl-3">
                   <select className="w-full bg-transparent text-xs text-white outline-none" value={v.colorId} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].colorId = e.target.value; setFormData({...formData, variants: newV});
+                    const newV = [...formData.variants]; newV[i].colorId = e.target.value; setFormData({ ...formData, variants: newV });
                   }}>
                     <option value="">Color...</option>
                     {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -134,14 +150,14 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 {/* Stock */}
                 <div className="col-span-2 border-l border-neutral-800 pl-3">
                   <input type="number" placeholder="Stock" className="w-full bg-transparent text-xs text-white outline-none" value={v.stock} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].stock = parseInt(e.target.value) || 0; setFormData({...formData, variants: newV});
+                    const newV = [...formData.variants]; newV[i].stock = parseInt(e.target.value) || 0; setFormData({ ...formData, variants: newV });
                   }} />
                 </div>
 
                 {/* SKU */}
                 <div className="col-span-3 border-l border-neutral-800 pl-3">
                   <input placeholder="SKU" className="w-full bg-transparent text-[10px] text-amber-500 outline-none uppercase" value={v.sku} onChange={e => {
-                    const newV = [...formData.variants]; newV[i].sku = e.target.value; setFormData({...formData, variants: newV});
+                    const newV = [...formData.variants]; newV[i].sku = e.target.value; setFormData({ ...formData, variants: newV });
                   }} />
                 </div>
 
@@ -149,7 +165,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 <div className="col-span-1 flex justify-end">
                   <button type="button" onClick={() => {
                     const newV = formData.variants.filter((_, idx) => idx !== i);
-                    setFormData({...formData, variants: newV});
+                    setFormData({ ...formData, variants: newV });
                   }} className="text-neutral-700 hover:text-red-500 transition-colors">
                     <X size={14} />
                   </button>
