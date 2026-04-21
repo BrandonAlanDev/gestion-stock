@@ -102,7 +102,6 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
         </table>
       </div>
 
-      {/* ESTE ES EL MODAL DE PROVEEDOR QUE FALTABA ABAJO */}
       {selectedProvider && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-neutral-950 border border-neutral-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative">

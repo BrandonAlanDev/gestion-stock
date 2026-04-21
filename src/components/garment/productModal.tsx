@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { X, Package, Edit3, ChevronDown } from "lucide-react"; 
 import { toast } from "sonner";
 
-// --- MINI COMPONENTE PARA EL SELECTOR DE COLOR CON LIMITE ---
+//  COMPONENTE PARA EL SELECTOR DE COLOR ---
 function ColorDropdown({ colors, value, onChange }: { colors: any[], value: string, onChange: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ function ColorDropdown({ colors, value, onChange }: { colors: any[], value: stri
 
       {open && (
         <div className="absolute top-full left-0 z-[110] w-48 mt-2 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl overflow-hidden">
-          {/* AQUÍ EL LÍMITE: 6 items * 32px de altura = 192px */}
+          {/* LÍMITE: 6 items * 32px de altura = 192px */}
           <div className="max-h-[192px] overflow-y-auto custom-scrollbar">
             {colors.map(c => (
               <div 
@@ -144,7 +144,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                     </select>
                   </div>
 
-                  {/* AQUÍ EL SELECTOR DE COLOR CON LÍMITE */}
+                  {/*  SELECTOR DE COLOR CON LÍMITE */}
                   <div className="col-span-3 border-l border-neutral-800 pl-3">
                     <ColorDropdown 
                       colors={colors} 
