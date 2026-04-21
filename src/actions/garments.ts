@@ -14,7 +14,6 @@ export async function createGarment(data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  // NOTA: Tu zod 'garmentSchema' ahora debería esperar un array de variantes
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
@@ -58,7 +57,7 @@ export async function getGarments(query?: string, categoryId?: string) {
             { variants: { some: { sku: { contains: query, } } } },
           ]
         } : {},
-        // Filtro por categoría (NUEVO)
+        // Filtro por categoría
         categoryId ? { categoryId: categoryId } : {},
       ]
     },
