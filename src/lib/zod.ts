@@ -55,6 +55,7 @@ export const movementSchema = z.object({
 
 export const variantSchema = z.object({
   sizeId: z.string().min(1, "Selecciona un talle"),
+  colorId: z.string().min(1, "Selecciona un color"),
   sku: z.string().optional(),
   stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
 });
@@ -128,4 +129,14 @@ export const idSchema = z.string().cuid();
 
 export const SizeTypeNameSchema = z.object({
   name:providerNameSchema
+});
+
+export const SizeValueSchema = z.string()
+.min(1, "El valor del talle no puede estar vacío")
+.regex(/^[a-zA-Z0-9.]+$/, "Solo se permiten letras, números y puntos (sin espacios)");
+ 
+// COLOR
+export const colorSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio"),
+  hex: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Formato hex inválido").optional().nullable(),
 });

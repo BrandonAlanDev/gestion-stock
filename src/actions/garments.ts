@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; 
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
+import { color } from "framer-motion";
 
 // ==========================================
 // PRENDAS / GARMENTS (Modificado para Variantes)
@@ -24,7 +25,7 @@ export async function createGarment(data: any) {
      data: {
         name: data.name,
         price: data.price,
-        cost: data.cost, // <-- Guardamos el costo
+        cost: data.cost,
         description: data.description,
         categoryId: data.categoryId,
         supplierId: data.supplierId || null,
@@ -33,6 +34,7 @@ export async function createGarment(data: any) {
             sku: v.sku,
             stock: v.stock,
             sizeId: v.sizeId,
+            colorId: v.colorId || null,
           })),
         }
       }
@@ -52,8 +54,8 @@ export async function getGarments(query?: string, categoryId?: string) {
       AND: [
         query ? {
           OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { variants: { some: { sku: { contains: query, mode: 'insensitive' } } } },
+            { name: { contains: query, } },
+            { variants: { some: { sku: { contains: query, } } } },
           ]
         } : {},
         // Filtro por categoría (NUEVO)
@@ -62,7 +64,11 @@ export async function getGarments(query?: string, categoryId?: string) {
     },
     include: { 
       category: true, 
-      variants: { include: { size: true } },
+      variants: { 
+        include: {
+           size: true,
+           color: true
+          } },
       supplier: {
         include: {contacts: {where: {active:true}}}
       }
@@ -123,6 +129,7 @@ export async function updateGarment(id: string, data: any) {
               sku: v.sku,
               stock: Number(v.stock),
               sizeId: v.sizeId,
+              colorId: v.colorId || null,
             },
           });
         } else {
@@ -132,6 +139,7 @@ export async function updateGarment(id: string, data: any) {
               sku: v.sku,
               stock: Number(v.stock),
               sizeId: v.sizeId,
+              colorId: v.colorId || null,
             },
           });
         }
@@ -161,13 +169,32 @@ export async function getSizes() {
 // ==========================================
 // CATEGORÍAS (Funciones faltantes para la gestión)
 // ==========================================
-
 export async function getCategories() {
-  return await prisma.category.findMany({
-    // Incluimos el sizeType para saber qué talles tiene asignados
-    include: { sizeType: true },
-    orderBy: { name: "asc" },
-  });
+  try {
+    const categories = await prisma.category.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        sizeType: {
+          include: {
+            sizes: {
+              orderBy: {
+                order: "asc",
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    return categories;
+  } catch (error) {
+    console.error("Error al obtener categorías:", error);
+    return [];
+  }
 }
 
 export async function createCategory(formData: { name: string; description?: string; sizeTypeId?: string }) {
@@ -176,7 +203,7 @@ export async function createCategory(formData: { name: string; description?: str
       data: {
         name: formData.name,
         description: formData.description,
-        sizeTypeId: formData.sizeTypeId || null, // Asignamos el ID del talle
+        sizeTypeId: formData.sizeTypeId, 
       },
     });
     revalidatePath("/dashboard/categories");
@@ -193,8 +220,7 @@ export async function updateCategory(id: string, data: { name: string; descripti
       data: {
         name: data.name,
         description: data.description,
-        // Permitimos actualizar el grupo de talles o quitarlo
-        sizeTypeId: data.sizeTypeId || null,
+        sizeTypeId: data.sizeTypeId && data.sizeTypeId !== "" ? data.sizeTypeId : null,
       },
     });
     revalidatePath("/dashboard");
