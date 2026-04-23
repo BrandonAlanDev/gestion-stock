@@ -65,10 +65,25 @@ export async function deleteSize(id: string) {
 
 export async function deleteSizeType(id: string) {
   try {
-    await prisma.sizeType.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      // 1. Borramos todos los talles que pertenecen a este grupo
+      await tx.size.deleteMany({
+        where: { sizeTypeId: id },
+      });
+
+      // 2. Borramos el grupo de talles
+      await tx.sizeType.delete({
+        where: { id },
+      });
+    });
+
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
-    return { error: "El grupo contiene talles o está vinculado" };
+    console.error(error);
+    // Este error suele darse si el Grupo de Talles está vinculado a una CATEGORÍA activa
+    return { 
+      error: "No se puede eliminar: El grupo está siendo usado por una Categoría." 
+    };
   }
 }
