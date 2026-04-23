@@ -14,7 +14,6 @@ export async function createGarment(data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  // NOTA: Tu zod 'garmentSchema' ahora debería esperar un array de variantes
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
@@ -58,7 +57,7 @@ export async function getGarments(query?: string, categoryId?: string) {
             { variants: { some: { sku: { contains: query, } } } },
           ]
         } : {},
-        // Filtro por categoría (NUEVO)
+        // Filtro por categoría
         categoryId ? { categoryId: categoryId } : {},
       ]
     },
@@ -156,6 +155,38 @@ export async function updateGarment(id: string, data: any) {
   }
 }
 
+export async function deleteGarment(id: string) {
+  try {
+    // Verificamos si el producto existe antes de intentar borrar
+    const existingGarment = await prisma.garment.findUnique({
+      where: { id },
+      include: { variants: true }
+    });
+
+    if (!existingGarment) {
+      return { error: "El producto no existe o ya fue eliminado." };
+    }
+
+    // Eliminación del producto
+    await prisma.garment.delete({
+      where: { id },
+    });
+
+    // Revalidamos la ruta donde se muestra la tabla para refrescar los datos
+    revalidatePath("/dashboard/productos"); 
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("DELETE_GARMENT_ERROR:", error);
+
+    // Manejo de errores específicos de Prisma (opcional)
+    if (error.code === 'P2003') {
+      return { error: "No se puede eliminar: existen registros vinculados que no permiten el borrado." };
+    }
+
+    return { error: "Ocurrió un error inesperado al intentar eliminar el producto." };
+  }
+}
 
 // Auxiliar para traer los talles disponibles en la base de datos
 export async function getSizes() {

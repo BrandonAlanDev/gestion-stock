@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { serializeData } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
-// Obtener todos los colores activos
 export async function getColors() {
   try {
     const colors = await prisma.color.findMany({
