@@ -6,7 +6,6 @@ import { X, Tag } from "lucide-react";
 import { createCategory } from "@/actions/garments";
 import { toast } from "sonner";
 
-// Esta interfaz es la que resuelve el error en la Dashboard
 interface CategoryModalProps {
   sizeTypes: any[]; 
 }

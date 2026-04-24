@@ -82,7 +82,6 @@ export default function ManageCategoryModal({ sizeTypes, category }: ManageCateg
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in zoom-in duration-200">
-            {/* Decoración superior */}
             <div className={`absolute top-0 left-0 w-full h-1 ${isEdit ? 'bg-blue-500' : 'bg-amber-500'}`} />
 
             <div className="p-8">
