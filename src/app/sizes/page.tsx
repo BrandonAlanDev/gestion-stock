@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { getSizeTypes, createSizeType, addSizeToType, deleteSize, deleteSizeType } from "@/actions/sizes";
 import { Button } from "@/components/ui/button";
-import { Ruler, Plus, Trash2, Layers, ChevronRight, Hash } from "lucide-react";
+import { Ruler, Plus, Trash2, Layers, ChevronRight, Hash, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SizesPage() {
   const [sizeTypes, setSizeTypes] = useState<any[]>([]);
   const [newTypeName, setNewTypeName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Para feedback visual al borrar
 
   const fetchSizes = async () => {
     setLoading(true);
@@ -24,23 +25,40 @@ export default function SizesPage() {
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validación local rápida
-    if (!newTypeName.trim()) {
-      return toast.error("Ingresa un nombre para el grupo");
-    }
+    if (!newTypeName.trim()) return toast.error("Ingresa un nombre para el grupo");
 
     const res = await createSizeType(newTypeName);
+    if (res.error) return toast.error(res.error);
 
-    if (res.error) {
-      // Aquí se disparará el error de Zod (ej: "Solo se permiten letras")
-      return toast.error(res.error);
-    }
+    setNewTypeName("");
+    fetchSizes();
+    toast.success("Grupo de talles creado");
+  };
 
-    if (res.success) {
-      setNewTypeName("");
+  // FUNCIÓN PARA ELIMINAR GRUPO
+  const handleDeleteGroup = async (id: string, name: string) => {
+    if (!confirm(`¿Borrar el grupo "${name}"?`)) return;
+    
+    setIsDeleting(id);
+    const res = await deleteSizeType(id);
+    
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.info("Grupo eliminado");
       fetchSizes();
-      toast.success("Grupo de talles creado con éxito");
+    }
+    setIsDeleting(null);
+  };
+
+  // FUNCIÓN PARA ELIMINAR TALLE INDIVIDUAL
+  const handleDeleteSize = async (id: string) => {
+    const res = await deleteSize(id);
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Talle eliminado");
+      fetchSizes();
     }
   };
 
@@ -68,12 +86,12 @@ export default function SizesPage() {
         >
           <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50" />
           <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Layers size={14} /> Nuevo Grupo (Ej: Calzado, Remeras, Accesorios)
+            <Layers size={14} /> Nuevo Grupo
           </h3>
           <div className="flex gap-3">
             <input 
               className="flex-1 bg-black border border-neutral-800 rounded-xl p-3 text-sm text-white outline-none focus:border-amber-500 transition-all placeholder:text-neutral-700"
-              placeholder="Nombre del grupo (solo letras)..."
+              placeholder="Nombre del grupo..."
               value={newTypeName}
               onChange={e => setNewTypeName(e.target.value)}
             />
@@ -85,9 +103,9 @@ export default function SizesPage() {
 
         {/* Grilla de Grupos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {loading ? (
+          {loading && sizeTypes.length === 0 ? (
             <div className="col-span-full text-center py-20 text-neutral-800 uppercase text-[10px] font-black tracking-[0.5em] animate-pulse">
-              Sincronizando curvas de talles...
+              Sincronizando curvas...
             </div>
           ) : sizeTypes.map(type => (
             <div key={type.id} className="bg-neutral-950 border border-neutral-900 rounded-[2.5rem] p-6 space-y-6 hover:border-neutral-800 transition-all group">
@@ -98,34 +116,25 @@ export default function SizesPage() {
                   {type.name}
                 </h3>
                 <button 
-                  onClick={async () => { 
-                    if(confirm(`¿Borrar el grupo "${type.name}"?`)) { 
-                      await deleteSizeType(type.id); 
-                      fetchSizes(); 
-                      toast.info("Grupo eliminado");
-                    } 
-                  }}
-                  className="text-neutral-700 hover:text-red-500 transition-colors p-2"
+                  onClick={() => handleDeleteGroup(type.id, type.name)}
+                  disabled={isDeleting === type.id}
+                  className="text-neutral-700 hover:text-red-500 transition-colors p-2 disabled:opacity-30"
                 >
-                  <Trash2 size={16} />
+                  {isDeleting === type.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                 </button>
               </div>
 
               {/* Tags de Talles Actuales */}
               <div className="flex flex-wrap gap-2 min-h-[50px]">
                 {type.sizes.map((s: any) => (
-                  <div key={s.id} className="flex items-center gap-3 bg-black px-4 py-2 rounded-xl border border-neutral-800 group/item hover:border-amber-500/30 transition-all">
+                  <div key={s.id} className="flex items-center gap-3 bg-black px-4 py-2 rounded-xl border border-neutral-800 group/item hover:border-red-500/20 transition-all">
                     <div className="flex flex-col">
                       <span className="text-[10px] text-neutral-600 font-bold uppercase leading-none">Talle</span>
                       <span className="text-sm font-black font-mono text-white leading-tight">{s.value}</span>
                     </div>
                     <button 
-                      onClick={async () => { 
-                        await deleteSize(s.id); 
-                        fetchSizes(); 
-                        toast.success("Talle eliminado");
-                      }}
-                      className="text-neutral-800 hover:text-red-500 transition-colors ml-2"
+                      onClick={() => handleDeleteSize(s.id)}
+                      className="text-neutral-800 hover:text-red-500 transition-colors ml-2 p-1"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -153,7 +162,7 @@ export default function SizesPage() {
                   }
                 }}
               >
-                <div className="col-span-6 relative">
+                <div className="col-span-6">
                   <input 
                     placeholder="Valor (XL)" 
                     className="w-full bg-black border border-neutral-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-500" 
