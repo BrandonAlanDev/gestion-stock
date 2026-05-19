@@ -86,8 +86,6 @@ function ProductLayout() {
                 />
               </>
 
-            {/* RUTA CATÁLOGO COMPLETO */}
-            <ProductsPage addToCart={handleAddToCart} />
         </main>
 
         <footer className="border-t-2 border-gray-50">
