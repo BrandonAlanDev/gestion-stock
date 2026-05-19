@@ -5,6 +5,13 @@ import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod";
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import { color } from "framer-motion";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ==========================================
 // PRENDAS / GARMENTS (Modificado para Variantes)
@@ -17,9 +24,25 @@ export async function createGarment(data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { name, price, description, categoryId, supplierId, variants } = parsed.data;
+  const { name, price, description, categoryId, supplierId, variants, images } = parsed.data;
 
   try {
+    let uploadedImages: { srcImage: string; order: number }[] = [];
+    if (images && images.length > 0) {
+      for (let i = 0; i < images.length; i++) {
+        // Upload base64 strings
+        if (images[i].startsWith("data:image")) {
+          const uploadResponse = await cloudinary.uploader.upload(images[i], {
+            folder: "gestion-stock/garments",
+          });
+          uploadedImages.push({
+            srcImage: uploadResponse.secure_url,
+            order: i,
+          });
+        }
+      }
+    }
+
     const garment = await prisma.garment.create({
      data: {
         name: data.name,
@@ -35,6 +58,9 @@ export async function createGarment(data: any) {
             sizeId: v.sizeId,
             colorId: v.colorId || null,
           })),
+        },
+        images: {
+          create: uploadedImages,
         }
       }
     });
@@ -70,6 +96,9 @@ export async function getGarments(query?: string, categoryId?: string) {
           } },
       supplier: {
         include: {contacts: {where: {active:true}}}
+      },
+      images: {
+        orderBy: { order: 'asc' }
       }
     },
     orderBy: { updatedAt: 'desc' }
@@ -78,13 +107,56 @@ export async function getGarments(query?: string, categoryId?: string) {
   return serializeData(garments);
 }
 
+function extractPublicId(url: string) {
+  try {
+    const parts = url.split('/');
+    const uploadIndex = parts.findIndex(p => p === 'upload');
+    if (uploadIndex !== -1) {
+      const pathParts = parts.slice(uploadIndex + 2);
+      const fileName = pathParts.join('/');
+      return fileName.split('.')[0];
+    }
+  } catch (e) {
+    console.error("Error extracting public ID", e);
+  }
+  return null;
+}
+
 export async function updateGarment(id: string, data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  const { name, price, cost, description, categoryId, supplierId, variants } = data;
+  const { name, price, cost, description, categoryId, supplierId, variants, images } = data;
 
   try {
+    const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
+    
+    let finalImageRecords: { srcImage: string; order: number }[] = [];
+    
+    if (images && Array.isArray(images)) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        if (img.startsWith("data:image")) {
+          const uploadResponse = await cloudinary.uploader.upload(img, {
+            folder: "gestion-stock/garments",
+          });
+          finalImageRecords.push({ srcImage: uploadResponse.secure_url, order: i });
+        } else {
+          finalImageRecords.push({ srcImage: img, order: i });
+        }
+      }
+    }
+
+    const newUrls = finalImageRecords.map(r => r.srcImage);
+    const imagesToDelete = existingImages.filter(img => !newUrls.includes(img.srcImage));
+
+    for (const img of imagesToDelete) {
+      const publicId = extractPublicId(img.srcImage);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
     const updatedGarment = await prisma.$transaction(async (tx) => {
       // 1. Actualización de datos básicos (Prisma castea strings a Decimal automáticamente)
       const garment = await tx.garment.update({
@@ -143,6 +215,21 @@ export async function updateGarment(id: string, data: any) {
           });
         }
       }
+
+      // C. Sincronización de Imágenes
+      await tx.garmentImage.deleteMany({
+        where: { garmentId: id }
+      });
+      if (finalImageRecords.length > 0) {
+        await tx.garmentImage.createMany({
+          data: finalImageRecords.map(r => ({
+            garmentId: id,
+            srcImage: r.srcImage,
+            order: r.order
+          }))
+        });
+      }
+
       return garment;
     });
 

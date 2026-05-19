@@ -6,6 +6,7 @@ import { createGarment, updateGarment } from "@/actions/garments";
 import { Button } from "@/components/ui/button";
 import { X, Package, Edit3, ChevronDown } from "lucide-react"; 
 import { toast } from "sonner";
+import Image from "next/image";
 
 //  COMPONENTE PARA EL SELECTOR DE COLOR ---
 function ColorDropdown({ colors, value, onChange }: { colors: any[], value: string, onChange: (id: string) => void }) {
@@ -73,7 +74,40 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
       stock: v.stock,
       sku: v.sku || ""
     })) || [],
+    images: garment?.images?.map((img: any) => img.srcImage) || [] as string[],
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    
+    if (formData.images.length + files.length > 4) {
+      toast.error("Puedes subir un máximo de 4 imágenes.");
+      return;
+    }
+
+    const readers = files.map(file => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readers).then(base64Images => {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...base64Images]
+      }));
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
 
   const availableSizes = useMemo(() => {
     if (!formData.categoryId) return [];
@@ -178,6 +212,33 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               ))}
             </div>
           </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between border-b border-neutral-800 pb-2">
+                <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Imágenes (Máx. 4)</span>
+              </div>
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-black hover:file:bg-amber-600 cursor-pointer"
+              />
+              <div className="flex gap-4 flex-wrap">
+                {formData.images.map((img, idx) => (
+                  <div key={idx} className="relative w-24 h-24 border border-neutral-800 rounded-xl overflow-hidden group">
+                    <Image src={img} alt={`Preview ${idx}`} fill className="object-cover" />
+                    <button 
+                      type="button" 
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-1 right-1 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
           <Button type="submit" disabled={loading} variant="amarillo" className="w-full py-6 font-black uppercase rounded-2xl">
             {loading ? "Procesando..." : (isEdit ? "Guardar Cambios" : "Crear Producto")}
