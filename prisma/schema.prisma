@@ -55,29 +55,32 @@ model Category {
   id            String        @id @default(cuid())
   name          String        @unique
   active        Boolean       @default(true)
-  sizeTypeId    String?
-  sizeType      SizeType?     @relation(fields: [sizeTypeId], references: [id])
   subCategories SubCategory[]
   garments      Garment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-
-  @@index([sizeTypeId])
 }
 
 model SubCategory {
   id          String    @id @default(cuid())
   name        String
   active      Boolean   @default(true)
-  description String?
+  
+  // Relación con Categoría
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
+  
+  // NUEVO: La curva de talles ahora vive acá 
+  sizeTypeId  String?
+  sizeType    SizeType? @relation(fields: [sizeTypeId], references: [id])
+  
   garments    Garment[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@unique([name, categoryId])
   @@index([categoryId])
+  @@index([sizeTypeId]) // Añadido índice para optimizar búsquedas por talle
 }
 
 model Garment {
@@ -147,7 +150,7 @@ model SizeType {
   name       String     @unique
   active     Boolean    @default(true)
   sizes      Size[]
-  categories Category[]
+  subCategories SubCategory[]
 }
 
 model Size {

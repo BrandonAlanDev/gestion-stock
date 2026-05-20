@@ -13,6 +13,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+interface CreateSubCategoryInput {
+  name: string;
+  categoryId: string;
+  sizeTypeId: string | null;
+}
+
 // ==========================================
 // PRENDAS / GARMENTS (Modificado para Variantes)
 // ==========================================
@@ -290,58 +296,61 @@ export async function getSizes() {
 export async function getCategories() {
   try {
     const categories = await prisma.category.findMany({
-      where: {
-        active: true,
+      orderBy: {
+        name: 'asc'
       },
       include: {
-        sizeType: {
+        subCategories: {
           include: {
-            sizes: {
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
+            sizeType: {
+              include: {
+                sizes: {
+                  orderBy: {
+                    id: 'asc' 
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
+
     return categories;
+
   } catch (error) {
-    console.error("Error al obtener categorías:", error);
+    console.error("Error al obtener las categorías en el backend:", error);
+    // Retornamos un array vacío de contingencia para que el .map() de la UI no rompa la página
     return [];
   }
 }
 
-export async function createCategory(formData: { name: string; description?: string; sizeTypeId?: string }) {
+export async function createCategory(formData: { name: string; description?: string }) {
   try {
-    await prisma.category.create({
+    const newCategory = await prisma.category.create({
       data: {
         name: formData.name,
-        description: formData.description,
-        sizeTypeId: formData.sizeTypeId, 
       },
     });
-    revalidatePath("/dashboard/categories");
-    return { success: true };
+    revalidatePath("/categories");
+    return { success: true, data: newCategory };
   } catch (error) {
+    console.error("Error al crear categoría:", error);
     return { error: "Error al crear categoría" };
   }
 }
 
-export async function updateCategory(id: string, data: { name: string; description?: string; sizeTypeId?: string }) {
+export async function updateCategory(id: string, data: { name: string; description?: string }) {
   try {
     const updated = await prisma.category.update({
       where: { id },
       data: {
         name: data.name,
         description: data.description,
-        sizeTypeId: data.sizeTypeId && data.sizeTypeId !== "" ? data.sizeTypeId : null,
+        // Eliminado sizeTypeId de acá porque ahora pertenece a subcategorías
       },
     });
-    revalidatePath("/dashboard");
+    revalidatePath("/categories");
     return { success: true, data: updated };
   } catch (error) {
     console.error("Error al actualizar categoría:", error);
@@ -351,15 +360,77 @@ export async function updateCategory(id: string, data: { name: string; descripti
 
 export async function deleteCategory(id: string) {
   try {
+    // Si usas relationMode = "prisma", validamos subcategorías de forma manual antes de borrar
+    const subCatsCount = await prisma.subCategory.count({
+      where: { categoryId: id }
+    });
+
+    if (subCatsCount > 0) {
+      return { error: `No se puede eliminar. Tenés ${subCatsCount} subcategorías vinculadas a este grupo.` };
+    }
+
     await prisma.category.delete({
       where: { id },
     });
-    revalidatePath("/dashboard");
+    revalidatePath("/categories");
     return { success: true };
   } catch (error) {
-    return { error: "No se puede eliminar la categoría porque tiene productos asociados." };
+    console.error("Error al borrar categoría:", error);
+    return { error: "No se puede eliminar la categoría porque tiene dependencias activas." };
   }
 }
+
+export async function createSubCategory(data: CreateSubCategoryInput) {
+  try {
+    if (!data.name || !data.categoryId) {
+      return { error: "El nombre y la categoría madre son obligatorios." };
+    }
+
+    const newSubCategory = await prisma.subCategory.create({
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        sizeTypeId: data.sizeTypeId || null,
+      },
+    });
+
+    revalidatePath("/categories"); 
+    return { success: true, data: newSubCategory };
+  } catch (error: any) {
+    console.error("Error en createSubCategoryAction:", error);
+    if (error.code === "P2002") {
+      return { error: "Ya existe una subcategoría con ese nombre en este grupo." };
+    }
+    return { error: "No se pudo crear la subcategoría." };
+  }
+}
+
+export async function deleteSubCategory(id: string) {
+  try {
+    if (!id) return { error: "ID de subcategoría no provisto." };
+
+    const garmentsCount = await prisma.garment.count({
+      where: { subCategoryId: id },
+    });
+
+    if (garmentsCount > 0) {
+      return { 
+        error: `No se puede eliminar. Hay ${garmentsCount} producto(s) asignado(s) a esta subcategoría.` 
+      };
+    }
+
+    await prisma.subCategory.delete({
+      where: { id },
+    });
+
+    revalidatePath("/categories");
+    return { success: true };
+  } catch (error) {
+    console.error("Error en deleteSubCategoryAction:", error);
+    return { error: "Ocurrió un error al intentar eliminar la subcategoría." };
+  }
+}
+
 // ==========================================
 // PROVEEDORES
 // ==========================================

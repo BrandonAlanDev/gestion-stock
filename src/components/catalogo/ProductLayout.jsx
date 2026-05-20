@@ -85,9 +85,8 @@ function ProductLayout() {
                    addToCart={handleAddToCart}
                 />
               </>
-
         </main>
-
+        
         <footer className="border-t-2 border-gray-50">
            {/* <LocationSection /> */}
         </footer>
