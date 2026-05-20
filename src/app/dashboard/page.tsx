@@ -5,7 +5,6 @@ import { getSizeTypes } from "@/actions/sizes";
 import { getColors } from "@/actions/colors";
 import Search from "@/components/Search";
 import CategoryFilter from "@/components/garment/CategoryFilter";
-import CategoryModal from "@/components/garment/CategoryModal";
 import MovementModal from "@/components/garment/MovementModal";
 import ProductModal from "@/components/garment/productModal";
 import QuickViewTable from "@/components/garment/QuickViewTable";
@@ -44,7 +43,6 @@ export default async function DashboardPage({
         
         <div className="flex flex-row flex-wrap gap-3">
           <MovementModal garments={garments} /> 
-          <CategoryModal sizeTypes={sizeTypes} /> 
           {/* 3. Pasamos los colores al modal de producto para poder elegirlos al crear/editar */}
           <ProductModal 
             categories={categories} 

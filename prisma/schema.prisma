@@ -5,9 +5,11 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
+  provider     = "mysql" 
   relationMode = "prisma"
 }
+
+// --- AUTENTICACIÓN ---
 
 model account {
   id                String  @id @default(cuid())
@@ -42,82 +44,85 @@ model user {
   account       account[]
 }
 
+enum user_role {
+  USER
+  ADMIN
+}
+
+// --- PRODUCTOS Y CATEGORÍAS ---
+
 model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  active        Boolean       @default(true)
+  subCategories SubCategory[]
+  garments      Garment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SubCategory {
   id          String    @id @default(cuid())
-  name        String    @unique
-  description String?
+  name        String
   active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  
+  // Relación con Categoría
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  // NUEVO: La curva de talles ahora vive acá 
   sizeTypeId  String?
   sizeType    SizeType? @relation(fields: [sizeTypeId], references: [id])
+  
   garments    Garment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  @@index([sizeTypeId])
-}
-
-model Provider {
-  id        String            @id @default(cuid())
-  name      String            @unique
-  active    Boolean           @default(true)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  details   String?
-  contacts  ContactProvider[]
-  garments  Garment[]
-}
-
-model ContactProvider {
-  id         String   @id @default(cuid())
-  contact    String
-  type       String
-  idProvider String
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  provider   Provider @relation(fields: [idProvider], references: [id], onDelete: Cascade)
-
-  @@unique([contact, idProvider], name: "contact_provider_unique")
+  @@unique([name, categoryId])
+  @@index([categoryId])
+  @@index([sizeTypeId]) // Añadido índice para optimizar búsquedas por talle
 }
 
 model Garment {
-  id          String           @id @default(cuid())
-  name        String
-  price       Decimal          @db.Decimal(10, 2)
-  description String?
-  active      Boolean          @default(true)
-  categoryId  String
-  supplierId  String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  cost        Decimal          @db.Decimal(10, 2)
-  category    Category         @relation(fields: [categoryId], references: [id])
-  supplier    Provider?        @relation(fields: [supplierId], references: [id])
-  variants    GarmentVariant[]
+  id            String           @id @default(cuid())
+  name          String
+  description   String?          @db.Text
+  price         Decimal          @db.Decimal(10, 2)
+  cost          Decimal          @db.Decimal(10, 2)
+  active        Boolean          @default(true)
+  
+  // Relaciones
+  categoryId    String
+  category      Category         @relation(fields: [categoryId], references: [id])
+  subCategoryId String?
+  subCategory   SubCategory?      @relation(fields: [subCategoryId], references: [id])
+  supplierId    String?
+  supplier      Provider?        @relation(fields: [supplierId], references: [id])
+  
+  variants      GarmentVariant[]
+  images        GarmentImage[]   // Relación para las 4 fotos
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   @@index([categoryId])
+  @@index([subCategoryId])
   @@index([supplierId])
 }
 
-model SizeType {
-  id         String     @id @default(cuid())
-  name       String     @unique
-  active     Boolean    @default(true)
-  sizes      Size[]
-  categories Category[]
+// Modelo para manejar múltiples fotos
+model GarmentImage {
+  id        String   @id @default(cuid())
+  srcImage  String   @db.Text
+  alt       String?
+  order     Int      @default(0) // Para decidir cuál es la principal (0)
+  garmentId String
+  garment   Garment  @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+
+  @@index([garmentId])
 }
 
-model Size {
-  id         String           @id @default(cuid())
-  active     Boolean          @default(true)
-  order      Int
-  sizeTypeId String
-  value      String
-  sizeType   SizeType         @relation(fields: [sizeTypeId], references: [id])
-  variants   GarmentVariant[]
-
-  @@unique([value, sizeTypeId])
-}
+// --- STOCK Y VARIANTES ---
 
 model GarmentVariant {
   id        String     @id @default(cuid())
@@ -125,28 +130,40 @@ model GarmentVariant {
   stock     Int        @default(0)
   garmentId String
   sizeId    String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
   colorId   String?
   garment   Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
   size      Size       @relation(fields: [sizeId], references: [id])
   color     Color?     @relation(fields: [colorId], references: [id])
   movements Movement[]
 
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
   @@unique([garmentId, sizeId, colorId])
+  @@index([garmentId])
+  @@index([sizeId])
+  @@index([colorId])
 }
 
-model Movement {
-  id             String         @id @default(cuid())
-  type           MovementType
-  quantity       Int
-  priceAtTime    Decimal        @db.Decimal(10, 2)
-  note           String?
-  variantId      String
-  createdAt      DateTime       @default(now())
-  garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+model SizeType {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  active     Boolean    @default(true)
+  sizes      Size[]
+  subCategories SubCategory[]
+}
 
-  @@index([variantId])
+model Size {
+  id         String           @id @default(cuid())
+  value      String
+  order      Int              @default(0)
+  active     Boolean          @default(true)
+  sizeTypeId String
+  sizeType   SizeType         @relation(fields: [sizeTypeId], references: [id])
+  variants   GarmentVariant[]
+
+  @@unique([value, sizeTypeId])
+  @@index([sizeTypeId])
 }
 
 model Color {
@@ -157,9 +174,44 @@ model Color {
   variants GarmentVariant[]
 }
 
-enum user_role {
-  USER
-  ADMIN
+// --- PROVEEDORES Y MOVIMIENTOS ---
+
+model Provider {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  active    Boolean           @default(true)
+  details   String?
+  contacts  ContactProvider[]
+  garments  Garment[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model ContactProvider {
+  id         String   @id @default(cuid())
+  contact    String
+  type       String
+  idProvider String
+  active     Boolean  @default(true)
+  provider   Provider @relation(fields: [idProvider], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([contact, idProvider])
+  @@index([idProvider])
+}
+
+model Movement {
+  id             String         @id @default(cuid())
+  type           MovementType
+  quantity       Int
+  priceAtTime    Decimal        @db.Decimal(10, 2)
+  note           String?
+  variantId      String
+  garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  @@index([variantId])
 }
 
 enum MovementType {
