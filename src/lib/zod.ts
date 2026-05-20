@@ -133,7 +133,7 @@ export const SizeTypeNameSchema = z.object({
 
 export const SizeValueSchema = z.string()
 .min(1, "El valor del talle no puede estar vacío")
-.regex(/^[a-zA-Z0-9.]+$/, "Solo se permiten letras, números y puntos (sin espacios)");
+.regex(/^[a-zA-Z0-9.\']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
  
 // COLOR
 export const colorSchema = z.object({

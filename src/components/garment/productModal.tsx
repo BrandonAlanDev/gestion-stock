@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { X, Package, Edit3, ChevronDown } from "lucide-react"; 
 import { toast } from "sonner";
 
-//  COMPONENTE PARA EL SELECTOR DE COLOR ---
+interface Props {
+  categories: any[];
+  sizes: any[];
+  providers: any[];
+  colors: any[];
+  garment?: any;
+}
+
+// COMPONENTE PARA EL SELECTOR DE COLOR
 function ColorDropdown({ colors, value, onChange }: { colors: any[], value: string, onChange: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +41,6 @@ function ColorDropdown({ colors, value, onChange }: { colors: any[], value: stri
 
       {open && (
         <div className="absolute top-full left-0 z-[110] w-48 mt-2 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl overflow-hidden">
-          {/* LÍMITE: 6 items * 32px de altura = 192px */}
           <div className="max-h-[192px] overflow-y-auto custom-scrollbar">
             {colors.map(c => (
               <div 
@@ -65,6 +72,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     cost: garment?.cost?.toString() || "",
     description: garment?.description || "",
     categoryId: garment?.categoryId || "",
+    subCategoryId: garment?.subCategoryId || "", // Agregado según nuevo schema
     supplierId: garment?.supplierId || "",
     variants: garment?.variants?.map((v: any) => ({
       id: v.id,
@@ -75,20 +83,58 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     })) || [],
   });
 
+  // Efecto para setear datos al editar si el garment cambia
+  useEffect(() => {
+    if (garment) {
+      setFormData({
+        name: garment.name || "",
+        price: garment.price?.toString() || "",
+        cost: garment.cost?.toString() || "",
+        description: garment.description || "",
+        categoryId: garment.categoryId || "",
+        subCategoryId: garment.subCategoryId || "",
+        supplierId: garment.supplierId || "",
+        variants: garment.variants?.map((v: any) => ({
+          id: v.id,
+          sizeId: v.sizeId,
+          colorId: v.colorId || "",
+          stock: v.stock,
+          sku: v.sku || ""
+        })) || [],
+      });
+    }
+  }, [garment]);
+
+  // Obtener la categoría seleccionada actualmente
+  const selectedCategoryData = useMemo(() => {
+    return categories.find((c) => c.id === formData.categoryId);
+  }, [formData.categoryId, categories]);
+
+  // Subcategorías dependientes de la Categoría seleccionada
+  const availableSubCategories = useMemo(() => {
+    if (!selectedCategoryData) return [];
+    return selectedCategoryData.subCategories || [];
+  }, [selectedCategoryData]);
+
+  // Talles disponibles basados en el sizeType de la Categoría seleccionada
   const availableSizes = useMemo(() => {
-    if (!formData.categoryId) return [];
-    const selectedCat = categories.find((c) => c.id === formData.categoryId);
-    if (!selectedCat) return [];
-    if (selectedCat.sizeType?.sizes && selectedCat.sizeType.sizes.length > 0) return selectedCat.sizeType.sizes;
-    return sizes.find((st) => st.id === selectedCat.sizeTypeId)?.sizes || [];
-  }, [formData.categoryId, categories, sizes]);
+    if (!selectedCategoryData) return [];
+    
+    // Si la categoría trae su sizeType incluido relacionalmente
+    if (selectedCategoryData.sizeType?.sizes) {
+      return selectedCategoryData.sizeType.sizes;
+    }
+    
+    // Fallback buscando en el array global de sizes por el sizeTypeId
+    return sizes.find((st) => st.id === selectedCategoryData.sizeTypeId)?.sizes || [];
+  }, [selectedCategoryData, sizes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const res = isEdit ? await updateGarment(garment.id, formData) : await createGarment(formData);
     setLoading(false);
-    if (res.error) toast.error(res.error);
+    if (res?.error) toast.error(res.error);
     else {
       toast.success("Operación exitosa");
       setIsOpen(false);
@@ -109,66 +155,112 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Nombre" className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-            <select className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.categoryId} onChange={e => setFormData({ ...formData, categoryId: e.target.value, variants: [] })}>
+          {/* Nombre, Categoría y Subcategoría */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input 
+              placeholder="Nombre" 
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" 
+              value={formData.name} 
+              onChange={e => setFormData({ ...formData, name: e.target.value })} 
+              required
+            />
+            
+            <select 
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" 
+              value={formData.categoryId} 
+              onChange={e => setFormData({ ...formData, categoryId: e.target.value, subCategoryId: "", variants: [] })}
+              required
+            >
               <option value="">Categoría...</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+
+            <select 
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none disabled:opacity-40" 
+              value={formData.subCategoryId} 
+              onChange={e => setFormData({ ...formData, subCategoryId: e.target.value })}
+              disabled={!formData.categoryId}
+            >
+              <option value="">Subcategoría...</option>
+              {availableSubCategories.map((sc: any) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+            </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <input type="number" placeholder="Venta" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-emerald-500" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-            <input type="number" placeholder="Costo" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-amber-500" value={formData.cost} onChange={e => setFormData({ ...formData, cost: e.target.value })} />
-            <select className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white" value={formData.supplierId} onChange={e => setFormData({ ...formData, supplierId: e.target.value })}>
+          {/* Precios y Proveedor */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="number" step="0.01" placeholder="Venta" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-emerald-500 outline-none" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} required />
+            <input type="number" step="0.01" placeholder="Costo" className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-amber-500 outline-none" value={formData.cost} onChange={e => setFormData({ ...formData, cost: e.target.value })} required />
+            <select className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none" value={formData.supplierId} onChange={e => setFormData({ ...formData, supplierId: e.target.value })}>
               <option value="">Proveedor...</option>
               {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
+          {/* Descripción */}
+          <div className="space-y-2">
+            <textarea 
+              placeholder="Descripción opcional del producto..." 
+              className="w-full h-20 bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none resize-none"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+
+          {/* Variantes (Talle, Color, Stock, SKU) */}
           <div className="space-y-4">
             <div className="flex justify-between border-b border-neutral-800 pb-2">
-              <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Variantes</span>
-              <button type="button" onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sizeId: "", colorId: "", stock: 0, sku: "" }] })} className="text-amber-500 text-[10px] font-bold uppercase">+ Agregar Variante</button>
+              <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Variantes de Stock</span>
+              <button 
+                type="button" 
+                disabled={!formData.categoryId}
+                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sizeId: "", colorId: "", stock: 0, sku: "" }] })} 
+                className="text-amber-500 text-[10px] font-bold uppercase disabled:opacity-30"
+              >
+                + Agregar Variante
+              </button>
             </div>
 
             <div className="space-y-3">
               {formData.variants.map((v, i) => (
                 <div key={i} className="grid grid-cols-12 gap-3 bg-neutral-900/50 p-3 rounded-2xl border border-neutral-800/50 items-center">
+                  {/* Talle */}
                   <div className="col-span-3">
                     <select className="w-full bg-transparent text-xs text-white outline-none font-medium cursor-pointer" value={v.sizeId} onChange={e => {
                       const newV = [...formData.variants]; newV[i].sizeId = e.target.value; setFormData({ ...formData, variants: newV });
-                    }}>
+                    }} required>
                       <option value="" className="bg-neutral-900 text-white">Talle...</option>
-                      {availableSizes.map(s => <option key={s.id} value={s.id} className="bg-neutral-900 text-white">{s.value}</option>)}
+                      {availableSizes.map((s: any) => <option key={s.id} value={s.id} className="bg-neutral-900 text-white">{s.value}</option>)}
                     </select>
                   </div>
 
-                  {/*  SELECTOR DE COLOR CON LÍMITE */}
+                  {/* Color */}
                   <div className="col-span-3 border-l border-neutral-800 pl-3">
                     <ColorDropdown 
                       colors={colors} 
                       value={v.colorId} 
                       onChange={(id) => {
                         const newV = [...formData.variants];
-                        newV[i].colorId = id;
+                        newV[i].colorId = id || null;
                         setFormData({ ...formData, variants: newV });
                       }} 
                     />
                   </div>
 
+                  {/* Stock */}
                   <div className="col-span-2 border-l border-neutral-800 pl-3">
                     <input type="number" placeholder="Stock" className="w-full bg-transparent text-xs text-white outline-none" value={v.stock} onChange={e => {
                       const newV = [...formData.variants]; newV[i].stock = parseInt(e.target.value) || 0; setFormData({ ...formData, variants: newV });
-                    }} />
+                    }} required />
                   </div>
 
+                  {/* SKU */}
                   <div className="col-span-3 border-l border-neutral-800 pl-3">
                     <input placeholder="SKU" className="w-full bg-transparent text-[10px] text-amber-500 outline-none uppercase" value={v.sku} onChange={e => {
                       const newV = [...formData.variants]; newV[i].sku = e.target.value; setFormData({ ...formData, variants: newV });
                     }} />
                   </div>
 
+                  {/* Quitar Variante */}
                   <div className="col-span-1 flex justify-end">
                     <button type="button" onClick={() => {
                       const newV = formData.variants.filter((_, idx) => idx !== i); setFormData({ ...formData, variants: newV });
