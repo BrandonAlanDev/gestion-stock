@@ -72,7 +72,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     cost: garment?.cost?.toString() || "",
     description: garment?.description || "",
     categoryId: garment?.categoryId || "",
-    subCategoryId: garment?.subCategoryId || "", // Agregado según nuevo schema
+    subCategoryId: garment?.subCategoryId || "", 
     supplierId: garment?.supplierId || "",
     variants: garment?.variants?.map((v: any) => ({
       id: v.id,
@@ -116,18 +116,29 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     return selectedCategoryData.subCategories || [];
   }, [selectedCategoryData]);
 
-  // Talles disponibles basados en el sizeType de la Categoría seleccionada
+  // NUEVO: Talles disponibles basados en la Subcategoría seleccionada
   const availableSizes = useMemo(() => {
-    if (!selectedCategoryData) return [];
-    
-    // Si la categoría trae su sizeType incluido relacionalmente
-    if (selectedCategoryData.sizeType?.sizes) {
-      return selectedCategoryData.sizeType.sizes;
+    if (!formData.subCategoryId || !selectedCategoryData) return [];
+
+    // Buscamos la subcategoría seleccionada dentro de la categoría actual
+    const selectedSubCategory = selectedCategoryData.subCategories?.find(
+      (sc: any) => sc.id === formData.subCategoryId
+    );
+
+    if (!selectedSubCategory) return [];
+
+    // Si la subcategoría ya trae la relación sizeType con sus talles incluidos
+    if (selectedSubCategory.sizeType?.sizes) {
+      return selectedSubCategory.sizeType.sizes;
     }
-    
-    // Fallback buscando en el array global de sizes por el sizeTypeId
-    return sizes.find((st) => st.id === selectedCategoryData.sizeTypeId)?.sizes || [];
-  }, [selectedCategoryData, sizes]);
+
+    // Fallback: Si no viene incluido, lo buscamos en el array global de "sizes" usando el sizeTypeId
+    if (selectedSubCategory.sizeTypeId) {
+      return sizes.find((st) => st.id === selectedSubCategory.sizeTypeId)?.sizes || [];
+    }
+
+    return [];
+  }, [formData.subCategoryId, selectedCategoryData, sizes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +162,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             {isEdit ? <Edit3 size={20} className="text-amber-500" /> : <Package size={20} className="text-amber-500" />}
             {isEdit ? "Editar Producto" : "Nuevo Ingreso"}
           </h2>
-          <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white"><X size={24} /></button>
+          <button type="button" onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white"><X size={24} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -175,11 +186,13 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
 
+            {/* Al cambiar la subcategoría, limpiamos las variantes anteriores ya que cambian los talles */}
             <select 
               className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none disabled:opacity-40" 
               value={formData.subCategoryId} 
-              onChange={e => setFormData({ ...formData, subCategoryId: e.target.value })}
+              onChange={e => setFormData({ ...formData, subCategoryId: e.target.value, variants: [] })}
               disabled={!formData.categoryId}
+              required
             >
               <option value="">Subcategoría...</option>
               {availableSubCategories.map((sc: any) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
@@ -212,7 +225,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               <span className="text-[10px] font-black uppercase text-neutral-500 tracking-widest">Variantes de Stock</span>
               <button 
                 type="button" 
-                disabled={!formData.categoryId}
+                disabled={!formData.subCategoryId}
                 onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sizeId: "", colorId: "", stock: 0, sku: "" }] })} 
                 className="text-amber-500 text-[10px] font-bold uppercase disabled:opacity-30"
               >
