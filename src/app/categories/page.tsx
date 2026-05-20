@@ -40,9 +40,6 @@ export default async function CategoriesAdminPage() {
             <h3 className="text-xl font-bold text-white uppercase italic tracking-tighter mb-1">
               {cat.name}
             </h3>
-            <p className="text-neutral-500 text-[11px] font-medium leading-relaxed mb-6">
-              {cat.description || "Sin descripción."}
-            </p>
 
             <div className="flex flex-wrap gap-1.5">
               {cat.sizeType?.sizes?.map((s: any) => (
