@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 
@@ -76,7 +77,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems, updateQty, removeItem }) => {
               ) : (
                 cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4">
-                    <img src={item.image} alt={item.title} className="w-20 h-20 object-cover rounded-lg bg-gray-50" />
+                    <Image src={item.image} alt={item.title} width={80} height={80} className="w-20 h-20 object-cover rounded-lg bg-gray-50" />
                     <div className="flex-1">
                       <h3 className="font-bold text-sm leading-tight">{item.title}</h3>
                       <p className="text-xs text-gray-500 mb-2">{item.shipping}</p>

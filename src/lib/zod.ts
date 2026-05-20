@@ -69,6 +69,7 @@ export const garmentSchema = z.object({
   supplierId: z.string().optional().nullable(),
   // Aquí está el cambio clave:
   variants: z.array(variantSchema).min(1, "Debes agregar al menos un talle"),
+  images: z.array(z.string()).max(4, "Máximo 4 imágenes permitidas").optional(),
 });
 
 
