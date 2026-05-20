@@ -69,6 +69,7 @@ export const garmentSchema = z.object({
   supplierId: z.string().optional().nullable(),
   // Aquí está el cambio clave:
   variants: z.array(variantSchema).min(1, "Debes agregar al menos un talle"),
+  images: z.array(z.string()).max(4, "Máximo 4 imágenes permitidas").optional(),
 });
 
 
@@ -133,7 +134,7 @@ export const SizeTypeNameSchema = z.object({
 
 export const SizeValueSchema = z.string()
 .min(1, "El valor del talle no puede estar vacío")
-.regex(/^[a-zA-Z0-9.]+$/, "Solo se permiten letras, números y puntos (sin espacios)");
+.regex(/^[a-zA-Z0-9.\']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
  
 // COLOR
 export const colorSchema = z.object({

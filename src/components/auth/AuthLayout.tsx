@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: AuthProps) {
     {/* Fondo con blur */}
     <div
         className="absolute inset-0 bg-cover bg-no-repeat bg-right-bottom blur-sm scale-105"
-        style={{ backgroundImage: "url('/images/ropa.jpg')", backgroundRepeat: "no-repeat", backgroundSize: "cover", backgroundPosition: "right bottom", minWidth: "100vw", minHeight: "100vh", }}
+        style={{ backgroundImage: "url('/images/shape.jpg')", backgroundRepeat: "no-repeat", backgroundSize: "cover", backgroundPosition: "right bottom", minWidth: "100vw", minHeight: "100vh", }}
     />
 
       {/* Capa oscura */}
