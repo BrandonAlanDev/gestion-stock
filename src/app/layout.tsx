@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import LayoutComponent from "@/components/LayoutComponent";
 import { auth } from "@/auth";
 import NextTopLoader from 'nextjs-toploader';
+import AppGate from "@/components/AppGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,9 @@ export default async function RootLayout({
         />
         
         <LayoutComponent session={session}>
+          <AppGate>
             {children}
+          </AppGate>
         </LayoutComponent>
       </body>
     </html>
