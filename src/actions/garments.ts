@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; 
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
-import { color } from "framer-motion";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -20,7 +19,7 @@ interface CreateSubCategoryInput {
 }
 
 // ==========================================
-// PRENDAS / GARMENTS (Modificado para Variantes)
+// PRENDAS / GARMENTS (Modificado para Variantes y Subcategorías)
 // ==========================================
 
 export async function createGarment(data: any) {
@@ -30,13 +29,13 @@ export async function createGarment(data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { name, price, description, categoryId, supplierId, variants, images } = parsed.data;
+  // Agregada la extracción de subCategoryId desde los datos validados
+  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
     let uploadedImages: { srcImage: string; order: number }[] = [];
     if (images && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
-        // Upload base64 strings
         if (images[i].startsWith("data:image")) {
           const uploadResponse = await cloudinary.uploader.upload(images[i], {
             folder: "gestion-stock/garments",
@@ -50,17 +49,18 @@ export async function createGarment(data: any) {
     }
 
     const garment = await prisma.garment.create({
-     data: {
-        name: data.name,
-        price: data.price,
-        cost: data.cost,
-        description: data.description,
-        categoryId: data.categoryId,
-        supplierId: data.supplierId || null,
+      data: {
+        name,
+        price,
+        cost,
+        description,
+        categoryId,
+        subCategoryId: subCategoryId || null, // ADAPTADO: Se guarda la subcategoría en la base de datos
+        supplierId: supplierId || null,
         variants: {
-          create: data.variants.map((v: any) => ({
+          create: variants.map((v: any) => ({
             sku: v.sku,
-            stock: v.stock,
+            stock: Number(v.stock),
             sizeId: v.sizeId,
             colorId: v.colorId || null,
           })),
@@ -89,12 +89,12 @@ export async function getGarments(query?: string, categoryId?: string) {
             { variants: { some: { sku: { contains: query, } } } },
           ]
         } : {},
-        // Filtro por categoría
         categoryId ? { categoryId: categoryId } : {},
       ]
     },
     include: { 
       category: true, 
+      subCategory: true, // ADAPTADO: Trae también la relación de la subcategoría si la necesitás en las tablas
       variants: { 
         include: {
            size: true,
@@ -132,7 +132,8 @@ export async function updateGarment(id: string, data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  const { name, price, cost, description, categoryId, supplierId, variants, images } = data;
+  // ADAPTADO: Extraer subCategoryId desde la data entrante
+  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
 
   try {
     const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
@@ -164,15 +165,16 @@ export async function updateGarment(id: string, data: any) {
     }
 
     const updatedGarment = await prisma.$transaction(async (tx) => {
-      // 1. Actualización de datos básicos (Prisma castea strings a Decimal automáticamente)
+      // 1. Actualización de datos básicos (Incluida subCategoryId)
       const garment = await tx.garment.update({
         where: { id },
         data: {
           name,
-          price: price,
-          cost: cost,
+          price,
+          cost,
           description,
           categoryId,
+          subCategoryId: subCategoryId || null, // ADAPTADO: Mapeo de la subcategoría en el update
           supplierId: supplierId || null,
         },
       });
@@ -250,7 +252,6 @@ export async function updateGarment(id: string, data: any) {
 
 export async function deleteGarment(id: string) {
   try {
-    // Verificamos si el producto existe antes de intentar borrar
     const existingGarment = await prisma.garment.findUnique({
       where: { id },
       include: { variants: true }
@@ -260,28 +261,21 @@ export async function deleteGarment(id: string) {
       return { error: "El producto no existe o ya fue eliminado." };
     }
 
-    // Eliminación del producto
     await prisma.garment.delete({
       where: { id },
     });
 
-    // Revalidamos la ruta donde se muestra la tabla para refrescar los datos
     revalidatePath("/dashboard/productos"); 
-    
     return { success: true };
   } catch (error: any) {
     console.error("DELETE_GARMENT_ERROR:", error);
-
-    // Manejo de errores específicos de Prisma (opcional)
     if (error.code === 'P2003') {
       return { error: "No se puede eliminar: existen registros vinculados que no permiten el borrado." };
     }
-
     return { error: "Ocurrió un error inesperado al intentar eliminar el producto." };
   }
 }
 
-// Auxiliar para traer los talles disponibles en la base de datos
 export async function getSizes() {
   const sizes = await prisma.size.findMany({
     where: { active: true },
@@ -291,23 +285,19 @@ export async function getSizes() {
 }
 
 // ==========================================
-// CATEGORÍAS (Funciones faltantes para la gestión)
+// CATEGORÍAS Y SUBCATEGORÍAS
 // ==========================================
 export async function getCategories() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: {
-        name: 'asc'
-      },
+      orderBy: { name: 'asc' },
       include: {
         subCategories: {
           include: {
             sizeType: {
               include: {
                 sizes: {
-                  orderBy: {
-                    id: 'asc' 
-                  }
+                  orderBy: { id: 'asc' }
                 }
               }
             }
@@ -315,12 +305,9 @@ export async function getCategories() {
         }
       }
     });
-
     return categories;
-
   } catch (error) {
     console.error("Error al obtener las categorías en el backend:", error);
-    // Retornamos un array vacío de contingencia para que el .map() de la UI no rompa la página
     return [];
   }
 }
@@ -328,9 +315,7 @@ export async function getCategories() {
 export async function createCategory(formData: { name: string; description?: string }) {
   try {
     const newCategory = await prisma.category.create({
-      data: {
-        name: formData.name,
-      },
+      data: { name: formData.name },
     });
     revalidatePath("/categories");
     return { success: true, data: newCategory };
@@ -347,7 +332,6 @@ export async function updateCategory(id: string, data: { name: string; descripti
       data: {
         name: data.name,
         description: data.description,
-        // Eliminado sizeTypeId de acá porque ahora pertenece a subcategorías
       },
     });
     revalidatePath("/categories");
@@ -360,7 +344,6 @@ export async function updateCategory(id: string, data: { name: string; descripti
 
 export async function deleteCategory(id: string) {
   try {
-    // Si usas relationMode = "prisma", validamos subcategorías de forma manual antes de borrar
     const subCatsCount = await prisma.subCategory.count({
       where: { categoryId: id }
     });
@@ -438,22 +421,17 @@ export async function deleteSubCategory(id: string) {
 export async function getProviders() {
   try {
     const providers = await prisma.provider.findMany({
-      where: { 
-        active: true 
-      },
-      orderBy: { 
-        name: 'asc' 
-      },
+      where: { active: true },
+      orderBy: { name: 'asc' },
       include: {
         contacts: {
           where: { active: true }
         }
       }
     });
-
     return serializeData(providers);
   } catch (error) {
     console.error("Error al obtener proveedores:", error);
-    return []; // Retornamos un array vacío para que el modal no rompa
+    return [];
   }
 }

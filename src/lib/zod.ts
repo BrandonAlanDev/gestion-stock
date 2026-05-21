@@ -61,15 +61,25 @@ export const variantSchema = z.object({
 });
 
 export const garmentSchema = z.object({
-  name: z.string().min(2, "Nombre requerido"),
-  price: z.coerce.number().positive("El precio debe ser mayor a 0"),
-  cost: z.coerce.number().min(0),
+  name: z.string().min(1, "El nombre es obligatorio"),
+  price: z.coerce.number().positive(),
+  cost: z.coerce.number().positive(),
   description: z.string().optional(),
-  categoryId: z.string().min(1, "Selecciona una categoría"),
+  categoryId: z.string().min(1, "La categoría es obligatoria"),
+  
+  subCategoryId: z.string().optional().nullable(), 
+  
   supplierId: z.string().optional().nullable(),
-  // Aquí está el cambio clave:
-  variants: z.array(variantSchema).min(1, "Debes agregar al menos un talle"),
-  images: z.array(z.string()).max(4, "Máximo 4 imágenes permitidas").optional(),
+  images: z.array(z.string()).optional(),
+  variants: z.array(
+    z.object({
+      id: z.string().optional(), // Por si editas
+      sizeId: z.string().min(1),
+      colorId: z.string().optional().nullable(),
+      sku: z.string().optional(),
+      stock: z.coerce.number().int().nonnegative(),
+    })
+  ),
 });
 
 
@@ -134,7 +144,7 @@ export const SizeTypeNameSchema = z.object({
 
 export const SizeValueSchema = z.string()
 .min(1, "El valor del talle no puede estar vacío")
-.regex(/^[a-zA-Z0-9.\']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
+.regex(/^[a-zA-Z0-9.\-\/']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
  
 // COLOR
 export const colorSchema = z.object({

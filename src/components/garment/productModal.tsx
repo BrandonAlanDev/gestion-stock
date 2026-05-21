@@ -319,10 +319,14 @@ export default function ProductModal({
     try {
       setLoading(true);
 
+      // ADAPTADO: Extraer solo las URLs de las imágenes para cumplir con el esquema Zod del backend
+      const imageUrls = formData.images.map((img: ImageType) => img.url);
+
       const payload = {
         ...formData,
         price: Number(formData.price),
         cost: Number(formData.cost),
+        images: imageUrls, // Envia el array estructurado como strings planos
       };
 
       const res = isEdit
@@ -330,7 +334,9 @@ export default function ProductModal({
         : await createGarment(payload);
 
       if (res?.error) {
-        toast.error(res.error);
+        // Muestra un error detallado en la consola si viene de la validación de Zod
+        console.error("Error devuelto por la Server Action:", res.error);
+        toast.error(typeof res.error === 'object' ? "Error de validación de datos" : res.error);
         return;
       }
 
