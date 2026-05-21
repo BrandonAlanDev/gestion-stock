@@ -29,23 +29,28 @@ export async function createGarment(data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  // Agregada la extracción de subCategoryId desde los datos validados
-  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
+  const { 
+    name, 
+    price, 
+    cost, 
+    description, 
+    categoryId, 
+    subCategoryId, 
+    supplierId, 
+    variants, 
+    images 
+  } = parsed.data;
 
   try {
-    let uploadedImages: { srcImage: string; order: number }[] = [];
+    // 💡 LAS IMÁGENES YA FUERON SUBIDAS POR EL FRONTEND.
+    // Solo mapeamos el array de URLs strings que nos envía el cliente al formato de Prisma.
+    let mappedImages: { srcImage: string; order: number }[] = [];
+    
     if (images && images.length > 0) {
-      for (let i = 0; i < images.length; i++) {
-        if (images[i].startsWith("data:image")) {
-          const uploadResponse = await cloudinary.uploader.upload(images[i], {
-            folder: "gestion-stock/garments",
-          });
-          uploadedImages.push({
-            srcImage: uploadResponse.secure_url,
-            order: i,
-          });
-        }
-      }
+      mappedImages = images.map((url: string, index: number) => ({
+        srcImage: url,
+        order: index, // Mantiene el orden original (0 será la principal)
+      }));
     }
 
     const garment = await prisma.garment.create({
@@ -55,26 +60,34 @@ export async function createGarment(data: any) {
         cost,
         description,
         categoryId,
-        subCategoryId: subCategoryId || null, // ADAPTADO: Se guarda la subcategoría en la base de datos
+        subCategoryId: subCategoryId || null,
         supplierId: supplierId || null,
         variants: {
           create: variants.map((v: any) => ({
-            sku: v.sku,
+            sku: v.sku || null, // Evita strings vacíos que rompan por UNIQUE
             stock: Number(v.stock),
             sizeId: v.sizeId,
             colorId: v.colorId || null,
           })),
         },
         images: {
-          create: uploadedImages,
+          create: mappedImages, // Guardamos la relación en la tabla GarmentImage
         }
       }
     });
+
     revalidatePath("/dashboard");
     return { success: true, data: serializeData(garment) };
-  } catch (error) {
-    console.error(error);
-    return { error: "Error al crear el producto. Revisa si el SKU ya existe." };
+    
+  } catch (error: any) {
+    console.error("❌ Error en createGarment:", error);
+    
+    // Un extra útil: capturar explícitamente el error de SKU duplicado en Prisma
+    if (error.code === 'P2002') {
+      return { error: "El SKU ingresado ya pertenece a otra variante activa." };
+    }
+    
+    return { error: "Error interno al crear el producto en la base de datos." };
   }
 }
 
