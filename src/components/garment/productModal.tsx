@@ -69,8 +69,9 @@ function ColorDropdown({
 
         <ChevronDown
           size={12}
-          className={`text-neutral-500 transition-transform ${open ? "rotate-180" : ""
-            }`}
+          className={`text-neutral-500 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
         />
       </div>
 
@@ -229,7 +230,8 @@ export default function ProductModal({
           );
 
           const res = await fetch(
-            `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+            `https://api.cloudinary.com/v1_1/${
+              process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
             }/image/upload`,
             {
               method: "POST",
@@ -237,10 +239,7 @@ export default function ProductModal({
             }
           );
 
-          // 🛠️ AGREGA ESTO PARA DEBUGEAR:
           if (!res.ok) {
-            const errorJson = await res.json().catch(() => ({}));
-            console.error("❌ ERROR DETALLADO DE CLOUDINARY:", errorJson);
             throw new Error("Error subiendo imagen");
           }
 
@@ -684,8 +683,8 @@ export default function ProductModal({
               {loading
                 ? "Procesando..."
                 : isEdit
-                  ? "Guardar Cambios"
-                  : "Crear Producto"}
+                ? "Guardar Cambios"
+                : "Crear Producto"}
             </Button>
           </form>
         </div>

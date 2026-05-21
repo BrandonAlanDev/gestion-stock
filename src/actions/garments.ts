@@ -303,24 +303,28 @@ export async function getSizes() {
 export async function getCategories() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' },
       include: {
         subCategories: {
           include: {
             sizeType: {
               include: {
                 sizes: {
-                  orderBy: { id: 'asc' }
-                }
-              }
-            }
-          }
-        }
-      }
+                  orderBy: {
+                    order: "asc", 
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
     });
     return categories;
   } catch (error) {
-    console.error("Error al obtener las categorías en el backend:", error);
+    console.error("Error al obtener las categorías con talles:", error);
     return [];
   }
 }
