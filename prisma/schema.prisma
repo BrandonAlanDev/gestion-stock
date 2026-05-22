@@ -129,11 +129,13 @@ model GarmentVariant {
   sku       String?    @unique
   stock     Int        @default(0)
   garmentId String
-  sizeId    String
+  sizeId    String?
   colorId   String?
   garment   Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
-  size      Size       @relation(fields: [sizeId], references: [id])
+  size      Size?      @relation(fields: [sizeId], references: [id])
   color     Color?     @relation(fields: [colorId], references: [id])
+  attributes Json?
+
   movements Movement[]
 
   createdAt DateTime   @default(now())

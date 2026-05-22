@@ -66,8 +66,9 @@ export async function createGarment(data: any) {
           create: variants.map((v: any) => ({
             sku: v.sku || null, // Evita strings vacíos que rompan por UNIQUE
             stock: Number(v.stock),
-            sizeId: v.sizeId,
+            sizeId: v.sizeId || null,
             colorId: v.colorId || null,
+            attributes: v.attributes || null,
           })),
         },
         images: {
@@ -220,8 +221,9 @@ export async function updateGarment(id: string, data: any) {
             data: {
               sku: v.sku,
               stock: Number(v.stock),
-              sizeId: v.sizeId,
+              sizeId: v.sizeId || null,
               colorId: v.colorId || null,
+              attributes: v.attributes || null,
             },
           });
         } else {
@@ -230,8 +232,9 @@ export async function updateGarment(id: string, data: any) {
               garmentId: id,
               sku: v.sku,
               stock: Number(v.stock),
-              sizeId: v.sizeId,
+              sizeId: v.sizeId || null,
               colorId: v.colorId || null,
+              attributes: v.attributes || null,
             },
           });
         }

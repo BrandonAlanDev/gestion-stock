@@ -119,10 +119,11 @@ export default function ProductModal({
     variants:
       garment?.variants?.map((v: any) => ({
         id: v.id,
-        sizeId: v.sizeId,
+        sizeId: v.sizeId || "CUSTOM",
         colorId: v.colorId || "",
         stock: v.stock,
         sku: v.sku || "",
+        attributes: v.attributes || { customSize: "" },
       })) || [],
     images:
       garment?.images?.map((img: any) => ({
@@ -145,10 +146,11 @@ export default function ProductModal({
       variants:
         garment.variants?.map((v: any) => ({
           id: v.id,
-          sizeId: v.sizeId,
+          sizeId: v.sizeId || "CUSTOM",
           colorId: v.colorId || "",
           stock: v.stock,
           sku: v.sku || "",
+          attributes: v.attributes || { customSize: "" },
         })) || [],
       images:
         garment.images?.map((img: any) => ({
@@ -249,7 +251,7 @@ export default function ProductModal({
   const addVariant = () => {
     setFormData((prev) => ({
       ...prev,
-      variants: [...prev.variants, { sizeId: "", colorId: "", stock: 0, sku: "" }],
+      variants: [...prev.variants, { sizeId: "", colorId: "", stock: 0, sku: "", attributes: { customSize: "" } }],
     }));
   };
 
@@ -260,9 +262,18 @@ export default function ProductModal({
     }));
   };
 
-  const updateVariant = (index: number, field: keyof Variant, value: any) => {
+  const updateVariant = (index: number, field: keyof Variant | "attributes", value: any) => {
     const updated = [...formData.variants];
     updated[index] = { ...updated[index], [field]: value };
+    setFormData((prev) => ({ ...prev, variants: updated }));
+  };
+
+  const updateVariantCustomSize = (index: number, customSizeValue: string) => {
+    const updated = [...formData.variants];
+    updated[index] = { 
+      ...updated[index], 
+      attributes: { ...updated[index].attributes, customSize: customSizeValue } 
+    };
     setFormData((prev) => ({ ...prev, variants: updated }));
   };
 
@@ -274,6 +285,11 @@ export default function ProductModal({
 
       const payload = {
         ...formData,
+        variants: formData.variants.map((v: any) => ({
+          ...v,
+          sizeId: v.sizeId === "CUSTOM" ? null : v.sizeId,
+          attributes: v.sizeId === "CUSTOM" ? v.attributes : null,
+        })),
         price: Number(formData.price),
         cost: Number(formData.cost),
         images: imageUrls,
@@ -355,7 +371,7 @@ export default function ProductModal({
                     ...prev,
                     subCategoryId: e.target.value,
                     variants: e.target.value 
-                      ? [{ sizeId: "", colorId: "", stock: 0, sku: "" }] 
+                      ? [{ sizeId: "", colorId: "", stock: 0, sku: "", attributes: { customSize: "" } }] 
                       : [],
                   }))
                 }
@@ -434,7 +450,7 @@ export default function ProductModal({
                     key={i}
                     className="grid grid-cols-12 gap-3 bg-neutral-900/50 p-3 rounded-2xl border border-neutral-800/50 items-center"
                   >
-                    <div className="col-span-3">
+                    <div className="col-span-3 flex flex-col gap-1">
                       <select
                         className="w-full bg-transparent text-xs text-white outline-none font-medium custom-select-dark"
                         value={v.sizeId}
@@ -447,7 +463,19 @@ export default function ProductModal({
                             {String(s.value)}
                           </option>
                         ))}
+                        <option value="CUSTOM" className="bg-amber-500 text-black font-bold">Personalizado...</option>
                       </select>
+                      
+                      {v.sizeId === "CUSTOM" && (
+                        <input
+                          type="text"
+                          placeholder="Medida (ej: 5'8 x 20 x 2)"
+                          className="w-full bg-neutral-800 border border-neutral-700 rounded-md p-1 mt-1 text-[10px] text-white outline-none"
+                          value={v.attributes?.customSize || ""}
+                          onChange={(e) => updateVariantCustomSize(i, e.target.value)}
+                          required
+                        />
+                      )}
                     </div>
 
                     <div className="col-span-3 border-l border-neutral-800 pl-3">

@@ -54,10 +54,11 @@ export const movementSchema = z.object({
 
 
 export const variantSchema = z.object({
-  sizeId: z.string().min(1, "Selecciona un talle"),
+  sizeId: z.string().optional().nullable(),
   colorId: z.string().min(1, "Selecciona un color"),
   sku: z.string().optional(),
   stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
+  attributes: z.any().optional().nullable(),
 });
 
 export const garmentSchema = z.object({
@@ -74,10 +75,11 @@ export const garmentSchema = z.object({
   variants: z.array(
     z.object({
       id: z.string().optional(), // Por si editas
-      sizeId: z.string().min(1),
+      sizeId: z.string().optional().nullable(),
       colorId: z.string().optional().nullable(),
       sku: z.string().optional(),
       stock: z.coerce.number().int().nonnegative(),
+      attributes: z.any().optional().nullable(),
     })
   ),
 });
