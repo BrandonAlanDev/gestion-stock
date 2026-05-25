@@ -13,7 +13,7 @@ export const products = [
     subcategory: "Shortboards",
     price: 850000,
     rating: 4.9,
-    image: ["https://images.unsplash.com/photo-1531722569936-825d3dd91b15?q=80&w=1000&auto=format&fit=crop"],
+    image: ["/images/products/tabla.jpg"],
     isNew: true,
     shipping: "Gratis",
     description: "La Lost Driver 3.0 Pro es una tabla de surf de alto rendimiento diseñada para surfistas que buscan velocidad, maniobrabilidad y control en las olas. Con su diseño innovador y materiales de alta calidad, esta tabla ofrece una experiencia de surf excepcional tanto para profesionales como para entusiastas avanzados.",
@@ -112,41 +112,31 @@ export const heroSlides = [
   {
     id: 1,
     title: "New Surf Board",
-    subtitle: "Personalizado.",
-    description: "Crea tu propia tabla.",
-    image: ["/images/products/tabla.jpg"],
+    subtitle: "Artesanal",
+    description: "Tablas hechas a mano con los mejores materiales.",
+    image: ["/images/shape3.jpg"],
     ctaText: "Contactanos",
     targetCategory: "Tablas",
     theme: "dark"
-  },
-  {
-    id: 2,
-    title: "Indumentaria",
-    subtitle: "Nuestro estilo.",
-    description: "Encontrá las mejores indumentaria surfera.",
-    image: ["https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1000&auto=format&fit=crop"],
-    ctaText: "Ver Indumentaria",
-    targetCategory: "Indumentaria",
-    theme: "dark"
   }
   , {
-    id: 3,
-    title: "Accesorios",
-    subtitle: "Accesorios de alta calidad.",
-    description: "Encontrá los mejores accesorios.",
-    image: ["https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1000&auto=format&fit=crop"],
-    ctaText: "Ver Accesorios",
-    targetCategory: "Accesorios",
+    id: 2,
+    title: "Tablas",
+    subtitle: "Nuestros modelos.",
+    description: "Encontrá tu tabla ideal.",
+    image: ["/images/tablas.jpg"],
+    ctaText: "Ver Tablas",
+    targetCategory: "Tablas",
     theme: "dark"
   },
    {
-    id: 4,
-    title: "Trajes",
-    subtitle: "Equipamiento de alto rendimiento.",
-    description: "",
-    image: ["/images/products/traje.jpg"],
-    ctaText: "Ver Trajes",
-    targetCategory: "Trajes",
+    id: 3,
+    title: "Clases de surf",
+    subtitle: "Aprende a surfear.",
+    description: "Toma clases con el prsonal mas capacitado.",
+    image: ["/images/escuela.jpg"],
+    ctaText: "Ver Clases",
+    targetCategory: "Clases",
     theme: "dark"
   }
 ];

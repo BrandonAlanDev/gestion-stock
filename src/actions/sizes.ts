@@ -5,10 +5,20 @@ import { revalidatePath } from "next/cache";
 import {SizeTypeNameSchema,SizeValueSchema} from "@/lib/zod";
 
 export async function getSizeTypes() {
-  return await prisma.sizeType.findMany({
-    include: { sizes: { orderBy: { order: "asc" } } },
-    orderBy: { name: "asc" }
-  });
+  try {
+    const sizeTypes = await prisma.sizeType.findMany({
+      include: {
+        sizes: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    return sizeTypes;
+  } catch (error) {
+    console.error("Error al obtener los tipos de talle:", error);
+    return [];
+  }
 }
 
 export async function createSizeType(name: string) {
