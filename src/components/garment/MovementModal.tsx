@@ -99,7 +99,7 @@ export default function MovementModal({ garments }: { garments: any[] }) {
                     <option value="">Seleccionar...</option>
                     {garments.map((g) => g.variants.map((v: any) => (
                       <option key={v.id} value={v.id}>
-                        {g.name} - {v.size.value} (Stock: {v.stock})
+                        {g.name} - {v.size?.value || (v.attributes as any)?.customSize || "S/T"} (Stock: {v.stock})
                       </option>
                     )))}
                   </select>

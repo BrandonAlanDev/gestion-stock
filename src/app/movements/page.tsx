@@ -46,7 +46,7 @@ export default async function MovementsPage() {
                       {m.garmentVariant.garment.name}
                     </span>
                     <span className="text-[10px] text-neutral-500 font-black uppercase">
-                      Talle: {m.garmentVariant.size.value}
+                      Talle: {m.garmentVariant.size?.value || (m.garmentVariant.attributes as any)?.customSize || "S/T"}
                     </span>
                   </div>
                 </td>
