@@ -13,7 +13,7 @@ export const products = [
     subcategory: "Shortboards",
     price: 850000,
     rating: 4.9,
-    image: ["https://images.unsplash.com/photo-1531722569936-825d3dd91b15?q=80&w=1000&auto=format&fit=crop"],
+    image: ["/images/products/tabla.jpg"],
     isNew: true,
     shipping: "Gratis",
     description: "La Lost Driver 3.0 Pro es una tabla de surf de alto rendimiento diseñada para surfistas que buscan velocidad, maniobrabilidad y control en las olas. Con su diseño innovador y materiales de alta calidad, esta tabla ofrece una experiencia de surf excepcional tanto para profesionales como para entusiastas avanzados.",
