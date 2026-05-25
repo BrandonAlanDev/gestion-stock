@@ -56,7 +56,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                     <div className="flex flex-wrap gap-2">
                       {item.variants?.map((v: any) => (
                         <div key={v.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-neutral-900/50 border border-neutral-800">
-                          <span className="text-[9px] font-black text-white uppercase">{v.size?.value || "S/T"}</span>
+                          <span className="text-[9px] font-black text-white uppercase">{v.size?.value || (v.attributes as any)?.customSize || "S/T"}</span>
                           {v.color && (
                             <div className="flex items-center gap-1 border-l border-neutral-700 pl-1.5 ml-0.5">
                               <span className="text-[8px] text-neutral-500 font-bold uppercase tracking-tighter">{v.color.name}</span>
