@@ -84,7 +84,7 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
           {garment.name}
         </h3>
         <div className="flex items-center justify-between">
-          <span className="text-lg font-black text-blue-600">{price}</span>
+          <span className="text-lg font-black text-cyan-600">{price}</span>
           <div className="flex gap-1">
             {/* Puntos de colores disponibles */}
             {Array.from(new Set(garment.variants.filter(v => v.color).map(v => v.color!.hex || "#e2e8f0")))
@@ -178,7 +178,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                     <button
                       key={img.id}
                       onClick={() => setSelectedImg(i)}
-                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-blue-500" : "border-transparent opacity-60 hover:opacity-100"}`}
+                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-cyan-500" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
                       <img src={img.srcImage} alt={img.alt || ""} className="w-full h-full object-cover" />
                     </button>
@@ -208,7 +208,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                 </button>
               </div>
 
-              <span className="text-3xl font-black text-blue-600">{price}</span>
+              <span className="text-3xl font-black text-cyan-600">{price}</span>
 
               {/* Stock */}
               <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
               )}
 
               {/* CTA */}
-              <button className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white font-black uppercase tracking-wider text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group">
+              <button className="w-full py-4 bg-slate-900 hover:bg-cyan-600 text-white font-black uppercase tracking-wider text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group">
                 <ShoppingBag size={16} />
                 Consultar disponibilidad
               </button>
