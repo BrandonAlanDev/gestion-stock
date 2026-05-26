@@ -127,6 +127,40 @@ export async function getGarments(query?: string, categoryId?: string) {
   return serializeData(garments);
 }
 
+export async function getGarmentById(id: string) {
+  const garment = await prisma.garment.findUnique({
+    where: {
+      id
+    },
+    include: {
+      category: true,
+      subCategory: true,
+      variants: {
+        include: {
+          size: true,
+          color: true
+        }
+      },
+      supplier: {
+        include: {
+          contacts: {
+            where: {
+              active: true
+            }
+          }
+        }
+      },
+      images: {
+        orderBy: {
+          order: "asc"
+        }
+      }
+    }
+  });
+
+  return serializeData(garment);
+}
+
 function extractPublicId(url: string) {
   try {
     const parts = url.split('/');
