@@ -36,36 +36,79 @@ export default function AddSubCategoryForm({ categoryId, sizeTypes }: Props) {
     }
   };
 
+  const fieldStyle: React.CSSProperties = {
+    background: "#f0fafa",
+    border: "1px solid #b2dede",
+    borderRadius: "12px",
+    padding: "10px 12px",
+    fontSize: "12px",
+    color: "#0d2b2e",
+    outline: "none",
+    transition: "border-color 0.15s",
+  };
+
   return (
-    <form onSubmit={handleAdd} className="mt-4 pt-4 border-t border-neutral-800/50 space-y-3">
-      <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest mb-2">
+    <form
+      onSubmit={handleAdd}
+      className="space-y-3"
+      style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #e0f5f5" }}
+    >
+      <p
+        className="text-[9px] font-black uppercase tracking-widest mb-2"
+        style={{ color: "#0d5c63" }}
+      >
         + Nuevo Subgrupo
       </p>
+
       <div className="flex flex-col gap-2">
         <input
-          className="bg-neutral-950 border border-neutral-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-neutral-700"
+          style={fieldStyle}
           placeholder="Nombre (ej: Neoprenes)"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          onFocus={e => (e.currentTarget.style.borderColor = "#4ab8b8")}
+          onBlur={e => (e.currentTarget.style.borderColor = "#b2dede")}
         />
+
         <div className="flex gap-2">
           <select
-            className="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl p-2.5 text-[10px] text-neutral-400 outline-none cursor-pointer"
+            style={{ ...fieldStyle, flex: 1, cursor: "pointer", color: sizeTypeId ? "#0d2b2e" : "#4a7c80" }}
             value={sizeTypeId}
             onChange={(e) => setSizeTypeId(e.target.value)}
+            onFocus={e => (e.currentTarget.style.borderColor = "#4ab8b8")}
+            onBlur={e => (e.currentTarget.style.borderColor = "#b2dede")}
           >
             <option value="">Talle estándar...</option>
             {sizeTypes.map((st) => (
-              <option key={st.id} value={st.id}>
-                {st.name}
-              </option>
+              <option key={st.id} value={st.id}>{st.name}</option>
             ))}
           </select>
+
           <button
             type="submit"
             disabled={loading || !name}
-            className="bg-amber-500 hover:bg-amber-400 text-black p-2.5 rounded-xl transition-all disabled:opacity-30"
+            className="transition-all"
+            style={{
+              background: loading || !name ? "#e0f5f5" : "#0d5c63",
+              color: loading || !name ? "#4a7c80" : "#ffffff",
+              padding: "10px",
+              borderRadius: "12px",
+              border: "none",
+              cursor: loading || !name ? "not-allowed" : "pointer",
+              opacity: loading || !name ? 0.6 : 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={e => {
+              if (!loading && name)
+                (e.currentTarget as HTMLButtonElement).style.background = "#083d42";
+            }}
+            onMouseLeave={e => {
+              if (!loading && name)
+                (e.currentTarget as HTMLButtonElement).style.background = "#0d5c63";
+            }}
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
           </button>
