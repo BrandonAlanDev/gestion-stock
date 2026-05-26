@@ -1,12 +1,26 @@
-"use client";
+import { getGarments } from "@/actions/garments";
 
-import { useCart } from "@/context/CartContext";
-import ProductsPage from '@/components/catalogo/ProductsPage'; // Importa el componente que muestra todos los productos
+import { getCategories } from "@/actions/garments";
 
-export default function CatalogoPage() {
-  const { addToCart } = useCart(); // Obtenemos la misma función del contexto
+import CatalogoClient from "@/components/catalogo/CatalogoClient";
+
+export default async function CatalogoPage() {
+  // =========================================
+  // DATA
+  // =========================================
+
+  const garments = await getGarments();
+
+  const categories = await getCategories();
+
+  // =========================================
+  // RENDER
+  // =========================================
 
   return (
-    <ProductsPage addToCart={addToCart} />
+    <CatalogoClient
+      garments={garments}
+      categories={categories}
+    />
   );
 }
