@@ -18,36 +18,45 @@ export default async function DashboardPage({
   const query = params?.query || "";
   const category = params?.category || "";
 
-  // 2. Agregamos getColors() al Promise.all para cargar los colores de la DB
   const [garments, sizeTypes, categories, providers, colors] = await Promise.all([
     getGarments(query, category),
     getSizeTypes(),
     getCategories(),
     getProviders(),
-    getColors(), 
+    getColors(),
   ]);
 
   return (
-    <div className="p-8 bg-neutral-950 min-h-screen text-neutral-100 pt-24">
+    <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase italic text-white flex items-center gap-3">
-            <span className="w-2 h-8 bg-amber-500 rounded-full inline-block" />
+          <h1
+            className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3"
+            style={{ color: "#083d42" }}
+          >
+            {/* Acento verde marino en lugar de amber */}
+            <span
+              className="w-2 h-8 rounded-full inline-block"
+              style={{ background: "#0d5c63" }}
+            />
             Gestión de Inventario
           </h1>
-          <p className="text-neutral-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1 ml-5">
+          <p
+            className="text-[10px] font-black uppercase mt-1 ml-5"
+            style={{ color: "#4a7c80", letterSpacing: "0.4em" }}
+          >
             Control de Stock y Operaciones
           </p>
         </div>
-        
+
         <div className="flex flex-row flex-wrap gap-3">
-          <MovementModal garments={garments} /> 
-          {/* 3. Pasamos los colores al modal de producto para poder elegirlos al crear/editar */}
-          <ProductModal 
-            categories={categories} 
-            sizes={sizeTypes} 
-            providers={providers} 
+          <MovementModal garments={garments} />
+          <ProductModal
+            categories={categories}
+            sizes={sizeTypes}
+            providers={providers}
             colors={colors}
           />
         </div>
@@ -63,12 +72,12 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* 4. Pasamos los colores a la tabla de vista rápida */}
-      <QuickViewTable 
-        garments={garments} 
-        categories={categories} 
-        sizeTypes={sizeTypes} 
-        providers={providers} 
+      {/* TABLA */}
+      <QuickViewTable
+        garments={garments}
+        categories={categories}
+        sizeTypes={sizeTypes}
+        providers={providers}
         colors={colors}
       />
     </div>
