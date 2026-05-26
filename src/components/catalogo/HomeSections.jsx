@@ -13,12 +13,12 @@ const CATEGORY_GRID = [
     sublabel: "Todos nuestros modelos",
     href: "/productos/tablas", // 👈 Esto le avisa a la página de productos qué filtrar
     image: "/images/products/tablas.jpg",
-    accent: "from-cyan-900/80 via-cyan-900/40 to-transparent",
+    accent: "from-blue-900/80 via-blue-900/40 to-transparent",
   },
   {
     id: "indumentaria",
     label: "Indumentaria",
-    sublabel: "Remeras · Shorts · Calzado",
+    sublabel: "Remeras · Jeans · Calzado",
     href: "/productos?categoria=indumentaria",
     image: "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&q=80",
     accent: "from-slate-900/80 via-slate-900/30 to-transparent",
