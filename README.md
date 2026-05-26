@@ -42,15 +42,15 @@ Crea un archivo llamado `.env` en la raíz del proyecto y copia el siguiente con
 
 ```env
 # Conexión a Base de Datos (URL Completa para Prisma)
-DATABASE_URL=" connection string "
+DATABASE_URL="mysql://root@127.0.0.1:3306/gestion-stock"
 
 # Variables para el Adaptador Nativo (Requerido en Prisma 7)
 
-DATABASE_USER="usuario"
-DATABASE_PASSWORD="contraseña"
-DATABASE_NAME="nombre de tu db"
-DATABASE_HOST="dominio del host"
-DATABASE_PORT=1234 (puerto de la DB)
+DATABASE_USER="root"
+DATABASE_PASSWORD=""
+DATABASE_NAME="gestion-stock"
+DATABASE_HOST="127.0.0.1"
+DATABASE_PORT=3306
 
 TIMEZONE = "America/Argentina/Buenos_Aires";
 

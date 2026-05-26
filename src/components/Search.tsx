@@ -24,6 +24,7 @@ export default function Search({ className }: SearchProps) {
   return (
     <div className={`relative flex flex-1 flex-shrink-0 ${className}`}>
       <input
+        className="peer block w-full rounded-md border border-neutral-800 bg-neutral-900 py-[9px] pl-10 text-sm outline-none placeholder:text-neutral-500 focus:border-cyan-500 text-white"
         style={{
           background: "#ffffff",
           border: "1px solid #b2dede",

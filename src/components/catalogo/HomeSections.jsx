@@ -12,7 +12,7 @@ const CATEGORY_GRID = [
     label: "Tablas",
     sublabel: "Todos nuestros modelos",
     href: "/productos/tablas", // 👈 Esto le avisa a la página de productos qué filtrar
-    image: "/images/new.jpg",
+    image: "/images/products/tablas.jpg",
     accent: "from-blue-900/80 via-blue-900/40 to-transparent",
   },
   {
