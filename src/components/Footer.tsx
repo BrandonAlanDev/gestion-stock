@@ -36,7 +36,7 @@ export function Footer({
           {/* Marca */}
           <div className="md:col-span-2 space-y-5">
             <span className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
-              NewSurf<span className="text-blue-500">Board</span>
+              NewSurf<span className="text-cyan-500">Board</span>
 
             </span>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
@@ -54,7 +54,7 @@ export function Footer({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-300"
+                  className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:border-cyan-400 hover:text-cyan-500 hover:bg-cyan-50 transition-all duration-300"
                 >
                   <Icon size={16} />
                 </a>
@@ -74,7 +74,7 @@ export function Footer({
                     href={l.href}
                     className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
                   >
-                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-blue-500" />
+                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
                     {l.label}
                   </Link>
                 </li>
@@ -94,7 +94,7 @@ export function Footer({
                     href={l.href}
                     className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
                   >
-                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-blue-500" />
+                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
                     {l.label}
                   </Link>
                 </li>

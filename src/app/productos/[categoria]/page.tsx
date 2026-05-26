@@ -32,7 +32,7 @@ export default async function CategoriaPage({
 
   // Buscar categoría con sus subcategorías y conteo de productos
   const category = await prisma.category.findFirst({
-where: { name: categoryName, active: true },
+    where: { name: categoryName, active: true },
     include: {
       subCategories: {
         where: { active: true },

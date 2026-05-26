@@ -49,7 +49,7 @@ const ProductCard = ({ product, addToCart }) => {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className="select-none group bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300 relative overflow-hidden"
-    ><Link href={`/productos/${product.id}`}>
+    ><Link href={`/productos/item/${product.id}`}>
       {/* Badges */}
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
         {product.isNew && (
