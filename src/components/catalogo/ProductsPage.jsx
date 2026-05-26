@@ -48,7 +48,7 @@ const ProductsPage = ({ addToCart }) => {
           <div className="flex items-center gap-3">
             <div className="relative group">
               <select 
-                className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium focus:ring-2 focus:ring-accent outline-none cursor-pointer"
+                className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-accent outline-none cursor-pointer text-teal-400 font-bold"
                 onChange={(e) => {
                   const [key, order] = e.target.value.split('-');
                   setSortConfig({ key, order });
@@ -74,7 +74,7 @@ const ProductsPage = ({ addToCart }) => {
               <div className="space-y-2">
                 <button 
                   onClick={() => { setSelectedCat("Todos"); setSelectedSub("Todos"); }}
-                  className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCat === "Todos" ? "bg-primary text-white font-medium" : "text-slate-600 hover:bg-slate-100"}`}
+                  className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCat === "Todos" ? "bg-primary text-teal-400 font-medium" : "text-slate-600 hover:bg-slate-100"}`}
                 >
                   Todos los productos
                 </button>
@@ -82,7 +82,7 @@ const ProductsPage = ({ addToCart }) => {
                   <button 
                     key={cat.id}
                     onClick={() => { setSelectedCat(cat.name); setSelectedSub("Todos"); }}
-                    className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCat === cat.name ? "bg-primary text-white font-medium" : "text-slate-600 hover:bg-slate-100"}`}
+                    className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCat === cat.name ? "bg-primary text-teal-400 font-medium" : "text-slate-600 hover:bg-slate-100"}`}
                   >
                     {cat.name}
                   </button>
@@ -97,7 +97,7 @@ const ProductsPage = ({ addToCart }) => {
                 <div className="space-y-2">
                   <button 
                     onClick={() => setSelectedSub("Todos")}
-                    className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedSub === "Todos" ? "bg-accent text-white font-medium" : "text-slate-600 hover:bg-slate-100"}`}
+                    className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedSub === "Todos" ? "bg-accent text-teal-400 font-medium" : "text-slate-600 hover:bg-slate-100"}`}
                   >
                     Cualquiera
                   </button>
@@ -105,7 +105,7 @@ const ProductsPage = ({ addToCart }) => {
                     <button 
                       key={sub}
                       onClick={() => setSelectedSub(sub)}
-                      className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedSub === sub ? "bg-accent text-white font-medium" : "text-slate-600 hover:bg-slate-100"}`}
+                      className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedSub === sub ? "bg-accent text-teal-400 font-medium" : "text-slate-600 hover:bg-slate-100"}`}
                     >
                       {sub}
                     </button>
@@ -119,10 +119,9 @@ const ProductsPage = ({ addToCart }) => {
           <div className="flex-1">
             {processedProducts.length > 0 ? (
               <motion.div 
-                layout
                 className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
               >
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
                   {processedProducts.map(product => (
                     <ProductCard key={product.id} product={product} addToCart={addToCart} />
                   ))}
