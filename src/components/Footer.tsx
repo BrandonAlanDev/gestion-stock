@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Instagram, Facebook, Youtube } from "lucide-react";
+import { ArrowRight, Instagram, Facebook, Youtube, Twitter, Music2Icon, Linkedin } from "lucide-react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 const LINKS = {
   tienda: [
@@ -25,6 +26,7 @@ export function Footer({
   openPrivacy: () => void;
   openTerms: () => void;
 }) {
+  const pageConfig = usePageConfig();
   return (
 
     <footer className="bg-white border-t border-slate-200 text-slate-900">
@@ -36,25 +38,28 @@ export function Footer({
           {/* Marca */}
           <div className="md:col-span-2 space-y-5">
             <span className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
-              NewSurf<span className="text-cyan-500">Board</span>
+              {pageConfig?.pageConfig.storeName || <>GESTION<span className="text-cyan-500">OK</span></>}
 
             </span>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-              Equipamiento de surf en Santa Clara del Mar. Tablas, trajes y accesorios para todos los niveles, probados en el Atlántico.
+              {pageConfig?.pageConfig.description || "Tu tienda online de respaldo para tu comercio físico. Gestiona tu stock, exhibe tus productos y llega a más clientes con nuestra plataforma de ecommerce integrada."}
             </p>
             {/* Redes */}
             <div className="flex items-center gap-3 pt-1">
               {[
-                { icon: Instagram, href: "https://instagram.com" },
-                { icon: Facebook,  href: "https://facebook.com" },
-                { icon: Youtube,   href: "https://youtube.com" },
-              ].map(({ icon: Icon, href }) => (
+                { icon: Instagram, href: pageConfig?.pageConfig.instagram},
+                { icon: Facebook,  href: pageConfig?.pageConfig.facebook},
+                { icon: Youtube,   href: pageConfig?.pageConfig.youtube},
+                { icon : Linkedin,  href: pageConfig?.pageConfig.linkedin},
+                { icon: Twitter,   href: pageConfig?.pageConfig.x},
+                { icon: Music2Icon, href: pageConfig?.pageConfig.tiktok},
+              ].map(({ icon: Icon, href }, index) => (
                 <a
-                  key={href}
+                  key={index}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:border-cyan-400 hover:text-cyan-500 hover:bg-cyan-50 transition-all duration-300"
+                  className={`${!href ? "hidden" : ""} w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:border-cyan-400 hover:text-cyan-500 hover:bg-cyan-50 transition-all duration-300`}
                 >
                   <Icon size={16} />
                 </a>
@@ -110,7 +115,7 @@ export function Footer({
       {/* Franja inferior */}
       <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-xs text-slate-400">
-          © {new Date().getFullYear()} NewSurfBoard — Santa Clara del Mar, Buenos Aires.
+          © {new Date().getFullYear()} {pageConfig?.pageConfig.storeName || "GestionOK"} — {pageConfig?.pageConfig.location ? pageConfig?.pageConfig.location + ", Argentina" : "Argentina"}.
         </p>
         <div className="flex gap-5">
           <button

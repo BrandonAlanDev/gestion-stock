@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import {getBrandingConfig} from "@/actions/page-config.actions";
 
 import {
   Package,
@@ -22,15 +23,18 @@ import {
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { is } from "zod/v4/locales";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface HeaderProps {
   cartCount: number;
   onOpenCart: () => void;
+  branding: any;
 }
 
 export default function Header({
   cartCount,
   onOpenCart,
+  branding,
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -41,8 +45,11 @@ export default function Header({
   const isHomeTop = pathname === "/" && !scrolled;
 
   const { data: session, status } = useSession();
+  const pageConfig =
+  usePageConfig();
 
   useEffect(() => {
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 0);
     };
@@ -140,13 +147,21 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-[34px] h-[34px] rounded-lg bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M2 12 Q6 6 12 12 Q18 18 22 12" />
-            </svg>
-          </div>
+          {pageConfig?.pageConfig.logo ? (
+            <img
+              src={pageConfig.pageConfig.logo}
+              alt="Logo"
+              className="w-[34px] h-[34px] rounded-lg"
+            />
+          ) : (
+            <div className="w-[34px] h-[34px] rounded-lg bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M2 12 Q6 6 12 12 Q18 18 22 12" />
+              </svg>
+            </div>
+          )}
           <span className="text-[16px] font-medium text-white tracking-tight">
-            New<span className="text-cyan-400">Surf</span>Board
+            {pageConfig?.pageConfig.storeName || <>GESTION<span className="text-cyan-400">OK</span></>}
           </span>
         </Link>
 
@@ -162,7 +177,7 @@ export default function Header({
 
                 {session.user.role === "ADMIN" && (
                   <Link
-                    href="/admin"
+                    href="/admin/pageConfig"
                     className="flex items-center gap-2 text-xs text-cyan-500 font-bold hover:text-cyan-400 transition hover:cursor-pointer"
                   >
                     <ShieldCheck size={14} />

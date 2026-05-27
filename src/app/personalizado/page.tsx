@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const WA_NUMBER = "5492235000000"; // ← reemplazá con tu número real
+const WA_NUMBER = "5492235000000"; // ← Reemplazá con tu número real
 
 /* ── Paleta del logo ────────────────────────────────────────────────── */
 const T = {
@@ -17,12 +17,40 @@ const T = {
   chipTxt: "#e8f5f5",
 } as const;
 
-const TIPOS = ["Shortboard", "Longboard", "Fish", "Funboard", "Gun", "Mini Malibu", "Hybrid"];
+// Lista ordenada real alineada con BOARD_SHAPES
+const TIPOS = [
+  "Shortboard", 
+  "Huevos", 
+  "Fish", 
+  "Hybrid", 
+  "Mid length", 
+  "Mini Malibu", 
+  "Funboard", 
+  "Longboard", 
+  "Gun"
+];
+
 const MATERIALES = [
   { val: "Epóxi", desc: "liviana y rígida" },
   { val: "Poliéster", desc: "clásica y flexible" },
 ];
-const COLAS = ["Pin tail", "Round tail", "Squash tail", "Swallow tail", "Square tail", "Bat tail"];
+
+// Lista alineada con TAIL_SHAPES
+const COLAS = [
+  "Pin tail", 
+  "Round tail", 
+  "RoudSquash tail", 
+  "Squash tail", 
+  "fullRoudSquash", 
+  "Fish Tail (moderno)", 
+  "Retro Fish Tail", 
+  "Swallow tail", 
+  "Square tail", 
+  "Dimante tail", 
+  "SquareFish", 
+  "FullRoundSquashFish"
+];
+
 const KILLA_TIPOS = ["FCS II", "Futures", "FCS (clásico)", "Glasson (fijas)"];
 const KILLA_COUNTS = ["1", "2", "3", "4", "5"];
 
@@ -33,22 +61,30 @@ type State = {
 };
 
 const BOARD_SHAPES: Record<string, string> = {
-  Shortboard:    "M30,6 C40,6 51,28 51,78 C51,118 43,146 30,154 C17,146 9,118 9,78 C9,28 20,6 30,6 Z",
-  Longboard:     "M30,4 C38,4 48,35 48,85 C48,125 42,150 30,156 C18,150 12,125 12,85 C12,35 22,4 30,4 Z",
-  Fish:          "M30,10 C41,10 52,32 52,78 C52,110 46,132 30,148 C14,132 8,110 8,78 C8,32 19,10 30,10 Z",
-  Funboard:      "M30,5 C39,5 50,30 50,80 C50,120 43,148 30,155 C17,148 10,120 10,80 C10,30 21,5 30,5 Z",
-  Gun:           "M30,3 C37,3 48,22 48,78 C48,122 41,150 30,157 C19,150 12,122 12,78 C12,22 23,3 30,3 Z",
+  Shortboard: "M30,6 C40,6 51,28 51,78 C51,118 43,146 30,154 C17,146 9,118 9,78 C9,28 20,6 30,6 Z",
+  Huevos: "M30,8 C41,8 52,32 52,78 C52,118 44,146 30,154 C16,146 8,118 8,78 C8,32 19,8 30,8 Z",
+  Fish: "M30,10 C41,10 52,32 52,78 C52,110 46,132 30,148 C14,132 8,110 8,78 C8,32 19,10 30,10 Z",
+  Hybrid: "M30,8 C41,8 52,30 52,78 C52,116 45,142 30,152 C15,142 8,116 8,78 C8,30 19,8 30,8 Z",
+  "Mid length": "M30,5 C39,5 49,32 49,82 C49,122 42,149 30,155 C18,149 11,122 11,82 C11,32 21,5 30,5 Z",
   "Mini Malibu": "M30,6 C40,6 50,32 50,80 C50,120 43,147 30,154 C17,147 10,120 10,80 C10,32 20,6 30,6 Z",
-  Hybrid:        "M30,8 C41,8 52,30 52,78 C52,116 45,142 30,152 C15,142 8,116 8,78 C8,30 19,8 30,8 Z",
+  Funboard: "M30,5 C39,5 50,30 50,80 C50,120 43,148 30,155 C17,148 10,120 10,80 C10,30 21,5 30,5 Z",
+  Longboard: "M30,4 C38,4 48,35 48,85 C48,125 42,150 30,156 C18,150 12,125 12,85 C12,35 22,4 30,4 Z",
+  Gun: "M30,3 C37,3 48,22 48,78 C48,122 41,150 30,157 C19,150 12,122 12,78 C12,22 23,3 30,3 Z",
 };
 
 const TAIL_SHAPES: Record<string, string> = {
-  "Pin tail":    "M22,146 Q30,156 38,146",
-  "Round tail":  "M16,148 Q30,158 44,148",
+  "Pin tail": "M22,146 Q30,156 38,146",
+  "Round tail": "M16,148 Q30,158 44,148",
+  "RoudSquash tail": "M16,148 Q30,156 44,148 L44,156 L16,156 Z",
   "Squash tail": "M16,150 L30,156 L44,150",
-  "Swallow tail":"M14,148 L24,156 L30,150 L36,156 L46,148",
+  "fullRoudSquash": "M16,148 Q30,156 44,148 L44,156 L16,156 Z",
+  "Fish Tail (moderno)": "M22,146 Q30,156 38,146 L38,156 L22,156 Z",
+  "Retro Fish Tail": "M22,146 Q30,156 38,146 L30,156 Z",
+  "Swallow tail": "M14,148 L24,156 L30,150 L36,156 L46,148",
   "Square tail": "M16,150 L44,150 L44,156 L16,156 Z",
-  "Bat tail":    "M14,146 L22,154 L30,149 L38,154 L46,146",
+  "Dimante tail": "M16,148 L30,156 L44,148 L38,156 L30,150 L22,156 Z",
+  "SquareFish": "M14,148 L46,148 L44,156 L30,152 L16,156 Z",
+  "FullRoundSquashFish": "M14,148 Q30,154 46,148 L44,156 L30,151 L16,156 Z",
 };
 
 const FIN_POSITIONS: Record<number, [number, number][]> = {
@@ -205,7 +241,7 @@ export default function BoardDesignerPage() {
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
             {([
-              { key:"largo"   as const, label:"Largo",            unit:"pies",     ph:"6.2",  min:4,  max:12,  step:0.1  },
+              { key:"largo"   as const, label:"Largo",            unit:"pies",    ph:"6.2",  min:4,  max:12,  step:0.1  },
               { key:"ancho"   as const, label:"Ancho",            unit:"pulgadas", ph:"20.5", min:14, max:26,  step:0.25 },
               { key:"espesor" as const, label:"Espesor",          unit:"pulgadas", ph:"2.5",  min:1,  max:4,   step:0.25 },
               { key:"volumen" as const, label:"Volumen (opcional)",unit:"litros",   ph:"32",   min:20, max:100, step:0.5  },
