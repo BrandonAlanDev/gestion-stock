@@ -126,6 +126,7 @@ export default function ProductoView({ product }: Props) {
                   key={img.id}
                   onMouseEnter={() => setSelectedImage(img.srcImage)}
                   onClick={() => setSelectedImage(img.srcImage)}
+                  draggable={false}
                   className={`
                     relative rounded-xl overflow-hidden aspect-square bg-gray-50 transition-all duration-200
                     ${

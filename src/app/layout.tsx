@@ -1,14 +1,17 @@
-import type { Metadata } from "next";
 import "./globals.css";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import LayoutComponent from "@/components/LayoutComponent";
 import { auth } from "@/auth";
 import RouteLoader from "@/components/RouteLoader";
 import AppGate from "@/components/AppGate";
-import { getBrandingConfig } from "@/actions/page-config.actions";
+import {
+  getBrandingConfig,
+} from "@/actions/page-config/branding.actions";
+
 import {
   getPageConfig,
-} from "@/actions/page-config.actions";
+} from "@/actions/page-config/general.actions";
 
 import {
   PageConfigProvider,

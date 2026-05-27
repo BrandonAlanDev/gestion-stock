@@ -1,7 +1,5 @@
 "use client";
 
-import { Hero } from "@/components/Hero";
-import { Footer } from "@/components/Footer";
 import ProductLayout from "./catalogo/ProductLayout";
 
 export default function HomeClient() {
