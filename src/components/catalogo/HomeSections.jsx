@@ -5,13 +5,16 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+
 // --- DATOS DE CATEGORÍAS DEL GRID ---
 const CATEGORY_GRID = [
   {
     id: "tablas",
     label: "Tablas",
     sublabel: "Todos nuestros modelos",
-    href: "/productos/tablas",
+
+    href: "/productos?categoria=tablas",
     image: "/images/new.jpg",
     accent: "from-blue-900/80 via-blue-900/40 to-transparent",
   },
@@ -129,13 +132,14 @@ const CategoryCard = ({ cat, index, tall }) => {
 
 // --- COMPONENTE PRINCIPAL ---
 export default function FeaturedSection() {
+    const { pageConfig } = usePageConfig();
   return (
     <section id="featured" className="w-full py-16">
       {/* Encabezado */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
-          <span className="text-xs font-bold tracking-widest uppercase text-amber-500 mb-2 block">
-            Santa Clara del Mar
+          <span className="text-xs font-bold tracking-widest uppercase text-cyan-500 mb-2 block">
+            {pageConfig?.location || "Argentina"}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
             Somos NEWSURFBOARD
