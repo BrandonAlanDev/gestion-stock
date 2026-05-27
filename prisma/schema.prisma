@@ -216,7 +216,89 @@ model Movement {
   @@index([variantId])
 }
 
+model PageConfig {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // =========================
+  // INFORMACIÓN DEL NEGOCIO
+  // =========================
+  storeName   String
+  description String? @db.Text
+  slogan      String?
+
+  // =========================
+  // BRANDING
+  // =========================
+  logo        String? @db.Text
+  favicon     String? @db.Text
+  banner      String? @db.Text
+
+  primaryColor   String? @default("#000000")
+  secondaryColor String? @default("#FFFFFF")
+
+  // =========================
+  // ECOMMERCE
+  // =========================
+  ecommerceEnabled Boolean @default(true)
+  cartEnabled      Boolean @default(true)
+  checkoutEnabled  Boolean @default(true)
+
+  // =========================
+  // CONTACTO
+  // =========================
+  phone      String?
+  whatsapp   String?
+  email      String?
+
+  // =========================
+  // UBICACIÓN
+  // =========================
+  locationEnabled Boolean @default(false)
+
+  address  String?
+  city     String?
+  province String?
+  country  String?
+
+  postalCode String?
+
+  mapsUrl String? @db.Text
+
+  // =========================
+  // REDES SOCIALES
+  // =========================
+  instagram String? @db.Text
+  facebook  String? @db.Text
+  tiktok    String? @db.Text
+  x         String? @db.Text
+  youtube   String? @db.Text
+  linkedin  String? @db.Text
+
+  // =========================
+  // CONFIGURACIONES GENERALES
+  // =========================
+  currency String @default("ARS")
+  language String @default("es")
+
+  maintenanceMode Boolean @default(false)
+
+  // =========================
+  // SEO
+  // =========================
+  metaTitle       String?
+  metaDescription String? @db.Text
+
+  // =========================
+  // OPCIONALES FUTUROS
+  // =========================
+  termsAndConditions String? @db.Text
+  privacyPolicy      String? @db.Text
+}
+
 enum MovementType {
   IN
   OUT
 }
+
