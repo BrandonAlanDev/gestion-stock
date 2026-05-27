@@ -2,102 +2,258 @@
 
 import { prisma } from "@/lib/prisma";
 
-import {
-  getOrCreatePageConfig,
-} from "./shared/get-page-config";
+import cloudinary, {
+  extractPublicId,
+} from "@/lib/cloudinary";
 
-import {
-  uploadPageImage,
-} from "./shared/upload-page-image";
+import { uploadImage } from "@/lib/upload-image";
+
+import { generateSeoImageData } from "./helpers";
+
+type BrandingInput = {
+  storeName?: string;
+
+  slogan?: string | null;
+
+  description?: string | null;
+
+  logo?: string | null;
+
+  banner?: string | null;
+
+  favicon?: string | null;
+
+  primaryColor?: string | null;
+
+  secondaryColor?: string | null;
+};
 
 export async function updateBrandingConfig(
-  data: {
-    storeName?: string;
-    slogan?: string | null;
-
-    logo?: string | null;
-    banner?: string | null;
-    favicon?: string | null;
-
-    primaryColor?: string | null;
-    secondaryColor?: string | null;
-  }
+  data: BrandingInput
 ) {
   try {
     const existing =
-      await getOrCreatePageConfig();
+      await prisma.pageConfig.findFirst();
 
-    const logo =
-      await uploadPageImage(
-        data.logo,
-        existing.logo,
-        "gestion-stock/page-config/logo"
-      );
+    const storeName =
+      data.storeName?.trim() ||
+      existing?.storeName ||
+      "GestionOK";
 
-    const banner =
-      await uploadPageImage(
-        data.banner,
-        existing.banner,
-        "gestion-stock/page-config/banner"
-      );
+    let finalLogo =
+      existing?.logo || null;
 
-    const favicon =
-      await uploadPageImage(
-        data.favicon,
-        existing.favicon,
-        "gestion-stock/page-config/favicon"
-      );
+    let finalBanner =
+      existing?.banner || null;
 
-    const branding =
-      await prisma.pageConfig.update({
-        where: { id: 1 },
+    let finalFavicon =
+      existing?.favicon || null;
 
-        data: {
-          storeName: data.storeName,
-          slogan: data.slogan,
+    // =====================================
+    // LOGO
+    // =====================================
 
-          logo,
-          banner,
-          favicon,
+    if (
+      data.logo &&
+      data.logo.startsWith(
+        "data:image"
+      )
+    ) {
+      if (existing?.logo) {
+        const publicId =
+          extractPublicId(
+            existing.logo
+          );
 
-          primaryColor:
-            data.primaryColor,
+        if (publicId) {
+          await cloudinary.uploader.destroy(
+            publicId,
+            {
+              invalidate: true,
+            }
+          );
+        }
+      }
 
-          secondaryColor:
-            data.secondaryColor,
-        },
-      });
+      const seo =
+        generateSeoImageData(
+          storeName,
+          "logo"
+        );
+
+      const uploadedLogo = await uploadImage({ base64: data.logo, folder: seo.folder, publicId: seo.publicId, displayName: seo.displayName });
+
+      finalLogo =
+        uploadedLogo.secure_url;
+    }
+
+    // =====================================
+    // BANNER
+    // =====================================
+
+    if (
+      data.banner &&
+      data.banner.startsWith(
+        "data:image"
+      )
+    ) {
+      if (existing?.banner) {
+        const publicId =
+          extractPublicId(
+            existing.banner
+          );
+
+        if (publicId) {
+          await cloudinary.uploader.destroy(
+            publicId,
+            {
+              invalidate: true,
+            }
+          );
+        }
+      }
+
+      const seo =
+        generateSeoImageData(
+          storeName,
+          "banner"
+        );
+
+      const uploadedBanner = await uploadImage({ base64: data.banner, folder: seo.folder, publicId: seo.publicId, displayName: seo.displayName });
+
+      finalBanner =
+        uploadedBanner.secure_url;
+    }
+
+    // =====================================
+    // FAVICON
+    // =====================================
+
+    if (
+      data.favicon &&
+      data.favicon.startsWith(
+        "data:image"
+      )
+    ) {
+      if (existing?.favicon) {
+        const publicId =
+          extractPublicId(
+            existing.favicon
+          );
+
+        if (publicId) {
+          await cloudinary.uploader.destroy(
+            publicId,
+            {
+              invalidate: true,
+            }
+          );
+        }
+      }
+
+      const seo =
+        generateSeoImageData(
+          storeName,
+          "favicon"
+        );
+
+      const uploadedFavicon = await uploadImage({ base64: data.favicon, folder: seo.folder, publicId: seo.publicId, displayName: seo.displayName });
+
+      finalFavicon =
+        uploadedFavicon.secure_url;
+    }
+
+    // =====================================
+    // UPSERT
+    // =====================================
+
+    const payload = {
+      storeName,
+
+      slogan:
+        data.slogan ?? null,
+
+      description:
+        data.description ??
+        null,
+
+      primaryColor:
+        data.primaryColor ??
+        "#06b6d4",
+
+      secondaryColor:
+        data.secondaryColor ??
+        "#ffffff",
+
+      logo: finalLogo,
+
+      banner:
+        finalBanner,
+
+      favicon:
+        finalFavicon,
+    };
+
+    const pageConfig =
+      existing
+        ? await prisma.pageConfig.update(
+          {
+            where: {
+              id: existing.id,
+            },
+
+            data: payload,
+          }
+        )
+        : await prisma.pageConfig.create(
+          {
+            data: payload,
+          }
+        );
 
     return {
       ok: true,
-      branding,
+      pageConfig,
     };
   } catch (error) {
-    console.error(error);
+    console.error(
+      "UPDATE BRANDING ERROR:",
+      error
+    );
 
     return {
       ok: false,
       error:
-        "Error al actualizar branding",
+        error instanceof Error
+          ? error.message
+          : "Error al actualizar branding",
     };
   }
 }
 
+// =====================================
+// GET BRANDING CONFIG
+// =====================================
+
 export async function getBrandingConfig() {
   try {
     const branding =
-      await prisma.pageConfig.findUnique({
-        where: { id: 1 },
-
+      await prisma.pageConfig.findFirst({
         select: {
           storeName: true,
+
           slogan: true,
 
+          description: true,
+
           logo: true,
-          favicon: true,
+
           banner: true,
 
+          favicon: true,
+
           primaryColor: true,
+
           secondaryColor: true,
         },
       });
@@ -106,11 +262,18 @@ export async function getBrandingConfig() {
       ok: true,
       branding,
     };
-  } catch {
+  } catch (error) {
+    console.error(
+      "GET BRANDING ERROR:",
+      error
+    );
+
     return {
       ok: false,
       error:
-        "Error al obtener branding",
+        error instanceof Error
+          ? error.message
+          : "Error al obtener branding",
     };
   }
 }
