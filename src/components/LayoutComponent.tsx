@@ -7,12 +7,12 @@ import CartSidebar from "@/components/catalogo/CartSidebar";
 import { CartProvider, useCart } from "@/context/CartContext";
 
 // Componente interno para acceder al contexto
-function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayout({ children, branding }: { children: React.ReactNode; branding: any }) {
   const { cartCount, openCart, isCartOpen, closeCart, cartItems, updateQty, removeItem } = useCart();
   
   return (
     <>
-      <Header cartCount={cartCount} onOpenCart={openCart} />
+      <Header cartCount={cartCount} onOpenCart={openCart} branding={branding} />
       <CartSidebar
         isOpen={isCartOpen}
         onClose={closeCart}
@@ -31,11 +31,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 // Componente principal exportado
-export default function LayoutComponent({ children }: { children: React.ReactNode }) {
+export default function LayoutComponent({ children, branding }: { children: React.ReactNode; branding: any }) {
   return (
     <SessionWrapper>
       <CartProvider>
-        <AppLayout>
+        <AppLayout branding={branding}>
           {children}
         </AppLayout>
       </CartProvider>

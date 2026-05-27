@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import Link from 'next/link'; // 👈 Usamos el Link nativo de Next.js para una navegación veloz
+import Link from 'next/link';
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 // --- DATOS DE CATEGORÍAS DEL GRID ---
 const CATEGORY_GRID = [
@@ -11,7 +12,7 @@ const CATEGORY_GRID = [
     id: "tablas",
     label: "Tablas",
     sublabel: "Todos nuestros modelos",
-    href: "/productos/tablas", // 👈 Esto le avisa a la página de productos qué filtrar
+    href: "/productos?categoria=tablas",
     image: "/images/products/tablas.jpg",
     accent: "from-cyan-900/80 via-cyan-900/40 to-transparent",
   },
@@ -130,13 +131,14 @@ const CategoryCard = ({ cat, index }) => {
 
 // --- COMPONENTE PRINCIPAL ---
 export default function FeaturedSection() {
+    const { pageConfig } = usePageConfig();
   return (
     <section id="featured" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
-          <span className="text-xs font-bold tracking-widest uppercase text-amber-500 mb-2 block">
-            Santa Clara del Mar
+          <span className="text-xs font-bold tracking-widest uppercase text-cyan-500 mb-2 block">
+            {pageConfig?.location || "Argentina"}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
             Somos NEWSURFBOARD
