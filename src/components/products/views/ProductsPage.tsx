@@ -317,7 +317,7 @@ const ProductsPage = ({
                         }
                       `}
                     >
-                      Cualquiera
+                      Todos los productos
                     </button>
 
                     {activeCategoryData.subCategories.map(
