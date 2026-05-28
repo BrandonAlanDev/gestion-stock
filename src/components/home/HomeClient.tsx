@@ -1,6 +1,6 @@
 "use client";
 
-import ProductLayout from "./catalogo/ProductLayout";
+import ProductLayout from "@/components/products/layouts/ProductLayout";
 
 export default function HomeClient() {
 

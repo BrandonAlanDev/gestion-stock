@@ -19,7 +19,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-import ProductCard from "./ProductCard";
+import ProductCard from "../cards/ProductCard";
 
 interface Props {
   garments: any[];

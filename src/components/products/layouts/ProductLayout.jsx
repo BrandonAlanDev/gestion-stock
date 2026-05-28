@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { products } from './data';
-import FeaturedSection  from './HomeSections';
-import Hero from './Hero';
-import Navbar from './Navbar';
-import ProductsPage from './ProductsPage';
-//import LocationSection from './LocationSection';
-import CartSidebar from './CartSidebar';
+import { products } from '@/components/products/data/data';
+import FeaturedSection from '@/components/home/HomeSections';
+import { Hero } from '@/components/layout/Hero';
+import Navbar from '@/components/layout/Navbar';
+import CartSidebar from '@/components/cart/CartSidebar';
+
 
 function ProductLayout() {
   const [homeCategory, setHomeCategory] = useState("Todos");
@@ -57,40 +56,40 @@ function ProductLayout() {
   const totalItemsInCart = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   return (
-      <div className="min-h-screen bg-slate-50 font-sans flex flex-col m-0 p-0">
-        
-        <Navbar 
-           cartCount={totalItemsInCart} 
-           onOpenCart={() => setIsCartOpen(true)}
-        />
-        <CartSidebar 
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-          cartItems={cartItems}
-          updateQty={handleUpdateQty}
-          removeItem={handleRemoveItem}
-        />
-        
-        <main className="flex-grow">
-            {/* RUTA HOME */}
-              <>
-                {/* El Hero controla la categoría de la FeaturedSection */}
-                <Hero setActiveCategory={setHomeCategory} />
-                
-                {/* FeaturedSection recibe el estado y la función para cambiarlo */}
-                <FeaturedSection 
-                   activeCategory={homeCategory} 
-                   setActiveCategory={setHomeCategory}
-                   products={products}
-                   addToCart={handleAddToCart}
-                />
-              </>
-        </main>
-        
-        <footer className="border-t-2 border-gray-50">
-           {/* <LocationSection /> */}
-        </footer>
-      </div>
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col m-0 p-0">
+
+      <Navbar
+        cartCount={totalItemsInCart}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
+      <CartSidebar
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        updateQty={handleUpdateQty}
+        removeItem={handleRemoveItem}
+      />
+
+      <main className="flex-grow">
+        {/* RUTA HOME */}
+        <>
+          {/* El Hero controla la categoría de la FeaturedSection */}
+          <Hero setActiveCategory={setHomeCategory} />
+
+          {/* FeaturedSection recibe el estado y la función para cambiarlo */}
+          <FeaturedSection
+            activeCategory={homeCategory}
+            setActiveCategory={setHomeCategory}
+            products={products}
+            addToCart={handleAddToCart}
+          />
+        </>
+      </main>
+
+      <footer className="border-t-2 border-gray-50">
+        {/* <LocationSection /> */}
+      </footer>
+    </div>
   );
 }
 

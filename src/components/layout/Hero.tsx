@@ -1,14 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Sparkles, Clock, Shield} from "lucide-react";
 import heroImage from "@/assets/fondoropa.avif";
 import Link from "next/link";
 import Image from "next/image";
-
-interface HeroProps {
-  onBookingClick: () => void;
-}
 
 export function Hero() {
   return (

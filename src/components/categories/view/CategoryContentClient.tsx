@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ProductGrid from "@/components/catalogo/ProductGrid";
+import ProductGrid from "@/components/products/grid/ProductGrid";
 import { Package, Layers } from "lucide-react";
 
 interface SubCategory {

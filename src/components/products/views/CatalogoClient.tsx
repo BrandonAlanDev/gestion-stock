@@ -2,7 +2,7 @@
 
 import { useCart } from "@/context/CartContext";
 
-import ProductsPage from "@/components/catalogo/ProductsPage";
+import ProductsPage from "@/components/products/views/ProductsPage";
 
 interface Props {
   garments: any[];

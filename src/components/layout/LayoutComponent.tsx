@@ -1,9 +1,9 @@
 "use client";
 
-import Header from "@/components/Header";
-import SessionWrapper from "./providers/SessionWrapper";
+import Header from "@/components/layout/Header";
+import SessionWrapper from "../providers/SessionWrapper";
 import { Toaster } from "sonner";
-import CartSidebar from "@/components/catalogo/CartSidebar";
+import CartSidebar from "@/components/cart/CartSidebar";
 import { CartProvider, useCart } from "@/context/CartContext";
 
 // Componente interno para acceder al contexto

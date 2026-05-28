@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Phone, Mail, Truck, Trash2 } from "lucide-react";
-import ProductModal from "./productModal";
+import ProductModal from "./ProductModal";
 import { deleteGarment } from "@/actions/garments";
 import { toast } from "sonner";
 

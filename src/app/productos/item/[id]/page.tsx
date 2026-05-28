@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getGarmentById } from "@/actions/garments";
-import ProductoView from "@/components/producto/ProductoView";
+import ProductoView from "@/components/products/views/ProductoView";
 
 interface Props {
   params: Promise<{

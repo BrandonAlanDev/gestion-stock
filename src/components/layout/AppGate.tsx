@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import CookieModal from "@/components/CookieModal";
-import PrivacyModal from "@/components/PrivacyModal";
-import TermsModal from "@/components/TermsModal";
+import CookieModal from "@/components/legal/CookieModal";
+import PrivacyModal from "@/components/legal/PrivacyModal";
+import TermsModal from "@/components/legal/TermsModal";
 import { Footer } from "./Footer";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
