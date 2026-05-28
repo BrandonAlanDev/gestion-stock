@@ -49,7 +49,7 @@ const CATEGORY_GRID = [
     label: "Personalizado",
     sublabel: "Diseñá a Medida",
     href: "/personalizado",
-    image: "/images/shape.jpg",
+    image: "/images/personalizado.jpg",
   },
   {
     id: "arreglos",

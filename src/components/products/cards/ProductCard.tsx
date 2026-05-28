@@ -121,7 +121,7 @@ const ProductCard = ({
 
           {totalStock <= 0 && (
             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
-              Sin stock
+              Consultar stock con el vendedor
             </span>
           )}
 
@@ -179,15 +179,6 @@ const ProductCard = ({
 
             </div>
 
-            {/* RATING MOCK */}
-            <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-50 px-2 py-1 rounded-md shrink-0">
-
-              <Star className="w-3 h-3 fill-amber-400" />
-
-              5.0
-
-            </div>
-
           </div>
 
           {/* ENVÍO */}
@@ -196,7 +187,7 @@ const ProductCard = ({
             <Truck className="w-3 h-3" />
 
             <span>
-              Envío gratis
+              Envios a todo el pais
             </span>
 
           </div>
