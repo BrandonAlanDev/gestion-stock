@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { products } from '@/components/products/data/data';
+import { products } from '@/components/data/data';
 import FeaturedSection from '@/components/home/HomeSections';
-import { Hero } from '@/components/layout/Hero';
+import Hero from '@/components/layout/Hero';
 import Navbar from '@/components/layout/Navbar';
 import CartSidebar from '@/components/cart/CartSidebar';
 
