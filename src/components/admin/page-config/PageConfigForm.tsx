@@ -1,16 +1,11 @@
 "use client";
 
-import BrandingSection from "./BrandingSection";
-
-import EcommerceSection from "./EcommerceSection";
-
-import ContactSection from "./ContactSection";
-
-import SocialsSection from "./SocialsSection";
-
-import SeoSection from "./SeoSection";
-
-import LocationSection from "./LocationSection";
+import ContactSection from "@/components/admin/page-config/ContactSection"
+import EcommerceSection from "@/components/admin/page-config/EcommerceSection"
+import LocationSection from "@/components/admin/page-config/LocationSection"
+import BrandingSection from "@/components/admin/page-config/BrandingSection"
+import SeoSection from "@/components/admin/page-config/SeoSection"
+import SocialsSection from "@/components/admin/page-config/SocialsSection"
 
 export default function PageConfigForm({
   config,
