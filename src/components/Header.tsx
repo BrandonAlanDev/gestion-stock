@@ -147,9 +147,9 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          {pageConfig?.pageConfig.logo ? (
+          {pageConfig?.pageConfig?.logo ? (
             <img
-              src={pageConfig.pageConfig.logo}
+              src={pageConfig.pageConfig?.logo}
               alt="Logo"
               className="w-[34px] h-[34px] rounded-lg"
             />
@@ -161,7 +161,7 @@ export default function Header({
             </div>
           )}
           <span className="text-[16px] font-medium text-white tracking-tight">
-            {pageConfig?.pageConfig.storeName || <>GESTION<span className="text-cyan-400">OK</span></>}
+            {pageConfig?.pageConfig?.storeName || <>GESTION<span className="text-cyan-400">OK</span></>}
           </span>
         </Link>
 

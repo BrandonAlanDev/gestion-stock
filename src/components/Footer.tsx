@@ -38,21 +38,21 @@ export function Footer({
           {/* Marca */}
           <div className="md:col-span-2 space-y-5">
             <span className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
-              {pageConfig?.pageConfig.storeName || <>GESTION<span className="text-cyan-500">OK</span></>}
+              {pageConfig?.pageConfig?.storeName || <>GESTION<span className="text-cyan-500">OK</span></>}
 
             </span>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-              {pageConfig?.pageConfig.description || "Tu tienda online de respaldo para tu comercio físico. Gestiona tu stock, exhibe tus productos y llega a más clientes con nuestra plataforma de ecommerce integrada."}
+              {pageConfig?.pageConfig?.description || "Tu tienda online de respaldo para tu comercio físico. Gestiona tu stock, exhibe tus productos y llega a más clientes con nuestra plataforma de ecommerce integrada."}
             </p>
             {/* Redes */}
             <div className="flex items-center gap-3 pt-1">
               {[
-                { icon: Instagram, href: pageConfig?.pageConfig.instagram},
-                { icon: Facebook,  href: pageConfig?.pageConfig.facebook},
-                { icon: Youtube,   href: pageConfig?.pageConfig.youtube},
-                { icon : Linkedin,  href: pageConfig?.pageConfig.linkedin},
-                { icon: Twitter,   href: pageConfig?.pageConfig.x},
-                { icon: Music2Icon, href: pageConfig?.pageConfig.tiktok},
+                { icon: Instagram, href: pageConfig?.pageConfig?.instagram},
+                { icon: Facebook,  href: pageConfig?.pageConfig?.facebook},
+                { icon: Youtube,   href: pageConfig?.pageConfig?.youtube},
+                { icon : Linkedin,  href: pageConfig?.pageConfig?.linkedin},
+                { icon: Twitter,   href: pageConfig?.pageConfig?.x},
+                { icon: Music2Icon, href: pageConfig?.pageConfig?.tiktok},
               ].map(({ icon: Icon, href }, index) => (
                 <a
                   key={index}
@@ -115,7 +115,7 @@ export function Footer({
       {/* Franja inferior */}
       <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-xs text-slate-400">
-          © {new Date().getFullYear()} {pageConfig?.pageConfig.storeName || "GestionOK"} — {pageConfig?.pageConfig.location ? pageConfig?.pageConfig.location + ", Argentina" : "Argentina"}.
+          © {new Date().getFullYear()} {pageConfig?.pageConfig?.storeName || "GestionOK"} — {pageConfig?.pageConfig?.location ? pageConfig?.pageConfig?.location + ", Argentina" : "Argentina"}.
         </p>
         <div className="flex gap-5">
           <button
