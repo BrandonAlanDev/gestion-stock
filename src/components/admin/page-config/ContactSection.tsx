@@ -1,107 +1,89 @@
 "use client";
 
-import {
-  ImageIcon,
-} from "lucide-react";
-
-import Image from "next/image";
-
-import { useState } from "react";
-
+import { Phone, Save } from "lucide-react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { updateContactConfig } from "@/actions/page-config/contact.actions";
+import Input from "./shared/Input";
+
 interface Props {
-  label: string;
-  value: string;
-  onChange: (
-    value: string
-  ) => void;
+  config: any;
 }
 
-export default function ImageUploader({
-  label,
-  value,
-  onChange,
-}: Props) {
-  const [uploading, setUploading] =
-    useState(false);
+export default function ContactSection({ config }: Props) {
+  const [isPending, startTransition] = useTransition();
 
-  const handleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file =
-      e.target.files?.[0];
+  const [form, setForm] = useState({
+    phone: config?.phone || "",
+    whatsapp: config?.whatsapp || "",
+    email: config?.email || "",
+  });
 
-    if (!file) return;
+  const handleChange = (key: string, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
-    setUploading(true);
+  const handleSave = () => {
+    startTransition(async () => {
+      const res = await updateContactConfig(form);
 
-    try {
-      const reader =
-        new FileReader();
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
 
-      reader.readAsDataURL(file);
-
-      reader.onloadend = () => {
-        onChange(
-          reader.result as string
-        );
-
-        setUploading(false);
-      };
-    } catch {
-      toast.error(
-        "Error al subir imagen"
-      );
-
-      setUploading(false);
-    }
+      toast.success("Contacto actualizado");
+    });
   };
 
   return (
-    <div>
-      <label className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-500 block mb-3">
-        {label}
-      </label>
-
-      <div className="rounded-[2rem] border border-neutral-800 bg-neutral-950 overflow-hidden">
-        <div className="aspect-video relative bg-black flex items-center justify-center">
-          {value ? (
-            <Image
-              src={value}
-              alt={label}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="text-center">
-              <ImageIcon
-                size={42}
-                className="mx-auto text-neutral-700 mb-3"
-              />
-
-              <p className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-600">
-                Sin Imagen
-              </p>
-            </div>
-          )}
+    <section className="rounded-[2rem] border border-neutral-900 bg-black/40 overflow-hidden">
+      <div className="border-b border-neutral-900 px-8 py-6 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+          <Phone size={22} />
         </div>
 
-        <div className="p-4 border-t border-neutral-900">
-          <label className="h-12 rounded-2xl bg-cyan-500 text-black text-[10px] uppercase tracking-[0.3em] font-black flex items-center justify-center cursor-pointer">
-            {uploading
-              ? "Procesando..."
-              : "Subir Imagen"}
-
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleUpload}
-            />
-          </label>
+        <div>
+          <h2 className="text-xl font-black uppercase italic tracking-tight">
+            Contacto
+          </h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 font-bold">
+            Teléfonos · Email · WhatsApp
+          </p>
         </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
+        <Input
+          label="Teléfono"
+          value={form.phone}
+          onChange={(v) => handleChange("phone", v)}
+        />
+
+        <Input
+          label="WhatsApp"
+          value={form.whatsapp}
+          onChange={(v) => handleChange("whatsapp", v)}
+        />
+
+        <Input
+          label="Email"
+          value={form.email}
+          onChange={(v) => handleChange("email", v)}
+        />
+      </div>
+
+      <div className="px-8 pb-8 flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="h-14 px-8 rounded-2xl bg-cyan-500 text-black font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3"
+        >
+          <Save size={18} />
+          {isPending ? "Guardando..." : "Guardar Contacto"}
+        </button>
+      </div>
+    </section>
   );
 }

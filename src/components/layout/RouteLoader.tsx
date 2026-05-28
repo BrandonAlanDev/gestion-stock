@@ -15,7 +15,7 @@ export default function RouteLoader() {
 
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 700);
+    });
 
     return () =>
       clearTimeout(timer);

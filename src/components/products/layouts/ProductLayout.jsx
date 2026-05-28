@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { products } from '@/components/data/data';
 import FeaturedSection from '@/components/home/HomeSections';
 import Hero from '@/components/layout/Hero';
-import Navbar from '@/components/layout/Navbar';
 import CartSidebar from '@/components/cart/CartSidebar';
 
 
@@ -14,10 +13,12 @@ function ProductLayout() {
   // --- LÓGICA DE LOCALSTORAGE ---
 
   // 1. Inicializar el estado directamente desde LocalStorage si existe
-  const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem('tech_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const guardado = localStorage.getItem('tech_cart');
+    if (guardado) setCartItems(JSON.parse(guardado));
+  }, []);
 
   // 2. useEffect para guardar automáticamente cuando cartItems cambie
   useEffect(() => {
@@ -53,15 +54,8 @@ function ProductLayout() {
     setCartItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
-  const totalItemsInCart = cartItems.reduce((acc, item) => acc + item.qty, 0);
-
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col m-0 p-0">
-
-      <Navbar
-        cartCount={totalItemsInCart}
-        onOpenCart={() => setIsCartOpen(true)}
-      />
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
