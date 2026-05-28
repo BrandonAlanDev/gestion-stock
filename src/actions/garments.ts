@@ -1,10 +1,12 @@
 "use server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { garmentSchema, categorySchema, movementSchema } from "@/lib/zod"; 
+import { garmentSchema } from "@/lib/zod";
+import { unstable_cache } from 'next/cache';
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
+import { getCachedProducts } from "@/lib/cache";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -29,28 +31,12 @@ export async function createGarment(data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { 
-    name, 
-    price, 
-    cost, 
-    description, 
-    categoryId, 
-    subCategoryId, 
-    supplierId, 
-    variants, 
-    images 
-  } = parsed.data;
+  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
-    // 💡 LAS IMÁGENES YA FUERON SUBIDAS POR EL FRONTEND.
-    // Solo mapeamos el array de URLs strings que nos envía el cliente al formato de Prisma.
     let mappedImages: { srcImage: string; order: number }[] = [];
-    
     if (images && images.length > 0) {
-      mappedImages = images.map((url: string, index: number) => ({
-        srcImage: url,
-        order: index, // Mantiene el orden original (0 será la principal)
-      }));
+      mappedImages = images.map((url: string, index: number) => ({ srcImage: url, order: index }));
     }
 
     const garment = await prisma.garment.create({
@@ -62,104 +48,58 @@ export async function createGarment(data: any) {
         categoryId,
         subCategoryId: subCategoryId || null,
         supplierId: supplierId || null,
-        variants: {
-          create: variants.map((v: any) => ({
-            sku: v.sku || null, // Evita strings vacíos que rompan por UNIQUE
-            stock: Number(v.stock),
-            sizeId: v.sizeId || null,
-            colorId: v.colorId || null,
-            attributes: v.attributes || null,
-          })),
-        },
-        images: {
-          create: mappedImages, // Guardamos la relación en la tabla GarmentImage
-        }
-      }
+        variants: { create: variants.map((v: any) => ({ sku: v.sku || null, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null })) },
+        images: { create: mappedImages },
+      },
     });
 
     revalidatePath("/dashboard");
+    revalidatePath("/productos"); // para que se actualice el caché de productos
     return { success: true, data: serializeData(garment) };
-    
   } catch (error: any) {
     console.error("❌ Error en createGarment:", error);
-    
-    // Un extra útil: capturar explícitamente el error de SKU duplicado en Prisma
-    if (error.code === 'P2002') {
-      return { error: "El SKU ingresado ya pertenece a otra variante activa." };
-    }
-    
-    return { error: "Error interno al crear el producto en la base de datos." };
+    if (error.code === 'P2002') return { error: "El SKU ya pertenece a otra variante." };
+    return { error: "Error interno al crear el producto." };
   }
 }
 
-export async function getGarments(query?: string, categoryId?: string) {
-  const garments = await prisma.garment.findMany({
-    where: {
-      active: true,
-      AND: [
-        query ? {
-          OR: [
-            { name: { contains: query, } },
-            { variants: { some: { sku: { contains: query, } } } },
-          ]
-        } : {},
-        categoryId ? { categoryId: categoryId } : {},
-      ]
-    },
-    include: { 
-      category: true, 
-      subCategory: true, // ADAPTADO: Trae también la relación de la subcategoría si la necesitás en las tablas
-      variants: { 
-        include: {
-           size: true,
-           color: true
-          } },
-      supplier: {
-        include: {contacts: {where: {active:true}}}
-      },
-      images: {
-        orderBy: { order: 'asc' }
-      }
-    },
-    orderBy: { updatedAt: 'desc' }
-  });
-  
-  return serializeData(garments);
+// =========================================
+// GET PRENDAS / GARMENTS (con paginación y caché)
+// =========================================
+export async function getGarments(page: number = 1, limit: number = 20, categoryId?: string) {
+  try {
+    const cachedFn = getCachedProducts(page, limit, categoryId);
+    const { garments, total } = await cachedFn();
+    return {
+      success: true,
+      data: serializeData(garments),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch (error: any) {
+    console.error("Error en getGarments:", error);
+    return { error: error.message || "Error al cargar productos" };
+  }
 }
 
+// =========================================
+// GET SINGLE GARMENT (sin paginación)
+// =========================================
 export async function getGarmentById(id: string) {
   const garment = await prisma.garment.findUnique({
-    where: {
-      id
-    },
+    where: { id },
     include: {
       category: true,
       subCategory: true,
-      variants: {
-        include: {
-          size: true,
-          color: true
-        }
-      },
-      supplier: {
-        include: {
-          contacts: {
-            where: {
-              active: true
-            }
-          }
-        }
-      },
-      images: {
-        orderBy: {
-          order: "asc"
-        }
-      }
-    }
+      variants: { include: { size: true, color: true } },
+      supplier: { include: { contacts: { where: { active: true } } } },
+      images: { orderBy: { order: "asc" } },
+    },
   });
-
   return serializeData(garment);
 }
+
 
 function extractPublicId(url: string) {
   try {
@@ -185,9 +125,9 @@ export async function updateGarment(id: string, data: any) {
 
   try {
     const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
-    
+
     let finalImageRecords: { srcImage: string; order: number }[] = [];
-    
+
     if (images && Array.isArray(images)) {
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
@@ -315,7 +255,7 @@ export async function deleteGarment(id: string) {
       where: { id },
     });
 
-    revalidatePath("/dashboard/productos"); 
+    revalidatePath("/dashboard/productos");
     return { success: true };
   } catch (error: any) {
     console.error("DELETE_GARMENT_ERROR:", error);
@@ -334,37 +274,28 @@ export async function getSizes() {
   return serializeData(sizes);
 }
 
-// ==========================================
-// CATEGORÍAS Y SUBCATEGORÍAS
-// ==========================================
-export async function getCategories() {
-  try {
+// =========================================
+// GET CATEGORIES (cacheado)
+// =========================================
+export const getCategories = unstable_cache(
+  async () => {
     const categories = await prisma.category.findMany({
       include: {
         subCategories: {
           include: {
             sizeType: {
-              include: {
-                sizes: {
-                  orderBy: {
-                    order: "asc", 
-                  },
-                },
-              },
+              include: { sizes: { orderBy: { order: "asc" } } },
             },
           },
         },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
     });
-    return categories;
-  } catch (error) {
-    console.error("Error al obtener las categorías con talles:", error);
-    return [];
-  }
-}
+    return serializeData(categories);
+  },
+  ["all-categories"],
+  { revalidate: 3600 }
+);
 
 export async function createCategory(formData: { name: string; description?: string }) {
   try {
@@ -431,7 +362,7 @@ export async function createSubCategory(data: CreateSubCategoryInput) {
       },
     });
 
-    revalidatePath("/categories"); 
+    revalidatePath("/categories");
     return { success: true, data: newSubCategory };
   } catch (error: any) {
     console.error("Error en createSubCategoryAction:", error);
@@ -451,8 +382,8 @@ export async function deleteSubCategory(id: string) {
     });
 
     if (garmentsCount > 0) {
-      return { 
-        error: `No se puede eliminar. Hay ${garmentsCount} producto(s) asignado(s) a esta subcategoría.` 
+      return {
+        error: `No se puede eliminar. Hay ${garmentsCount} producto(s) asignado(s) a esta subcategoría.`
       };
     }
 

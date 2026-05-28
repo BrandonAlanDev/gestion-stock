@@ -1,14 +1,10 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
-
-import cloudinary, {
-  extractPublicId,
-} from "@/lib/cloudinary";
-
 import { uploadImage } from "@/lib/upload-image";
+import { unstable_cache } from 'next/cache';
+import cloudinary, { extractPublicId } from "@/lib/cloudinary";
+import { generateSeoImageData } from "@/actions/page-config/helpers";
 
-import { generateSeoImageData } from "./helpers";
 
 type BrandingInput = {
   storeName?: string;
@@ -231,49 +227,30 @@ export async function updateBrandingConfig(
   }
 }
 
+/// =====================================
+// GET BRANDING CONFIG (CACHEADO)
 // =====================================
-// GET BRANDING CONFIG
-// =====================================
-
-export async function getBrandingConfig() {
-  try {
-    const branding =
-      await prisma.pageConfig.findFirst({
+export const getBrandingConfig = unstable_cache(
+  async () => {
+    try {
+      const branding = await prisma.pageConfig.findFirst({
         select: {
           storeName: true,
-
           slogan: true,
-
           description: true,
-
           logo: true,
-
           banner: true,
-
           favicon: true,
-
           primaryColor: true,
-
           secondaryColor: true,
         },
       });
-
-    return {
-      ok: true,
-      branding,
-    };
-  } catch (error) {
-    console.error(
-      "GET BRANDING ERROR:",
-      error
-    );
-
-    return {
-      ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Error al obtener branding",
-    };
-  }
-}
+      return { ok: true, branding };
+    } catch (error) {
+      console.error("GET BRANDING ERROR:", error);
+      return { ok: false, error: error instanceof Error ? error.message : "Error al obtener branding" };
+    }
+  },
+  ["branding-config"], // clave única
+  { revalidate: 3600 }  // 1 hora
+);
