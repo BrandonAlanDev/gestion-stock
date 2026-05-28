@@ -1,10 +1,10 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import LayoutComponent from "@/components/LayoutComponent";
+import LayoutComponent from "@/components/layout/LayoutComponent";
 import { auth } from "@/auth";
-import RouteLoader from "@/components/RouteLoader";
-import AppGate from "@/components/AppGate";
+import RouteLoader from "@/components/layout/RouteLoader";
+import AppGate from "@/components/layout/AppGate";
 import {
   getBrandingConfig,
 } from "@/actions/page-config/branding.actions";

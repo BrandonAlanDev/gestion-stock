@@ -2,7 +2,7 @@ import { getGarments } from "@/actions/garments";
 
 import { getCategories } from "@/actions/garments";
 
-import CatalogoClient from "@/components/catalogo/CatalogoClient";
+import CatalogoClient from "@/components/products/views/CatalogoClient";
 
 export default async function CatalogoPage() {
   // =========================================

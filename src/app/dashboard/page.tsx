@@ -3,11 +3,11 @@
 import { getGarments, getCategories, getProviders } from "@/actions/garments";
 import { getSizeTypes } from "@/actions/sizes";
 import { getColors } from "@/actions/colors";
-import Search from "@/components/Search";
-import CategoryFilter from "@/components/garment/CategoryFilter";
-import MovementModal from "@/components/garment/MovementModal";
-import ProductModal from "@/components/garment/productModal";
-import QuickViewTable from "@/components/garment/QuickViewTable";
+import Search from "@/components/search/Search";
+import CategoryFilter from "@/components/categories/filters/CategoryFilter";
+import MovementModal from "@/components/movements/MovementModal";
+import ProductModal from "@/components/products/modals/ProductModal";
+import QuickViewTable from "@/components/products/modals/QuickViewTable";
 
 export default async function DashboardPage({
   searchParams,

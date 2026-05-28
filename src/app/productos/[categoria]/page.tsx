@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Package, Layers } from "lucide-react";
-import CategoryContentClient from "@/components/catalogo/CategoryContentClient";
+import { ArrowLeft} from "lucide-react";
+import CategoryContentClient from "@/components/categories/view/CategoryContentClient";
 
 // Genera las rutas estáticas para cada categoría activa
 export async function generateStaticParams() {
