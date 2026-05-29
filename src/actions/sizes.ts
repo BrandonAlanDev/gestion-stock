@@ -1,35 +1,18 @@
 "use server";
-
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import {SizeTypeNameSchema,SizeValueSchema} from "@/lib/zod";
+import { SizeTypeNameSchema, SizeValueSchema } from "@/lib/zod";
+import { getCachedSizeTypes } from "@/lib/cache";
+import * as sizeService from "@/lib/services/size-service";
 
-export async function getSizeTypes() {
-  try {
-    const sizeTypes = await prisma.sizeType.findMany({
-      include: {
-        sizes: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-    return sizeTypes;
-  } catch (error) {
-    console.error("Error al obtener los tipos de talle:", error);
-    return [];
-  }
-}
+export const getSizeTypes = getCachedSizeTypes;
 
 export async function createSizeType(name: string) {
   const validateFields = SizeTypeNameSchema.safeParse({ name });
-  
   if (!validateFields.success) {
     return { error: validateFields.error.flatten().fieldErrors.name?.[0] };
   }
-
   try {
-    await prisma.sizeType.create({ data: { name: validateFields.data.name } });
+    await sizeService.createSizeType(validateFields.data.name);
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
@@ -39,33 +22,21 @@ export async function createSizeType(name: string) {
 
 export async function addSizeToType(sizeTypeId: string, value: string, order: number) {
   const validateValue = SizeValueSchema.safeParse(value);
-  
   if (!validateValue.success) {
-    const firstError = validateValue.error?.issues?.[0]?.message 
-                    || "Valor de talle inválido";
-                    
-    return { error: firstError };
+    return { error: validateValue.error?.issues?.[0]?.message || "Valor de talle inválido" };
   }
-
   try {
-    await prisma.size.create({
-      data: { 
-        value: validateValue.data.toUpperCase(), 
-        order: Number(order), // Aseguramos que sea número
-        sizeTypeId 
-      }
-    });
+    await sizeService.addSize(sizeTypeId, validateValue.data.toUpperCase(), Number(order));
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
-    console.error("Error Prisma:", error);
     return { error: "Error al guardar en la base de datos" };
   }
 }
 
 export async function deleteSize(id: string) {
   try {
-    await prisma.size.delete({ where: { id } });
+    await sizeService.deleteSize(id);
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
@@ -75,25 +46,10 @@ export async function deleteSize(id: string) {
 
 export async function deleteSizeType(id: string) {
   try {
-    await prisma.$transaction(async (tx) => {
-      // 1. Borramos todos los talles que pertenecen a este grupo
-      await tx.size.deleteMany({
-        where: { sizeTypeId: id },
-      });
-
-      // 2. Borramos el grupo de talles
-      await tx.sizeType.delete({
-        where: { id },
-      });
-    });
-
+    await sizeService.deleteSizeType(id);
     revalidatePath("/dashboard/sizes");
     return { success: true };
   } catch (error) {
-    console.error(error);
-    // Este error suele darse si el Grupo de Talles está vinculado a una CATEGORÍA activa
-    return { 
-      error: "No se puede eliminar: El grupo está siendo usado por una Categoría." 
-    };
+    return { error: "No se puede eliminar: El grupo está siendo usado por una Categoría." };
   }
 }

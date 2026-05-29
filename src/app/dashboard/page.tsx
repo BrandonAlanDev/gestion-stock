@@ -18,13 +18,15 @@ export default async function DashboardPage({
   const query = params?.query || "";
   const category = params?.category || "";
 
-  const [garments, sizeTypes, categories, providers, colors] = await Promise.all([
-    getGarments(query, category),
+  const [garmentsResult, sizeTypes, categories, providers, colors] = await Promise.all([
+    getGarments(1, 1000, category || undefined, query || undefined), // traemos todos por ahora
     getSizeTypes(),
     getCategories(),
     getProviders(),
     getColors(),
   ]);
+  // Desestructuramos la data de la respuesta
+  const garments = garmentsResult.data || [];
 
   return (
     <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>

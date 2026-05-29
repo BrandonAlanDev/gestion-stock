@@ -8,6 +8,18 @@ import { useProductForm } from "@/hooks/useProductForm";
 import VariantRow from "@/components/products/forms/VariantRow";
 import ImageUploader from "@/components/products/forms/ImageUploader";
 
+/* ── Paleta ──────────────────---─────────────────────────────────
+   #ffffff   blanco — fondos principales
+   #f0fafa   cyan muy claro — fondos suaves
+   #e0f5f5   cyan claro — inputs, variantes
+   #b2dede   cyan borde
+   #4ab8b8   cyan acento
+   #0d5c63   verde marino — detalles, iconos
+   #083d42   verde marino oscuro — títulos
+   #0d2b2e   texto principal
+   #4a7c80   texto secundario
+─────────────────────────────────────────────────────────────────── */
+
 // ── Estilos reutilizables ──────────────────────────────────────────────
 const inputStyle: React.CSSProperties = {
   width: "100%",
