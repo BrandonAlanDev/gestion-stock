@@ -12,6 +12,7 @@ import {
 } from "@/lib/cache";
 import * as garmentService from "@/lib/services/garment-service";
 import * as categoryService from "@/lib/services/category-service";
+import { extractPublicId } from "@/lib/utils";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -92,79 +93,59 @@ export async function updateGarment(id: string, data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
+  // Validación de Zod (ya la hacés en el cliente, pero por seguridad repetimos)
+  const parsed = garmentSchema.safeParse(data);
+  if (!parsed.success) return { error: parsed.error.format() };
+
+  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
+    // 1. Obtener imágenes existentes para detectar cuáles se eliminaron
     const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
-    let finalImageRecords: { srcImage: string; order: number }[] = [];
 
+    // 2. Procesar las imágenes recibidas (pueden ser URLs existentes o base64 nuevas)
+    let finalImages: string[] = [];
     if (images && Array.isArray(images)) {
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
         if (img.startsWith("data:image")) {
+          // Es una nueva imagen en base64 → subir a Cloudinary
           const uploadResponse = await cloudinary.uploader.upload(img, {
             folder: "gestion-stock/garments",
           });
-          finalImageRecords.push({ srcImage: uploadResponse.secure_url, order: i });
+          finalImages.push(uploadResponse.secure_url);
         } else {
-          finalImageRecords.push({ srcImage: img, order: i });
+          // Es una URL existente, la conservamos
+          finalImages.push(img);
         }
       }
     }
 
-    const newUrls = finalImageRecords.map(r => r.srcImage);
-    const imagesToDelete = existingImages.filter(img => !newUrls.includes(img.srcImage));
+    // 3. Eliminar de Cloudinary las imágenes que ya no están en la lista nueva
+    const newUrlsSet = new Set(finalImages);
+    const imagesToDelete = existingImages.filter(img => !newUrlsSet.has(img.srcImage));
     for (const img of imagesToDelete) {
       const publicId = extractPublicId(img.srcImage);
-      if (publicId) await cloudinary.uploader.destroy(publicId);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
     }
 
-    const updatedGarment = await prisma.$transaction(async (tx) => {
-      const garment = await tx.garment.update({
-        where: { id },
-        data: {
-          name,
-          price,
-          cost,
-          description,
-          categoryId,
-          subCategoryId: subCategoryId || null,
-          supplierId: supplierId || null,
-        },
-      });
-
-      const currentVariants = await tx.garmentVariant.findMany({ where: { garmentId: id } });
-      const currentVariantIds = currentVariants.map((v) => v.id);
-      const incomingVariantIds = variants.filter((v: any) => v.id).map((v: any) => v.id);
-      const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
-      if (idsToDelete.length > 0) {
-        await tx.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
-      }
-
-      for (const v of variants) {
-        if (v.id) {
-          await tx.garmentVariant.update({
-            where: { id: v.id },
-            data: { sku: v.sku, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null },
-          });
-        } else {
-          await tx.garmentVariant.create({
-            data: { garmentId: id, sku: v.sku, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null },
-          });
-        }
-      }
-
-      await tx.garmentImage.deleteMany({ where: { garmentId: id } });
-      if (finalImageRecords.length > 0) {
-        await tx.garmentImage.createMany({
-          data: finalImageRecords.map(r => ({ garmentId: id, srcImage: r.srcImage, order: r.order })),
-        });
-      }
-
-      return garment;
+    // 4. Llamar al servicio que actualiza la DB (todo en una transacción)
+    const updatedGarment = await garmentService.updateGarmentWithDetails(id, {
+      name,
+      price,
+      cost,
+      description: description || "",
+      categoryId,
+      subCategoryId,
+      supplierId,
+      variants,
+      images: finalImages,
     });
 
     revalidatePath("/dashboard");
+    revalidatePath("/productos");
     return { success: true, data: serializeData(updatedGarment) };
   } catch (error: any) {
     console.error("Error:", error);
@@ -257,19 +238,3 @@ export async function deleteSubCategory(id: string) {
 
 // ── PROVEEDORES (ahora desde el servicio cacheado) ──
 export const getProviders = getCachedProviders; // reutiliza la caché
-
-// ── UTILS ──
-function extractPublicId(url: string) {
-  try {
-    const parts = url.split('/');
-    const uploadIndex = parts.findIndex(p => p === 'upload');
-    if (uploadIndex !== -1) {
-      const pathParts = parts.slice(uploadIndex + 2);
-      const fileName = pathParts.join('/');
-      return fileName.split('.')[0];
-    }
-  } catch (e) {
-    console.error("Error extracting public ID", e);
-  }
-  return null;
-}
