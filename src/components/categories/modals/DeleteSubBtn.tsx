@@ -1,6 +1,6 @@
 "use client";
 import { X } from "lucide-react";
-import { deleteSubCategory } from "@/actions/garments";
+import { deleteSubCategory } from "@/actions/categories";
 import { toast } from "sonner";
 
 export default function DeleteSubBtn({ id }: { id: string }) {

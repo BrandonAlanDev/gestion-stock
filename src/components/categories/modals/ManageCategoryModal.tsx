@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory } from "@/actions/garments";
+import { createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory } from "@/actions/categories";
 import { X, Edit2, Trash2, Tag, Loader2, Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
 

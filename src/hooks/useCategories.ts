@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCategories } from "@/actions/garments";
+import { getCategories } from "@/actions/categories";
 
 export function useCategories() {
   return useQuery({

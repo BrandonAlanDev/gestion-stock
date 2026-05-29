@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getProviders } from "@/actions/garments";
+import { getProviders } from "@/actions/providers";
 
 export function useProviders() {
   return useQuery({

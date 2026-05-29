@@ -6,7 +6,6 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { User, Mail, Lock, Rocket, Shirt } from "lucide-react";
-import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();

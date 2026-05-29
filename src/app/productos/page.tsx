@@ -1,6 +1,7 @@
-import { getGarments, getCategories } from "@/actions/garments";
+import { getGarments } from "@/actions/garments";
+import { getCategories } from "@/actions/categories";
 import CatalogoClient from "@/components/products/views/CatalogoClient";
-import { prisma } from "@/lib/prisma"; // ✅ importar prisma
+import { prisma } from "@/lib/prisma";
 
 interface Props {
   searchParams: Promise<{ page?: string; categoria?: string }>;
