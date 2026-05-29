@@ -2,7 +2,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Truck, HelpCircle } from "lucide-react";
+import { useRouter } from "next/navigation"; // ◄ Importamos el router de Next.js
+import { Truck, HelpCircle, ArrowLeft } from "lucide-react"; // ◄ Sumamos ArrowLeft
 import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { ProductProps } from "../types";
@@ -13,6 +14,7 @@ const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 
 export default function ProductoView({ product }: ProductProps) {
   const { addToCart } = useCart();
+  const router = useRouter();
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -83,6 +85,15 @@ export default function ProductoView({ product }: ProductProps) {
     <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-100">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         
+        {/* BOTÓN VOLVER ATRÁS (Se ubica arriba de todo en la grilla) */}
+        <button
+          onClick={() => router.back()}
+          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:text-black transition-colors mb-8"
+        >
+          <ArrowLeft size={14} className="transform group-hover:-translate-x-1 transition-transform" />
+          Volver al catálogo
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-12 lg:gap-20 items-start">
           
           {/* BLOQUE IZQUIERDO: IMÁGENES */}
@@ -196,7 +207,7 @@ export default function ProductoView({ product }: ProductProps) {
 
         {/* CONTENIDO EXTRA: DESCRIPCIÓN */}
         <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Descripción</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Product Overview</h2>
           <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">
             <p className="whitespace-pre-line">
               {hasDescription ? product.description : "No description available for this model."}
