@@ -3,34 +3,48 @@
 import { getGarments, getCategories, getProviders } from "@/actions/garments";
 import { getSizeTypes } from "@/actions/sizes";
 import { getColors } from "@/actions/colors";
+import DashboardTable from "@/components/dashboard/DashboardTable";
 import Search from "@/components/search/Search";
 import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
 import ProductModal from "@/components/products/modals/ProductModal";
-import QuickViewTable from "@/components/products/modals/QuickViewTable";
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ query?: string; category?: string }>;
-}) {
+interface DashboardPageProps {
+  searchParams?: Promise<{
+    query?: string;
+    category?: string;
+    page?: string;
+  }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
   const query = params?.query || "";
   const category = params?.category || "";
+  const currentPage = Number(params?.page) || 1;
+  const limit = 20; // Productos por página
 
-  const [garmentsResult, sizeTypes, categories, providers, colors] = await Promise.all([
-    getGarments(1, 1000, category || undefined, query || undefined), // traemos todos por ahora
+  // Obtener datos paginados del servidor
+  const garmentsResult = await getGarments(
+    currentPage,
+    limit,
+    category || undefined,
+    query || undefined
+  );
+
+  // Obtener datos de referencia (categorías, talles, proveedores, colores)
+  const [sizeTypes, categories, providers, colors] = await Promise.all([
     getSizeTypes(),
     getCategories(),
     getProviders(),
     getColors(),
   ]);
-  // Desestructuramos la data de la respuesta
-  const garments = garmentsResult.data || [];
+
+  const garments = garmentsResult?.data || [];
+  const totalPages = garmentsResult?.totalPages || 1;
 
   return (
     <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
-
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
@@ -38,7 +52,6 @@ export default async function DashboardPage({
             className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3"
             style={{ color: "#083d42" }}
           >
-            {/* Acento verde marino en lugar de amber */}
             <span
               className="w-2 h-8 rounded-full inline-block"
               style={{ background: "#0d5c63" }}
@@ -74,13 +87,17 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* TABLA */}
-      <QuickViewTable
+      {/* TABLA + PAGINACIÓN */}
+      <DashboardTable
         garments={garments}
         categories={categories}
         sizeTypes={sizeTypes}
         providers={providers}
         colors={colors}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        query={query}
+        category={category}
       />
     </div>
   );
