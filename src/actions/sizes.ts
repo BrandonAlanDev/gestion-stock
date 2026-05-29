@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { SizeTypeNameSchema, SizeValueSchema } from "@/lib/zod";
 import { getCachedSizeTypes } from "@/lib/cache";
 import * as sizeService from "@/lib/services/size-service";
@@ -13,7 +13,7 @@ export async function createSizeType(name: string) {
   }
   try {
     await sizeService.createSizeType(validateFields.data.name);
-    revalidatePath("/dashboard/sizes");
+    revalidateTag("sizeTypes");
     return { success: true };
   } catch (error) {
     return { error: "Error al crear el grupo" };
@@ -27,7 +27,7 @@ export async function addSizeToType(sizeTypeId: string, value: string, order: nu
   }
   try {
     await sizeService.addSize(sizeTypeId, validateValue.data.toUpperCase(), Number(order));
-    revalidatePath("/dashboard/sizes");
+    revalidateTag("sizeTypes");
     return { success: true };
   } catch (error) {
     return { error: "Error al guardar en la base de datos" };
@@ -37,7 +37,7 @@ export async function addSizeToType(sizeTypeId: string, value: string, order: nu
 export async function deleteSize(id: string) {
   try {
     await sizeService.deleteSize(id);
-    revalidatePath("/dashboard/sizes");
+    revalidateTag("sizeTypes");
     return { success: true };
   } catch (error) {
     return { error: "No se puede borrar: talle en uso" };
@@ -47,7 +47,7 @@ export async function deleteSize(id: string) {
 export async function deleteSizeType(id: string) {
   try {
     await sizeService.deleteSizeType(id);
-    revalidatePath("/dashboard/sizes");
+    revalidateTag("sizeTypes");
     return { success: true };
   } catch (error) {
     return { error: "No se puede eliminar: El grupo está siendo usado por una Categoría." };

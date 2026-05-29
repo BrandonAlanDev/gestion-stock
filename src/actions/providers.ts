@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import {
   createProviderSchema,
   updateProviderSchema,
@@ -31,7 +31,7 @@ export async function createProvider(raw: unknown) {
       },
       include: { contacts: true },
     });
-    revalidatePath("provider");
+    revalidateTag("providers");
     return { success: true, provider };
   } catch (e: any) {
     if (e.code === "P2002") return { error: "Proveedor o contacto duplicado" };
@@ -46,7 +46,7 @@ export async function updateProvider(raw: unknown) {
   const { id, name, details, contacts } = parsed.data;
   try {
     const provider = await providerService.updateProvider(id, { name, details, contacts });
-    revalidatePath("provider");
+    revalidateTag("providers");
     return { success: true, provider };
   } catch {
     return { error: "Error al actualizar" };
@@ -58,6 +58,6 @@ export async function deleteProvider(id: unknown) {
   if (!parsed.success) return { error: "ID inválido" };
 
   await providerService.deleteProvider(parsed.data);
-  revalidatePath("provider");
+  revalidateTag("providers");
   return { success: true };
 }

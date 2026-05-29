@@ -2,7 +2,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { garmentSchema } from "@/lib/zod";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
 import {
@@ -12,7 +12,6 @@ import {
 } from "@/lib/cache";
 import * as garmentService from "@/lib/services/garment-service";
 import * as categoryService from "@/lib/services/category-service";
-import { extractPublicId } from "@/lib/utils";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -52,8 +51,7 @@ export async function createGarment(data: any) {
       },
     });
 
-    revalidatePath("/dashboard");
-    revalidatePath("/productos");
+    revalidateTag("products");
     return { success: true, data: serializeData(garment) };
   } catch (error: any) {
     console.error("❌ Error en createGarment:", error);
@@ -62,12 +60,7 @@ export async function createGarment(data: any) {
   }
 }
 
-export async function getGarments(
-  page: number = 1,
-  limit: number = 20,
-  categoryId?: string,
-  search?: string
-) {
+export async function getGarments(page: number = 1, limit: number = 20, categoryId?: string, search?: string) {
   try {
     const cachedFn = getCachedProducts(page, limit, categoryId, search);
     const { garments, total } = await cachedFn();
@@ -93,45 +86,36 @@ export async function updateGarment(id: string, data: any) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
 
-  // Validación de Zod (ya la hacés en el cliente, pero por seguridad repetimos)
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
   const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
-    // 1. Obtener imágenes existentes para detectar cuáles se eliminaron
     const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
-
-    // 2. Procesar las imágenes recibidas (pueden ser URLs existentes o base64 nuevas)
     let finalImages: string[] = [];
+
     if (images && Array.isArray(images)) {
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
         if (img.startsWith("data:image")) {
-          // Es una nueva imagen en base64 → subir a Cloudinary
           const uploadResponse = await cloudinary.uploader.upload(img, {
             folder: "gestion-stock/garments",
           });
           finalImages.push(uploadResponse.secure_url);
         } else {
-          // Es una URL existente, la conservamos
           finalImages.push(img);
         }
       }
     }
 
-    // 3. Eliminar de Cloudinary las imágenes que ya no están en la lista nueva
     const newUrlsSet = new Set(finalImages);
     const imagesToDelete = existingImages.filter(img => !newUrlsSet.has(img.srcImage));
     for (const img of imagesToDelete) {
       const publicId = extractPublicId(img.srcImage);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
-      }
+      if (publicId) await cloudinary.uploader.destroy(publicId);
     }
 
-    // 4. Llamar al servicio que actualiza la DB (todo en una transacción)
     const updatedGarment = await garmentService.updateGarmentWithDetails(id, {
       name,
       price,
@@ -144,8 +128,7 @@ export async function updateGarment(id: string, data: any) {
       images: finalImages,
     });
 
-    revalidatePath("/dashboard");
-    revalidatePath("/productos");
+    revalidateTag("products");
     return { success: true, data: serializeData(updatedGarment) };
   } catch (error: any) {
     console.error("Error:", error);
@@ -160,7 +143,7 @@ export async function deleteGarment(id: string) {
     if (!existingGarment) return { error: "El producto no existe o ya fue eliminado." };
 
     await garmentService.deleteGarment(id);
-    revalidatePath("/dashboard/productos");
+    revalidateTag("products");
     return { success: true };
   } catch (error: any) {
     console.error("DELETE_GARMENT_ERROR:", error);
@@ -169,13 +152,14 @@ export async function deleteGarment(id: string) {
   }
 }
 
+
 // ── CATEGORÍAS (acción delegada al servicio + caché) ──
 export const getCategories = getCachedCategories; // reutiliza la caché
 
 export async function createCategory(formData: { name: string; description?: string }) {
   try {
     const newCategory = await categoryService.createCategory(formData.name);
-    revalidatePath("/categories");
+    revalidateTag("categories");
     return { success: true, data: newCategory };
   } catch (error) {
     console.error("Error al crear categoría:", error);
@@ -186,7 +170,7 @@ export async function createCategory(formData: { name: string; description?: str
 export async function updateCategory(id: string, data: { name: string; description?: string }) {
   try {
     const updated = await categoryService.updateCategory(id, data);
-    revalidatePath("/categories");
+    revalidateTag("categories");
     return { success: true, data: updated };
   } catch (error) {
     console.error("Error al actualizar categoría:", error);
@@ -201,7 +185,7 @@ export async function deleteCategory(id: string) {
       return { error: `No se puede eliminar. Tenés ${subCatsCount} subcategorías vinculadas.` };
     }
     await categoryService.deleteCategory(id);
-    revalidatePath("/categories");
+    revalidateTag("categories");
     return { success: true };
   } catch (error) {
     console.error("Error al borrar categoría:", error);
@@ -213,7 +197,7 @@ export async function createSubCategory(data: { name: string; categoryId: string
   try {
     if (!data.name || !data.categoryId) return { error: "El nombre y la categoría madre son obligatorios." };
     const newSub = await categoryService.createSubCategory(data);
-    revalidatePath("/categories");
+    revalidateTag("categories");
     return { success: true, data: newSub };
   } catch (error: any) {
     console.error("Error en createSubCategoryAction:", error);
@@ -228,13 +212,14 @@ export async function deleteSubCategory(id: string) {
     const garmentsCount = await categoryService.getGarmentCountBySubCategory(id);
     if (garmentsCount > 0) return { error: `No se puede eliminar. Hay ${garmentsCount} producto(s) asignado(s).` };
     await categoryService.deleteSubCategory(id);
-    revalidatePath("/categories");
+    revalidateTag("categories");
     return { success: true };
   } catch (error) {
     console.error("Error en deleteSubCategoryAction:", error);
     return { error: "Ocurrió un error al intentar eliminar la subcategoría." };
   }
 }
+
 
 // ── PROVEEDORES (ahora desde el servicio cacheado) ──
 export const getProviders = getCachedProviders; // reutiliza la caché
