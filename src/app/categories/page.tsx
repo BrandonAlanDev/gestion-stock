@@ -1,4 +1,4 @@
-import { getCategories } from "@/actions/garments";
+import { getCategories } from "@/actions/categories";
 import { getSizeTypes } from "@/actions/sizes";
 import ManageCategoryModal from "@/components/categories/modals/ManageCategoryModal";
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";

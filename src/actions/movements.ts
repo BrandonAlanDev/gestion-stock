@@ -1,7 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 export async function createMovement(data: {
   variantId: string;
@@ -48,7 +47,7 @@ export async function createMovement(data: {
       return movement;
     });
 
-    revalidatePath("/dashboard");
+    revalidateTag("products");
     return { success: true, data: JSON.parse(JSON.stringify(result)) };
   } catch (error: any) {
     console.error("Movement Error:", error);
@@ -67,7 +66,7 @@ export async function getMovements() {
       },
     },
     orderBy: {
-      createdAt: "desc", 
+      createdAt: "desc",
     },
   });
   return movements;

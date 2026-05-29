@@ -1,43 +1,59 @@
-import { unstable_cache } from 'next/cache';
-import { prisma } from './prisma';
+import { unstable_cache } from "next/cache";
+import * as garmentService from "./services/garment-service";
+import * as categoryService from "./services/category-service";
+import * as providerService from "./services/provider-service";
+import * as sizeService from "./services/size-service";
+import * as colorService from "./services/color-service";
+import { prisma } from "./prisma";
 
-// Caché para la configuración general (único registro)
+// ── PAGE CONFIG ──────────────────────────────────
 export const getCachedPageConfig = unstable_cache(
-  async () => {
-    return prisma.pageConfig.findUnique({ where: { id: "1" } });
-  },
-  ['page-config'],
-  { revalidate: 3600 } // 1 hora
+  async () => prisma.pageConfig.findUnique({ where: { id: "1" } }),
+  ["page-config"],
+  { revalidate: 3600 }
 );
 
-// Caché para productos paginados – esta función RETORNA una función cacheada
-export const getCachedProducts = (page: number, limit: number, categoryId?: string) =>
+// ── PRODUCTOS ────────────────────────────────────
+export const getCachedProducts = (
+  page: number,
+  limit: number,
+  categoryId?: string,
+  search?: string,
+  subCategoryId?: string
+) =>
   unstable_cache(
-    async () => {
-      const skip = (page - 1) * limit;
-      const where = categoryId ? { categoryId, active: true } : { active: true };
-
-      const [garments, total] = await Promise.all([
-        prisma.garment.findMany({
-          where,
-          include: {
-            images: { take: 1, orderBy: { order: 'asc' } },
-            variants: {
-              include: { size: true, color: true },
-              take: 5,
-            },
-            subCategory: true,
-            category: true,
-          },
-          skip,
-          take: limit,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.garment.count({ where }),
-      ]);
-
-      return { garments, total };
-    },
-    [`products-pg-${page}-lim-${limit}-cat-${categoryId || 'all'}`],
-    { revalidate: 60 } // 60 segundos – ajustá según necesidad
+    () => garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId),
+    [
+      `products-pg-${page}-lim-${limit}-cat-${categoryId || "all"}-q-${search || ""}-sub-${subCategoryId || "all"}`,
+    ],
+    { revalidate: 60, tags: ["products"] }
   );
+
+// ── CATEGORÍAS (con subcategorías y talles) ──────
+export const getCachedCategories = unstable_cache(
+  categoryService.getCategoriesFull,
+  ["all-categories"],
+  { revalidate: 3600, tags: ["categories"] }
+
+);
+
+// ── PROVEEDORES ─────────────────────────────────
+export const getCachedProviders = unstable_cache(
+  providerService.getProviders,
+  ["all-providers"],
+  { revalidate: 3600, tags: ["providers"] }
+);
+
+// ── TALLES ──────────────────────────────────────
+export const getCachedSizeTypes = unstable_cache(
+  sizeService.getSizeTypes,
+  ["all-size-types"],
+  { revalidate: 3600, tags: ["sizeTypes"] }
+);
+
+// ── COLORES ─────────────────────────────────────
+export const getCachedColors = unstable_cache(
+  colorService.getColors,
+  ["all-colors"],
+  { revalidate: 3600, tags: ["colors"] }
+);
