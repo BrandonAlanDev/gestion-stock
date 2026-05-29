@@ -180,10 +180,6 @@ export default function ProductoView({ product }: ProductProps) {
 
             <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <p>Hecho a mano localmente bajo pedido personalizado.</p>
-              </div>
-              <div className="flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-gray-400" />
                 <p>Envíos y logística a coordinar para todo el país.</p>
               </div>
@@ -200,7 +196,7 @@ export default function ProductoView({ product }: ProductProps) {
 
         {/* CONTENIDO EXTRA: DESCRIPCIÓN */}
         <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Product Overview</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Descripción</h2>
           <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">
             <p className="whitespace-pre-line">
               {hasDescription ? product.description : "No description available for this model."}
