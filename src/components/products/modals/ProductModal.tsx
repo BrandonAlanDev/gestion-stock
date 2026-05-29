@@ -20,6 +20,15 @@ import ImageUploader from "@/components/products/forms/ImageUploader";
    #4a7c80   texto secundario
 ─────────────────────────────────────────────────────────────────── */
 
+interface Props {
+  categories: any[];
+  sizes: any[];
+  providers: any[];
+  colors: any[];
+  garment?: any;
+  onSuccess?: () => void; // <-- nuevo
+}
+
 // ── Estilos reutilizables ──────────────────────────────────────────────
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -37,7 +46,7 @@ const selectStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-export default function ProductModal({ categories, sizes, providers, colors, garment }: Props) {
+export default function ProductModal({ categories, sizes, providers, colors, garment, onSuccess }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -71,6 +80,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
         return;
       }
       toast.success(isEdit ? "Producto actualizado" : "Producto creado");
+      onSuccess?.();
       setIsOpen(false);
     } catch (error) {
       toast.error("Ocurrió un error");
