@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createSubCategory } from "@/actions/garments";
+import { createSubCategory } from "@/actions/categories";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

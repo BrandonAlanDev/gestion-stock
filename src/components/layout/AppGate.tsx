@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import CookieModal from "@/components/legal/CookieModal";
 import PrivacyModal from "@/components/legal/PrivacyModal";
 import TermsModal from "@/components/legal/TermsModal";
-import { Footer } from "./Footer";
+import { Footer } from "@/components/layout/Footer";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
   const [acceptedCookies, setAcceptedCookies] = useState(false);

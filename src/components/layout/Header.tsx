@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {getBrandingConfig} from "@/actions/page-config.actions";
-
 import {
   Package,
   Tags,
@@ -21,21 +19,11 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { is } from "zod/v4/locales";
+import { Button } from "@/components/ui/button"
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-interface HeaderProps {
-  cartCount: number;
-  onOpenCart: () => void;
-  branding: any;
-}
 
-export default function Header({
-  cartCount,
-  onOpenCart,
-  branding,
-}: HeaderProps) {
+export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 

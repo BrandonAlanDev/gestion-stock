@@ -1,58 +1,107 @@
+"use client";
+
+import {
+  ImageIcon,
+} from "lucide-react";
+
+import Image from "next/image";
+
+import { useState } from "react";
+
+import { toast } from "sonner";
+
 interface Props {
-  title: string;
-  checked: boolean;
+  label: string;
+  value: string;
   onChange: (
-    value: boolean
+    value: string
   ) => void;
 }
 
-export default function SwitchCard({
-  title,
-  checked,
+export default function ImageUploader({
+  label,
+  value,
   onChange,
 }: Props) {
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        onChange(!checked)
-      }
-      className={`
-        h-32 rounded-[2rem] border transition-all p-6 text-left
-        ${
-          checked
-            ? "bg-cyan-500/10 border-cyan-500/30"
-            : "bg-neutral-950 border-neutral-800"
-        }
-      `}
-    >
-      <div className="flex flex-col h-full justify-between">
-        <h3 className="text-xl font-black uppercase italic tracking-tight text-white">
-          {title}
-        </h3>
+  const [uploading, setUploading] =
+    useState(false);
 
-        <div
-          className={`
-            w-14 h-8 rounded-full p-1 transition-all
-            ${
-              checked
-                ? "bg-cyan-500"
-                : "bg-neutral-700"
-            }
-          `}
-        >
-          <div
-            className={`
-              w-6 h-6 rounded-full bg-white transition-all
-              ${
-                checked
-                  ? "translate-x-6"
-                  : "translate-x-0"
-              }
-            `}
-          />
+  const handleUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    setUploading(true);
+
+    try {
+      const reader =
+        new FileReader();
+
+      reader.readAsDataURL(file);
+
+      reader.onloadend = () => {
+        onChange(
+          reader.result as string
+        );
+
+        setUploading(false);
+      };
+    } catch {
+      toast.error(
+        "Error al subir imagen"
+      );
+
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-500 block mb-3">
+        {label}
+      </label>
+
+      <div className="rounded-[2rem] border border-neutral-800 bg-neutral-950 overflow-hidden">
+        <div className="aspect-video relative bg-black flex items-center justify-center">
+          {value ? (
+            <Image
+              src={value}
+              alt={label}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="text-center">
+              <ImageIcon
+                size={42}
+                className="mx-auto text-neutral-700 mb-3"
+              />
+
+              <p className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-600">
+                Sin Imagen
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-neutral-900">
+          <label className="h-12 rounded-2xl bg-cyan-500 text-black text-[10px] uppercase tracking-[0.3em] font-black flex items-center justify-center cursor-pointer">
+            {uploading
+              ? "Procesando..."
+              : "Subir Imagen"}
+
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleUpload}
+            />
+          </label>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
