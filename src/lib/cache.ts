@@ -18,11 +18,14 @@ export const getCachedProducts = (
   page: number,
   limit: number,
   categoryId?: string,
-  search?: string
+  search?: string,
+  subCategoryId?: string
 ) =>
   unstable_cache(
-    () => garmentService.getGarmentsPaginated(page, limit, categoryId, search),
-    [`products-pg-${page}-lim-${limit}-cat-${categoryId || "all"}-q-${search || ""}`],
+    () => garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId),
+    [
+      `products-pg-${page}-lim-${limit}-cat-${categoryId || "all"}-q-${search || ""}-sub-${subCategoryId || "all"}`,
+    ],
     { revalidate: 60 }
   );
 

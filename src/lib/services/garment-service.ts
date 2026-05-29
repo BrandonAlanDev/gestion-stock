@@ -5,15 +5,15 @@ export async function getGarmentsPaginated(
   page: number,
   limit: number,
   categoryId?: string,
-  search?: string
+  search?: string,
+  subCategoryId?: string
 ) {
   const skip = (page - 1) * limit;
   const where: Prisma.GarmentWhereInput = {
     active: true,
     ...(categoryId && { categoryId }),
-    ...(search && {
-      name: { contains: search, mode: 'insensitive' },
-    }),
+    ...(subCategoryId && { subCategoryId }),
+    ...(search && { name: { contains: search, mode: 'insensitive' } }),
   };
 
   const [garments, total] = await Promise.all([

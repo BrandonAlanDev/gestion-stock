@@ -7,7 +7,7 @@ import * as categoryService from "@/lib/services/category-service";
 import * as garmentService from "@/lib/services/garment-service";
 
 export async function generateStaticParams() {
-  const categories = await categoryService.getCategoriesFull(); // reutiliza caché
+  const categories = await categoryService.getCategoriesFull();
   return categories.map((c) => ({ categoria: c.name.toLowerCase() }));
 }
 
@@ -24,31 +24,34 @@ export default async function CategoriaPage({
   searchParams,
 }: {
   params: Promise<{ categoria: string }>;
-  searchParams?: Promise<{ page?: string; limit?: string }>;
+  searchParams?: Promise<{ page?: string; limit?: string; subcategory?: string }>;
 }) {
   const { categoria } = await params;
   const sp = await searchParams;
   const currentPage = Number(sp?.page) || 1;
-  const limit = Number(sp?.limit) || 12; // 12 productos por página
+  const limit = Number(sp?.limit) || 12;
+  const subCategoryId = sp?.subcategory || undefined;
 
   const categoryName = decodeURIComponent(categoria);
 
-  // 1. Obtener la categoría (solo metadatos, subcategorías, y conteo)
+  // 1. Obtener categoría (sin productos)
   const category = await categoryService.getCategoryByName(categoryName);
   if (!category) notFound();
 
-  // 2. Obtener los productos paginados usando el id de la categoría
+  // 2. Productos paginados y filtrados por subcategoría (si corresponde)
   const { garments, total } = await garmentService.getGarmentsPaginated(
     currentPage,
     limit,
-    category.id
+    category.id,
+    undefined, // search — no se usa en la página pública
+    subCategoryId
   );
 
   const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="min-h-screen bg-white pt-24">
-      {/* Header (idéntico al original) */}
+      {/* Header */}
       <div className="bg-neutral-50 border-b border-neutral-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
@@ -70,10 +73,12 @@ export default async function CategoriaPage({
         </div>
       </div>
 
-      {/* Componente cliente con los productos actuales */}
+      {/* Sidebar + Grid */}
       <CategoryContentClient
         subCategories={category.subCategories}
-        garments={garments} // solo los de esta página
+        garments={garments}
+        selectedSubId={subCategoryId || "all"}
+        basePath={`/productos/${categoria}`}
       />
 
       {/* Paginación */}
@@ -81,6 +86,7 @@ export default async function CategoriaPage({
         currentPage={currentPage}
         totalPages={totalPages}
         basePath={`/productos/${categoria}`}
+        searchParams={{ subcategory: subCategoryId }}
       />
     </div>
   );
