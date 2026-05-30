@@ -130,11 +130,10 @@ export default function ProductoView({ product }: ProductProps) {
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
-                    className={`w-16 h-20 overflow-hidden bg-gray-50/50 rounded-md transition-all border ${
-                      selectedImage === img.srcImage
-                        ? "border-black opacity-100"
-                        : "border-transparent opacity-50 hover:opacity-100"
-                    }`}
+                    className={`w-16 h-20 overflow-hidden bg-gray-50/50 rounded-md transition-all border ${selectedImage === img.srcImage
+                      ? "border-black opacity-100"
+                      : "border-transparent opacity-50 hover:opacity-100"
+                      }`}
                   >
                     <img src={img.srcImage} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -183,9 +182,15 @@ export default function ProductoView({ product }: ProductProps) {
             </div>
 
             <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
-              <p className="text-2xl font-light text-gray-800">
-                $ {Number(product.price).toLocaleString("es-AR")}
-              </p>
+              {esTabla ? (
+                <p className="text-2xl font-light text-gray-800">
+                  USD {Number(product.price).toLocaleString("es-AR")}
+                </p>
+              ) : (
+                <p className="text-2xl font-light text-gray-800">
+                  $ {Number(product.price).toLocaleString("es-AR")}
+                </p>
+              )}
             </div>
 
             {/* COLOR */}
@@ -198,11 +203,10 @@ export default function ProductoView({ product }: ProductProps) {
                       key={color.id}
                       onClick={() => setSelectedColor(color.name)}
                       title={color.name}
-                      className={`w-8 h-8 rounded-full border transition-all ${
-                        selectedColor === color.name
-                          ? "ring-2 ring-black ring-offset-2 scale-105"
-                          : "border-gray-200"
-                      }`}
+                      className={`w-8 h-8 rounded-full border transition-all ${selectedColor === color.name
+                        ? "ring-2 ring-black ring-offset-2 scale-105"
+                        : "border-gray-200"
+                        }`}
                       style={{ backgroundColor: color.hex || "#000" }}
                     />
                   ))}
