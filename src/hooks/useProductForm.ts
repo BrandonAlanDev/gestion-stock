@@ -178,41 +178,62 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     });
   };
 
+  // Resetear formulario
+  const resetForm = useCallback(() => {
+    setFormData({
+      name: "",
+      price: "",
+      cost: "",
+      description: "",
+      categoryId: "",
+      subCategoryId: "",
+      supplierId: "",
+      variants: [],
+      images: [],
+    });
+  }, []);
+
   // Submit 
   const handleSubmit = useCallback(async () => {
-    // 1. Subir imágenes nuevas a Cloudinary
     const finalImages: { url: string; publicId?: string }[] = [];
 
     for (const img of formData.images) {
-      if (img.file) {
-        // Es un archivo nuevo → subir
-        const base64 = await fileToBase64(img.file);
-        const uploaded = await uploadProductImage(base64);
-        finalImages.push({ url: uploaded.url, publicId: uploaded.publicId });
-        // Revocar preview local
-        if (img.preview) URL.revokeObjectURL(img.preview);
-      } else if (img.url) {
-        // Ya está en Cloudinary, se mantiene igual
-        finalImages.push({ url: img.url, publicId: img.publicId });
+      try {
+        if (img.file) {
+          const base64 = await fileToBase64(img.file);
+          const uploaded = await uploadProductImage(base64);
+          finalImages.push({ url: uploaded.url, publicId: uploaded.publicId });
+          if (img.preview) URL.revokeObjectURL(img.preview);
+        } else if (img.url) {
+          finalImages.push({ url: img.url, publicId: img.publicId });
+        }
+      } catch (error) {
+        console.error("Error al subir imagen individual:", error);
+        toast.error("Error al subir una imagen. Se omitirá.");
       }
     }
 
-    const imageUrls = finalImages.map((img) => img.url);
+    if (finalImages.length === 0 && formData.images.length > 0) {
+      throw new Error("No se pudo subir ninguna imagen. Revisá los archivos e intentá de nuevo.");
+    }
 
-    // 2. Construir payload
+    const imageUrls = finalImages.map(img => img.url);
     const payload = {
-      ...formData,
+      name: formData.name,
+      price: Number(formData.price),
+      cost: Number(formData.cost),
+      description: formData.description,
+      categoryId: formData.categoryId,
+      subCategoryId: formData.subCategoryId || null,
+      supplierId: formData.supplierId || null,
       variants: formData.variants.map((v) => ({
         ...v,
         sizeId: v.sizeId === "CUSTOM" ? null : v.sizeId,
         attributes: v.sizeId === "CUSTOM" ? v.attributes : null,
       })),
-      price: Number(formData.price),
-      cost: Number(formData.cost),
       images: imageUrls,
     };
 
-    // 3. Crear o actualizar producto
     if (isEdit) {
       return updateGarment(garment.id, payload);
     } else {
@@ -236,5 +257,6 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     addImages,
     removeImage,
     handleSubmit,
+    resetForm,
   };
 }
