@@ -1,7 +1,9 @@
 "use client";
-
+import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
+import { uploadProductImage } from "@/actions/upload-product-image";
+import type { PendingImage } from "@/components/products/forms/ImageUploader";
 
 interface Variant {
   id?: string;
@@ -10,11 +12,6 @@ interface Variant {
   stock: number;
   sku: string;
   attributes?: any;
-}
-
-interface ImageType {
-  url: string;
-  publicId?: string;
 }
 
 interface UseProductFormProps {
@@ -33,7 +30,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     subCategoryId: "",
     supplierId: "",
     variants: [] as Variant[],
-    images: [] as ImageType[],
+    images: [] as PendingImage[],
   });
 
   const isEdit = !!garment;
@@ -150,7 +147,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   }, []);
 
   // Imágenes
-  const addImages = useCallback((newImages: ImageType[]) => {
+  const addImages = useCallback((newImages: PendingImage[]) => {
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...newImages],
@@ -158,24 +155,91 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   }, []);
 
   const removeImage = useCallback((index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const img = prev.images[index];
+      // Revocar objectURL si era nueva
+      if (img.preview && !img.url) {
+        URL.revokeObjectURL(img.preview);
+      }
+      return {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      };
+    });
   }, []);
 
-  // Submit
+  const reorderImages = useCallback((sourceIndex: number, targetIndex: number) => {
+    setFormData((prev) => {
+      const copy = [...prev.images];
+      const [moved] = copy.splice(sourceIndex, 1);
+      copy.splice(targetIndex, 0, moved);
+      return { ...prev, images: copy };
+    });
+  }, []);
+
+  // Función para convertir File a base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Resetear formulario
+  const resetForm = useCallback(() => {
+    setFormData({
+      name: "",
+      price: "",
+      cost: "",
+      description: "",
+      categoryId: "",
+      subCategoryId: "",
+      supplierId: "",
+      variants: [],
+      images: [],
+    });
+  }, []);
+
+  // Submit 
   const handleSubmit = useCallback(async () => {
-    const imageUrls = formData.images.map((img) => img.url);
+    const finalImages: { url: string; publicId?: string }[] = [];
+
+    for (const img of formData.images) {
+      try {
+        if (img.file) {
+          const base64 = await fileToBase64(img.file);
+          const uploaded = await uploadProductImage(base64);
+          finalImages.push({ url: uploaded.url, publicId: uploaded.publicId });
+          if (img.preview) URL.revokeObjectURL(img.preview);
+        } else if (img.url) {
+          finalImages.push({ url: img.url, publicId: img.publicId });
+        }
+      } catch (error) {
+        console.error("Error al subir imagen individual:", error);
+        toast.error("Error al subir una imagen. Se omitirá.");
+      }
+    }
+
+    if (finalImages.length === 0 && formData.images.length > 0) {
+      throw new Error("No se pudo subir ninguna imagen. Revisá los archivos e intentá de nuevo.");
+    }
+
+    const imageUrls = finalImages.map(img => img.url);
     const payload = {
-      ...formData,
+      name: formData.name,
+      price: Number(formData.price),
+      cost: Number(formData.cost),
+      description: formData.description,
+      categoryId: formData.categoryId,
+      subCategoryId: formData.subCategoryId || null,
+      supplierId: formData.supplierId || null,
       variants: formData.variants.map((v) => ({
         ...v,
         sizeId: v.sizeId === "CUSTOM" ? null : v.sizeId,
         attributes: v.sizeId === "CUSTOM" ? v.attributes : null,
       })),
-      price: Number(formData.price),
-      cost: Number(formData.cost),
       images: imageUrls,
     };
 
@@ -201,6 +265,8 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     updateVariantCustomSize,
     addImages,
     removeImage,
+    reorderImages,
     handleSubmit,
+    resetForm,
   };
 }

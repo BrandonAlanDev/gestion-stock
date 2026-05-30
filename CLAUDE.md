@@ -1,686 +1,1112 @@
-# CLAUDE.md — Guía del Proyecto GestionOK / NewSurfBoard
+## Descripción General del Proyecto
 
-Este archivo describe la arquitectura, convenciones y patrones del proyecto. Leerlo completo antes de realizar cualquier modificación.
+Sistema full-stack de **gestión de inventario y e-commerce** construido sobre Next.js 15 App Router. El negocio es **NewSurfBoard**, una tienda de surf en Mar del Plata, Argentina.
 
----
-
-## Descripción General
-
-Sistema de gestión de stock e e-commerce construido con **Next.js 15** (App Router), **Prisma 7** y **MySQL/MariaDB**. El proyecto tiene dos caras principales:
-
-- **Panel de administración**: gestión de productos, categorías, proveedores, talles, movimientos de stock y configuración visual del sitio.
-- **Tienda pública (NewSurfBoard)**: catálogo de productos, carrito, páginas de categorías, escuela de surf, diseñador de tablas personalizado.
+El sistema tiene dos capas diferenciadas:
+- **Panel de administración (ADMIN)**: inventario de productos, categorías, subcategorías, proveedores, grupos de talles, colores, movimientos de stock, configuración visual del sitio y gestión de usuarios.
+- **Tienda pública (USER)**: catálogo con filtros, carrito lateral, vista de producto con variantes (talle/color), páginas de categorías, escuela de surf y diseñador de tablas personalizadas.
 
 ---
 
-## Stack Tecnológico
+## Stack Tecnológico Completo
 
-| Tecnología | Versión | Uso |
+| Tecnología | Versión | Propósito |
 |---|---|---|
-| Next.js | 15.2.8 | Framework principal (App Router + Server Actions) |
-| React | 19 | UI |
-| TypeScript | 5 | Tipado estático |
-| Prisma | 7.2+ | ORM con Driver Adapter para MariaDB |
-| MySQL / MariaDB | — | Base de datos |
-| Auth.js (NextAuth) | 5 beta | Autenticación (Credentials + Google OAuth) |
-| Tailwind CSS | 4 | Estilos (con `@tailwindcss/postcss`) |
-| Zod | 4 | Validación de esquemas |
-| Cloudinary | 2 | Almacenamiento de imágenes |
-| Sonner | 2 | Notificaciones toast |
-| Framer Motion | 12 | Animaciones |
-| Lucide React | 0.562 | Iconos |
-| bcryptjs | 3 | Hash de contraseñas |
-| slugify | 1.6 | Generación de slugs para SEO |
-| use-debounce | 10 | Debounce en búsquedas |
-| date-fns | 4 | Manejo de fechas |
+| **Next.js** | 15.2.8 | Framework principal (App Router, Turbopack en dev) |
+| **React** | 19.x | UI con Server y Client Components |
+| **TypeScript** | 5 | Tipado estático (strict mode) |
+| **Prisma** | 7.2+ | ORM con Driver Adapter nativo para MariaDB |
+| **MySQL / MariaDB** | — | Base de datos relacional |
+| **Auth.js (NextAuth)** | 5 beta.30 | Autenticación (Google OAuth + Credenciales) |
+| **Tailwind CSS** | 4 | Estilos con `@tailwindcss/postcss` |
+| **Zod** | 4.3+ | Validación de esquemas en cliente y servidor |
+| **Cloudinary** | 2.x | Almacenamiento y CDN de imágenes |
+| **Sonner** | 2.x | Notificaciones toast |
+| **Framer Motion** | 12.x | Animaciones de UI |
+| **Lucide React** | 0.562 | Librería de iconos |
+| **bcryptjs** | 3.x | Hash de contraseñas |
+| **TanStack Query (React Query)** | — | Caché del cliente en el dashboard admin |
+| **CVA (class-variance-authority)** | — | Variantes del componente Button |
+| **slugify** | 1.6 | Slugs para carpetas de Cloudinary |
+| **date-fns / date-fns-tz** | 4 / 3 | Manejo de fechas y zonas horarias |
+| **use-debounce** | 10 | Debounce en búsqueda del admin |
+| **embla-carousel-react** | 8.6 | Carrusel (instalado, uso pendiente) |
 
 ---
 
-## Estructura de Archivos
+## Estructura Completa de Archivos
 
 ```
 /
 ├── prisma/
-│   ├── schema.prisma              # Modelos de base de datos
-│   ├── config.ts                  # Configuración Prisma
+│   ├── schema.prisma               # Esquema de base de datos
+│   ├── config.ts                   # Configuración de Prisma (datasource, migrations)
 │   └── migrations/
-│       └── 0_init/migration.sql   # Migración inicial
+│       └── 0_init/migration.sql    # Migración inicial (users + accounts)
+│
+├── generated/
+│   └── prisma/                     # Cliente Prisma generado (NO editar)
+│       └── client/                 # Se regenera con `npx prisma generate`
 │
 ├── src/
-│   ├── app/                       # Rutas Next.js (App Router)
-│   │   ├── layout.tsx             # Layout raíz (providers, header, footer)
-│   │   ├── page.tsx               # Página de inicio (HomeClient)
-│   │   ├── loading.tsx            # Spinner global
-│   │   ├── globals.css            # Estilos globales + variables CSS
-│   │   ├── login/page.tsx         # Inicio de sesión
-│   │   ├── register/page.tsx      # Registro de usuario
-│   │   ├── dashboard/page.tsx     # Panel admin — Inventario
-│   │   ├── categories/page.tsx    # Panel admin — Categorías
-│   │   ├── provider/page.tsx      # Panel admin — Proveedores
-│   │   ├── sizes/page.tsx         # Panel admin — Talles
-│   │   ├── movements/page.tsx     # Panel admin — Historial de movimientos
+│   ├── app/                        # Rutas Next.js (App Router)
+│   │   ├── globals.css             # Variables CSS, fuentes, animaciones, scrollbar
+│   │   ├── layout.tsx              # Layout raíz: session + branding + pageConfig + providers
+│   │   ├── loading.tsx             # Spinner global de carga
+│   │   ├── page.tsx                # "/" → HomeClient → ProductLayout
+│   │   │
+│   │   ├── api/
+│   │   │   └── auth/[...nextauth]/
+│   │   │       └── route.ts        # Handler de Auth.js (GET + POST)
+│   │   │
+│   │   ├── login/
+│   │   │   └── page.tsx            # Página de login (Client Component)
+│   │   ├── register/
+│   │   │   └── page.tsx            # Página de registro (Client Component)
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── layout.tsx          # Wrappea con QueryProvider (TanStack Query)
+│   │   │   └── page.tsx            # → DashboardClient (inventario admin)
+│   │   │
+│   │   ├── categories/
+│   │   │   └── page.tsx            # Gestión de categorías (force-dynamic, Server Component)
+│   │   ├── provider/
+│   │   │   └── page.tsx            # Gestión de proveedores (Client Component + Suspense)
+│   │   ├── sizes/
+│   │   │   └── page.tsx            # Gestión de grupos de talles (Client Component)
+│   │   ├── movements/
+│   │   │   └── page.tsx            # Historial de movimientos (Server Component)
+│   │   │
 │   │   ├── productos/
-│   │   │   ├── page.tsx           # Catálogo general
-│   │   │   ├── [categoria]/       # Catálogo por categoría (rutas estáticas)
-│   │   │   │   └── page.tsx
-│   │   │   └── item/[id]/         # Detalle de producto
-│   │   │       └── page.tsx
-│   │   ├── personalizado/page.tsx # Diseñador de tablas custom
-│   │   ├── escuela/page.tsx       # Página escuela de surf
+│   │   │   ├── page.tsx            # Catálogo general paginado
+│   │   │   ├── [categoria]/
+│   │   │   │   └── page.tsx        # Catálogo por categoría (SSG + ISR)
+│   │   │   └── item/[id]/
+│   │   │       └── page.tsx        # Detalle de producto
+│   │   │
+│   │   ├── personalizado/
+│   │   │   └── page.tsx            # Diseñador de tablas (Client Component puro)
+│   │   ├── escuela/
+│   │   │   └── page.tsx            # Landing escuela de surf (Server Component)
+│   │   │
 │   │   └── admin/
-│   │       └── pageConfig/page.tsx # Configuración visual del sitio
+│   │       └── pageConfig/
+│   │           └── page.tsx        # Configuración visual del sitio (Server + Client)
 │   │
-│   ├── actions/                   # Server Actions (toda la lógica de negocio)
-│   │   ├── admin.actions.ts       # Turnos (obtener, limpiar)
-│   │   ├── admin-dashboard.ts     # Gestión de usuarios (rol, eliminar)
-│   │   ├── auth-actions.ts        # Login, registro, Google, logout
-│   │   ├── colors.ts              # CRUD colores
-│   │   ├── garments.ts            # CRUD productos, categorías, subcategorías, proveedores
-│   │   ├── movements.ts           # Crear/obtener movimientos de stock
-│   │   ├── providers.ts           # CRUD proveedores (con validación Zod)
-│   │   ├── sizes.ts               # CRUD grupos de talles y valores
-│   │   ├── user-dashboard.ts      # Perfil usuario, turnos, cambio de contraseña
-│   │   └── page-config/           # Configuración de la página (branding, SEO, etc.)
-│   │       ├── branding.actions.ts
-│   │       ├── contact.actions.ts
-│   │       ├── ecommerce.actions.ts
-│   │       ├── general.actions.ts
-│   │       ├── helpers.ts
-│   │       ├── location.actions.ts
-│   │       ├── maintenance.actions.ts
-│   │       ├── seo.actions.ts
-│   │       ├── socials.actions.ts
+│   ├── actions/                    # Server Actions — toda la lógica de negocio
+│   │   ├── admin.actions.ts        # Turnos: obtenerTurnos, limpiarTurnosAntiguos, limpiarTurnosCancelados
+│   │   ├── admin-dashboard.ts      # Usuarios: getAllUsers, toggleUserRole, deleteUserAccount
+│   │   ├── auth-actions.ts         # loginAction, registerAction, googleLoginAction, handleSignOut
+│   │   ├── categories.ts           # getCategories (cacheada), createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory
+│   │   ├── colors.ts               # getColors (cacheada), createColor
+│   │   ├── garments.ts             # createGarment, getGarments (paginado+cacheado), getGarmentById, updateGarment, deleteGarment
+│   │   ├── movements.ts            # createMovement (con transacción), getMovements
+│   │   ├── providers.ts            # getProviders (cacheada), createProvider, updateProvider, deleteProvider
+│   │   ├── sizes.ts                # getSizeTypes (cacheada), createSizeType, addSizeToType, deleteSize, deleteSizeType
+│   │   ├── user-dashboard.ts       # updateProfile, getUserTurnos, cancelTurno, updatePassword
+│   │   └── page-config/
+│   │       ├── branding.actions.ts  # updateBrandingConfig (sube imgs), getBrandingConfig (cacheada 1h)
+│   │       ├── contact.actions.ts   # updateContactConfig, getContactConfig
+│   │       ├── ecommerce.actions.ts # updateEcommerceConfig, getEcommerceConfig
+│   │       ├── general.actions.ts   # getPageConfig (consulta directa sin caché)
+│   │       ├── helpers.ts           # generateSeoImageData (genera ruta+ID para Cloudinary)
+│   │       ├── location.actions.ts  # updateLocationConfig, getLocationConfig
+│   │       ├── maintenance.actions.ts # clearPageConfig (limpia imágenes en Cloudinary + reset DB)
+│   │       ├── seo.actions.ts       # updateSeoConfig, getSeoConfig
+│   │       ├── socials.actions.ts   # updateSocialsConfig, getSocialsConfig
 │   │       └── shared/
-│   │           ├── defaults.ts    # Valores por defecto de PageConfig
-│   │           ├── get-page-config.ts
-│   │           ├── reset-data.ts  # Datos para reset de configuración
-│   │           ├── types.ts       # Tipos TypeScript para PageConfig
-│   │           └── upload-page-image.ts
+│   │           ├── defaults.ts      # DEFAULT_VALUES para reset de PageConfig
+│   │           ├── get-page-config.ts # getOrCreatePageConfig (upsert del registro id=1)
+│   │           ├── reset-data.ts    # RESET_DATA: objeto completo para resetear PageConfig
+│   │           ├── types.ts         # PageConfigInput: tipo TS para las mutaciones
+│   │           └── upload-page-image.ts # uploadPageImage: sube/reemplaza imagen en Cloudinary
 │   │
 │   ├── components/
 │   │   ├── admin/
-│   │   │   └── page-config/       # Secciones del panel de configuración visual
-│   │   │       ├── BrandingSection.tsx    # Logo, nombre, colores, banner
-│   │   │       ├── ContactSection.tsx     # Subidor de imágenes (mal nombrado)
-│   │   │       ├── EcommerceSection.tsx   # Switches ecommerce/carrito/checkout
-│   │   │       ├── LocationSection.tsx    # Dirección, ciudad, provincia, país
-│   │   │       ├── PageConfigForm.tsx     # Contenedor de todas las secciones
-│   │   │       ├── SeoSection.tsx         # Meta title y descripción
-│   │   │       ├── SocialsSection.tsx     # Redes sociales
+│   │   │   └── page-config/        # Secciones del panel /admin/pageConfig
+│   │   │       ├── BrandingSection.tsx    # Logo, banner, favicon, nombre, slogan, desc, colores
+│   │   │       ├── ContactSection.tsx     # Teléfono, WhatsApp, email
+│   │   │       ├── EcommerceSection.tsx   # SwitchCards: ecommerce/carrito/checkout
+│   │   │       ├── LocationSection.tsx    # Dirección, ciudad, provincia, país + switch habilitado
+│   │   │       ├── PageConfigForm.tsx     # Contenedor que compone todas las secciones
+│   │   │       ├── SeoSection.tsx         # Meta title y meta description
+│   │   │       ├── SocialsSection.tsx     # Instagram, Facebook, TikTok, X, YouTube, LinkedIn
 │   │   │       └── shared/
-│   │   │           ├── Input.tsx          # Input estilizado para el admin
-│   │   │           ├── ImageUploader.tsx  # (contiene SwitchCard, nombre incorrecto)
-│   │   │           ├── SwitchCard.tsx     # Toggle switch con card
-│   │   │           └── Textarea.tsx       # Textarea estilizado para el admin
+│   │   │           ├── ImageUploader.tsx  # Carga imagen como base64 (para branding)
+│   │   │           ├── Input.tsx          # Input estilizado admin (dark)
+│   │   │           ├── SwitchCard.tsx     # Toggle switch con card negro/cyan
+│   │   │           └── Textarea.tsx       # Textarea estilizado admin (dark)
 │   │   │
 │   │   ├── auth/
-│   │   │   ├── AuthLayout.tsx     # Layout para páginas de auth (fondo blur)
-│   │   │   ├── google-button.tsx  # Botón Google OAuth
-│   │   │   └── LoginModal.tsx     # Modal de login (usado en header)
+│   │   │   ├── AuthLayout.tsx       # Layout con imagen de fondo, blur, neón
+│   │   │   ├── google-button.tsx    # Botón Google con useFormStatus (form action)
+│   │   │   └── LoginModal.tsx       # Modal de login que aparece en header
 │   │   │
 │   │   ├── cart/
-│   │   │   └── CartSidebar.tsx    # Panel lateral del carrito de compras
+│   │   │   └── CartSidebar.tsx      # Panel lateral carrito: items, cantidades, totales, link a pago
 │   │   │
 │   │   ├── categories/
 │   │   │   ├── filters/
-│   │   │   │   └── CategoryFilter.tsx    # Select de filtro por categoría
+│   │   │   │   └── CategoryFilter.tsx    # Select de filtro por categoría (dashboard)
 │   │   │   ├── forms/
-│   │   │   │   └── AddSubCategoryForm.tsx # Formulario para añadir subcategoría
+│   │   │   │   └── AddSubCategoryForm.tsx # Form rápido para añadir subcategoría en /categories
 │   │   │   ├── modals/
-│   │   │   │   ├── CategoryModal.tsx     # Modal alternativo (panel admin oscuro)
-│   │   │   │   ├── DeleteSubBtn.tsx      # Botón eliminar subcategoría
-│   │   │   │   └── ManageCategoryModal.tsx # Modal de gestión (paleta cyan)
+│   │   │   │   ├── CategoryModal.tsx          # Modal ADMIN OSCURO (estilo amber, para dashboard)
+│   │   │   │   ├── DeleteSubBtn.tsx            # Botón cliente que llama deleteSubCategory
+│   │   │   │   └── ManageCategoryModal.tsx     # Modal TIENDA (estilo cyan, para /categories)
 │   │   │   └── view/
-│   │   │       └── CategoryContentClient.tsx # Vista de categoría con filtro de subs
+│   │   │       └── CategoryContentClient.tsx  # Vista de categoría: sidebar subs + grilla productos
 │   │   │
 │   │   ├── data/
-│   │   │   └── data.js            # Datos estáticos: categorías mock, heroSlides
+│   │   │   └── data.js              # Datos estáticos: categorías mock, products mock, heroSlides
 │   │   │
 │   │   ├── home/
-│   │   │   ├── HomeClient.tsx     # Wrapper cliente para la página de inicio
-│   │   │   └── HomeSections.jsx   # Grid de categorías (FeaturedSection)
+│   │   │   ├── HomeClient.tsx       # Wrapper cliente para la página de inicio
+│   │   │   └── HomeSections.jsx     # Grid de 7 categorías animadas (FeaturedSection)
 │   │   │
 │   │   ├── layout/
-│   │   │   ├── AppGate.tsx        # Control de cookies, privacidad y términos
-│   │   │   ├── Footer.tsx         # Footer del sitio público
-│   │   │   ├── Header.tsx         # Navbar principal (fijo, con menú hamburguesa)
-│   │   │   ├── Hero.tsx           # Slider hero con slides dinámicos
-│   │   │   ├── LayoutComponent.tsx # Provider de carrito + header + footer
-│   │   │   ├── Navbar.jsx         # Navbar vacío (componente legado, no usar)
-│   │   │   └── RouteLoader.tsx    # Barra de progreso en cambios de ruta
+│   │   │   ├── AppGate.tsx          # Controla flujo cookies → privacidad → términos → app
+│   │   │   ├── Footer.tsx           # Footer público: links, redes, términos, privacidad
+│   │   │   ├── Header.tsx           # Navbar fijo: logo, menú hamburguesa, links admin/user, logout
+│   │   │   ├── Hero.tsx             # Carrusel hero: slides dinámicos del pageConfig + estáticos
+│   │   │   ├── LayoutComponent.tsx  # Provider de carrito + AppLayout interno
+│   │   │   └── RouteLoader.tsx      # Barra cyan de carga en cambios de ruta (Framer Motion)
 │   │   │
 │   │   ├── legal/
-│   │   │   ├── CookieModal.tsx    # Modal de cookies (bloquea la app)
-│   │   │   ├── PrivacyModal.tsx   # Modal de política de privacidad
-│   │   │   └── TermsModal.tsx     # Modal de términos (requiere checkbox)
+│   │   │   ├── CookieModal.tsx      # Modal de cookies (bloquea toda la app hasta aceptar)
+│   │   │   ├── PrivacyModal.tsx     # Modal privacidad (automático tras cookies)
+│   │   │   └── TermsModal.tsx       # Modal términos (requiere checkbox para aceptar)
 │   │   │
 │   │   ├── movements/
-│   │   │   └── MovementModal.tsx  # Modal para registrar ingresos/egresos de stock
+│   │   │   └── MovementModal.tsx    # Modal para registrar ingreso/egreso de stock
 │   │   │
 │   │   ├── products/
 │   │   │   ├── cards/
-│   │   │   │   └── ProductCard.tsx   # Tarjeta de producto (hover con slider imágenes)
+│   │   │   │   └── ProductCard.tsx     # Tarjeta: hover slider de imágenes, badge nuevo/sin stock
+│   │   │   ├── forms/
+│   │   │   │   ├── ImageUploader.tsx   # Sube imágenes a Cloudinary (upload preset público)
+│   │   │   │   └── VariantRow.tsx      # Fila de variante: talle, color, stock, SKU + custom
 │   │   │   ├── grid/
-│   │   │   │   └── ProductGrid.tsx   # Grilla de productos + modal de detalle
+│   │   │   │   └── ProductGrid.tsx     # Grilla de productos + modal de detalle rápido
 │   │   │   ├── layouts/
-│   │   │   │   └── ProductLayout.jsx # Layout principal de la tienda (legado)
+│   │   │   │   └── ProductLayout.jsx   # Layout principal de la tienda home (JSX, usa datos mock)
 │   │   │   ├── modals/
-│   │   │   │   ├── ProductModal.tsx  # Modal crear/editar producto (con portal)
-│   │   │   │   └── QuickViewTable.tsx # Tabla de inventario admin con acciones
+│   │   │   │   ├── ProductModal.tsx    # Modal CRUD de productos (con createPortal)
+│   │   │   │   ├── ProviderModal.tsx   # Modal de info de proveedor (readonly)
+│   │   │   │   └── QuickViewTable.tsx  # Tabla del inventario con editar/eliminar
 │   │   │   └── views/
-│   │   │       ├── CatalogoClient.tsx  # Wrapper cliente para catálogo
-│   │   │       ├── ProductoView.tsx    # Vista detalle de producto (variantes, talles)
-│   │   │       └── ProductsPage.tsx    # Página catálogo con filtros y ordenamiento
+│   │   │       ├── CatalogoClient.tsx  # Wrapper cliente para catálogo (pasa addToCart)
+│   │   │       ├── ProductoView.tsx    # Vista detalle: galería, talles, colores, carrito
+│   │   │       └── ProductsPage.tsx    # Catálogo con sidebar de filtros, orden y paginación
 │   │   │
 │   │   ├── providers/
-│   │   │   ├── PageConfigProvider.tsx  # Context para la configuración del sitio
-│   │   │   └── SessionWrapper.tsx      # SessionProvider de NextAuth
+│   │   │   ├── PageConfigProvider.tsx  # Context global de la config del sitio
+│   │   │   └── SessionWrapper.tsx      # SessionProvider de NextAuth (envuelve la app)
 │   │   │
 │   │   ├── search/
-│   │   │   └── Search.tsx         # Input de búsqueda con debounce (URL params)
+│   │   │   └── Search.tsx             # Input con debounce 300ms, llama onChange del padre
 │   │   │
 │   │   └── ui/
-│   │       ├── button.tsx         # Botón base con variantes (CVA)
-│   │       └── input.tsx          # Input base de shadcn/ui
+│   │       ├── button.tsx             # Botón con múltiples variantes (CVA + Radix Slot)
+│   │       ├── color-dropdown.tsx     # Dropdown custom de colores con punto de color
+│   │       ├── confirm-dialog.tsx     # Diálogo de confirmación (eliminar producto)
+│   │       ├── input.tsx              # Input base de shadcn/ui
+│   │       └── pagination.tsx         # Paginación con Links de Next.js y searchParams
 │   │
 │   ├── context/
-│   │   └── CartContext.tsx        # Context del carrito (con localStorage)
+│   │   └── CartContext.tsx            # Estado global del carrito con localStorage
+│   │
+│   ├── hooks/                         # Custom hooks (todos client-side con TanStack Query)
+│   │   ├── useCategories.ts           # getCategories → queryKey: ["categories"], staleTime: Infinity
+│   │   ├── useColors.ts               # getColors → queryKey: ["colors"], staleTime: Infinity
+│   │   ├── useGarments.ts             # getGarments paginado → queryKey: ["garments", params]
+│   │   ├── useProductForm.ts          # Lógica completa del form de producto (sin componente)
+│   │   ├── useProviders.ts            # getProviders → queryKey: ["providers"], staleTime: Infinity
+│   │   └── useSizeTypes.ts            # getSizeTypes → queryKey: ["sizeTypes"], staleTime: Infinity
 │   │
 │   ├── lib/
-│   │   ├── cloudinary.ts          # Configuración Cloudinary + extractPublicId()
-│   │   ├── prisma.ts              # Singleton de PrismaClient con MariaDB adapter
-│   │   ├── upload-image.ts        # Función para subir imagen a Cloudinary
-│   │   ├── utils.ts               # cn() para clases + serializeData()
-│   │   └── zod.ts                 # Todos los esquemas de validación Zod
+│   │   ├── cache.ts                   # Sistema de caché con unstable_cache + tags
+│   │   ├── cloudinary.ts              # Config v2 + extractPublicId()
+│   │   ├── prisma.ts                  # Singleton PrismaClient con adapter MariaDB
+│   │   ├── upload-image.ts            # Helper: sube imagen base64 a Cloudinary como webp
+│   │   ├── utils.ts                   # cn() + serializeData() + extractPublicId()
+│   │   ├── zod.ts                     # Todos los esquemas de validación
+│   │   └── services/                  # Capa de servicio — queries a Prisma puras
+│   │       ├── category-service.ts    # getCategoriesFull, createCategory, updateCategory, deleteCategory, getSubCategoriesCount, createSubCategory, deleteSubCategory, getCategoryWithProducts, getCategoryByName, getGarmentCountBySubCategory
+│   │       ├── color-service.ts       # getColors, createColor
+│   │       ├── garment-service.ts     # getGarmentsPaginated, getGarmentById, createGarment, updateGarment, deleteGarment, updateGarmentWithDetails
+│   │       ├── provider-service.ts    # getProviders, createProvider, updateProvider, deleteProvider
+│   │       └── size-service.ts        # getSizeTypes, createSizeType, addSize, deleteSize, deleteSizeType
+│   │
+│   ├── providers/
+│   │   └── QueryProvider.tsx          # QueryClientProvider de TanStack Query
 │   │
 │   ├── types/
-│   │   └── next-auth.d.ts         # Extensión de tipos de NextAuth (id, role, telefono)
+│   │   └── next-auth.d.ts             # Extiende tipos de NextAuth: id, role, telefono, image
 │   │
-│   ├── auth.ts                    # Configuración principal de Auth.js
-│   ├── auth.config.ts             # Config edge-compatible de Auth.js
-│   └── middleware.ts              # Protección de rutas (admin, gestion, auth)
+│   ├── auth.ts                        # Config principal Auth.js (providers, callbacks)
+│   ├── auth.config.ts                 # Config edge Auth.js (para middleware, sin Node.js)
+│   └── middleware.ts                  # Protección de rutas por rol
 │
-├── next.config.ts                 # Configuración Next.js
-├── postcss.config.mjs             # Plugin Tailwind v4
-├── tsconfig.json                  # Configuración TypeScript
-├── prisma.config.ts               # Config Prisma con env vars
-└── eslint.config.mjs              # ESLint flat config
+├── CLAUDE.md                          # Este archivo
+├── next.config.ts                     # Config Next.js (eslint ignorado, imágenes remotas)
+├── postcss.config.mjs                 # Plugin Tailwind v4
+├── tsconfig.json                      # TypeScript strict mode
+├── prisma.config.ts                   # Datasource de Prisma desde env vars
+├── eslint.config.mjs                  # ESLint flat config (next/core-web-vitals)
+└── package.json                       # Scripts: dev, build (prisma generate + push + build)
 ```
 
 ---
 
-## Base de Datos — Modelos Prisma
+## Sistema de Caché con Tags (CRÍTICO)
 
-El esquema está en `prisma/schema.prisma`. Usa MySQL con `relationMode = "prisma"` (sin foreign keys nativas).
+El proyecto usa **dos capas de caché independientes** que deben entenderse bien para evitar datos desactualizados.
 
-### Modelos Principales
+### Capa 1: `unstable_cache` de Next.js (servidor)
 
-| Modelo | Descripción |
-|---|---|
-| `user` | Usuarios del sistema (rol USER/ADMIN) |
-| `account` | Cuentas OAuth (Google) vinculadas al user |
-| `Category` | Categorías de productos (Tablas, Wetsuits, etc.) |
-| `SubCategory` | Subcategorías con curva de talles opcional |
-| `Garment` | Productos del catálogo |
-| `GarmentVariant` | Variantes de producto (talle + color + stock + SKU) |
-| `GarmentImage` | Imágenes de productos (hasta 4, con orden) |
-| `SizeType` | Grupo de talles (Adulto, Junior, etc.) |
-| `Size` | Valor de talle individual (XS, S, M... o medidas custom) |
-| `Color` | Colores con nombre y hex |
-| `Provider` | Proveedores de productos |
-| `ContactProvider` | Contactos de proveedor (email o teléfono) |
-| `Movement` | Registro de movimientos de stock (IN/OUT) |
-| `PageConfig` | Configuración completa del sitio (id siempre = 1) |
-
-### Relaciones Clave
-
-```
-Category → SubCategory (1:N) → SizeType (N:1)
-Category → Garment (1:N)
-Garment → GarmentVariant (1:N) → Size, Color
-Garment → GarmentImage (1:N)
-Garment → Provider (N:1)
-GarmentVariant → Movement (1:N)
-user → account (1:N)
-```
-
-### Regla importante: PageConfig
-
-El registro de `PageConfig` siempre tiene `id = 1`. Todas las acciones de configuración hacen `update({ where: { id: 1 } })`. No crear registros nuevos de PageConfig manualmente.
-
----
-
-## Configuración de Prisma
-
-El proyecto usa **Prisma 7** con el **Driver Adapter nativo para MariaDB** (`@prisma/adapter-mariadb`). El cliente se genera en `generated/prisma/`, no en el default.
-
-```ts
-// src/lib/prisma.ts — patrón singleton
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { PrismaClient } from '../../generated/prisma/client';
-
-const adaptador = new PrismaMariaDb({ host, user, password, database, ssl });
-export const prisma = global.prisma || new PrismaClient({ adapter: adaptador });
-```
-
-**Comandos importantes:**
-```bash
-npx prisma generate     # Regenerar cliente (después de cambiar schema)
-npx prisma db push      # Aplicar cambios al schema sin migración
-npx prisma migrate dev  # Crear migración (desarrollo)
-```
-
----
-
-## Variables de Entorno Requeridas
-
-```env
-# Base de datos
-DATABASE_URL="mysql://root@127.0.0.1:3306/gestion-stock"
-DATABASE_USER="root"
-DATABASE_PASSWORD=""
-DATABASE_NAME="gestion-stock"
-DATABASE_HOST="127.0.0.1"
-DATABASE_PORT=3306
-
-# Auth
-AUTH_SECRET="..."
-AUTH_GOOGLE_ID="..."
-AUTH_GOOGLE_SECRET="..."
-AUTH_TRUST_HOST=true
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME="..."
-CLOUDINARY_API_KEY="..."
-CLOUDINARY_API_SECRET="..."
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="..."
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="..."
-
-# Timezone
-TIMEZONE="America/Argentina/Buenos_Aires"
-```
-
----
-
-## Autenticación
-
-Gestionada con **Auth.js v5 (beta)**. Archivos relevantes:
-
-- `src/auth.ts` — Providers (Google + Credentials), callbacks JWT/session, refresco desde DB
-- `src/auth.config.ts` — Config edge-compatible (usada en middleware)
-- `src/middleware.ts` — Protección de rutas
-- `src/app/api/auth/[...nextauth]/route.ts` — Handler de Auth.js
-
-### Roles
+Definida en `src/lib/cache.ts`. Cachea los resultados de las queries de Prisma en el servidor.
 
 ```typescript
-enum user_role { USER | ADMIN }
+// src/lib/cache.ts — resumen del sistema
+
+// Cacheada 1 hora (3600s)
+export const getCachedPageConfig = unstable_cache(
+  async () => prisma.pageConfig.findUnique({ where: { id: "1" } }),
+  ["page-config"],
+  { revalidate: 3600 }
+);
+
+// Cacheada 1 minuto (60s) con tag "products"
+export const getCachedProducts = (page, limit, categoryId?, search?, subCategoryId?) =>
+  unstable_cache(
+    () => garmentService.getGarmentsPaginated(...),
+    [`products-pg-${page}-lim-${limit}-cat-${catId}-q-${search}-sub-${subId}`],
+    { revalidate: 60, tags: ["products"] }
+  );
+
+// Las demás son cacheadas 1 hora con sus respectivos tags
+export const getCachedCategories = unstable_cache(fn, ["all-categories"], { revalidate: 3600, tags: ["categories"] });
+export const getCachedProviders  = unstable_cache(fn, ["all-providers"],  { revalidate: 3600, tags: ["providers"] });
+export const getCachedSizeTypes  = unstable_cache(fn, ["all-size-types"], { revalidate: 3600, tags: ["sizeTypes"] });
+export const getCachedColors     = unstable_cache(fn, ["all-colors"],     { revalidate: 3600, tags: ["colors"] });
 ```
 
-### Protección de rutas (middleware.ts)
+### Tags del servidor y quién los invalida
 
-| Tipo de ruta | Condición |
-|---|---|
-| `/login`, `/register` | Redirige a `/` si ya está autenticado |
-| `/admin/*`, `/dashboard`, `/provider`, `/sizes`, `/movements` | Requiere autenticación + rol ADMIN |
-| Rutas públicas | Sin restricción |
+| Tag | revalidate | Lo invalida (`revalidateTag`) |
+|---|---|---|
+| `"products"` | 60s | `garments.ts`: createGarment, updateGarment, deleteGarment |
+| `"products"` | 60s | `movements.ts`: createMovement (cambia stock) |
+| `"categories"` | 3600s | `categories.ts`: create/update/delete category/subCategory |
+| `"providers"` | 3600s | `providers.ts`: create/update/delete provider |
+| `"sizeTypes"` | 3600s | `sizes.ts`: create/delete size/sizeType |
+| `"colors"` | 3600s | `colors.ts`: createColor |
+| `"branding-config"` | 3600s | Solo expira por tiempo (no hay `revalidateTag`) |
+| `"page-config"` | 3600s | Solo expira por tiempo |
 
-### Token JWT
+> **Regla:** Toda Server Action que mute datos debe llamar `revalidateTag("tag-correspondiente")` al final. Si falta, los datos cacheados no se actualizan hasta que expire el tiempo.
 
-El token incluye: `id`, `role`, `telefono`, `image`, `name`. El callback `jwt` refresca desde la DB en cada petición si el user está logueado.
+### Capa 2: TanStack Query (cliente, solo en /dashboard)
+
+El dashboard admin usa **TanStack Query** para gestionar el estado del cliente con queries reactivas.
+
+```typescript
+// src/app/dashboard/layout.tsx
+import QueryProvider from "@/providers/QueryProvider";
+export default function DashboardLayout({ children }) {
+  return <QueryProvider>{children}</QueryProvider>;
+}
+
+// src/providers/QueryProvider.tsx — configuración del cliente
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 60 * 1000, retry: 1 } }
+});
+```
+
+### Query Keys del cliente y su relación con los hooks
+
+| Hook | queryKey | staleTime | Fuente de datos |
+|---|---|---|---|
+| `useGarments` | `["garments", { page, limit, categoryId, search }]` | 60s (default) | `getGarments()` Server Action |
+| `useCategories` | `["categories"]` | `Infinity` | `getCategories()` Server Action |
+| `useSizeTypes` | `["sizeTypes"]` | `Infinity` | `getSizeTypes()` Server Action |
+| `useProviders` | `["providers"]` | `Infinity` | `getProviders()` Server Action |
+| `useColors` | `["colors"]` | `Infinity` | `getColors()` Server Action |
+
+### Invalidación de caché del cliente (TanStack Query)
+
+En `DashboardClient.tsx`, después de mutaciones:
+
+```typescript
+const queryClient = useQueryClient();
+
+const invalidarProductos = () => {
+  queryClient.invalidateQueries({ queryKey: ["garments"] });
+};
+
+// Se pasa como prop onSuccess a los modales
+<MovementModal garments={garments} onSuccess={invalidarProductos} />
+<ProductModal ... onSuccess={invalidarProductos} />
+```
+
+### Flujo completo de una mutación en el dashboard
+
+```
+Usuario edita producto
+  → ProductModal.onSubmit()
+    → updateGarment() [Server Action]
+      → Valida con garmentSchema (Zod)
+      → garmentService.updateGarmentWithDetails() [Prisma]
+      → revalidateTag("products") [invalida caché servidor]
+    → onSuccess?.() [callback del padre]
+      → queryClient.invalidateQueries({ queryKey: ["garments"] }) [invalida caché cliente]
+        → useGarments re-fetcha automáticamente
+          → UI se actualiza
+```
 
 ---
 
-## Server Actions
+## Arquitectura en Capas
 
-Toda la lógica de negocio vive en `src/actions/`. Convenciones:
+El proyecto sigue una arquitectura en 3 capas:
 
-1. **Siempre** empezar con `"use server"` al tope del archivo.
-2. Validar con **Zod** antes de cualquier operación de base de datos.
-3. Llamar a `revalidatePath()` después de mutaciones para invalidar caché.
-4. Retornar `{ success: true, data }` o `{ error: "mensaje" }` consistentemente.
-5. Serializar datos con `serializeData()` antes de retornar (convierte `Decimal` a `number`).
+```
+components/pages (UI)
+    ↓ llaman
+actions/ (Server Actions — interfaz pública)
+    ↓ llaman
+lib/services/ (Servicios — lógica de queries Prisma)
+    ↓ usan
+lib/prisma.ts (ORM — PrismaClient singleton)
+    ↓
+Base de datos (MySQL/MariaDB)
+```
+
+### Por qué la separación actions/ vs services/
+
+- **`actions/`**: Validan con Zod, manejan errores, llaman `revalidateTag`, usan `auth()`. Son la interfaz pública que puede llamar cualquier componente.
+- **`services/`**: Solo contienen las queries de Prisma, sin lógica de negocio. Son funciones puras que reciben parámetros tipados.
 
 ```typescript
-// Patrón típico de server action
-export async function crearAlgo(data: unknown) {
-  const parsed = esquemaZod.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+// services/garment-service.ts — solo Prisma puro
+export async function getGarmentsPaginated(page, limit, categoryId?, search?, subCategoryId?) {
+  const where = { active: true, ...filtros };
+  const [garments, total] = await Promise.all([
+    prisma.garment.findMany({ where, include: {...}, skip, take }),
+    prisma.garment.count({ where }),
+  ]);
+  return { garments, total };
+}
 
-  try {
-    const resultado = await prisma.modelo.create({ data: parsed.data });
-    revalidatePath("/ruta");
-    return { success: true, data: serializeData(resultado) };
-  } catch (error: any) {
-    if (error.code === "P2002") return { error: "Duplicado" };
-    return { error: "Error interno" };
+// actions/garments.ts — orquesta el servicio
+export async function getGarments(page, limit, categoryId?, search?) {
+  const cachedFn = getCachedProducts(page, limit, categoryId, search);
+  const { garments, total } = await cachedFn();
+  return { success: true, data: serializeData(garments), total, totalPages };
+}
+```
+
+---
+
+## Base de Datos — Esquema Prisma Completo
+
+### Configuración
+
+```prisma
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma"  // Path personalizado
+  relationMode = "prisma"               // Sin FK nativas en MySQL
+}
+
+datasource db {
+  provider     = "mysql"
+  relationMode = "prisma"               // Relaciones simuladas por Prisma
+}
+```
+
+### Modelos
+
+#### Autenticación
+
+```prisma
+model user {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?   // null en usuarios de Google
+  role          user_role @default(USER)  // USER | ADMIN
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  emailVerified DateTime?
+  image         String?
+  telefono      String?
+  account       account[]
+}
+
+model account {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          String  // "google"
+  providerAccountId String
+  // ...tokens OAuth
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+```
+
+#### Catálogo
+
+```prisma
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  active        Boolean       @default(true)
+  subCategories SubCategory[]
+  garments      Garment[]
+}
+
+model SubCategory {
+  id          String    @id @default(cuid())
+  name        String
+  active      Boolean   @default(true)
+  categoryId  String
+  sizeTypeId  String?   // curva de talles opcional
+  category    Category  @relation(...)
+  sizeType    SizeType? @relation(...)
+  garments    Garment[]
+  @@unique([name, categoryId])
+}
+
+model Garment {
+  id            String           @id @default(cuid())
+  name          String
+  description   String?          @db.Text
+  price         Decimal          @db.Decimal(10, 2)  // precio de venta
+  cost          Decimal          @db.Decimal(10, 2)  // precio de costo
+  active        Boolean          @default(true)
+  categoryId    String
+  subCategoryId String?
+  supplierId    String?
+  variants      GarmentVariant[]
+  images        GarmentImage[]
+}
+
+model GarmentVariant {
+  id        String    @id @default(cuid())
+  sku       String?   @unique
+  stock     Int       @default(0)
+  garmentId String
+  sizeId    String?
+  colorId   String?
+  attributes Json?    // para talles custom: { customSize: "5'8 x 20 x 2" }
+  movements  Movement[]
+  @@unique([garmentId, sizeId, colorId])
+}
+
+model GarmentImage {
+  id        String  @id @default(cuid())
+  srcImage  String  @db.Text  // URL de Cloudinary
+  alt       String?
+  order     Int     @default(0)  // 0 = imagen principal
+  garmentId String
+  // onDelete: Cascade
+}
+```
+
+#### Talles y Colores
+
+```prisma
+model SizeType {
+  id    String  @id @default(cuid())
+  name  String  @unique  // "Talles Adulto", "Medidas Tablas"
+  sizes Size[]
+  subCategories SubCategory[]
+}
+
+model Size {
+  id         String  @id @default(cuid())
+  value      String          // "XS", "M", "5'8"", "6'0""
+  order      Int @default(0) // para ordenar correctamente
+  active     Boolean @default(true)
+  sizeTypeId String
+  variants   GarmentVariant[]
+  @@unique([value, sizeTypeId])
+}
+
+model Color {
+  id       String  @id @default(cuid())
+  name     String  @unique   // "Rojo", "Azul marino"
+  hex      String?           // "#FF0000"
+  active   Boolean @default(true)
+  variants GarmentVariant[]
+}
+```
+
+#### Proveedores y Movimientos
+
+```prisma
+model Provider {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  active    Boolean           @default(true)
+  details   String?
+  contacts  ContactProvider[]
+  garments  Garment[]
+}
+
+model ContactProvider {
+  id         String  @id @default(cuid())
+  contact    String  // email o teléfono
+  type       String  // "EMAIL" | "PHONE"
+  idProvider String
+  active     Boolean @default(true)
+  @@unique([contact, idProvider])  // contact_provider_unique
+}
+
+model Movement {
+  id             String    @id @default(cuid())
+  type           MovementType  // IN | OUT
+  quantity       Int
+  priceAtTime    Decimal   @db.Decimal(10, 2)
+  note           String?
+  variantId      String
+  createdAt      DateTime  @default(now())
+}
+
+enum MovementType { IN  OUT }
+```
+
+#### Configuración de Página
+
+```prisma
+model PageConfig {
+  id        String  @id @default(cuid())
+  // BRANDING
+  storeName       String
+  description     String? @db.Text
+  slogan          String?
+  logo            String? @db.Text   // URL Cloudinary
+  favicon         String? @db.Text
+  banner          String? @db.Text
+  primaryColor    String? @default("#000000")
+  secondaryColor  String? @default("#FFFFFF")
+  // ECOMMERCE
+  ecommerceEnabled Boolean @default(true)
+  cartEnabled      Boolean @default(true)
+  checkoutEnabled  Boolean @default(true)
+  // CONTACTO
+  phone    String?
+  whatsapp String?
+  email    String?
+  // UBICACIÓN
+  locationEnabled Boolean @default(false)
+  address  String?
+  city     String?
+  province String?
+  country  String?
+  postalCode String?
+  mapsUrl  String? @db.Text
+  // REDES SOCIALES
+  instagram String? @db.Text
+  facebook  String? @db.Text
+  tiktok    String? @db.Text
+  x         String? @db.Text
+  youtube   String? @db.Text
+  linkedin  String? @db.Text
+  // SISTEMA
+  currency        String @default("ARS")
+  language        String @default("es")
+  maintenanceMode Boolean @default(false)
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.Text
+  // LEGAL
+  termsAndConditions String? @db.Text
+  privacyPolicy      String? @db.Text
+}
+```
+
+> **IMPORTANTE:** `PageConfig` siempre tiene el registro con `id = 1` (string, no int). Todas las acciones hacen `{ where: { id: 1 } }`. La función `getOrCreatePageConfig()` en `shared/get-page-config.ts` garantiza que exista.
+
+---
+
+## Autenticación — Flujo Completo
+
+### Archivos involucrados
+
+| Archivo | Propósito |
+|---|---|
+| `src/auth.ts` | Config completa: providers Google + Credentials, callbacks JWT y session |
+| `src/auth.config.ts` | Config edge-compatible (sin Node.js específico), para middleware |
+| `src/middleware.ts` | Usa `authConfig` para proteger rutas sin importar prisma |
+| `src/app/api/auth/[...nextauth]/route.ts` | Expone handlers GET/POST de Auth.js |
+
+### Callbacks JWT y Session
+
+```typescript
+// auth.ts
+callbacks: {
+  async jwt({ token, user, trigger, session }) {
+    if (user) {
+      // Primera vez: poblar token desde el user de la DB
+      token.id = user.id;
+      token.role = user.role;
+      token.telefono = user.telefono;
+      token.image = user.image;
+    }
+    if (trigger === "update" && session) {
+      // Cuando el usuario actualiza su perfil (useSession update)
+      token.name = session.name ?? token.name;
+      token.telefono = session.telefono ?? token.telefono;
+    }
+    return token;
+  },
+  async session({ session, token }) {
+    if (!token.id) return { ...session, user: null }; // token inválido
+    session.user.id = token.id;
+    session.user.role = token.role;
+    session.user.telefono = token.telefono;
+    session.user.image = token.image;
+    session.user.name = token.name;
+    return session;
   }
 }
 ```
 
-### Errores Prisma frecuentes
+### Protección de rutas (middleware.ts)
 
-| Código | Causa |
-|---|---|
-| `P2002` | Violación de UNIQUE constraint |
-| `P2003` | Violación de referencia (FK simulada) |
-| `P2025` | Registro no encontrado |
+```typescript
+const isApiAuthRoute   = pathname.startsWith("/api/auth");     // siempre pasar
+const isAuthRoute      = ["/login", "/register"].includes(...); // redirigir si logueado
+const isAdminRoute     = pathname.startsWith("/admin");
+const isGestionRoute   = ["/dashboard", "/provider", "/sizes", "/movements"].includes(...);
 
----
+// Reglas:
+// 1. API auth → siempre pasa
+// 2. Rutas de auth + logueado → redirige a "/"
+// 3. Admin/gestión + no logueado → redirige a /login?callbackUrl=...
+// 4. Admin/gestión + rol USER → redirige a "/"
+```
 
-## Validación con Zod
+### Configuración de sesión
 
-Todos los esquemas están centralizados en `src/lib/zod.ts`. Esquemas principales:
-
-| Esquema | Uso |
-|---|---|
-| `loginSchema` | Email + contraseña |
-| `registerSchema` | Login + nombre + teléfono |
-| `garmentSchema` | Crear/actualizar producto con variantes |
-| `categorySchema` | Crear/actualizar categoría |
-| `movementSchema` | Registrar movimiento de stock |
-| `variantSchema` | Variante de producto individual |
-| `createProviderSchema` | Crear proveedor con contactos |
-| `updateProviderSchema` | Actualizar proveedor |
-| `colorSchema` | Crear color |
-| `SizeTypeNameSchema` | Nombre de grupo de talles |
-| `SizeValueSchema` | Valor de talle (sin espacios) |
+```typescript
+session: {
+  strategy: "jwt",
+  maxAge: 24 * 60 * 60,    // 1 día
+  updateAge: 60 * 60,       // refresca token cada 1 hora de actividad
+}
+```
 
 ---
 
-## Gestión de Imágenes
+## Gestión de Imágenes — Dos Caminos
 
-Las imágenes se suben a **Cloudinary** desde dos puntos:
+### 1. Imágenes de productos (desde el cliente)
 
-### 1. Desde el frontend (ProductModal)
-El componente sube directamente a Cloudinary usando el upload preset público:
+`src/components/products/forms/ImageUploader.tsx` → sube directamente a Cloudinary usando **upload preset público** (sin exponer API secret):
+
 ```typescript
 const data = new FormData();
 data.append("file", file);
 data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
-const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, ...);
+const res = await fetch(
+  `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+  { method: "POST", body: data }
+);
+// Recibe: { secure_url, public_id }
+// Carpeta: gestion-stock/garments/
 ```
 
-### 2. Desde el servidor (BrandingSection, updateGarment)
-Se usa la función `uploadImage()` de `src/lib/upload-image.ts` con las credenciales del servidor.
+### 2. Imágenes de branding (desde el servidor)
 
-### Extracción de publicId
-La función `extractPublicId(url)` en `src/lib/cloudinary.ts` extrae el ID público para poder eliminar imágenes:
+`src/actions/page-config/branding.actions.ts` + `src/lib/upload-image.ts` → usa las credenciales del servidor:
+
 ```typescript
-export function extractPublicId(url: string) {
-  const parts = url.split("/upload/")[1];
-  const clean = parts.replace(/v\d+\//, "");
-  return clean.replace(/\.[^/.]+$/, "");
+// lib/upload-image.ts
+export async function uploadImage({ base64, folder, publicId, displayName }) {
+  return cloudinary.uploader.upload(base64, {
+    folder,
+    public_id: publicId,
+    overwrite: true,
+    format: "webp",           // convierte a webp automáticamente
+    transformation: [{ fetch_format: "auto", quality: "auto" }],
+  });
+}
+
+// Carpetas generadas con generateSeoImageData():
+// gestion-stock/{slug-del-negocio}/branding/logo
+// gestion-stock/{slug-del-negocio}/branding/banner
+// gestion-stock/{slug-del-negocio}/branding/favicon
+```
+
+### Eliminar imágenes anteriores
+
+Antes de subir una nueva imagen de branding, se elimina la anterior con `extractPublicId()`:
+
+```typescript
+const publicId = extractPublicId(imagenAnteriorUrl);
+if (publicId) await cloudinary.uploader.destroy(publicId, { invalidate: true });
+```
+
+---
+
+## Hooks Personalizados
+
+Todos en `src/hooks/`. Usan TanStack Query y solo funcionan dentro de componentes envueltos con `QueryProvider` (es decir, dentro del layout del dashboard).
+
+### useGarments
+
+```typescript
+export function useGarments(page, limit, categoryId?, search?) {
+  return useQuery({
+    queryKey: ["garments", { page, limit, categoryId, search }],
+    queryFn: async () => {
+      const res = await getGarments(page, limit, categoryId, search);
+      if (res.error) throw new Error(res.error);
+      return res; // { success, data, total, page, totalPages }
+    },
+    placeholderData: (prev) => prev, // mantiene datos previos al paginar (sin flash)
+  });
 }
 ```
 
----
+### useCategories / useColors / useProviders / useSizeTypes
 
-## Sistema de Configuración del Sitio (PageConfig)
-
-El modelo `PageConfig` (id = 1) centraliza toda la configuración visual y funcional del sitio. Se accede mediante el contexto `PageConfigProvider`.
-
-### Secciones configurables
-
-| Sección | Campos |
-|---|---|
-| Branding | `storeName`, `slogan`, `description`, `logo`, `banner`, `favicon`, `primaryColor`, `secondaryColor` |
-| Ecommerce | `ecommerceEnabled`, `cartEnabled`, `checkoutEnabled`, `currency` |
-| Contacto | `phone`, `whatsapp`, `email` |
-| Ubicación | `locationEnabled`, `address`, `city`, `province`, `country`, `postalCode`, `mapsUrl` |
-| Redes sociales | `instagram`, `facebook`, `tiktok`, `x`, `youtube`, `linkedin` |
-| SEO | `metaTitle`, `metaDescription` |
-| Legal | `termsAndConditions`, `privacyPolicy` |
-| Sistema | `maintenanceMode`, `language` |
-
-### Uso del contexto
+Todos siguen el mismo patrón con `staleTime: Infinity` porque los datos de referencia cambian poco:
 
 ```typescript
-// En cualquier Client Component
-const pageConfig = usePageConfig();
-// Acceso: pageConfig?.pageConfig?.storeName
+export function useCategories() {
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const data = await getCategories(); // Server Action cacheada
+      if (!data) throw new Error("Error");
+      return data;
+    },
+    staleTime: Infinity, // solo se refresca con queryClient.invalidateQueries
+  });
+}
+```
+
+### useProductForm
+
+Hook especial que encapsula toda la lógica del formulario de producto:
+
+```typescript
+// Gestiona:
+const { formData, isEdit, availableSubCategories, availableSizes,
+        setField, handleCategoryChange, handleSubCategoryChange,
+        addVariant, removeVariant, updateVariant, updateVariantCustomSize,
+        addImages, removeImage, handleSubmit } = useProductForm({ garment, categories, sizes });
+
+// availableSizes se calcula desde la subcategoría seleccionada:
+// SubCategory → SizeType → Size[]
+// Si no hay sizeType, devuelve []
+// Si hay variante custom (sizeId === "CUSTOM"), guarda en attributes.customSize
 ```
 
 ---
 
-## Sistema de Carrito
+## Componentes Clave
 
-El carrito se gestiona con `CartContext` (`src/context/CartContext.tsx`):
+### ProductModal
 
-- Persiste en **localStorage** con la clave `tech_cart`
-- El `CartProvider` está en `LayoutComponent.tsx`
-- Expone: `cartItems`, `addToCart()`, `updateQty()`, `removeItem()`, `cartCount`, `isCartOpen`, `openCart()`, `closeCart()`
+`src/components/products/modals/ProductModal.tsx`
+
+- Usa `createPortal(modal, document.body)` para evitar problemas de z-index
+- Soporta crear y editar (detecta por prop `garment`)
+- Delega toda la lógica a `useProductForm`
+- Las imágenes se suben a Cloudinary al seleccionarlas (no al guardar)
+
+### QuickViewTable
+
+`src/components/products/modals/QuickViewTable.tsx`
+
+- Tabla del inventario admin con acciones inline (editar, eliminar)
+- Cada fila tiene `ProductModal` en modo edición y botón de eliminar
+- La eliminación usa `ConfirmDialog` (diálogo de confirmación reutilizable)
+- Muestra stock total de todas las variantes y el proveedor como botón que abre `ProviderModal`
+
+### Hero
+
+`src/components/layout/Hero.tsx`
+
+- Carrusel automático con cambio cada 6 segundos
+- El primer slide se construye dinámicamente desde `pageConfig` (storeName, slogan, banner, primaryColor)
+- Los siguientes slides son estáticos desde `data.js`
+- Usa `primaryColor` del pageConfig para el color del botón CTA y los indicadores
+
+### AppGate
+
+`src/components/layout/AppGate.tsx`
+
+- Controla el flujo legal antes de mostrar la app
+- Estado gestionado con `localStorage` (3 llaves: `cookiesAcknowledged`, `privacySeen`, `termsAccepted`)
+- Flujo: CookieModal → PrivacyModal (auto, 1 segundo de delay) → TermsModal → App renderizada
+- El Footer solo se renderiza cuando el usuario ha aceptado todo
 
 ---
 
-## Paleta de Colores por Contexto
+## Paletas de Colores y Estilos
 
-### Panel de administración (dashboard, providers, sizes, movements)
-```
-bg-black / bg-neutral-950 / bg-neutral-900
-texto: white / neutral-200
-acento: amber-500 (iconos, bordes activos, botones)
-```
+### CSS Variables Globales (`globals.css`)
 
-### Tienda pública y catálogo (productos, categorías, formularios)
 ```css
---bg-soft: #f0fafa   /* fondo suave */
---bg-medium: #e0f5f5 /* inputs, tags */
---border: #b2dede    /* bordes */
---accent: #4ab8b8    /* cyan acento */
---teal-dk: #0d5c63   /* verde marino */
---teal-dkk: #083d42  /* títulos */
---text: #0d2b2e      /* texto principal */
---text-secondary: #4a7c80
-```
-
-### Panel de configuración (admin/pageConfig)
-```
-bg-black/40 con bordes border-neutral-900
-Acento: cyan-500
-Botones de acción: bg-cyan-500 text-black
-```
-
----
-
-## Variantes del Componente Button
-
-Definidas con CVA en `src/components/ui/button.tsx`:
-
-| Variante | Uso |
-|---|---|
-| `default` | Primario amber/dorado |
-| `destructive` | Destructivo rojo |
-| `outline` | Borde sin relleno |
-| `secondary` | Secundario gris |
-| `ghost` | Sin fondo |
-| `link` | Estilo link |
-| `celeste` | Gradiente celeste (tienda) |
-| `rojo` | Gradiente rojo |
-| `verde` | Gradiente verde |
-| `amarillo` | Gradiente amarillo (admin) |
-| `blanco` | Claro con borde |
-| `hero` | Grande para CTA principal |
-| `outline-celeste` | Borde celeste |
-
----
-
-## Convenciones de Código
-
-### Nomenclatura
-
-- **Comentarios, variables y funciones**: siempre en **español**
-- **Tipos TypeScript**: en inglés (convención de la librería/framework)
-- **Nombres de archivos**: camelCase para componentes React, kebab-case para utilidades
-- **Rutas de API y Server Actions**: usando el estándar de Next.js
-
-### Patrones de componentes
-
-```typescript
-// Client Component con estado
-"use client";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
-import { accionServidor } from "@/actions/modulo";
-
-export default function ComponenteEjemplo({ dato }: { dato: any }) {
-  const [estaCargando, iniciarTransicion] = useTransition();
-
-  const manejarGuardado = () => {
-    iniciarTransicion(async () => {
-      const res = await accionServidor(datos);
-      if (!res.ok) { toast.error(res.error); return; }
-      toast.success("Guardado correctamente");
-    });
-  };
-  // ...
+:root {
+  --primary: 38 92% 50%;        /* amber para botones principales */
+  --secondary: 0 0% 95%;
+  --destructive: 0 70% 50%;
+  --border: 0 0% 85%;
+  --radius: 0.75rem;
+}
+.dark {
+  --primary: 38 92% 55%;
+  --background: 0 0% 6%;
+  --card: 0 0% 10%;
 }
 ```
 
-### Serialización obligatoria
+### Panel Admin Inventario (Dashboard, Movements, Sizes, Provider, Categories)
 
-Prisma retorna objetos `Decimal` que Next.js no puede serializar entre Server/Client. **Siempre** usar `serializeData()`:
+```
+Fondo: bg-black / bg-neutral-950 / bg-neutral-900
+Texto: white / neutral-200 / neutral-400
+Acento principal: amber-500 (#f59e0b)
+Bordes activos: amber-500/50
+Botones: variant="amarillo" → gradiente amber
+Botones destructivos: variant="rojo" → gradiente rojo
+```
+
+### Tienda Pública y Catálogo (Productos, Categorías, Formularios)
+
+```
+#ffffff  — fondos principales (blanco)
+#f0fafa  — fondos suaves (cyan muy claro)
+#e0f5f5  — inputs, tags, variantes
+#b2dede  — bordes
+#4ab8b8  — cyan acento medio
+#0d5c63  — verde marino oscuro (botones, iconos)
+#083d42  — verde marino muy oscuro (títulos)
+#0d2b2e  — texto principal
+#4a7c80  — texto secundario
+#e05050  — rojo de eliminación
+```
+
+### Panel de Configuración (`/admin/pageConfig`)
+
+```
+Fondo: bg-neutral-950 con bg-black/40
+Bordes: border-neutral-900
+Acento: cyan-500
+Íconos de sección: text-cyan-400 en bg-cyan-500/10
+Botones de acción: bg-cyan-500 text-black font-black uppercase
+Inputs: bg-neutral-950 border-neutral-800, focus: border-cyan-500
+```
+
+---
+
+## Validación con Zod — Esquemas Completos
+
+Todos en `src/lib/zod.ts`:
+
+```typescript
+// AUTH
+loginSchema       — email + password (min 6)
+registerSchema    — extends login + name (solo letras/acentos/ñ) + telefono?
+
+// PRODUCTOS
+garmentSchema     — name, price, cost, description?, categoryId, subCategoryId?, supplierId?, images[], variants[]
+variantSchema     — sizeId?, colorId, sku?, stock (no negativo), attributes?
+
+// CATEGORÍAS
+categorySchema    — name, description?, sizeTypeId?
+
+// MOVIMIENTOS
+movementSchema    — variantId, type (IN|OUT), quantity (entero positivo), note?
+
+// PROVEEDORES
+createProviderSchema — name, details?, contacts[] (mínimo 1)
+updateProviderSchema — extends create + id (cuid)
+contactSchema        — email válido O teléfono válido (regex)
+providerNameSchema   — string 2-100 chars, solo letras y espacios
+idSchema             — string cuid
+
+// TALLES
+SizeTypeNameSchema   — name (mismas reglas que providerName)
+SizeValueSchema      — string min 1, sin espacios, solo: letras, números, puntos, guiones, slash, comillas
+
+// COLORES
+colorSchema          — name (min 1), hex? (formato #000 o #000000)
+
+// PERFIL
+changePasswordSchema — oldPassword?, newPassword (min 6), confirmPassword (deben coincidir)
+updateProfileSchema  — name (min 2, solo letras), telefono?
+```
+
+---
+
+## Convenciones y Reglas del Proyecto
+
+### Código
+
+- **Comentarios, variables, funciones y mensajes**: siempre en **español**
+- **Nombres de archivos**: kebab-case para utilidades, PascalCase para componentes
+- **Tipos TypeScript**: en inglés (convención de las librerías)
+- **Never `any`**: usar tipos correctos; si no se puede, documentar por qué
+- `"use server"` al principio de cada archivo de actions
+- `"use client"` solo cuando es estrictamente necesario (estado, efectos, eventos)
+
+### Server Actions
+
+```typescript
+export async function hacerAlgo(datos: unknown) {
+  // 1. Validar
+  const parsed = esquema.safeParse(datos);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    // 2. Operar
+    const resultado = await servicio.crear(parsed.data);
+    // 3. Invalidar caché
+    revalidateTag("tag-correspondiente");
+    // 4. Retornar serializado
+    return { success: true, data: serializeData(resultado) };
+  } catch (error: any) {
+    if (error.code === "P2002") return { error: "Ya existe un registro con esos datos" };
+    if (error.code === "P2003") return { error: "No se puede eliminar: tiene registros vinculados" };
+    return { error: "Error interno del servidor" };
+  }
+}
+```
+
+### Serialización
+
+Prisma retorna `Decimal` (de `@db.Decimal`) que **no se puede serializar** entre Server y Client Components. **Siempre** usar `serializeData()` en las acciones:
 
 ```typescript
 import { serializeData } from "@/lib/utils";
-const datos = serializeData(resultadoPrisma);
+
+// serializeData usa JSON.parse(JSON.stringify(...)) con un replacer
+// que detecta Decimal por su constructor y llama .toNumber()
+return { success: true, data: serializeData(resultadoPrisma) };
 ```
 
----
-
-## Rutas y Páginas
-
-### Rutas Públicas (sin autenticación)
-
-| Ruta | Descripción |
-|---|---|
-| `/` | Inicio con hero slider y grilla de categorías |
-| `/login` | Inicio de sesión |
-| `/register` | Registro de usuario |
-| `/productos` | Catálogo general con filtros |
-| `/productos/[categoria]` | Catálogo filtrado por categoría (rutas estáticas) |
-| `/productos/item/[id]` | Detalle de producto con variantes |
-| `/escuela` | Página de escuela de surf |
-| `/personalizado` | Diseñador de tablas custom con WhatsApp |
-
-### Rutas Admin (requiere ADMIN)
-
-| Ruta | Descripción |
-|---|---|
-| `/dashboard` | Inventario de productos con CRUD |
-| `/categories` | Gestión de categorías y subcategorías |
-| `/provider` | Gestión de proveedores |
-| `/sizes` | Gestión de grupos de talles |
-| `/movements` | Historial de movimientos de stock |
-| `/admin/pageConfig` | Configuración visual del sitio |
-
----
-
-## Generación de Rutas Estáticas
-
-Las páginas de categoría usan `generateStaticParams` para pre-renderizar:
+### Imágenes en componentes
 
 ```typescript
-// src/app/productos/[categoria]/page.tsx
-export async function generateStaticParams() {
-  const categorias = await prisma.category.findMany({
-    where: { active: true },
-    select: { name: true },
-  });
-  return categorias.map((c) => ({ categoria: c.name.toLowerCase() }));
-}
+// CORRECTO: next/image con fill o width/height
+import Image from "next/image";
+<Image src={url} alt={alt} fill className="object-cover" />
+
+// INCORRECTO: <img> directa (no optimizado, puede usar para SVGs simples)
+<img src={url} alt={alt} />
 ```
 
 ---
 
-## Flujo de Autenticación Legal (AppGate)
+## Páginas y Renderizado
 
-El componente `AppGate` controla el acceso mediante tres modales secuenciales:
-
-1. **CookieModal** → bloquea toda la app hasta aceptar
-2. **PrivacyModal** → se abre automáticamente después de cookies (se guarda `privacySeen`)
-3. **TermsModal** → requiere checkbox + botón aceptar (se guarda `termsAccepted`)
-
-Solo cuando `cookiesAcknowledged && termsAccepted` el contenido se renderiza.
-
----
-
-## Notas Importantes y Problemas Conocidos
-
-### Archivo mal nombrado
-`src/components/admin/page-config/ContactSection.tsx` en realidad contiene el componente `ImageUploader`, no una sección de contacto. La sección de contacto real está en el formulario del admin. Tener cuidado al importar.
-
-### Navbar.jsx vacío
-`src/components/layout/Navbar.jsx` es un componente legado vacío. El navbar real está en `Header.tsx`.
-
-### ProductLayout.jsx (legado)
-`src/components/products/layouts/ProductLayout.jsx` usa datos mock de `data.js` y `localStorage`. Es el layout original antes de la integración con la base de datos. Se sigue usando como wrapper en `HomeClient.tsx`.
-
-### PageConfig id hardcodeado
-Algunas acciones de `page-config/` usan `{ where: { id: 1 } }` como integer en lugar del string que retorna Prisma. Verificar si hay mismatch de tipos al modificar estas acciones.
-
-### Prisma output personalizado
-El cliente Prisma se genera en `../../generated/prisma/client` (relativo a `src/lib/`). Si se mueven archivos, actualizar el import path.
-
-### SSL en base de datos
-En `src/lib/prisma.ts`, SSL se desactiva automáticamente si `DATABASE_HOST` es `localhost` o `127.0.0.1`. En producción con host remoto, SSL está activo.
+| Página | Tipo de renderizado | Notas |
+|---|---|---|
+| `/` | Server Component → Client | Carga branding desde servidor |
+| `/login`, `/register` | Client Component | Solo cliente, sin datos del servidor |
+| `/dashboard` | Client Component (TanStack Query) | Datos reactivos con paginación |
+| `/categories` | Server Component + `force-dynamic` | Se revalida en cada request |
+| `/provider` | Client Component + Suspense | Carga inicial en cliente |
+| `/sizes` | Client Component | Estado local con `useState` |
+| `/movements` | Server Component | Datos frescos en cada request |
+| `/productos` | Server Component | Paginado, con searchParams |
+| `/productos/[categoria]` | SSG + ISR | `generateStaticParams` + `revalidate` por tag |
+| `/productos/item/[id]` | Server Component | Fetch por ID, con `notFound()` |
+| `/escuela` | Server Component puro | Sin DB, solo JSX/HTML |
+| `/personalizado` | Client Component puro | Sin DB, estado local + WhatsApp |
+| `/admin/pageConfig` | Server Component + secciones Client | Lee config del servidor |
 
 ---
 
-## Comandos de Desarrollo
+## Variables de Entorno
+
+```env
+# === BASE DE DATOS ===
+DATABASE_URL="mysql://root@127.0.0.1:3306/gestion-stock"
+DATABASE_USER="root"
+DATABASE_PASSWORD=""
+DATABASE_NAME="gestion-stock"
+DATABASE_HOST="127.0.0.1"  # IMPORTANTE: usar 127.0.0.1 no localhost (evita bug en Windows)
+DATABASE_PORT=3306
+TIMEZONE="America/Argentina/Buenos_Aires"
+
+# === AUTH ===
+AUTH_SECRET="secreto-seguro-min-32-chars"
+AUTH_GOOGLE_ID="...apps.googleusercontent.com"
+AUTH_GOOGLE_SECRET="GOCSPX-..."
+AUTH_TRUST_HOST=true  # Necesario para deployments detrás de proxy
+
+# === CLOUDINARY ===
+CLOUDINARY_CLOUD_NAME="nombre-de-tu-cloud"          # Solo servidor
+CLOUDINARY_API_KEY="123456789012345"                  # Solo servidor
+CLOUDINARY_API_SECRET="abc123..."                      # Solo servidor
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="preset-unsigned" # Upload preset público (sin signed)
+```
+
+---
+
+## Scripts y Comandos
 
 ```bash
-# Instalar dependencias
-npm install
-
-# Iniciar servidor de desarrollo (con Turbopack)
+# Desarrollo con Turbopack (más rápido)
 npm run dev
 
-# Build de producción
+# Build de producción (incluye: prisma generate + db push + next build)
 npm run build
-# (ejecuta: prisma generate + prisma db push + next build)
 
 # Iniciar en producción
 npm start
 
-# Linting
+# Linting (eslint con config de Next.js)
 npm run lint
 
-# Prisma
-npx prisma generate          # Regenerar cliente
-npx prisma db push           # Sincronizar schema sin migración
-npx prisma studio            # GUI de base de datos
-npx prisma migrate dev       # Crear migración
+# Prisma — comandos frecuentes
+npx prisma generate              # Regenerar cliente (después de cambiar schema.prisma)
+npx prisma db push               # Aplicar cambios al schema sin migrar (dev rápido)
+npx prisma migrate dev           # Crear migración formal (con nombre)
+npx prisma studio                # GUI visual para la base de datos
+npx prisma db pull               # Importar schema desde DB existente
 ```
 
 ---
 
-## Integración de Cloudinary — Configuración
+## Errores Comunes y Soluciones
 
-Para que las imágenes funcionen correctamente, configurar en el dashboard de Cloudinary:
-
-1. Crear un **Upload Preset** de tipo "unsigned" → guardar como `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
-2. Las imágenes del branding se suben a la carpeta `gestion-stock/{slug-del-negocio}/branding/`
-3. Las imágenes de productos se suben a `gestion-stock/garments/`
-
----
-
-## Flujo Completo: Crear un Producto
-
-1. Desde `/dashboard`, el botón "+ Nuevo Producto" abre `ProductModal`
-2. El usuario selecciona categoría → subcategoría (filtra talles disponibles)
-3. Se suben imágenes directamente a Cloudinary desde el frontend
-4. Al guardar, se llama `createGarment(data)` en `src/actions/garments.ts`
-5. La acción valida con `garmentSchema`, crea el `Garment` + `GarmentVariant[]` + `GarmentImage[]` en una transacción
-6. Se invalida el caché de `/dashboard` con `revalidatePath`
+| Error | Causa | Solución |
+|---|---|---|
+| `Decimal` no serializable | Retornar Prisma Decimal a Client Component | Usar `serializeData()` |
+| `Error P2002` | Unique constraint violada | Verificar campos únicos (SKU, email, etc.) |
+| `Error P2003` | FK simulada violada | El registro referenciado no existe |
+| `Error P2025` | Record not found | Verificar que el ID existe antes de update/delete |
+| Imágenes no se cargan | `unoptimized: true` en next.config pero hostname no permitido | Agregar hostname en `remotePatterns` |
+| Sesión null en server | Token JWT inválido o expirado | El callback session retorna `user: null`, verificar en el componente |
+| Build falla en Vercel | DB no disponible en build time | El script build tiene fallback: `|| echo 'Database unreachable'` |
+| Tipos Prisma no encontrados | Se movieron carpetas o falta `generate` | `npx prisma generate` después de `npm install` |
+| HMR lento en dev | Turbopack activo | Normal, Turbopack es beta; desactivar con `next dev` sin `--turbopack` si hay problemas |
 
 ---
 
-## Flujo Completo: Movimiento de Stock
+## Puntos a Tener en Cuenta
 
-1. Desde `/dashboard`, el botón "Movimientos" abre `MovementModal`
-2. Se selecciona producto/variante, tipo (IN/OUT), cantidad y precio
-3. Se llama `createMovement(data)` en `src/actions/movements.ts`
-4. La acción valida stock disponible para egresos
-5. Crea el registro `Movement` y actualiza `GarmentVariant.stock` en una transacción Prisma
-6. El historial completo se ve en `/movements`
+1. **CategoryModal vs ManageCategoryModal**: Son dos componentes distintos con la misma función pero diferente paleta. `CategoryModal` es el admin oscuro (amber). `ManageCategoryModal` es el de /categories (cyan). No mezclar.
+
+2. **ProductLayout.jsx es legado**: Usa datos mock de `data.js` y `localStorage` directo. No agregar lógica nueva ahí. La tienda real usa Server Components.
+
+3. **PageConfig id = 1**: Si se hace `prisma.pageConfig.findUnique({ where: { id: "1" } })` y no existe, algunas acciones fallan silenciosamente. Usar `getOrCreatePageConfig()` en casos críticos.
+
+4. **Prisma output en generated/**: El import del cliente Prisma es `from '../../generated/prisma/client'` (relativo a `src/lib/`). Si se mueven archivos, actualizar.
+
+5. **SSL automático en prisma.ts**: Si `DATABASE_HOST` es `localhost` o `127.0.0.1`, SSL se desactiva. En producción con host remoto, SSL activo automáticamente.
+
+6. **`serializeData` es obligatorio**: Nunca retornar directamente el resultado de Prisma si tiene campos `price`, `cost`, `priceAtTime`, `descuento`, `senia` u otros Decimal.
+
+7. **TanStack Query solo en /dashboard**: `QueryProvider` está solo en `dashboard/layout.tsx`. Los hooks `useGarments`, `useCategories`, etc. **solo funcionan ahí**. No usarlos en otras rutas sin añadir `QueryProvider`.

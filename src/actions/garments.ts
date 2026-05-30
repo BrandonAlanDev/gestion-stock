@@ -31,17 +31,15 @@ export async function createGarment(data: any) {
     }
 
     const garment = await garmentService.createGarment({
-      data: {
-        name,
-        price,
-        cost,
-        description,
-        categoryId,
-        subCategoryId: subCategoryId || null,
-        supplierId: supplierId || null,
-        variants: { create: variants.map((v: any) => ({ sku: v.sku || null, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null })) },
-        images: { create: mappedImages },
-      },
+      name,
+      price,
+      cost,
+      description,
+      categoryId,
+      subCategoryId: subCategoryId || null,
+      supplierId: supplierId || null,
+      variants: { create: variants.map((v: any) => ({ sku: v.sku || null, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null })) },
+      images: { create: mappedImages },
     });
 
     revalidateTag("products");

@@ -1,9 +1,9 @@
 "use client";
-
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
 import { X, Package, Edit3 } from "lucide-react";
+import { getGarmentById } from "@/actions/garments";
 import { useProductForm } from "@/hooks/useProductForm";
 import VariantRow from "@/components/products/forms/VariantRow";
 import ImageUploader from "@/components/products/forms/ImageUploader";
@@ -50,6 +50,15 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [fullGarment, setFullGarment] = useState<any>(null);
+
+  useEffect(() => {
+    if (garment) {
+      getGarmentById(garment.id).then(data => {
+        if (data) setFullGarment(data);
+      });
+    }
+  }, [garment?.id]);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -67,8 +76,10 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     updateVariantCustomSize,
     addImages,
     removeImage,
+    reorderImages,
     handleSubmit,
-  } = useProductForm({ garment, categories, sizes });
+    resetForm,
+  } = useProductForm({ garment: fullGarment || garment, categories, sizes });
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +92,9 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
       }
       toast.success(isEdit ? "Producto actualizado" : "Producto creado");
       onSuccess?.();
+      if (!isEdit) {
+        resetForm();
+      }
       setIsOpen(false);
     } catch (error) {
       toast.error("Ocurrió un error");
@@ -241,6 +255,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               images={formData.images}
               onAddImages={addImages}
               onRemoveImage={removeImage}
+              onReorder={reorderImages}
             />
 
             {/* Submit */}
