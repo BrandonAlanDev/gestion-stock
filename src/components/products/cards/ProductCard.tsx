@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Truck } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -16,7 +15,12 @@ const ProductCard = ({ product }: Props) => {
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  const images = product.images?.map((img: any) => img.srcImage) || [];
+  // 📐 CONVENCIÓN: posición 0 = logo. Fotos reales arrancan en la 1.
+  // Si solo hay 1 imagen (el logo), la usamos igual para no quedar en blanco.
+  const images =
+    product.images?.length > 1
+      ? product.images.slice(1).map((img: any) => img.srcImage)
+      : product.images?.map((img: any) => img.srcImage) || [];
 
   // Hover slider
   useEffect(() => {
@@ -53,16 +57,12 @@ const ProductCard = ({ product }: Props) => {
     >
       <Link href={`/productos/item/${product.id}`} className="block">
 
-        {/* Badges — solo los esenciales, muy discretos */}
+        {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isNew && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{
-                background: "#0d5c63",
-                color: "#ffffff",
-                borderRadius: "4px",
-              }}
+              style={{ background: "#0d5c63", color: "#ffffff", borderRadius: "4px" }}
             >
               Nuevo
             </span>
@@ -70,59 +70,36 @@ const ProductCard = ({ product }: Props) => {
           {totalStock <= 0 && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{
-                background: "rgba(0,0,0,0.06)",
-                color: "#4a7c80",
-                borderRadius: "4px",
-              }}
+              style={{ background: "rgba(0,0,0,0.06)", color: "#4a7c80", borderRadius: "4px" }}
             >
               Consultar stock
             </span>
           )}
         </div>
 
-        {/* IMAGEN — fondo neutro, sin border radius agresivo */}
         <div
           className="overflow-hidden mb-5 relative"
-          style={{
-            background: "#f4f7f7",
-            borderRadius: "12px",
-            aspectRatio: "3 / 4",
-          }}
+          style={{ background: "#f4f7f7", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
             src={images[currentImage] || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
-            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] ${
-              fade ? "opacity-100" : "opacity-0"
-            }`}
+            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
+              }`}
             style={{ padding: "12px" }}
           />
-        </div>
 
-        {/* INFO — tipografía limpia, sin caja */}
-        <div className="px-1">
-
-          {/* Categoría */}
-          <p
-            className="text-[10px] font-black uppercase tracking-widest mb-1"
-            style={{ color: "#4ab8b8" }}
-          >
-            {product.category?.name}
-            {product.subCategory?.name && ` / ${product.subCategory.name}`}
-          </p>
-
-          {/* Nombre */}
+          {/* Nombre superpuesto */}
           <h3
-            className="font-black uppercase italic leading-tight line-clamp-2 mb-3"
-            style={{ color: "#083d42", fontSize: "17px", letterSpacing: "-0.02em" }}
+            className="absolute bottom-4 left-0 right-0 text-center font-black uppercase italic px-3 line-clamp-2"
+            style={{ color: "#083d42", fontSize: "22px", letterSpacing: "-0.02em" }}
           >
             {product.name}
           </h3>
-
         </div>
+
       </Link>
     </motion.div>
   );

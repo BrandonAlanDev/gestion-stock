@@ -20,7 +20,8 @@ export async function getGarmentsPaginated(
     prisma.garment.findMany({
       where,
       include: {
-        images: { take: 1, orderBy: { order: "asc" } },
+        //SKIP:1 para saltar el logo, TAKE:1 para traer solo la primera foto real (si existe)
+        images: { skip: 1, take: 1, orderBy: { order: "asc" } },
         variants: {
           include: { size: true, color: true },
           take: 5,

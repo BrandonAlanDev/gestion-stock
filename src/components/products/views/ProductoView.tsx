@@ -2,8 +2,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation"; // ◄ Importamos el router de Next.js
-import { Truck, HelpCircle, ArrowLeft } from "lucide-react"; // ◄ Sumamos ArrowLeft
+import { useRouter } from "next/navigation";
+import { Truck, HelpCircle, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { ProductProps } from "../types";
@@ -20,8 +20,14 @@ export default function ProductoView({ product }: ProductProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState(false);
   const [showOrderForm, setShowOrderForm] = useState(false);
+
+  // 📐 CONVENCIÓN: La posición 0 es el Logo/Nombre. Las fotos del producto arrancan en la 1.
+  const logoImage = product.images?.[0]?.srcImage;
+  const productImages = useMemo(() => product.images?.slice(1) || [], [product.images]);
+
+  // Setear por defecto la primera foto real de la tabla (posición 1 del array original)
   const [selectedImage, setSelectedImage] = useState(
-    product.images?.[0]?.srcImage || "/images/placeholder.avif"
+    productImages[0]?.srcImage || "/images/placeholder.avif"
   );
 
   // Determinar categoría
@@ -85,7 +91,7 @@ export default function ProductoView({ product }: ProductProps) {
     <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-100">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         
-        {/* BOTÓN VOLVER ATRÁS (Se ubica arriba de todo en la grilla) */}
+        {/* BOTÓN VOLVER ATRÁS */}
         <button
           onClick={() => router.back()}
           className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:text-black transition-colors mb-8"
@@ -96,11 +102,11 @@ export default function ProductoView({ product }: ProductProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-12 lg:gap-20 items-start">
           
-          {/* BLOQUE IZQUIERDO: IMÁGENES */}
+          {/* BLOQUE IZQUIERDO: IMÁGENES DEL PRODUCTO (Filtradas sin el logo) */}
           <div className="flex flex-col-reverse md:flex-row gap-6">
-            {product.images && product.images.length > 1 && (
+            {productImages.length > 1 && (
               <div className="flex md:flex-col gap-3 flex-shrink-0">
-                {product.images.map((img: any) => (
+                {productImages.map((img: any) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
@@ -126,10 +132,23 @@ export default function ProductoView({ product }: ProductProps) {
           {/* BLOQUE DERECHO: DETALLES */}
           <div className="flex flex-col space-y-8 lg:sticky lg:top-32">
             
-            <div className="space-y-2">
+            {/* CONTENEDOR DEL ENCABEZADO */}
+            <div className="space-y-4">
               <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
                 {product.category?.name} {product.subCategory?.name && `/ ${product.subCategory.name}`}
               </p>
+              
+              {/* RENDEREADO DE LA FOTO DEL NOMBRE / LOGO */}
+              {logoImage && (
+                <div className="w-full max-w-[220px] h-auto mb-2 select-none mx-auto">
+                  <img 
+                    src={logoImage} 
+                    alt={`Logo de ${product.name}`} 
+                    className="w-full h-full object-contain mix-blend-multiply" 
+                  />
+                </div>
+              )}
+
               <h1 className="text-3xl md:text-4xl font-light tracking-tight text-gray-900 capitalize">
                 {product.name.toLowerCase()}
               </h1>
@@ -141,6 +160,7 @@ export default function ProductoView({ product }: ProductProps) {
               </p>
             </div>
 
+            {/* COLOR */}
             {hasColors && (
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Color</h3>
@@ -158,6 +178,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
+            {/* MEDIDAS */}
             {hasSizes && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -189,6 +210,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
+            {/* LOGÍSTICA */}
             <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
               <div className="flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-gray-400" />
@@ -196,6 +218,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             </div>
 
+            {/* ACCIÓN PRINCIPAL */}
             <button
               onClick={handleWhatsApp}
               className="w-full bg-gray-900 hover:bg-black text-white py-4.5 rounded-lg text-xs font-medium uppercase tracking-widest transition-colors shadow-xs"
@@ -205,7 +228,7 @@ export default function ProductoView({ product }: ProductProps) {
           </div>
         </div>
 
-        {/* CONTENIDO EXTRA: DESCRIPCIÓN */}
+        {/* DESCRIPCIÓN */}
         <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Product Overview</h2>
           <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">
@@ -217,7 +240,7 @@ export default function ProductoView({ product }: ProductProps) {
 
       </div>
 
-      {/* RENDER MODAL CONDICIONAL */}
+      {/* MODAL */}
       {showOrderForm && esTabla && (
         <WhatsAppOrderForm product={product} onClose={() => setShowOrderForm(false)} />
       )}

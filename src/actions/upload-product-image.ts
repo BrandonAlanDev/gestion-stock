@@ -29,6 +29,12 @@ export async function uploadProductImage(fileBase64: string): Promise<{ url: str
     throw new Error("Tipo de imagen no permitido. Usá JPEG, PNG o WebP.");
   }
 
+  cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
   try {
     const result = await cloudinary.uploader.upload(fileBase64, {
       folder: "gestion-stock/garments",

@@ -295,7 +295,7 @@ const ProductsPage = ({
           {/* PRODUCTOS */}
           <div className="flex-1">
             {processedProducts.length > 0 ? (
-              <motion.div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <AnimatePresence mode="wait">
                   {processedProducts.map((product: any) => (
                     <ProductCard
