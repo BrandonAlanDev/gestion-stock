@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
+import { uploadProductImage } from "@/actions/upload-product-image";
+import type { PendingImage } from "@/components/products/forms/ImageUploader";
 
 interface Variant {
   id?: string;
@@ -10,11 +12,6 @@ interface Variant {
   stock: number;
   sku: string;
   attributes?: any;
-}
-
-interface ImageType {
-  url: string;
-  publicId?: string;
 }
 
 interface UseProductFormProps {
@@ -33,7 +30,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     subCategoryId: "",
     supplierId: "",
     variants: [] as Variant[],
-    images: [] as ImageType[],
+    images: [] as PendingImage[],
   });
 
   const isEdit = !!garment;
@@ -150,7 +147,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   }, []);
 
   // Imágenes
-  const addImages = useCallback((newImages: ImageType[]) => {
+  const addImages = useCallback((newImages: PendingImage[]) => {
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...newImages],
@@ -158,15 +155,51 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   }, []);
 
   const removeImage = useCallback((index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const img = prev.images[index];
+      // Revocar objectURL si era nueva
+      if (img.preview && !img.url) {
+        URL.revokeObjectURL(img.preview);
+      }
+      return {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      };
+    });
   }, []);
 
-  // Submit
+  // Función para convertir File a base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Submit 
   const handleSubmit = useCallback(async () => {
-    const imageUrls = formData.images.map((img) => img.url);
+    // 1. Subir imágenes nuevas a Cloudinary
+    const finalImages: { url: string; publicId?: string }[] = [];
+
+    for (const img of formData.images) {
+      if (img.file) {
+        // Es un archivo nuevo → subir
+        const base64 = await fileToBase64(img.file);
+        const uploaded = await uploadProductImage(base64);
+        finalImages.push({ url: uploaded.url, publicId: uploaded.publicId });
+        // Revocar preview local
+        if (img.preview) URL.revokeObjectURL(img.preview);
+      } else if (img.url) {
+        // Ya está en Cloudinary, se mantiene igual
+        finalImages.push({ url: img.url, publicId: img.publicId });
+      }
+    }
+
+    const imageUrls = finalImages.map((img) => img.url);
+
+    // 2. Construir payload
     const payload = {
       ...formData,
       variants: formData.variants.map((v) => ({
@@ -179,6 +212,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
       images: imageUrls,
     };
 
+    // 3. Crear o actualizar producto
     if (isEdit) {
       return updateGarment(garment.id, payload);
     } else {
