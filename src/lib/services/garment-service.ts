@@ -16,12 +16,12 @@ export async function getGarmentsPaginated(
     ...(search && { name: { contains: search, mode: 'insensitive' } }),
   };
 
-  const [garments, total] = await Promise.all([
+  // 1. Traemos las imágenes con su ordenamiento, variantes y categorías vinculadas
+  const [rawGarments, total] = await Promise.all([
     prisma.garment.findMany({
       where,
       include: {
-        //SKIP:1 para saltar el logo, TAKE:1 para traer solo la primera foto real (si existe)
-        images: { skip: 1, take: 1, orderBy: { order: "asc" } },
+        images: { orderBy: { order: "asc" } }, // Traemos todas temporalmente para filtrarlas en memoria
         variants: {
           include: { size: true, color: true },
           take: 5,
@@ -35,6 +35,22 @@ export async function getGarmentsPaginated(
     }),
     prisma.garment.count({ where }),
   ]);
+
+  // 2. Procesamos los productos en memoria antes de mandarlos al catálogo
+  const garments = rawGarments.map((garment) => {
+    const esTabla = garment.category?.name?.toLowerCase() === "tablas";
+
+    // Si es una tabla, le removemos la primera imagen (el logo) para la grilla
+    if (esTabla && garment.images.length > 0) {
+      return {
+        ...garment,
+        images: garment.images.slice(1),
+      };
+    }
+
+    // Si es ropa u otra categoría, se devuelve tal cual con todas sus fotos
+    return garment;
+  });
 
   return { garments, total };
 }
@@ -63,6 +79,7 @@ export async function updateGarment(id: string, data: any) {
 export async function deleteGarment(id: string) {
   return prisma.garment.delete({ where: { id } });
 }
+
 export async function updateGarmentWithDetails(
   id: string,
   data: {

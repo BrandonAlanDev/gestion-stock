@@ -15,7 +15,6 @@ export default async function ProductoPage({ params }: Props) {
   // GET PRODUCTO DESDE PRISMA
   // =========================================
   const product = await getGarmentById(id);
-
   // =========================================
   // NOT FOUND
   // =========================================
