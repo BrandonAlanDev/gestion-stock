@@ -1,17 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-
-import {
-  Star,
-  Truck,
-  Heart,
-} from "lucide-react";
-
+import { Truck } from "lucide-react";
 import Image from "next/image";
-
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
 
 interface Props {
@@ -19,77 +11,35 @@ interface Props {
   addToCart?: (product: any) => void;
 }
 
-const ProductCard = ({
-  product,
-}: Props) => {
-  const [currentImage, setCurrentImage] =
-    useState(0);
-
-  const [isHovering, setIsHovering] =
-    useState(false);
-
+const ProductCard = ({ product }: Props) => {
+  const [currentImage, setCurrentImage] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  // =========================================
-  // IMÁGENES
-  // =========================================
+  const images = product.images?.map((img: any) => img.srcImage) || [];
 
-  const images =
-    product.images?.map(
-      (img: any) => img.srcImage
-    ) || [];
-
-  // =========================================
-  // HOVER SLIDER
-  // =========================================
-
+  // Hover slider
   useEffect(() => {
-    if (
-      !isHovering ||
-      images.length <= 1
-    ) {
+    if (!isHovering || images.length <= 1) {
       setCurrentImage(0);
       setFade(true);
       return;
     }
-
     const interval = setInterval(() => {
       setFade(false);
-
       setTimeout(() => {
-        setCurrentImage((prev) =>
-          prev === images.length - 1
-            ? 0
-            : prev + 1
-        );
-
+        setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
         setFade(true);
       }, 300);
     }, 2000);
-
     return () => clearInterval(interval);
   }, [isHovering, images]);
 
-  // =========================================
-  // STOCK TOTAL
-  // =========================================
-
   const totalStock =
-    product.variants?.reduce(
-      (acc: number, variant: any) =>
-        acc + variant.stock,
-      0
-    ) || 0;
-
-  // =========================================
-  // NEW PRODUCT
-  // =========================================
+    product.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
 
   const isNew =
-    new Date(product.createdAt) >
-    new Date(
-      Date.now() - 1000 * 60 * 60 * 24 * 14
-    );
+    new Date(product.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 14);
 
   return (
     <motion.div
@@ -97,128 +47,83 @@ const ProductCard = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onMouseEnter={() =>
-        setIsHovering(true)
-      }
-      onMouseLeave={() =>
-        setIsHovering(false)
-      }
-      className="select-none group bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300 relative overflow-hidden"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      className="select-none group relative"
     >
+      <Link href={`/productos/item/${product.id}`} className="block">
 
-      <Link
-        href={`/productos/item/${product.id}`}
-      >
-
-        {/* BADGES */}
-        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-
+        {/* Badges — solo los esenciales, muy discretos */}
+        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isNew && (
-            <span className="bg-black text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
+              style={{
+                background: "#0d5c63",
+                color: "#ffffff",
+                borderRadius: "4px",
+              }}
+            >
               Nuevo
             </span>
           )}
-
           {totalStock <= 0 && (
-            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
-              Sin stock
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
+              style={{
+                background: "rgba(0,0,0,0.06)",
+                color: "#4a7c80",
+                borderRadius: "4px",
+              }}
+            >
+              Consultar stock
             </span>
           )}
-
         </div>
 
-        {/* FAVORITO */}
-        <button
-          className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500"
+        {/* IMAGEN — fondo neutro, sin border radius agresivo */}
+        <div
+          className="overflow-hidden mb-5 relative"
+          style={{
+            background: "#f4f7f7",
+            borderRadius: "12px",
+            aspectRatio: "3 / 4",
+          }}
         >
-          <Heart className="w-4 h-4" />
-        </button>
-
-        {/* IMAGE */}
-        <div className="aspect-[4/5] overflow-hidden rounded-xl bg-gray-50 mb-4 relative">
-
           <Image
-            src={
-              images[currentImage] ||
-              "/images/placeholder.avif"
-            }
+            src={images[currentImage] || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
-            className={`
-              w-full h-full object-cover group-hover:scale-105 transition-all duration-500
-              ${
-                fade
-                  ? "opacity-100"
-                  : "opacity-0"
-              }
-            `}
+            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] ${
+              fade ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ padding: "12px" }}
           />
-
         </div>
 
-        {/* CONTENT */}
-        <div className="space-y-2">
+        {/* INFO — tipografía limpia, sin caja */}
+        <div className="px-1">
 
-          <div className="flex justify-between items-start gap-3">
+          {/* Categoría */}
+          <p
+            className="text-[10px] font-black uppercase tracking-widest mb-1"
+            style={{ color: "#4ab8b8" }}
+          >
+            {product.category?.name}
+            {product.subCategory?.name && ` / ${product.subCategory.name}`}
+          </p>
 
-            <div>
-
-              <p className="text-xs text-slate-500 font-medium">
-
-                {product.category?.name}
-
-                {product.subCategory?.name &&
-                  ` / ${product.subCategory.name}`}
-
-              </p>
-
-              <h3 className="font-bold text-slate-900 text-lg leading-tight line-clamp-2">
-                {product.name}
-              </h3>
-
-            </div>
-
-            {/* RATING MOCK */}
-            <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-50 px-2 py-1 rounded-md shrink-0">
-
-              <Star className="w-3 h-3 fill-amber-400" />
-
-              5.0
-
-            </div>
-
-          </div>
-
-          {/* ENVÍO */}
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-
-            <Truck className="w-3 h-3" />
-
-            <span>
-              Envío gratis
-            </span>
-
-          </div>
-
-          {/* FOOTER */}
-          <div className="pt-4 flex items-center justify-between border-t border-gray-50 mt-4">
-
-            <span className="text-xl font-bold text-slate-900">
-
-              $
-              {Number(
-                product.price
-              ).toLocaleString("es-AR")}
-
-            </span>
-
-          </div>
+          {/* Nombre */}
+          <h3
+            className="font-black uppercase italic leading-tight line-clamp-2 mb-3"
+            style={{ color: "#083d42", fontSize: "17px", letterSpacing: "-0.02em" }}
+          >
+            {product.name}
+          </h3>
 
         </div>
-
       </Link>
-
     </motion.div>
   );
 };
