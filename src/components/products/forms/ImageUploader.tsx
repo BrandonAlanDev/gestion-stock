@@ -4,6 +4,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { useState } from "react";
 import { X } from "lucide-react";
+import { uploadProductImage } from "@/actions/upload-product-image";
 
 interface ImageType {
   url: string;
@@ -16,40 +17,56 @@ interface ImageUploaderProps {
   onRemoveImage: (index: number) => void;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ImageUploader({ images, onAddImages, onRemoveImage }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
+
     if (images.length + files.length > 4) {
       toast.error("Máximo 4 imágenes.");
       return;
     }
 
+    setUploading(true);
     try {
-      setUploading(true);
-      const uploadedImages = await Promise.all(
-        files.map(async (file) => {
-          const data = new FormData();
-          data.append("file", file);
-          data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-          const res = await fetch(
-            `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-            { method: "POST", body: data }
-          );
-          if (!res.ok) throw new Error("Error subiendo imagen");
-          const json = await res.json();
-          return { url: json.secure_url, publicId: json.public_id };
-        })
-      );
-      onAddImages(uploadedImages);
-      toast.success("Imágenes subidas");
-    } catch (error) {
-      toast.error("Error al subir imágenes");
+      const uploadedImages: ImageType[] = [];
+
+      for (const file of files) {
+        // Validar tipo y tamaño también en el cliente (buena práctica)
+        if (!file.type.startsWith("image/")) {
+          toast.error(`${file.name} no es una imagen válida`);
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} supera los 5 MB`);
+          continue;
+        }
+
+        const base64 = await fileToBase64(file);
+        const result = await uploadProductImage(base64);
+        uploadedImages.push({ url: result.url, publicId: result.publicId });
+      }
+
+      if (uploadedImages.length > 0) {
+        onAddImages(uploadedImages);
+        toast.success(`${uploadedImages.length} imagen(es) subida(s)`);
+      }
+    } catch (error: any) {
+      console.error("Error al subir imágenes:", error);
+      toast.error(error.message || "Error al subir imágenes");
     } finally {
       setUploading(false);
-      // Limpiar input para permitir re-seleccionar el mismo archivo
       e.target.value = "";
     }
   };
@@ -76,7 +93,12 @@ export default function ImageUploader({ images, onAddImages, onRemoveImage }: Im
           fontSize: "14px",
         }}
       />
-      {uploading && <p className="text-xs text-[#4a7c80]">Subiendo...</p>}
+      {uploading && (
+        <p className="text-xs text-[#4a7c80] flex items-center gap-2">
+          <span className="inline-block w-3 h-3 border-2 border-[#4a7c80] border-t-transparent rounded-full animate-spin" />
+          Subiendo...
+        </p>
+      )}
       <div className="flex gap-4 flex-wrap">
         {images.map((img, idx) => (
           <div
@@ -84,7 +106,13 @@ export default function ImageUploader({ images, onAddImages, onRemoveImage }: Im
             className="relative w-24 h-24 overflow-hidden group"
             style={{ border: "1px solid #b2dede", borderRadius: "12px" }}
           >
-            <Image src={img.url} alt={`Preview ${idx}`} fill className="object-cover" />
+            <Image
+              src={img.url}
+              alt={`Preview ${idx}`}
+              fill
+              className="object-cover"
+              onError={() => toast.error(`No se pudo cargar la imagen ${idx + 1}`)}
+            />
             <button
               type="button"
               onClick={() => onRemoveImage(idx)}

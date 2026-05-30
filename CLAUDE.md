@@ -1049,7 +1049,6 @@ AUTH_TRUST_HOST=true  # Necesario para deployments detrás de proxy
 CLOUDINARY_CLOUD_NAME="nombre-de-tu-cloud"          # Solo servidor
 CLOUDINARY_API_KEY="123456789012345"                  # Solo servidor
 CLOUDINARY_API_SECRET="abc123..."                      # Solo servidor
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="nombre-de-tu-cloud" # Cliente y servidor
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="preset-unsigned" # Upload preset público (sin signed)
 ```
 

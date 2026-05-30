@@ -2,7 +2,8 @@
 import { prisma } from "@/lib/prisma";
 import { uploadImage } from "@/lib/upload-image";
 import { unstable_cache } from 'next/cache';
-import cloudinary, { extractPublicId } from "@/lib/cloudinary";
+import cloudinary from "@/lib/cloudinary";
+import { extractPublicId } from "@/lib/utils";
 import { generateSeoImageData } from "@/actions/page-config/helpers";
 
 
