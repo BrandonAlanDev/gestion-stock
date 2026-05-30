@@ -1,5 +1,5 @@
 "use client";
-
+import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
 import { uploadProductImage } from "@/actions/upload-product-image";
@@ -168,6 +168,15 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     });
   }, []);
 
+  const reorderImages = useCallback((sourceIndex: number, targetIndex: number) => {
+    setFormData((prev) => {
+      const copy = [...prev.images];
+      const [moved] = copy.splice(sourceIndex, 1);
+      copy.splice(targetIndex, 0, moved);
+      return { ...prev, images: copy };
+    });
+  }, []);
+
   // Función para convertir File a base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -256,6 +265,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     updateVariantCustomSize,
     addImages,
     removeImage,
+    reorderImages,
     handleSubmit,
     resetForm,
   };

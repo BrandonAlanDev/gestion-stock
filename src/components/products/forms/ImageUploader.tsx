@@ -1,40 +1,54 @@
+// src/components/products/forms/ImageUploader.tsx
 "use client";
 
 import Image from "next/image";
 import { toast } from "sonner";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { compressImage } from "@/lib/image-utils";
 import { X } from "lucide-react";
 
 export interface PendingImage {
-  // Imagen ya existente en el servidor
   url?: string;
   publicId?: string;
-  // Imagen nueva (archivo local)
   file?: File;
-  preview?: string; // objectURL para mostrar en el preview
+  preview?: string;
 }
 
 interface ImageUploaderProps {
   images: PendingImage[];
   onAddImages: (newImages: PendingImage[]) => void;
   onRemoveImage: (index: number) => void;
+  onReorder?: (sourceIndex: number, targetIndex: number) => void;
 }
 
-export default function ImageUploader({ images, onAddImages, onRemoveImage }: ImageUploaderProps) {
-  const [uploading] = useState(false); // lo dejamos para el spinner del submit global
+export default function ImageUploader({
+  images,
+  onAddImages,
+  onRemoveImage,
+  onReorder,
+}: ImageUploaderProps) {
+  // Estado local para el orden visual durante el arrastre
+  const [orderedImages, setOrderedImages] = useState<PendingImage[]>(images);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [uploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const originalIndexRef = useRef<number | null>(null);
 
+  // Sincronizar con las props SOLO si no estamos arrastrando
+  useEffect(() => {
+    if (draggedIndex === null) {
+      setOrderedImages(images);
+    }
+  }, [images, draggedIndex]);
 
+  // Manejo de archivos (sin cambios)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
-
     if (images.length + files.length > 4) {
       toast.error("Máximo 4 imágenes.");
       return;
     }
-
     const nuevas: PendingImage[] = [];
     for (const file of files) {
       try {
@@ -47,22 +61,68 @@ export default function ImageUploader({ images, onAddImages, onRemoveImage }: Im
         toast.error(`Error al comprimir ${file.name}`);
       }
     }
-
     if (nuevas.length > 0) {
       onAddImages(nuevas);
     }
-
-    // Limpiar input para permitir re-seleccionar
     e.target.value = "";
   };
 
   const handleRemove = (index: number) => {
-    const img = images[index];
-    // Revocar objectURL si es una imagen nueva
+    const img = orderedImages[index];
     if (img.preview && !img.url) {
       URL.revokeObjectURL(img.preview);
     }
     onRemoveImage(index);
+  };
+
+  // ── Drag & drop con desplazamiento en tiempo real ──
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggedIndex(index);
+    originalIndexRef.current = index;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    // Reordenar temporalmente el estado local para mostrar el desplazamiento
+    setOrderedImages(prev => {
+      const newOrder = [...prev];
+      const [moved] = newOrder.splice(originalIndexRef.current!, 1);
+      newOrder.splice(targetIndex, 0, moved);
+      // Actualizar el índice original arrastrado para futuros movimientos
+      originalIndexRef.current = targetIndex;
+      return newOrder;
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, finalIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || originalIndexRef.current === null) return;
+
+    // Llamar al padre con el índice original y el final
+    if (onReorder) {
+      onReorder(draggedIndex, finalIndex);
+    }
+
+    setDraggedIndex(null);
+    originalIndexRef.current = null;
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    // Si se canceló el arrastre (no hubo drop), restaurar el orden original
+    if (draggedIndex !== null) {
+      setOrderedImages(images); // vuelve al orden de las props
+    }
+    setDraggedIndex(null);
+    originalIndexRef.current = null;
   };
 
   return (
@@ -95,13 +155,27 @@ export default function ImageUploader({ images, onAddImages, onRemoveImage }: Im
         </p>
       )}
       <div className="flex gap-4 flex-wrap">
-        {images.map((img, idx) => {
+        {orderedImages.map((img, idx) => {
           const src = img.url || img.preview || "";
+          const isDragging = draggedIndex === idx;
+
           return (
             <div
               key={img.preview || img.url || idx}
-              className="relative w-24 h-24 overflow-hidden group"
-              style={{ border: "1px solid #b2dede", borderRadius: "12px" }}
+              draggable={!!onReorder}
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragEnter={(e) => handleDragEnter(e, idx)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+              className={`relative w-24 h-24 overflow-hidden group transition-all duration-200 cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40 scale-95 z-10" : ""
+                }`}
+              style={{
+                border: `1px solid ${isDragging ? "#0d5c63" : "#b2dede"}`,
+                borderRadius: "12px",
+                boxShadow: isDragging ? "0 0 0 2px rgba(13, 92, 99, 0.3)" : "none",
+                zIndex: isDragging ? 10 : 1,
+              }}
             >
               <Image
                 src={src}
@@ -112,7 +186,10 @@ export default function ImageUploader({ images, onAddImages, onRemoveImage }: Im
               />
               <button
                 type="button"
-                onClick={() => handleRemove(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove(idx);
+                }}
                 className="absolute top-1 right-1 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{ background: "#e05050" }}
               >

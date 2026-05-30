@@ -76,6 +76,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     updateVariantCustomSize,
     addImages,
     removeImage,
+    reorderImages,
     handleSubmit,
     resetForm,
   } = useProductForm({ garment: fullGarment || garment, categories, sizes });
@@ -254,6 +255,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               images={formData.images}
               onAddImages={addImages}
               onRemoveImage={removeImage}
+              onReorder={reorderImages}
             />
 
             {/* Submit */}
