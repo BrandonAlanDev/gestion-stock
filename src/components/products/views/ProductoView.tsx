@@ -27,23 +27,23 @@ export default function ProductoView({ product }: ProductProps) {
     return BOARD_CATEGORIES.some((cat) => name.includes(cat));
   }, [product.category]);
 
-  // 📐 ASIGNACIÓN DE IMÁGENES SEGÚN CATEGORÍA
-  // Si es tabla, el logo está en la posición 0. Si no, no hay logo independiente.
+  // 📐 SEPARACIÓN DE IMÁGENES CONTROLADA ÚNICAMENTE AQUÍ:
+  // Si es tabla, la posición 0 exacta es el Logo.
   const logoImage = esTabla ? product.images?.[0]?.srcImage : null;
 
-  // Si es tabla, la galería real de fotos de la tabla arranca en la posición 1 (ocultando el logo de la vista).
-  // Si es ropa u otra categoría, usa todas las imágenes desde la posición 0.
+  // Si es tabla, las fotos reales de exhibición arrancan desde el índice 1 en adelante.
+  // Si NO es tabla, se usan todas las imágenes (desde el índice 0).
   const productImages = useMemo(() => {
     if (!product.images) return [];
     return esTabla ? product.images.slice(1) : product.images;
   }, [product.images, esTabla]);
 
-  // Estado para controlar la imagen grande seleccionada
+  // Estado para la imagen grande seleccionada (va a tomar el índice 0 de las fotos reales, o sea, la foto 1 original)
   const [selectedImage, setSelectedImage] = useState(
     productImages[0]?.srcImage || "/images/placeholder.avif"
   );
 
-  // Efecto para sincronizar la imagen principal si cambian las propiedades del producto
+  // Sincroniza la galería principal por si cambia el producto en caliente
   useEffect(() => {
     if (productImages[0]?.srcImage) {
       setSelectedImage(productImages[0].srcImage);
@@ -52,7 +52,7 @@ export default function ProductoView({ product }: ProductProps) {
     }
   }, [productImages]);
 
-  // Procesar Talles — soporta size de BD y customSize en attributes
+  // Procesar Talles
   const sizes = useMemo(() => {
     const map = new Map();
     product.variants?.forEach((variant: any) => {
@@ -122,7 +122,7 @@ export default function ProductoView({ product }: ProductProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-12 lg:gap-20 items-start">
 
-          {/* BLOQUE IZQUIERDO: IMÁGENES */}
+          {/* BLOQUE IZQUIERDO: GALERÍA DE FOTOS REALES */}
           <div className="flex flex-col-reverse md:flex-row gap-6">
             {productImages.length > 1 && (
               <div className="flex md:flex-col gap-3 flex-shrink-0">
@@ -164,23 +164,25 @@ export default function ProductoView({ product }: ProductProps) {
                 {product.subCategory?.name && ` / ${product.subCategory.name}`}
               </p>
 
-              {/* LOGO — Solo se muestra sobre el título si es una tabla */}
+              {/* LOGO CENTRADO (Extraído del índice 0 original) */}
               {esTabla && logoImage && (
-                <div className="w-full max-w-[140px] h-auto mb-4 select-none">
-                  <img
-                    src={logoImage}
-                    alt={`Logo de ${product.name}`}
-                    className="w-full h-full object-contain mix-blend-multiply"
-                  />
+                <div className="w-full flex justify-center mb-4 select-none">
+                  <div className="w-full max-w-[140px] h-auto">
+                    <img
+                      src={logoImage}
+                      alt={`Logo de ${product.name}`}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
+                  </div>
                 </div>
               )}
 
-              <h1 className="text-3xl md:text-4xl font-light tracking-tight text-gray-900 capitalize">
+              <h1 className="text-3xl md:text-4xl font-light tracking-tight text-gray-900 capitalize text-center lg:text-left">
                 {product.name.toLowerCase()}
               </h1>
             </div>
 
-            <div className="border-b border-gray-100 pb-6">
+            <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
               <p className="text-2xl font-light text-gray-800">
                 $ {Number(product.price).toLocaleString("es-AR")}
               </p>
@@ -190,7 +192,7 @@ export default function ProductoView({ product }: ProductProps) {
             {hasColors && (
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Color</h3>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
                   {colors.map((color: any) => (
                     <button
                       key={color.id}
@@ -210,7 +212,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             {/* MEDIDAS */}
             {hasSizes && (
-              <div className="space-y-3">
+              <div className="space-y-3 text-center lg:text-left">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Medidas disponibles
                 </h3>
@@ -226,7 +228,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             {/* LOGÍSTICA */}
             <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center lg:justify-start">
                 <Truck className="w-3.5 h-3.5 text-gray-400" />
                 <p>Envíos y logística a coordinar para todo el país.</p>
               </div>
@@ -256,7 +258,7 @@ export default function ProductoView({ product }: ProductProps) {
 
       </div>
 
-      {/* MODAL WHATSAPP — solo tablas */}
+      {/* MODAL WHATSAPP */}
       {showOrderForm && esTabla && (
         <WhatsAppOrderForm product={product} onClose={() => setShowOrderForm(false)} />
       )}

@@ -16,12 +16,11 @@ export async function getGarmentsPaginated(
     ...(search && { name: { contains: search, mode: 'insensitive' } }),
   };
 
-  // 1. Traemos las imágenes con su ordenamiento, variantes y categorías vinculadas
-  const [rawGarments, total] = await Promise.all([
+  const [garments, total] = await Promise.all([
     prisma.garment.findMany({
       where,
       include: {
-        images: { orderBy: { order: "asc" } }, // Traemos todas temporalmente para filtrarlas en memoria
+        images: { orderBy: { order: "asc" } }, 
         variants: {
           include: { size: true, color: true },
           take: 5,
@@ -36,22 +35,7 @@ export async function getGarmentsPaginated(
     prisma.garment.count({ where }),
   ]);
 
-  // 2. Procesamos los productos en memoria antes de mandarlos al catálogo
-  const garments = rawGarments.map((garment) => {
-    const esTabla = garment.category?.name?.toLowerCase() === "tablas";
-
-    // Si es una tabla, le removemos la primera imagen (el logo) para la grilla
-    if (esTabla && garment.images.length > 0) {
-      return {
-        ...garment,
-        images: garment.images.slice(1),
-      };
-    }
-
-    // Si es ropa u otra categoría, se devuelve tal cual con todas sus fotos
-    return garment;
-  });
-
+  // Retornamos garments directo, sin hacerle .slice() acá
   return { garments, total };
 }
 
