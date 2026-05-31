@@ -1,6 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function updateSeoConfig(
   data: {
@@ -16,16 +16,11 @@ export async function updateSeoConfig(
         data,
       });
 
-    return {
-      ok: true,
-      seo,
-    };
+    revalidateTag("page-config");
+
+    return { ok: true, seo };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error SEO",
-    };
+    return { ok: false, error: "Error SEO" };
   }
 }
 
@@ -41,15 +36,8 @@ export async function getSeoConfig() {
         },
       });
 
-    return {
-      ok: true,
-      seo,
-    };
+    return { ok: true, seo };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error SEO",
-    };
+    return { ok: false, error: "Error SEO" };
   }
 }

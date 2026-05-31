@@ -8,7 +8,7 @@ interface PaginationProps {
 }
 
 export default function Pagination({ currentPage, totalPages, basePath, searchParams = {} }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  if (!totalPages || totalPages <= 1) return null;
 
   const buildHref = (page: number) => {
     const params = new URLSearchParams();

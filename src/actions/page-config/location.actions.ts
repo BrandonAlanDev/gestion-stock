@@ -1,6 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function updateLocationConfig(
   data: {
@@ -22,16 +22,10 @@ export async function updateLocationConfig(
         data,
       });
 
-    return {
-      ok: true,
-      location,
-    };
+    revalidateTag("page-config");
+    return { ok: true, location };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error ubicación",
-    };
+    return { ok: false, error: "Error ubicación" };
   }
 }
 
@@ -54,15 +48,8 @@ export async function getLocationConfig() {
         },
       });
 
-    return {
-      ok: true,
-      location,
-    };
+    return { ok: true, location };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error ubicación",
-    };
+    return { ok: false, error: "Error ubicación" };
   }
 }

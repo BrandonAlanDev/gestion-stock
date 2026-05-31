@@ -1,18 +1,16 @@
 "use client";
-
 import Header from "@/components/layout/Header";
-import SessionWrapper from "../providers/SessionWrapper";
+import SessionWrapper from "@/components/providers/SessionWrapper";
 import { Toaster } from "sonner";
 import CartSidebar from "@/components/cart/CartSidebar";
 import { CartProvider, useCart } from "@/context/CartContext";
 
-// Componente interno para acceder al contexto
-function AppLayout({ children, branding }: { children: React.ReactNode; branding: any }) {
+function AppLayout({ children }: { children: React.ReactNode }) {
   const { cartCount, openCart, isCartOpen, closeCart, cartItems, updateQty, removeItem } = useCart();
-  
+
   return (
     <>
-      <Header cartCount={cartCount} onOpenCart={openCart} branding={branding} />
+      <Header />
       <CartSidebar
         isOpen={isCartOpen}
         onClose={closeCart}
@@ -31,11 +29,11 @@ function AppLayout({ children, branding }: { children: React.ReactNode; branding
 }
 
 // Componente principal exportado
-export default function LayoutComponent({ children, branding }: { children: React.ReactNode; branding: any }) {
+export default function LayoutComponent({ children }: { children: React.ReactNode }) {
   return (
     <SessionWrapper>
       <CartProvider>
-        <AppLayout branding={branding}>
+        <AppLayout>
           {children}
         </AppLayout>
       </CartProvider>

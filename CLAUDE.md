@@ -39,222 +39,212 @@ El sistema tiene dos capas diferenciadas:
 ```
 /
 ├── prisma/
-│   ├── schema.prisma               # Esquema de base de datos
-│   ├── config.ts                   # Configuración de Prisma (datasource, migrations)
-│   └── migrations/
-│       └── 0_init/migration.sql    # Migración inicial (users + accounts)
+│ ├── schema.prisma # Esquema de base de datos
+│ ├── config.ts # Configuración Prisma (datasource, output)
+│ └── migrations/
+│ └── 0_init/migration.sql # Migración inicial (users + accounts)
 │
 ├── generated/
-│   └── prisma/                     # Cliente Prisma generado (NO editar)
-│       └── client/                 # Se regenera con `npx prisma generate`
+│ └── prisma/client/ # Cliente Prisma generado — NO editar manualmente
 │
 ├── src/
-│   ├── app/                        # Rutas Next.js (App Router)
-│   │   ├── globals.css             # Variables CSS, fuentes, animaciones, scrollbar
-│   │   ├── layout.tsx              # Layout raíz: session + branding + pageConfig + providers
-│   │   ├── loading.tsx             # Spinner global de carga
-│   │   ├── page.tsx                # "/" → HomeClient → ProductLayout
-│   │   │
-│   │   ├── api/
-│   │   │   └── auth/[...nextauth]/
-│   │   │       └── route.ts        # Handler de Auth.js (GET + POST)
-│   │   │
-│   │   ├── login/
-│   │   │   └── page.tsx            # Página de login (Client Component)
-│   │   ├── register/
-│   │   │   └── page.tsx            # Página de registro (Client Component)
-│   │   │
-│   │   ├── dashboard/
-│   │   │   ├── layout.tsx          # Wrappea con QueryProvider (TanStack Query)
-│   │   │   └── page.tsx            # → DashboardClient (inventario admin)
-│   │   │
-│   │   ├── categories/
-│   │   │   └── page.tsx            # Gestión de categorías (force-dynamic, Server Component)
-│   │   ├── provider/
-│   │   │   └── page.tsx            # Gestión de proveedores (Client Component + Suspense)
-│   │   ├── sizes/
-│   │   │   └── page.tsx            # Gestión de grupos de talles (Client Component)
-│   │   ├── movements/
-│   │   │   └── page.tsx            # Historial de movimientos (Server Component)
-│   │   │
-│   │   ├── productos/
-│   │   │   ├── page.tsx            # Catálogo general paginado
-│   │   │   ├── [categoria]/
-│   │   │   │   └── page.tsx        # Catálogo por categoría (SSG + ISR)
-│   │   │   └── item/[id]/
-│   │   │       └── page.tsx        # Detalle de producto
-│   │   │
-│   │   ├── personalizado/
-│   │   │   └── page.tsx            # Diseñador de tablas (Client Component puro)
-│   │   ├── escuela/
-│   │   │   └── page.tsx            # Landing escuela de surf (Server Component)
-│   │   │
-│   │   └── admin/
-│   │       └── pageConfig/
-│   │           └── page.tsx        # Configuración visual del sitio (Server + Client)
-│   │
-│   ├── actions/                    # Server Actions — toda la lógica de negocio
-│   │   ├── admin.actions.ts        # Turnos: obtenerTurnos, limpiarTurnosAntiguos, limpiarTurnosCancelados
-│   │   ├── admin-dashboard.ts      # Usuarios: getAllUsers, toggleUserRole, deleteUserAccount
-│   │   ├── auth-actions.ts         # loginAction, registerAction, googleLoginAction, handleSignOut
-│   │   ├── categories.ts           # getCategories (cacheada), createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory
-│   │   ├── colors.ts               # getColors (cacheada), createColor
-│   │   ├── garments.ts             # createGarment, getGarments (paginado+cacheado), getGarmentById, updateGarment, deleteGarment
-│   │   ├── movements.ts            # createMovement (con transacción), getMovements
-│   │   ├── providers.ts            # getProviders (cacheada), createProvider, updateProvider, deleteProvider
-│   │   ├── sizes.ts                # getSizeTypes (cacheada), createSizeType, addSizeToType, deleteSize, deleteSizeType
-│   │   ├── user-dashboard.ts       # updateProfile, getUserTurnos, cancelTurno, updatePassword
-│   │   └── page-config/
-│   │       ├── branding.actions.ts  # updateBrandingConfig (sube imgs), getBrandingConfig (cacheada 1h)
-│   │       ├── contact.actions.ts   # updateContactConfig, getContactConfig
-│   │       ├── ecommerce.actions.ts # updateEcommerceConfig, getEcommerceConfig
-│   │       ├── general.actions.ts   # getPageConfig (consulta directa sin caché)
-│   │       ├── helpers.ts           # generateSeoImageData (genera ruta+ID para Cloudinary)
-│   │       ├── location.actions.ts  # updateLocationConfig, getLocationConfig
-│   │       ├── maintenance.actions.ts # clearPageConfig (limpia imágenes en Cloudinary + reset DB)
-│   │       ├── seo.actions.ts       # updateSeoConfig, getSeoConfig
-│   │       ├── socials.actions.ts   # updateSocialsConfig, getSocialsConfig
-│   │       └── shared/
-│   │           ├── defaults.ts      # DEFAULT_VALUES para reset de PageConfig
-│   │           ├── get-page-config.ts # getOrCreatePageConfig (upsert del registro id=1)
-│   │           ├── reset-data.ts    # RESET_DATA: objeto completo para resetear PageConfig
-│   │           ├── types.ts         # PageConfigInput: tipo TS para las mutaciones
-│   │           └── upload-page-image.ts # uploadPageImage: sube/reemplaza imagen en Cloudinary
-│   │
-│   ├── components/
-│   │   ├── admin/
-│   │   │   └── page-config/        # Secciones del panel /admin/pageConfig
-│   │   │       ├── BrandingSection.tsx    # Logo, banner, favicon, nombre, slogan, desc, colores
-│   │   │       ├── ContactSection.tsx     # Teléfono, WhatsApp, email
-│   │   │       ├── EcommerceSection.tsx   # SwitchCards: ecommerce/carrito/checkout
-│   │   │       ├── LocationSection.tsx    # Dirección, ciudad, provincia, país + switch habilitado
-│   │   │       ├── PageConfigForm.tsx     # Contenedor que compone todas las secciones
-│   │   │       ├── SeoSection.tsx         # Meta title y meta description
-│   │   │       ├── SocialsSection.tsx     # Instagram, Facebook, TikTok, X, YouTube, LinkedIn
-│   │   │       └── shared/
-│   │   │           ├── ImageUploader.tsx  # Carga imagen como base64 (para branding)
-│   │   │           ├── Input.tsx          # Input estilizado admin (dark)
-│   │   │           ├── SwitchCard.tsx     # Toggle switch con card negro/cyan
-│   │   │           └── Textarea.tsx       # Textarea estilizado admin (dark)
-│   │   │
-│   │   ├── auth/
-│   │   │   ├── AuthLayout.tsx       # Layout con imagen de fondo, blur, neón
-│   │   │   ├── google-button.tsx    # Botón Google con useFormStatus (form action)
-│   │   │   └── LoginModal.tsx       # Modal de login que aparece en header
-│   │   │
-│   │   ├── cart/
-│   │   │   └── CartSidebar.tsx      # Panel lateral carrito: items, cantidades, totales, link a pago
-│   │   │
-│   │   ├── categories/
-│   │   │   ├── filters/
-│   │   │   │   └── CategoryFilter.tsx    # Select de filtro por categoría (dashboard)
-│   │   │   ├── forms/
-│   │   │   │   └── AddSubCategoryForm.tsx # Form rápido para añadir subcategoría en /categories
-│   │   │   ├── modals/
-│   │   │   │   ├── CategoryModal.tsx          # Modal ADMIN OSCURO (estilo amber, para dashboard)
-│   │   │   │   ├── DeleteSubBtn.tsx            # Botón cliente que llama deleteSubCategory
-│   │   │   │   └── ManageCategoryModal.tsx     # Modal TIENDA (estilo cyan, para /categories)
-│   │   │   └── view/
-│   │   │       └── CategoryContentClient.tsx  # Vista de categoría: sidebar subs + grilla productos
-│   │   │
-│   │   ├── data/
-│   │   │   └── data.js              # Datos estáticos: categorías mock, products mock, heroSlides
-│   │   │
-│   │   ├── home/
-│   │   │   ├── HomeClient.tsx       # Wrapper cliente para la página de inicio
-│   │   │   └── HomeSections.jsx     # Grid de 7 categorías animadas (FeaturedSection)
-│   │   │
-│   │   ├── layout/
-│   │   │   ├── AppGate.tsx          # Controla flujo cookies → privacidad → términos → app
-│   │   │   ├── Footer.tsx           # Footer público: links, redes, términos, privacidad
-│   │   │   ├── Header.tsx           # Navbar fijo: logo, menú hamburguesa, links admin/user, logout
-│   │   │   ├── Hero.tsx             # Carrusel hero: slides dinámicos del pageConfig + estáticos
-│   │   │   ├── LayoutComponent.tsx  # Provider de carrito + AppLayout interno
-│   │   │   └── RouteLoader.tsx      # Barra cyan de carga en cambios de ruta (Framer Motion)
-│   │   │
-│   │   ├── legal/
-│   │   │   ├── CookieModal.tsx      # Modal de cookies (bloquea toda la app hasta aceptar)
-│   │   │   ├── PrivacyModal.tsx     # Modal privacidad (automático tras cookies)
-│   │   │   └── TermsModal.tsx       # Modal términos (requiere checkbox para aceptar)
-│   │   │
-│   │   ├── movements/
-│   │   │   └── MovementModal.tsx    # Modal para registrar ingreso/egreso de stock
-│   │   │
-│   │   ├── products/
-│   │   │   ├── cards/
-│   │   │   │   └── ProductCard.tsx     # Tarjeta: hover slider de imágenes, badge nuevo/sin stock
-│   │   │   ├── forms/
-│   │   │   │   ├── ImageUploader.tsx   # Sube imágenes a Cloudinary (upload preset público)
-│   │   │   │   └── VariantRow.tsx      # Fila de variante: talle, color, stock, SKU + custom
-│   │   │   ├── grid/
-│   │   │   │   └── ProductGrid.tsx     # Grilla de productos + modal de detalle rápido
-│   │   │   ├── layouts/
-│   │   │   │   └── ProductLayout.jsx   # Layout principal de la tienda home (JSX, usa datos mock)
-│   │   │   ├── modals/
-│   │   │   │   ├── ProductModal.tsx    # Modal CRUD de productos (con createPortal)
-│   │   │   │   ├── ProviderModal.tsx   # Modal de info de proveedor (readonly)
-│   │   │   │   └── QuickViewTable.tsx  # Tabla del inventario con editar/eliminar
-│   │   │   └── views/
-│   │   │       ├── CatalogoClient.tsx  # Wrapper cliente para catálogo (pasa addToCart)
-│   │   │       ├── ProductoView.tsx    # Vista detalle: galería, talles, colores, carrito
-│   │   │       └── ProductsPage.tsx    # Catálogo con sidebar de filtros, orden y paginación
-│   │   │
-│   │   ├── providers/
-│   │   │   ├── PageConfigProvider.tsx  # Context global de la config del sitio
-│   │   │   └── SessionWrapper.tsx      # SessionProvider de NextAuth (envuelve la app)
-│   │   │
-│   │   ├── search/
-│   │   │   └── Search.tsx             # Input con debounce 300ms, llama onChange del padre
-│   │   │
-│   │   └── ui/
-│   │       ├── button.tsx             # Botón con múltiples variantes (CVA + Radix Slot)
-│   │       ├── color-dropdown.tsx     # Dropdown custom de colores con punto de color
-│   │       ├── confirm-dialog.tsx     # Diálogo de confirmación (eliminar producto)
-│   │       ├── input.tsx              # Input base de shadcn/ui
-│   │       └── pagination.tsx         # Paginación con Links de Next.js y searchParams
-│   │
-│   ├── context/
-│   │   └── CartContext.tsx            # Estado global del carrito con localStorage
-│   │
-│   ├── hooks/                         # Custom hooks (todos client-side con TanStack Query)
-│   │   ├── useCategories.ts           # getCategories → queryKey: ["categories"], staleTime: Infinity
-│   │   ├── useColors.ts               # getColors → queryKey: ["colors"], staleTime: Infinity
-│   │   ├── useGarments.ts             # getGarments paginado → queryKey: ["garments", params]
-│   │   ├── useProductForm.ts          # Lógica completa del form de producto (sin componente)
-│   │   ├── useProviders.ts            # getProviders → queryKey: ["providers"], staleTime: Infinity
-│   │   └── useSizeTypes.ts            # getSizeTypes → queryKey: ["sizeTypes"], staleTime: Infinity
-│   │
-│   ├── lib/
-│   │   ├── cache.ts                   # Sistema de caché con unstable_cache + tags
-│   │   ├── cloudinary.ts              # Config v2 + extractPublicId()
-│   │   ├── prisma.ts                  # Singleton PrismaClient con adapter MariaDB
-│   │   ├── upload-image.ts            # Helper: sube imagen base64 a Cloudinary como webp
-│   │   ├── utils.ts                   # cn() + serializeData() + extractPublicId()
-│   │   ├── zod.ts                     # Todos los esquemas de validación
-│   │   └── services/                  # Capa de servicio — queries a Prisma puras
-│   │       ├── category-service.ts    # getCategoriesFull, createCategory, updateCategory, deleteCategory, getSubCategoriesCount, createSubCategory, deleteSubCategory, getCategoryWithProducts, getCategoryByName, getGarmentCountBySubCategory
-│   │       ├── color-service.ts       # getColors, createColor
-│   │       ├── garment-service.ts     # getGarmentsPaginated, getGarmentById, createGarment, updateGarment, deleteGarment, updateGarmentWithDetails
-│   │       ├── provider-service.ts    # getProviders, createProvider, updateProvider, deleteProvider
-│   │       └── size-service.ts        # getSizeTypes, createSizeType, addSize, deleteSize, deleteSizeType
-│   │
-│   ├── providers/
-│   │   └── QueryProvider.tsx          # QueryClientProvider de TanStack Query
-│   │
-│   ├── types/
-│   │   └── next-auth.d.ts             # Extiende tipos de NextAuth: id, role, telefono, image
-│   │
-│   ├── auth.ts                        # Config principal Auth.js (providers, callbacks)
-│   ├── auth.config.ts                 # Config edge Auth.js (para middleware, sin Node.js)
-│   └── middleware.ts                  # Protección de rutas por rol
+│ ├── app/ # Rutas Next.js App Router
+│ │ ├── globals.css # Variables CSS globales, fuentes, scrollbar, animaciones
+│ │ ├── layout.tsx # Layout raíz: branding + session + pageConfig providers
+│ │ ├── loading.tsx # Spinner global de página
+│ │ ├── page.tsx # "/" → HomeClient → ProductLayout
+│ │ │
+│ │ ├── api/auth/[...nextauth]/
+│ │ │ └── route.ts # Handler Auth.js (GET + POST)
+│ │ │
+│ │ ├── login/page.tsx # Inicio de sesión
+│ │ ├── register/page.tsx # Registro de usuario
+│ │ │
+│ │ ├── dashboard/
+│ │ │ ├── layout.tsx # Wrappea con QueryProvider (TanStack Query)
+│ │ │ └── page.tsx # → DashboardClient (inventario admin)
+│ │ │
+│ │ ├── categories/page.tsx # Gestión categorías (force-dynamic, Server)
+│ │ ├── provider/page.tsx # Gestión proveedores (Client + Suspense)
+│ │ ├── sizes/page.tsx # Gestión talles (Client Component)
+│ │ ├── movements/page.tsx # Historial movimientos (Server Component)
+│ │ │
+│ │ ├── productos/
+│ │ │ ├── page.tsx # Catálogo general paginado (filtro por categoría/subcategoría)
+│ │ │ ├── [categoria]/page.tsx # Por categoría (SSG + ISR)
+│ │ │ └── item/[id]/page.tsx # Detalle de producto
+│ │ │
+│ │ ├── personalizado/page.tsx # Diseñador de tablas (Client puro)
+│ │ ├── escuela/page.tsx # Landing escuela de surf (Server)
+│ │ └── admin/pageConfig/page.tsx # Configuración visual del sitio
+│ │
+│ ├── actions/ # Server Actions — interfaz pública de negocio
+│ │ ├── admin.actions.ts # Turnos: obtenerTurnos, limpiarTurnosAntiguos, limpiarTurnosCancelados
+│ │ ├── admin-dashboard.ts # Usuarios: getAllUsers, toggleUserRole, deleteUserAccount
+│ │ ├── auth-actions.ts # loginAction, registerAction, googleLoginAction, handleSignOut
+│ │ ├── categories.ts # getCategories (cacheada), createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory
+│ │ ├── colors.ts # getColors (cacheada), createColor
+│ │ ├── garments.ts # createGarment, getGarments (paginado + sin caché), getGarmentById, updateGarment, deleteGarment
+│ │ ├── movements.ts # createMovement (transacción Prisma), getMovements
+│ │ ├── providers.ts # getProviders (cacheada), createProvider, updateProvider, deleteProvider
+│ │ ├── sizes.ts # getSizeTypes (cacheada), createSizeType, addSizeToType, deleteSize, deleteSizeType
+│ │ ├── upload-product-image.ts # Sube imagen de producto con validación y auth (ver sección imágenes)
+│ │ ├── user-dashboard.ts # updateProfile, getUserTurnos, cancelTurno, updatePassword
+│ │ └── page-config/
+│ │ ├── branding.actions.ts # updateBrandingConfig (revalida page-config y branding-config), getBrandingConfig (cacheada 1h)
+│ │ ├── contact.actions.ts # updateContactConfig (revalida page-config), getContactConfig
+│ │ ├── ecommerce.actions.ts # updateEcommerceConfig (revalida page-config), getEcommerceConfig
+│ │ ├── general.actions.ts # getPageConfig (sin caché, usa findFirst)
+│ │ ├── helpers.ts # generateSeoImageData → carpeta y publicId para Cloudinary
+│ │ ├── location.actions.ts # updateLocationConfig (revalida page-config), getLocationConfig
+│ │ ├── maintenance.actions.ts # clearPageConfig: borra imgs Cloudinary + reset DB (revalida page-config y branding-config)
+│ │ ├── seo.actions.ts # updateSeoConfig (revalida page-config), getSeoConfig
+│ │ ├── socials.actions.ts # updateSocialsConfig (revalida page-config), getSocialsConfig
+│ │ └── shared/
+│ │ ├── defaults.ts # DEFAULT_VALUES — valores iniciales de PageConfig
+│ │ ├── get-page-config.ts # getOrCreatePageConfig → garantiza que exista el único registro (usa findFirst)
+│ │ ├── reset-data.ts # RESET_DATA → objeto completo para limpiar PageConfig
+│ │ ├── types.ts # PageConfigInput: tipo TS para mutaciones de config
+│ │ └── upload-page-image.ts # uploadPageImage → sube/reemplaza imagen (branding)
+│ │
+│ ├── components/
+│ │ ├── admin/
+│ │ │ └── page-config/ # Secciones del panel /admin/pageConfig
+│ │ │ ├── BrandingSection.tsx # Logo, banner, favicon, nombre, slogan, desc, colores
+│ │ │ ├── ContactSection.tsx # Teléfono, WhatsApp, email
+│ │ │ ├── EcommerceSection.tsx # SwitchCards: ecommerce / carrito / checkout
+│ │ │ ├── LocationSection.tsx # Dirección, ciudad, provincia, país + switch habilitado
+│ │ │ ├── PageConfigForm.tsx # Contenedor que compone todas las secciones
+│ │ │ ├── SeoSection.tsx # Meta title y meta description
+│ │ │ ├── SocialsSection.tsx # Instagram, Facebook, TikTok, X, YouTube, LinkedIn
+│ │ │ └── shared/
+│ │ │ ├── ImageUploader.tsx # Lee archivo como base64 con FileReader (branding)
+│ │ │ ├── Input.tsx # Input dark estilizado para el panel admin
+│ │ │ ├── SwitchCard.tsx # Toggle switch con card negro/cyan
+│ │ │ └── Textarea.tsx # Textarea dark estilizado para el panel admin
+│ │ │
+│ │ ├── auth/
+│ │ │ ├── AuthLayout.tsx # Layout auth: imagen blur, neón, animación Framer
+│ │ │ ├── google-button.tsx # Botón Google con useFormStatus (form action)
+│ │ │ └── LoginModal.tsx # Modal de login (aparece en el Header)
+│ │ │
+│ │ ├── cart/
+│ │ │ └── CartSidebar.tsx # Panel lateral: items, cantidades, subtotal+envío+total, link /paycart
+│ │ │
+│ │ ├── categories/
+│ │ │ ├── filters/
+│ │ │ │ └── CategoryFilter.tsx # Select de filtro por categoría (dashboard)
+│ │ │ ├── forms/
+│ │ │ │ └── AddSubCategoryForm.tsx # Form rápido para añadir subcategoría
+│ │ │ ├── modals/
+│ │ │ │ ├── ManageCategoryModal.tsx # Modal unificado con prop variant ("admin"|"tienda")
+│ │ │ │ └── DeleteSubBtn.tsx # Botón cliente que llama deleteSubCategory
+│ │ │ └── view/
+│ │ │ └── CategoryContentClient.tsx # Vista: sidebar subs + grilla productos
+│ │ │
+│ │ ├── dashboard/
+│ │ │ └── DashboardClient.tsx # Panel de inventario con hooks de TanStack Query
+│ │ │
+│ │ ├── data/
+│ │ │ └── data.js # Datos estáticos: categorías mock, products mock, heroSlides
+│ │ │
+│ │ ├── home/
+│ │ │ ├── HomeClient.tsx # Wrapper cliente para la página de inicio
+│ │ │ └── HomeSections.jsx # FeaturedSection: grid de 7 categorías con animaciones
+│ │ │
+│ │ ├── layout/
+│ │ │ ├── AppGate.tsx # Flujo legal: cookies → privacidad → términos → app
+│ │ │ ├── Footer.tsx # Footer público con links, redes y botones legales
+│ │ │ ├── Header.tsx # Navbar fijo con carrito (usa useCart), logo, menú, links por rol
+│ │ │ ├── Hero.tsx # Carrusel: slide dinámico del pageConfig + slides estáticos
+│ │ │ ├── LayoutComponent.tsx # CartProvider + AppLayout (sin props extra)
+│ │ │ └── RouteLoader.tsx # Barra de progreso cyan en cambios de ruta
+│ │ │
+│ │ ├── legal/
+│ │ │ ├── CookieModal.tsx # Modal cookies (bloquea toda la app hasta aceptar)
+│ │ │ ├── PrivacyModal.tsx # Modal privacidad (auto tras cookies, 1s delay)
+│ │ │ └── TermsModal.tsx # Modal términos (requiere checkbox para continuar)
+│ │ │
+│ │ ├── movements/
+│ │ │ └── MovementModal.tsx # Modal para registrar ingresos/egresos de stock
+│ │ │
+│ │ ├── products/
+│ │ │ ├── cards/
+│ │ │ │ └── ProductCard.tsx # Tarjeta: hover slider de imágenes, badge nuevo/sin stock
+│ │ │ ├── forms/
+│ │ │ │ ├── ImageUploader.tsx # Sube imgs a Cloudinary al hacer submit (ver sección imágenes)
+│ │ │ │ └── VariantRow.tsx # Fila de variante: talle (con CUSTOM), color, stock, SKU
+│ │ │ ├── grid/
+│ │ │ │ └── ProductGrid.tsx # Grilla pública + modal de detalle rápido en catálogo
+│ │ │ ├── layouts/
+│ │ │ │ └── ProductLayout.jsx # Layout home tienda (JSX, datos mock, legado)
+│ │ │ ├── modals/
+│ │ │ │ ├── ProductModal.tsx # Modal CRUD de producto (createPortal)
+│ │ │ │ ├── ProviderModal.tsx # Modal info de proveedor (readonly, desde QuickViewTable)
+│ │ │ │ └── QuickViewTable.tsx # Tabla inventario con editar/eliminar/proveedor
+│ │ │ ├── types.ts # ProductProps: tipo TS para detalle de producto
+│ │ │ └── views/
+│ │ │ ├── CatalogoClient.tsx # Wrapper cliente para catálogo (pasa addToCart)
+│ │ │ ├── ProductoView.tsx # Vista detalle: galería, talles, colores, WhatsApp
+│ │ │ ├── ProductsPage.tsx # Catálogo con sidebar de filtros y ordenamiento (filtro server-side)
+│ │ │ └── WhatsAppOrder.tsx # Formulario de pedido custom para tablas de surf
+│ │ │
+│ │ ├── providers/
+│ │ │ ├── PageConfigProvider.tsx # Context global de la configuración del sitio
+│ │ │ └── SessionWrapper.tsx # SessionProvider de NextAuth
+│ │ │
+│ │ ├── search/
+│ │ │ └── Search.tsx # Input búsqueda con debounce 300ms
+│ │ │
+│ │ └── ui/
+│ │ ├── button.tsx # Botón con variantes (CVA + Radix Slot)
+│ │ ├── color-dropdown.tsx # Dropdown custom de colores con punto de color
+│ │ ├── confirm-dialog.tsx # Diálogo de confirmación de eliminación
+│ │ ├── input.tsx # Input base shadcn/ui
+│ │ └── pagination.tsx # Paginación con Links y searchParams
+│ │
+│ ├── context/
+│ │ └── CartContext.tsx # Estado global del carrito con localStorage
+│ │
+│ ├── hooks/
+│ │ ├── useCategories.ts # TanStack Query → queryKey: ["categories"]
+│ │ ├── useColors.ts # TanStack Query → queryKey: ["colors"]
+│ │ ├── useGarments.ts # TanStack Query → queryKey: ["garments", params]
+│ │ ├── useProductForm.ts # Lógica completa del formulario de producto
+│ │ ├── useProviders.ts # TanStack Query → queryKey: ["providers"]
+│ │ └── useSizeTypes.ts # TanStack Query → queryKey: ["sizeTypes"]
+│ │
+│ ├── lib/
+│ │ ├── cache.ts # Sistema de caché con unstable_cache (productos sin caché, función directa)
+│ │ ├── cloudinary.ts # Config Cloudinary v2 + extractPublicId()
+│ │ ├── image-utils.ts # compressImage() — comprime con Canvas API
+│ │ ├── prisma.ts # Singleton PrismaClient con adapter MariaDB + SSL auto
+│ │ ├── upload-image.ts # Helper: sube base64 a Cloudinary como webp (branding)
+│ │ ├── utils.ts # cn() + serializeData() + extractPublicId()
+│ │ ├── zod.ts # Todos los esquemas de validación
+│ │ └── services/ # Capa de servicio — queries Prisma puras sin lógica de negocio
+│ │ ├── category-service.ts # getCategoriesFull, create/update/delete Category/SubCategory, getCategoryWithProducts, getCategoryByName
+│ │ ├── color-service.ts # getColors, createColor
+│ │ ├── garment-service.ts # getGarmentsPaginated (filtro por categoryId/subCategoryId), getGarmentById, create/update/delete, updateGarmentWithDetails
+│ │ ├── provider-service.ts # getProviders, create/update/delete Provider
+│ │ └── size-service.ts # getSizeTypes, createSizeType, addSize, deleteSize, deleteSizeType
+│ │
+│ ├── providers/
+│ │ └── QueryProvider.tsx # QueryClientProvider de TanStack Query
+│ │
+│ ├── types/
+│ │ └── next-auth.d.ts # Extiende NextAuth: id, role, telefono, image
+│ │
+│ ├── auth.ts # Config Auth.js: providers, callbacks jwt/session
+│ ├── auth.config.ts # Config edge-compatible (sin Node.js, para middleware)
+│ └── middleware.ts # Protección de rutas por rol
 │
-├── CLAUDE.md                          # Este archivo
-├── next.config.ts                     # Config Next.js (eslint ignorado, imágenes remotas)
-├── postcss.config.mjs                 # Plugin Tailwind v4
-├── tsconfig.json                      # TypeScript strict mode
-├── prisma.config.ts                   # Datasource de Prisma desde env vars
-├── eslint.config.mjs                  # ESLint flat config (next/core-web-vitals)
-└── package.json                       # Scripts: dev, build (prisma generate + push + build)
+├── CLAUDE.md
+├── next.config.ts
+├── postcss.config.mjs # Plugin Tailwind v4
+├── tsconfig.json
+├── prisma.config.ts
+└── package.json # Scripts: dev, build (prisma generate + db push + next build)
 ```
 
 ---
