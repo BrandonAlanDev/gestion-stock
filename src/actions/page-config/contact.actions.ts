@@ -1,6 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function updateContactConfig(
   data: {
@@ -21,16 +21,10 @@ export async function updateContactConfig(
         },
       });
 
-    return {
-      ok: true,
-      contact,
-    };
+    revalidateTag("page-config");
+    return { ok: true, contact };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error contacto",
-    };
+    return { ok: false, error: "Error contacto" };
   }
 }
 
@@ -46,16 +40,8 @@ export async function getContactConfig() {
           email: true,
         },
       });
-
-    return {
-      ok: true,
-      contact,
-    };
+    return { ok: true, contact };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error contacto",
-    };
+    return { ok: false, error: "Error contacto" };
   }
 }

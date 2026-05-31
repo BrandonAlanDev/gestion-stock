@@ -20,14 +20,14 @@ const CATEGORY_GRID = [
     id: "indumentaria",
     label: "INDUMENTARIA",
     sublabel: "Nuestra colección",
-    href: "/productos?categoria=indumentaria%20",
+    href: "/productos?categoria=indumentaria",
     image: "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&q=80",
   },
   {
     id: "trajes",
     label: "TRAJES DE NEOPRENE",
     sublabel: "Trajes en disponibles",
-    href: "/productos?categoria=trajes%20de%20neopreno",
+    href: "/productos?categoria=trajes de neopreno",
     image: "/images/products/traje.jpg",
   },
   {

@@ -51,10 +51,15 @@ export async function createGarment(data: any) {
   }
 }
 
-export async function getGarments(page: number = 1, limit: number = 20, categoryId?: string, search?: string) {
+export async function getGarments(
+  page: number = 1,
+  limit: number = 20,
+  categoryId?: string,
+  search?: string,
+  subCategoryId?: string
+) {
   try {
-    const cachedFn = getCachedProducts(page, limit, categoryId, search);
-    const { garments, total } = await cachedFn();
+    const { garments, total } = await getCachedProducts(page, limit, categoryId, search, subCategoryId);
     return {
       success: true,
       data: serializeData(garments),

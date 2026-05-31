@@ -35,7 +35,6 @@ export async function getGarmentsPaginated(
     prisma.garment.count({ where }),
   ]);
 
-  // Retornamos garments directo, sin hacerle .slice() acá
   return { garments, total };
 }
 

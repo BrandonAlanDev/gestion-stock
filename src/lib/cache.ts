@@ -8,33 +8,27 @@ import { prisma } from "./prisma";
 
 // ── PAGE CONFIG ──────────────────────────────────
 export const getCachedPageConfig = unstable_cache(
-  async () => prisma.pageConfig.findUnique({ where: { id: "1" } }),
+  async () => prisma.pageConfig.findFirst(),
   ["page-config"],
   { revalidate: 3600 }
 );
 
-// ── PRODUCTOS ────────────────────────────────────
-export const getCachedProducts = (
+// ── PRODUCTOS (función directa, sin caché por closure) ──
+export async function getCachedProducts(
   page: number,
   limit: number,
   categoryId?: string,
   search?: string,
   subCategoryId?: string
-) =>
-  unstable_cache(
-    () => garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId),
-    [
-      `products-pg-${page}-lim-${limit}-cat-${categoryId || "all"}-q-${search || ""}-sub-${subCategoryId || "all"}`,
-    ],
-    { revalidate: 60, tags: ["products"] }
-  );
+) {
+  return garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId);
+}
 
 // ── CATEGORÍAS (con subcategorías y talles) ──────
 export const getCachedCategories = unstable_cache(
   categoryService.getCategoriesFull,
   ["all-categories"],
   { revalidate: 3600, tags: ["categories"] }
-
 );
 
 // ── PROVEEDORES ─────────────────────────────────

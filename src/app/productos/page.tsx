@@ -4,32 +4,42 @@ import CatalogoClient from "@/components/products/views/CatalogoClient";
 import { prisma } from "@/lib/prisma";
 
 interface Props {
-  searchParams: Promise<{ page?: string; categoria?: string }>;
+  searchParams: Promise<{ page?: string; categoria?: string; subcategoria?: string }>;
 }
 
 export default async function CatalogoPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const categoria = params.categoria;
+  const subcategoria = params.subcategoria;
 
   let categoryId: string | undefined;
   if (categoria) {
-    const cat = await prisma.category.findFirst({
-      where: { name: decodeURIComponent(categoria) },
-    });
-    categoryId = cat?.id;
+    const decoded = decodeURIComponent(categoria).trim().toLowerCase();
+    const categorias = await prisma.category.findMany();
+    const match = categorias.find(
+      (c) => c.name.trim().toLowerCase() === decoded
+    );
+    categoryId = match?.id;
   }
 
-  // Llamamos a getGarments con paginación
-  const result = await getGarments(page, 20, categoryId);
-  const categories = await getCategories(); // ✅ ahora cacheada
+  let subCategoryId: string | undefined;
+  if (subcategoria && categoryId) {
+    const decodedSub = decodeURIComponent(subcategoria).trim().toLowerCase();
+    const subCategories = await prisma.subCategory.findMany({
+      where: { categoryId },
+    });
+    const matchSub = subCategories.find(
+      (s) => s.name.trim().toLowerCase() === decodedSub
+    );
+    subCategoryId = matchSub?.id;
+  }
+
+  const result = await getGarments(page, 20, categoryId, undefined, subCategoryId);
+  const categories = await getCategories();
 
   if (!result.success) {
-    return (
-      <div className="p-8 text-center text-red-500">
-        Error: {result.error}
-      </div>
-    );
+    return <div className="p-8 text-center text-red-500">Error: {result.error}</div>;
   }
 
   return (

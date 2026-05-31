@@ -1,6 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function updateSocialsConfig(
   data: {
@@ -8,7 +8,7 @@ export async function updateSocialsConfig(
     facebook?: string | null;
     tiktok?: string | null;
     x?: string | null;
-    youtube?: string |null;
+    youtube?: string | null;
     linkedin?: string | null;
   }
 ) {
@@ -20,16 +20,11 @@ export async function updateSocialsConfig(
         data,
       });
 
-    return {
-      ok: true,
-      socials,
-    };
+    revalidateTag("page-config");
+
+    return { ok: true, socials };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error redes sociales",
-    };
+    return { ok: false, error: "Error redes sociales" };
   }
 }
 
@@ -49,15 +44,8 @@ export async function getSocialsConfig() {
         },
       });
 
-    return {
-      ok: true,
-      socials,
-    };
+    return { ok: true, socials };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error redes sociales",
-    };
+    return { ok: false, error: "Error redes sociales" };
   }
 }

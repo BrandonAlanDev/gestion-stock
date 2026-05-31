@@ -1,6 +1,6 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function updateEcommerceConfig(
   data: {
@@ -29,16 +29,11 @@ export async function updateEcommerceConfig(
         },
       });
 
-    return {
-      ok: true,
-      ecommerce,
-    };
+    revalidateTag("page-config");
+
+    return { ok: true, ecommerce };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error ecommerce",
-    };
+    return { ok: false, error: "Error ecommerce" };
   }
 }
 
@@ -56,15 +51,8 @@ export async function getEcommerceConfig() {
         },
       });
 
-    return {
-      ok: true,
-      ecommerce,
-    };
+    return { ok: true, ecommerce };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error ecommerce",
-    };
+    return { ok: false, error: "Error ecommerce" };
   }
 }
