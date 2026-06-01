@@ -24,6 +24,14 @@ export async function getCachedProducts(
   return garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId);
 }
 
+// ── PRODUCTO INDIVIDUAL (cacheado por ID) ──
+export const getCachedProductById = (id: string) =>
+  unstable_cache(
+    () => garmentService.getGarmentById(id),
+    [`product-detail-${id}`],
+    { revalidate: 300, tags: [`product-${id}`] }  // 5 minutos
+  );
+
 // ── CATEGORÍAS (con subcategorías y talles) ──────
 export const getCachedCategories = unstable_cache(
   categoryService.getCategoriesFull,
