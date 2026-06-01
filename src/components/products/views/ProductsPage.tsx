@@ -12,6 +12,8 @@ interface Props {
   addToCart: (product: any) => void;
   currentPage: number;
   totalPages: number;
+  onPageChange?: (page: number) => void;
+  onFilterChange?: (catName?: string, subName?: string) => void;
 }
 
 const ProductsPage = ({
@@ -20,6 +22,8 @@ const ProductsPage = ({
   addToCart,
   currentPage,
   totalPages,
+  onPageChange,
+  onFilterChange,
 }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,45 +100,24 @@ const ProductsPage = ({
   }, [garments, sortConfig]);
 
   // Manejo de categoría
-  const handleCategoryClick = useCallback(
-    (cat: any) => {
-      setOpenCategoryId((prev) => (prev === cat.id ? null : cat.id));
-      setSelectedSub("Todos");
-      router.push(`/productos?categoria=${encodeURIComponent(cat.name)}`);
-    },
-    [router]
-  );
+  const handleCategoryClick = (cat: any) => {
+    onFilterChange?.(cat.name);
+  };
 
   // Manejo de "Todo {cat.name}"
-  const handleTodoSubClick = useCallback(
-    (catName: string) => {
-      setSelectedSub("Todos");
-      startTransition(() => {
-        router.push(`/productos?categoria=${encodeURIComponent(catName)}`);
-      });
-    },
-    [router, startTransition]
-  );
-  
+  const handleTodoSubClick = (catName: string) => {
+    onFilterChange?.(catName);
+  };
+
   // Manejo de subcategoría (con transición para loading)
-  const handleSubCategoryClick = useCallback(
-    (catName: string, subName: string) => {
-      setSelectedSub(subName.toLowerCase());
-      startTransition(() => {
-        router.push(
-          `/productos?categoria=${encodeURIComponent(catName)}&subcategoria=${encodeURIComponent(subName)}`
-        );
-      });
-    },
-    [router, startTransition]
-  );
+  const handleSubCategoryClick = (catName: string, subName: string) => {
+    onFilterChange?.(catName, subName);
+  };
 
   // Limpiar todo
-  const handleClearAllCategories = useCallback(() => {
-    setOpenCategoryId(null);
-    setSelectedSub("Todos");
-    router.push("/productos");
-  }, [router]);
+  const handleClearAllCategories = () => {
+    onFilterChange?.();
+  };
 
   return (
     <div className="pt-24 min-h-screen bg-slate-50 relative">
@@ -176,8 +159,8 @@ const ProductsPage = ({
               <button
                 onClick={handleClearAllCategories}
                 className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold ${selectedCat === "Todos"
-                    ? "bg-primary text-teal-400"
-                    : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-primary text-teal-400"
+                  : "text-slate-600 hover:bg-slate-100"
                   }`}
               >
                 Todos los productos
@@ -192,8 +175,8 @@ const ProductsPage = ({
                     <button
                       onClick={() => handleCategoryClick(cat)}
                       className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm ${isCurrentCatSelected
-                          ? "bg-primary text-teal-400"
-                          : "text-slate-600 hover:bg-slate-100"
+                        ? "bg-primary text-teal-400"
+                        : "text-slate-600 hover:bg-slate-100"
                         }`}
                     >
                       <span>{cat.name}</span>
@@ -212,8 +195,8 @@ const ProductsPage = ({
                           <button
                             onClick={() => handleTodoSubClick(cat.name)}
                             className={`block text-left px-3 py-1.5 text-xs ${isCurrentCatSelected && selectedSub === "Todos"
-                                ? "text-teal-400 font-bold"
-                                : "text-slate-500"
+                              ? "text-teal-400 font-bold"
+                              : "text-slate-500"
                               }`}
                           >
                             • Todo {cat.name}
@@ -227,8 +210,8 @@ const ProductsPage = ({
                                 key={sub.id}
                                 onClick={() => handleSubCategoryClick(cat.name, sub.name)}
                                 className={`block text-left px-3 py-1.5 text-xs ${isSubActive
-                                    ? "text-teal-400 font-bold"
-                                    : "text-slate-500"
+                                  ? "text-teal-400 font-bold"
+                                  : "text-slate-500"
                                   }`}
                               >
                                 {sub.name}
@@ -268,11 +251,7 @@ const ProductsPage = ({
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              basePath="/productos"
-              searchParams={{
-                categoria: categoriaParam || undefined,
-                subcategoria: subcategoriaParam || undefined,
-              }}
+              onPageChange={onPageChange}
             />
           </div>
         </div>

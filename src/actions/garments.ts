@@ -1,13 +1,12 @@
-// src/actions/garments.ts
 "use server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { garmentSchema } from "@/lib/zod";
 import { revalidateTag } from "next/cache";
-import { serializeData, extractPublicId } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
-import { getCachedProducts } from "@/lib/cache";
+import { serializeData, extractPublicId } from "@/lib/utils";
 import * as garmentService from "@/lib/services/garment-service";
+import { getCachedProducts, getCachedProductById } from "@/lib/cache";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -73,8 +72,34 @@ export async function getGarments(
   }
 }
 
+export async function getGarmentsByNames(
+  page: number,
+  limit: number,
+  categoria?: string,
+  search?: string,
+  subcategoria?: string
+) {
+  const prisma = (await import("@/lib/prisma")).prisma;
+  let categoryId: string | undefined;
+  if (categoria) {
+    const decoded = decodeURIComponent(categoria).trim().toLowerCase();
+    const cats = await prisma.category.findMany();
+    const match = cats.find(c => c.name.trim().toLowerCase() === decoded);
+    categoryId = match?.id;
+  }
+  let subCategoryId: string | undefined;
+  if (subcategoria && categoryId) {
+    const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
+    const subs = await prisma.subCategory.findMany({ where: { categoryId } });
+    const match = subs.find(s => s.name.trim().toLowerCase() === decoded);
+    subCategoryId = match?.id;
+  }
+  return getGarments(page, limit, categoryId, search, subCategoryId);
+}
+
 export async function getGarmentById(id: string) {
-  const garment = await garmentService.getGarmentById(id);
+  const cachedFn = getCachedProductById(id);
+  const garment = await cachedFn();
   return serializeData(garment);
 }
 
@@ -125,6 +150,7 @@ export async function updateGarment(id: string, data: any) {
     });
 
     revalidateTag("products");
+    revalidateTag(`product-${id}`);
     return { success: true, data: serializeData(updatedGarment) };
   } catch (error: any) {
     console.error("Error:", error);
@@ -140,6 +166,7 @@ export async function deleteGarment(id: string) {
 
     await garmentService.deleteGarment(id);
     revalidateTag("products");
+    revalidateTag(`product-${id}`);
     return { success: true };
   } catch (error: any) {
     console.error("DELETE_GARMENT_ERROR:", error);
