@@ -73,6 +73,31 @@ export async function getGarments(
   }
 }
 
+export async function getGarmentsByNames(
+  page: number,
+  limit: number,
+  categoria?: string,
+  search?: string,
+  subcategoria?: string
+) {
+  const prisma = (await import("@/lib/prisma")).prisma;
+  let categoryId: string | undefined;
+  if (categoria) {
+    const decoded = decodeURIComponent(categoria).trim().toLowerCase();
+    const cats = await prisma.category.findMany();
+    const match = cats.find(c => c.name.trim().toLowerCase() === decoded);
+    categoryId = match?.id;
+  }
+  let subCategoryId: string | undefined;
+  if (subcategoria && categoryId) {
+    const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
+    const subs = await prisma.subCategory.findMany({ where: { categoryId } });
+    const match = subs.find(s => s.name.trim().toLowerCase() === decoded);
+    subCategoryId = match?.id;
+  }
+  return getGarments(page, limit, categoryId, search, subCategoryId);
+}
+
 export async function getGarmentById(id: string) {
   const garment = await garmentService.getGarmentById(id);
   return serializeData(garment);
