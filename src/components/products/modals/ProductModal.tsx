@@ -8,25 +8,13 @@ import { useProductForm } from "@/hooks/useProductForm";
 import VariantRow from "@/components/products/forms/VariantRow";
 import ImageUploader from "@/components/products/forms/ImageUploader";
 
-/* ── Paleta ──────────────────---─────────────────────────────────
-   #ffffff   blanco — fondos principales
-   #f0fafa   cyan muy claro — fondos suaves
-   #e0f5f5   cyan claro — inputs, variantes
-   #b2dede   cyan borde
-   #4ab8b8   cyan acento
-   #0d5c63   verde marino — detalles, iconos
-   #083d42   verde marino oscuro — títulos
-   #0d2b2e   texto principal
-   #4a7c80   texto secundario
-─────────────────────────────────────────────────────────────────── */
-
 interface Props {
   categories: any[];
   sizes: any[];
   providers: any[];
   colors: any[];
   garment?: any;
-  onSuccess?: () => void; // <-- nuevo
+  onSuccess?: () => void;
 }
 
 // ── Estilos reutilizables ──────────────────────────────────────────────
@@ -177,14 +165,20 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               </select>
             </div>
 
-            {/* Fila 2: Precio venta, costo, proveedor */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* MODIFICADO - Fila 2: Precio base, Precio techo (maxPrice), Costo, Proveedor */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <input
-                type="number" step="0.01" placeholder="Precio venta"
+                type="number" step="0.01" placeholder="Precio venta (Base)"
                 style={{ ...inputStyle, color: "#0d5c63", fontWeight: 600 }}
                 value={formData.price}
                 onChange={(e) => setField("price", e.target.value)}
                 required
+              />
+              <input
+                type="number" step="0.01" placeholder="Precio techo (Opcional)"
+                style={{ ...inputStyle, color: "#e06666", fontWeight: 600 }}
+                value={formData.maxPrice || ""}
+                onChange={(e) => setField("maxPrice", e.target.value)}
               />
               <input
                 type="number" step="0.01" placeholder="Precio costo"
