@@ -184,7 +184,7 @@ export default function ProductoView({ product }: ProductProps) {
             <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
               {esTabla ? (
                 <p className="text-2xl font-light text-gray-800">
-                  USD {Number(product.price).toLocaleString("es-AR")} -{Number(product.maxPrice || 0).toLocaleString("es-AR")}
+                  USD {Number(product.price).toLocaleString("es-AR")}  {product.maxPrice !== null ? `- ${Number(product.maxPrice).toLocaleString("es-AR")}` : ""}
                 </p>
               ) : (
                 <p className="text-2xl font-light text-gray-800">
