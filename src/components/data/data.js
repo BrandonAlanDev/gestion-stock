@@ -1,142 +1,114 @@
 export const categories = [
-  { id: 1, name: "Tablas", subcategories: ["Shortboards", "Longboards", "Funboards", "Evolutivas"] },
-  { id: 2, name: "Trajes", subcategories: ["3/2 mm", "4/3 mm", "Accesorios Neoprene", "Lycras"] },
-  { id: 3, name: "Accesorios", subcategories: ["Quillas", "Leashes", "Fundas", "Parafina"] },
-  { id: 4, name: "Indumentaria", subcategories: ["Remeras", "Bermudas", "Buzos", "Gorros"] },
-];
-
-export const products = [
-  {
-    id: 1,
-    title: "Tabla Lost Driver 3.0 Pro",
-    category: "Tablas",
-    subcategory: "Shortboards",
-    price: 850000,
-    rating: 4.9,
-    image: ["/images/products/tabla.jpg"],
-    isNew: true,
-    shipping: "Gratis",
-    description: "La Lost Driver 3.0 Pro es una tabla de surf de alto rendimiento diseñada para surfistas que buscan velocidad, maniobrabilidad y control en las olas. Con su diseño innovador y materiales de alta calidad, esta tabla ofrece una experiencia de surf excepcional tanto para profesionales como para entusiastas avanzados.",
-    sizes: [
-    {
-      name: "Chico (5'6\")",
-      stock: 4
-    },
-    {
-      name: "Mediano (6'0\")",
-      stock: 10
-    },
-    {
-      name: "Grande (6'6\")",
-      stock: 0
-    }]
+  { 
+    id: 1, 
+    name: "Botines", 
+    subcategories: ["Fútbol 11 (FG)", "Fútbol 5 (TF)", "Fútbol Salón (IC)", "Gama Profesional"] 
   },
-  {
-    id: 2,
-    title: "Wetsuit Rip Curl Flashbomb 4/3 Chest Zip",
-    category: "Wetsuits",
-    subcategory: "4/3 mm",
-    price: 420000,
-    rating: 4.8,
-    image: ["/images/products/traje.jpg"],
-    isNew: true,
-    shipping: "Gratis",
-    description: "El Wetsuit Rip Curl Flashbomb 4/3 Chest Zip es un traje de neopreno de alta calidad diseñado para ofrecer comodidad y protección en el agua. Con su construcción resistente y su diseño ergonómico, este wetsuit ofrece un ajuste perfecto y una excelente movilidad para surfistas de todos los niveles.",
-    sizes: [
-    {
-      name: "Chico (5'6\")",
-      stock: 4
-    },
-    {
-      name: "Mediano (6'0\")",
-      stock: 10
-    },
-    {
-      name: "Grande (6'6\")",
-      stock: 0
-    }]
+  { 
+    id: 2, 
+    name: "Urbano", 
+    subcategories: ["Zapatillas", "Remeras Oversize", "Buzos", "Gorras"] 
   },
-  {
-    id: 3,
-    title: "Quillas FCS II Mick Fanning PC Thruster",
-    category: "Accesorios",
-    subcategory: "Quillas",
-    price: 125000,
-    rating: 4.7,
-    image: [],
-    isNew: false,
-    shipping: "Envío: $5500",
-    description: "Las Quillas FCS II Mick Fanning PC Thruster son quillas de alta calidad diseñadas para ofrecer un rendimiento excepcional en el surf. Con su construcción resistente y su diseño ergonómico, estas quillas proporcionan una excelente adherencia y control en las olas.",
-    sizes: [
-    {
-      name: "Chico (5'6\")",
-      stock: 4
-    },
-    {
-      name: "Mediano (6'0\")",
-      stock: 10
-    },
-    {
-      name: "Grande (6'6\")",
-      stock: 0
-    }]
+  { 
+    id: 3, 
+    name: "Indumentaria", 
+    subcategories: ["Camisetas", "Shorts", "Medias de Agarre", "Conjuntos Deportivos"] 
   },
-  {
-    id: 4,
-    title: "Leash Creatures of Leisure Pro 6'",
-    category: "Accesorios",
-    subcategory: "Leashes",
-    price: 45000,
-    rating: 4.8,
-    image: [],
-    isNew: false,
-    shipping: "Gratis",
-    description: "El Leash Creatures of Leisure Pro 6' es un leash de alta calidad diseñado para mantener tu tabla de surf segura mientras estás en el agua. Con su construcción resistente y su diseño ergonómico, este leash ofrece comodidad y durabilidad para surfistas de todos los niveles.",
-    sizes: [
-    {
-      name: "Chico (5'6\")",
-      stock: 4
-    },
-    {
-      name: "Mediano (6'0\")",
-      stock: 10
-    },
-    {
-      name: "Grande (6'6\")",
-      stock: 0
-    }]
+  { 
+    id: 4, 
+    name: "Accesorios", 
+    subcategories: ["Pelotas", "Canilleras", "Guantes de Arquero", "Bolsos y Mochilas"] 
   },
 ];
 
 export const heroSlides = [
   {
-    id: 1,
-    title: "New Surf Board",
-    subtitle: "Artesanal",
-    description: "Tablas hechas a mano con los mejores materiales.",
-    image: ["/images/shape3.jpg"],
-    ctaText: "Contactanos",
-    targetCategory: "Tablas",
-    theme: "dark"
-  }
-  , {
-    id: 2,
-    title: "Tablas",
-    subtitle: "Nuestros modelos.",
-    description: "Encontrá tu tabla ideal.",
-    image: ["/images/tablas.jpg"],
-    ctaText: "Ver Tablas",
-    targetCategory: "Tablas",
-    theme: "dark"
+    id: "slide-botines-1",
+    title: "PREDATOR ELITE",
+    subtitle: "⚽ PRO FG",
+    description: "Máximo control y grip en césped natural.",
+    images: [
+      "https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511886929837-354d827aae26?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551958219-acbc608c6d77?q=80&w=600&auto=format&fit=crop"
+    ],
+    ctaText: "Ver Botines",
+    targetCategory: "Botines"
   },
-   {
-    id: 3,
-    title: "Clases de surf",
-    subtitle: "Aprende a surfear.",
-    description: "Toma clases con el prsonal mas capacitado.",
-    image: ["/images/escuela.jpg"],
-    ctaText: "Ver Clases",
-    targetCategory: "Clases",
-    theme: "dark"
+  {
+    id: "slide-urbano-1",
+    title: "AIR MAX PLUS",
+    subtitle: "🔥 STREETWEAR",
+    description: "Estilo agresivo e iconografía de asfalto.",
+    images: [
+      "https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1616166330003-8e5529e4652a?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?q=80&w=600&auto=format&fit=crop"
+    ],
+    ctaText: "Ver Sneakers",
+    targetCategory: "Urbano"
+  },
+  {
+    id: "slide-lanzamientos-1",
+    title: "DROP TEMPORADA",
+    subtitle: "⚡ INGRESO",
+    description: "Equipate antes que nadie con la selección élite.",
+    images: [
+      "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=600&auto=format&fit=crop"
+    ],
+    ctaText: "Ver Catálogo",
+    targetCategory: null
+  }
+];
+
+// ==========================================
+// PRODUCTS EXPORT (SOLUCIONA TU ERROR DE COMPILACIÓN)
+// ==========================================
+export const products = [
+  {
+    id: "prod-1",
+    title: "ADIDAS PREDATOR ELITE FG",
+    description: "Diseño aerodinámico y zonas de hule Strikeskin para un control de pelota quirúrgico.",
+    price: 345000,
+    category: "Botines",
+    subcategory: "Gama Profesional",
+    image: ["https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=600"],
+    isNew: true,
+    shipping: "Envío Gratis"
+  },
+  {
+    id: "prod-2",
+    title: "NIKE AIR MAX PLUS TN 'TRIPLE BLACK'",
+    description: "Líneas de diseño onduladas inspiradas en palmeras y una actitud puramente urbana.",
+    price: 290000,
+    category: "Urbano",
+    subcategory: "Zapatillas",
+    image: ["https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=600"],
+    isNew: true,
+    shipping: "Envío Gratis"
+  },
+  {
+    id: "prod-3",
+    title: "BUZO OVERSIZE 'MEMENTO' HEAVYWEIGHT",
+    description: "Frisa premium pesada con lavado split y moldería cuadrada drop shoulder.",
+    price: 78000,
+    category: "Urbano",
+    subcategory: "Buzos",
+    image: ["https://images.unsplash.com/photo-1616166330003-8e5529e4652a?q=80&w=600"],
+    isNew: false,
+    shipping: "Envío Normal"
+  },
+  {
+    id: "prod-4",
+    title: "MEDIAS DE AGARRE PRO TRAC",
+    description: "Almohadillas antideslizantes en la planta para máxima estabilidad en cambios de ritmo.",
+    price: 15500,
+    category: "Indumentaria",
+    subcategory: "Medias de Agarre",
+    image: ["https://images.unsplash.com/photo-1551958219-acbc608c6d77?q=80&w=600"],
+    isNew: false,
+    shipping: "Envío Normal"
   }
 ];

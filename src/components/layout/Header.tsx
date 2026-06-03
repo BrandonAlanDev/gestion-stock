@@ -9,14 +9,15 @@ import {
   Truck,
   Ruler,
   LogOut,
+  LogIn,
   Menu,
   X,
   User,
   History,
-  Home,
-  Store,
   ShieldCheck,
   ShoppingCart,
+  UserCheck,
+  Search,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -30,11 +31,11 @@ export default function Header() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isHomeTop = pathname === "/" && !scrolled;
 
   const { cartCount, openCart } = useCart();
-
   const { data: session, status } = useSession();
   const pageConfig = usePageConfig();
 
@@ -44,77 +45,45 @@ export default function Header() {
     };
 
     handleScroll();
-
     window.addEventListener("scroll", handleScroll);
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = async () => {
-    await signOut({
-      redirect: false,
-    });
-
+    await signOut({ redirect: false });
     router.refresh();
     router.push("/");
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    router.push(`/productos?search=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
   const linkStyle = (path: string) => `
-    flex items-center gap-2 text-sm font-bold uppercase tracking-tighter transition-all duration-300
+    text-xs font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap
     ${
       pathname === path
-        ? "text-cyan-800 italic"
-        : isHomeTop
-        ? "text-neutral-800"
-        : "text-neutral-800"
+        ? "text-cyan-400 font-black scale-105"
+        : "text-white/80 hover:text-white"
     }
   `;
 
-  /*
-    =========================
-    LINKS
-    =========================
-  */
-
-  const userLinks = [
-    {
-      href: "/",
-      label: "Home",
-      icon: Home,
-    },
-    {
-      href: "/productos",
-      label: "Catálogo",
-      icon: Store,
-    },
+  // --- NAVEGACIÓN ENFOCADA EN EL CORE BUSINESS (80% BOTINES + URBANO) ---
+  const headerLinks = [
+    { href: "/productos?categoria=deporte", label: " Deporte" }, // Acceso ultra rápido al motor de ventas
+    { href: "/productos?categoria=calzado", label: "Urbano" },     // Para la cultura sneaker diaria
+    { href: "/productos", label: "Catálogo" },                     // Exploración general
+    { href: "/contacto", label: "Contacto" },
   ];
 
   const adminLinks = [
-    {
-      href: "/dashboard",
-      label: "Productos",
-      icon: Package,
-    },
-    {
-      href: "/categories",
-      label: "Categorías",
-      icon: Tags,
-    },
-    {
-      href: "/provider",
-      label: "Proveedores",
-      icon: Truck,
-    },
-    {
-      href: "/sizes",
-      label: "Talles",
-      icon: Ruler,
-    },
-    {
-      href: "/movements",
-      label: "Historial",
-      icon: History,
-    },
+    { href: "/dashboard", label: "Productos", icon: Package },
+    { href: "/categories", label: "Categorías", icon: Tags },
+    { href: "/provider", label: "Proveedores", icon: Truck },
+    { href: "/sizes", label: "Talles", icon: Ruler },
+    { href: "/movements", label: "Historial", icon: History },
   ];
 
   if (status === "loading") {
@@ -128,174 +97,210 @@ export default function Header() {
         transition-all duration-500 
         ${
           isHomeTop
-            ? `border-transparent ${isMenuOpen ? "bg-black/80" : "bg-transparent "}`
-            : "bg-black/80 backdrop-blur-md "
+            ? `border-b border-white/5 ${isMenuOpen ? "bg-black" : "bg-transparent backdrop-blur-xs"}`
+            : "bg-black/95 border-b border-white/10 backdrop-blur-md"
         } 
       `}
     >
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+        
+        {/* IZQUIERDA: Identidad Visual */}
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 z-10">
           {pageConfig?.pageConfig?.logo ? (
             <img
               src={pageConfig.pageConfig?.logo}
               alt="Logo"
-              className="w-[34px] h-[34px] rounded-lg"
+              className="w-[34px] h-[34px] rounded-lg object-cover"
             />
           ) : (
             <div className="w-[34px] h-[34px] rounded-lg bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M2 12 Q6 6 12 12 Q18 18 22 12" />
               </svg>
             </div>
           )}
-          <span className="text-[16px] font-medium text-white tracking-tight">
-            {pageConfig?.pageConfig?.storeName || <>GESTION<span className="text-cyan-400">OK</span></>}
+          <span className="text-[16px] font-black tracking-tighter text-white uppercase italic">
+            {pageConfig?.pageConfig?.storeName || <>MYA<span className="text-cyan-400"></span></>}
           </span>
         </Link>
 
-        {/* Actions */}
-        <div className={`flex items-center gap-3 p-3 transition-all duration-300 rounded-2xl text-cyan-400 `}>
-          {/* Botón del carrito */}
+        {/* CENTRO: Enlaces de Nicho de Alta Conversión */}
+        <nav className="hidden lg:flex items-center gap-8 xl:gap-10 mx-auto">
+          {headerLinks.map((link) => (
+            <Link key={link.href} href={link.href} className={linkStyle(link.href)}>
+              {link.label}
+            </Link>
+          ))}
+          
+          {session?.user?.role === "ADMIN" && (
+            <Link
+              href="/admin/pageConfig"
+              className="text-xs font-black uppercase tracking-widest text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+            >
+              <ShieldCheck size={14} /> Panel
+            </Link>
+          )}
+        </nav>
+
+        {/* DERECHA: Búsqueda Semántica de Modelos + Carrito */}
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0 z-10">
+          
+          {/* Input optimizado con placeholder para calzado específico */}
+          <form 
+            onSubmit={handleSearchSubmit} 
+            className="hidden sm:flex items-center relative bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-cyan-400 transition-all duration-300 max-w-[160px] lg:max-w-[220px]"
+          >
+            <input 
+              type="text" 
+              placeholder="BUSCAR MODELO O TERRENO..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent text-white text-[10px] font-bold uppercase tracking-wider placeholder:text-white/30 focus:outline-none w-full pr-6"
+            />
+            <button type="submit" className="absolute right-2.5 text-white/50 hover:text-cyan-400 transition-colors">
+              <Search size={14} className="stroke-[2.5]" />
+            </button>
+          </form>
+
+          {/* Icono Carrito */}
           <button
             onClick={openCart}
-            className="relative p-2 rounded-xl transition-all duration-300 hover:text-cyan-400 hover:bg-white/10 text-white"
+            className="relative p-2.5 rounded-xl transition-all duration-300 text-white hover:text-cyan-400 hover:bg-white/10"
             aria-label="Abrir carrito"
           >
-            <ShoppingCart size={24} />
+            <ShoppingCart size={22} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 text-black text-xs font-bold rounded-full flex items-center justify-center">
+              <span className="absolute top-0 right-0 w-5 h-5 bg-cyan-400 text-black text-[10px] font-black rounded-full flex items-center justify-center">
                 {cartCount}
               </span>
             )}
           </button>
 
-          {session?.user ? (
-            <>
-              {/* User Info */}
-              <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-sm font-bold">
-                  Hola, {session.user.name}
-                </span>
-
-                {session.user.role === "ADMIN" && (
-                  <Link
-                    href="/admin/pageConfig"
-                    className="flex items-center gap-2 text-xs text-cyan-500 font-bold hover:text-cyan-400 transition hover:cursor-pointer"
+          {/* Autenticación */}
+          <div className="hidden md:flex items-center">
+            {session?.user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end text-right">
+                  <span className="text-xs text-white font-bold max-w-[120px] truncate">
+                    {session.user.name}
+                  </span>
+                  <button 
+                    onClick={handleLogout}
+                    className="text-[10px] text-red-400 font-bold uppercase tracking-wider hover:text-red-300 transition-colors"
                   >
-                    <ShieldCheck size={14} />
-                    Panel Admin
-                  </Link>
-                )}
+                    Salir
+                  </button>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-cyan-400 border border-white/5">
+                  <UserCheck size={18} />
+                </div>
               </div>
-            </>
-          ) : (
-            <>
-            </>
-          )}
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white hover:text-cyan-400 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/5 transition-all duration-300"
+              >
+                <LogIn size={15} />
+                <span>Ingresar</span>
+              </Link>
+            )}
+          </div>
 
-          {/* Mobile Menu */}
+          {/* Hamburguesa Mobile */}
           <button
-            className={`
-              p-2 rounded-xl transition-all duration-300 hover:text-cyan-400 transition hover:cursor-pointer
-              ${
-                isHomeTop
-                  ? "text-white hover:bg-white/10"
-                  : "text-white hover:bg-neutral-900"
-              }
-            `}
+            className="p-2.5 rounded-xl transition-all duration-300 text-white hover:text-cyan-400 hover:bg-white/10 lg:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Alternar menú"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* MENÚ RESPONSIVO MOBILE */}
       <div
         className={`
-          overflow-hidden transition-all duration-500 w-full max-w-7xl mx-auto
-          ${isMenuOpen ? "opacity-100" : "max-h-0 opacity-0"}
+          overflow-hidden transition-all duration-500 bg-black/95 border-b border-white/5 backdrop-blur-lg lg:hidden
+          ${isMenuOpen ? "max-h-[100vh] opacity-100" : "max-h-0 opacity-0 pointer-events-none"}
         `}
       >
-        <div className="w-full">
-          <nav className="flex flex-col md:flex-row md:items-center md:justify-between md:px-6 w-full p-6 gap-6">
-            <div>
-              {/* Logged User Mobile */}
-              {session?.user && (
-                <div className="flex flex-col gap-1 border-b border-neutral-800 pb-4">
-                  <span className="text-white font-bold">
-                    {session.user.name}
-                  </span>
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
+          
+          {/* Form de búsqueda mobile técnico */}
+          <form onSubmit={handleSearchSubmit} className="flex sm:hidden items-center relative bg-white/5 border border-white/10 rounded-xl px-4 h-12 focus-within:border-cyan-400 w-full">
+            <input 
+              type="text" 
+              placeholder="¿QUÉ BOTÍN BUSCÁS?..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent text-white text-xs font-bold uppercase tracking-wider placeholder:text-white/30 focus:outline-none w-full pr-8"
+            />
+            <button type="submit" className="absolute right-4 text-white/50 hover:text-cyan-400">
+              <Search size={18} />
+            </button>
+          </form>
 
-                  {session.user.role === "ADMIN" && (
-                    <span className="text-cyan-500 text-sm font-medium">
-                      Administrador
-                    </span>
-                  )}
-                </div>
-              )}
+          {session?.user && (
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-base">{session.user.name}</span>
+                <span className="text-cyan-400 text-xs font-bold uppercase tracking-wider">
+                  {session.user.role === "ADMIN" ? "Administrador" : "Cliente"}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col md:flex-row gap-4 gap-4">
-              {/* USER LINKS */}
-              {userLinks.map((link) => {
-                const Icon = link.icon;
+          )}
 
-                return (
-                  <Button key={link.href} variant={"blanco"}>
-                    <Link
-                      onClick={() => setIsMenuOpen(false)}
-                      href={link.href}
-                      className={linkStyle(link.href)}
-                    >
-                      <Icon size={20} />
-                      {link.label}
-                    </Link>
-                  </Button>
-                );
-              })}
+          {/* Enlaces Mobile */}
+          <div className="flex flex-col gap-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Secciones Destacadas</p>
+            <div className="grid grid-cols-1 gap-3">
+              {headerLinks.map((link) => (
+                <Button key={link.href} variant={"blanco"} asChild className="w-full justify-start h-12 bg-white/5 border-white/5 hover:bg-white/10 text-white">
+                  <Link onClick={() => setIsMenuOpen(false)} href={link.href}>
+                    {link.label}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </div>
 
-              {/* ADMIN LINKS */}
-              {session?.user?.role === "ADMIN" &&
-                adminLinks.map((link) => {
+          {/* Admin Panel en Mobile */}
+          {session?.user?.role === "ADMIN" && (
+            <div className="flex flex-col gap-4 border-t border-white/5 pt-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400/50">Administración</p>
+              <div className="grid grid-cols-2 gap-2">
+                {adminLinks.map((link) => {
                   const Icon = link.icon;
-
                   return (
-                    <Button key={link.href} variant={"blanco"}>
-                      <Link
-                        onClick={() => setIsMenuOpen(false)}
-                        href={link.href}
-                        className={linkStyle(link.href)}
-                      >
-                        <Icon size={20} />
+                    <Button key={link.href} variant={"blanco"} asChild className="justify-start gap-2 h-10 bg-white/5 text-xs text-white/80 border-transparent">
+                      <Link onClick={() => setIsMenuOpen(false)} href={link.href}>
+                        <Icon size={16} className="text-cyan-400" />
                         {link.label}
                       </Link>
                     </Button>
                   );
                 })}
+              </div>
             </div>
+          )}
 
-            {/* Login / Logout */}
+          {/* Botón Auth */}
+          <div className="border-t border-white/10 pt-6 pb-2">
             {session?.user ? (
-              <Button variant={"rojo"} onClick={handleLogout}>
-                <div className="flex items-center gap-2 p-3">
-                  <LogOut size={18} />
-                  Salir
-                </div>
+              <Button variant={"rojo"} onClick={handleLogout} className="w-full h-12 justify-center gap-2 text-sm font-bold uppercase tracking-wider">
+                <LogOut size={18} />
+                Cerrar Sesión
               </Button>
             ) : (
-              <Button variant={"blanco"}>
-                <Link
-                  href="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-2"
-                >
+              <Button variant={"blanco"} asChild className="w-full h-12 justify-center gap-2 text-sm font-bold uppercase tracking-wider bg-cyan-500 hover:bg-cyan-400 border-none text-black">
+                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                   <User size={18} />
                   Iniciar Sesión
                 </Link>
               </Button>
             )}
-          </nav>
+          </div>
         </div>
       </div>
     </header>

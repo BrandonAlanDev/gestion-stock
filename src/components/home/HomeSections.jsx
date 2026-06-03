@@ -7,161 +7,174 @@ import Link from 'next/link';
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-// --- DATOS DE CATEGORÍAS DEL GRID ---
+// --- DATOS DE CATEGORÍAS (ESTILO EDITORIAL ADIDAS) ---
 const CATEGORY_GRID = [
   {
-    id: "tablas",
-    label: "TABLAS",
-    sublabel: "Tablas en stock",
-    href: "/productos?categoria=tablas",
-    image: "/images/new.jpg",
+    id: "hombre",
+    label: "HOMBRE",
+    sublabel: "Estilo y rendimiento urbano",
+    href: "/productos?categoria=hombre",
+    image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80",
   },
   {
-    id: "indumentaria",
-    label: "INDUMENTARIA",
-    sublabel: "Nuestra colección",
-    href: "/productos?categoria=indumentaria",
-    image: "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&q=80",
+    id: "mujer",
+    label: "MUJER",
+    sublabel: "Diseño sin límites",
+    href: "/productos?categoria=mujer",
+    image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=80",
   },
   {
-    id: "trajes",
-    label: "TRAJES DE NEOPRENE",
-    sublabel: "Trajes en disponibles",
-    href: "/productos?categoria=trajes de neopreno",
-    image: "/images/products/traje.jpg",
+    id: "calzado",
+    label: "CALZADO",
+    sublabel: "Iconos de la cultura sneaker",
+    href: "/productos?categoria=calzado",
+    image: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&q=80",
   },
   {
-    id: "accesorios",
-    label: "ACCESORIOS",
-    sublabel: "Killas · Pitas · Grips",
-    href: "/productos?categoria=accesorios",
-    image: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=600&q=80",
+    id: "deporte",
+    label: "DEPORTE",
+    sublabel: "Equipamiento de alto nivel",
+    href: "/productos?categoria=deporte",
+    image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800&q=80",
   },
   {
-    id: "escuela",
-    label: "ESCUELA DE SURF",
-    sublabel: "Clases",
-    href: "/escuela",
-    image: "/images/escuela.jpg",
-  },
-  {
-    id: "personalizado",
-    label: "Personalizado",
-    sublabel: "Diseñá a Medida",
-    href: "/personalizado",
-    image: "/images/personalizado.jpg",
-  },
-  {
-    id: "arreglos",
-    label: "REPARACIONES",
-    sublabel: "Reparación y mantenimiento",
-    href: "/arreglos",
-    image: "/images/arreglos.jpg",
+    id: "nino",
+    label: "NIÑO",
+    sublabel: "Comodidad para dar sus primeros pasos",
+    href: "/productos?categoria=nino",
+    image: "https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=1200&q=80",
   },
 ];
 
-// --- TARJETA DE CATEGORÍA (ESTILO CI FLUIDO) ---
-const CategoryCard = ({ cat, index, isFullWidth }) => {
+// --- TARJETA DE CATEGORÍA (EDITORIAL ADIDAS SNEAKERS) ---
+const CategoryCard = ({ cat, index, className = "" }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <Link href={cat.href} passHref legacyBehavior>
       <motion.a
-        className={`relative block overflow-hidden cursor-pointer group bg-[#f9f9f9] border border-black/5 transition-colors duration-300 hover:border-black/40 w-full ${
-          isFullWidth 
-            ? 'aspect-[16/10] md:aspect-[3/1]' 
-            : 'aspect-[16/10] md:aspect-square' // Proporción rectangular en mobile para que no ocupe toda la pantalla vertical
-        }`}
+        className={`relative block overflow-hidden cursor-pointer group bg-neutral-100 w-full shadow-md hover:shadow-2xl transition-all duration-500 border border-neutral-900/5 ${className}`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: index * 0.04 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Imagen de fondo con zoom sutil */}
+        {/* Imagen de fondo limpia con zoom controlado al hacer hover */}
         <motion.div
-          className="absolute inset-0 bg-cover bg-center mix-blend-multiply opacity-95 contrast-[1.02]"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${cat.image})` }}
-          animate={{ scale: hovered ? 1.03 : 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          animate={{ scale: hovered ? 1.05 : 1 }}
+          transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
         />
 
-        {/* Degradado técnico muy suave */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-90" />
+        {/* Overlay oscuro plano - Adidas prefiere contraste abajo para legibilidad de marca */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-opacity duration-300 group-hover:from-black/95" />
 
-        {/* Textos alineados abajo a la izquierda */}
-        <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end z-10">
-          <p className="text-white text-[10px] md:text-xs font-bold tracking-[0.25em] uppercase mb-2 opacity-80">
+        {/* Contenido Editorial de la Tarjeta */}
+        <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end z-10">
+          
+          <h3 className="text-white font-black text-2xl md:text-4xl tracking-tighter uppercase italic leading-none mb-1">
+            {cat.label}
+          </h3>
+          
+          <p className="text-white/80 text-[11px] md:text-xs font-medium tracking-wide uppercase mb-4 max-w-[85%]">
             {cat.sublabel}
           </p>
-          <div className="flex items-center justify-between gap-4">
-            <h3 className="text-white font-black text-xl md:text-3xl tracking-[0.05em] uppercase leading-none">
-              {cat.label}
-            </h3>
-            
-            {/* Flecha minimalista CI */}
-            <div className="overflow-hidden w-6 h-6 flex items-center justify-center">
-              <motion.div
-                animate={{ x: hovered ? 0 : -25, opacity: hovered ? 1 : 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <ArrowRight className="w-6 h-6 text-white stroke-[1.5]" />
-              </motion.div>
-            </div>
+          
+          {/* Botón de acción estilo Adidas Link (Fondo blanco, texto negro, rígido) */}
+          <div className="inline-flex items-center gap-3 bg-white text-black text-xs font-black uppercase tracking-widest px-4 py-3 w-fit transition-all duration-300 group-hover:bg-cyan-400 group-hover:text-black">
+            <span>Ver Ahora</span>
+            <motion.div
+              animate={{ x: hovered ? 4 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            </motion.div>
           </div>
         </div>
 
-        {/* Overlay rápido al hacer hover */}
-        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        {/* Marcador técnico opcional de página / estilo revista */}
+        <div className="absolute top-4 right-4 text-white/20 text-[10px] font-black tracking-widest hidden md:block">
+          [0{index + 1}]
+        </div>
       </motion.a>
     </Link>
   );
 };
 
-// --- COMPONENTE PRINCIPAL (FULL WIDTH) ---
+// --- COMPONENTE PRINCIPAL (FEATURED SECTION) ---
 export default function FeaturedSection() {
   const { pageConfig } = usePageConfig();
   
   return (
-    <section id="featured" className="w-full bg-white py-16 border-t border-black/5 overflow-hidden">
-      {/* Encabezado Editorial */}
-      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 mb-10 text-center md:text-left">
-        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-black/40 mb-2 block">
-          {pageConfig?.location || "SANTA CLARA DEL MAR"}
-        </span>
-        <h2 className="text-3xl md:text-4xl font-black text-black tracking-[0.03em] uppercase leading-none">
-          CATEGORÍAS
-        </h2>
-        <div className="w-12 h-[2px] bg-black mt-3 mx-auto md:mx-0" />
-      </div>
-
-      {/* CONTENEDOR DEL GRID COMPLETAMENTE FLUIDO */}
-      <div className="w-full bg-black/5"> 
-        
-        {/* ── DESKTOP: 2 columnas de punta a punta ── */}
-        <div className="hidden md:grid grid-cols-2 gap-[1px]">
-          <CategoryCard cat={CATEGORY_GRID[0]} index={0} isFullWidth={false} />
-          <CategoryCard cat={CATEGORY_GRID[1]} index={1} isFullWidth={false} />
-          <CategoryCard cat={CATEGORY_GRID[2]} index={2} isFullWidth={false} />
-          <CategoryCard cat={CATEGORY_GRID[3]} index={3} isFullWidth={false} />
-          <CategoryCard cat={CATEGORY_GRID[4]} index={4} isFullWidth={false} />
-          <CategoryCard cat={CATEGORY_GRID[5]} index={5} isFullWidth={false} />
+    <section id="featured" className="w-full bg-white py-16 md:py-28 border-t border-neutral-200 overflow-hidden">
+      
+      {/* Encabezado Principal de Campaña (Estilo Editorial) */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b-2 border-black pb-6">
+          <div>
+            <span className="text-[11px] font-black tracking-[0.4em] text-neutral-400 uppercase block mb-2">
+              {pageConfig?.location || "EDICIÓN LIMITADA"}
+            </span>
+            <h2 className="text-5xl md:text-7xl font-black text-black tracking-tight uppercase italic leading-none">
+              NUESTRO <br className="hidden md:block"/>CATÁLOGO
+            </h2>
+          </div>
           
-          {/* Banner inferior extendido */}
-          <div className="col-span-2">
-            <CategoryCard cat={CATEGORY_GRID[6]} index={6} isFullWidth={true} />
+          <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
+            <Link 
+              href="/productos" 
+              className="text-xs font-black uppercase tracking-widest text-black hover:text-cyan-500 underline underline-offset-4 transition-colors mt-2"
+            >
+              Ver todo el catálogo completo
+            </Link>
           </div>
         </div>
+      </div>
 
-        {/* ── MOBILE: 1 sola columna de punta a punta (uno abajo del otro) ── */}
-        <div className="grid grid-cols-1 gap-[1px] md:hidden">
+      {/* CONTENEDOR COLLAGE ASIMÉTRICO */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        
+        {/* ── DESKTOP: Grid de Revista Asimétrico (Rompiendo líneas continuas) ── */}
+        <div className="hidden md:grid grid-cols-12 gap-6 items-start">
+          
+          {/* Bloque 1: Hombre (Ocupa 8 col, estirado verticalmente) */}
+          <div className="col-span-8">
+            <CategoryCard cat={CATEGORY_GRID[0]} index={0} className="aspect-[16/11]" />
+          </div>
+
+          {/* Bloque 2: Mujer (Ocupa 4 col, descalzado hacia abajo con margen superior) */}
+          <div className="col-span-4 md:mt-16">
+            <CategoryCard cat={CATEGORY_GRID[1]} index={1} className="aspect-[3/4]" />
+          </div>
+
+          {/* Bloque 3: Calzado (Ocupa 5 col, metido ligeramente hacia arriba gracias al descalce del anterior) */}
+          <div className="col-span-5 md:-mt-8">
+            <CategoryCard cat={CATEGORY_GRID[2]} index={2} className="aspect-[4/5]" />
+          </div>
+
+          {/* Bloque 4: Deporte (Ocupa 7 col, formato apaisado técnico para contrastar con el vertical de al lado) */}
+          <div className="col-span-7">
+            <CategoryCard cat={CATEGORY_GRID[3]} index={3} className="aspect-[16/9]" />
+          </div>
+          
+          {/* Bloque 5: Niño (Banner gigante descentrado de cierre, rompe ocupando 10 columnas en vez de las 12) */}
+          <div className="col-span-11 col-start-2 md:mt-8">
+            <CategoryCard cat={CATEGORY_GRID[4]} index={4} className="aspect-[21/8]" />
+          </div>
+
+        </div>
+
+        {/* ── MOBILE: Mantiene flujo ordenado pero cómodo para scroll manual ── */}
+        <div className="grid grid-cols-1 gap-6 md:hidden">
           {CATEGORY_GRID.map((cat, index) => (
             <CategoryCard 
               key={cat.id} 
               cat={cat} 
               index={index} 
-              isFullWidth={true} // En mobile todas toman el comportamiento de ancho completo
+              className="aspect-[4/3] odd:rotate-[-0.5deg] even:rotate-[0.5deg]" // Mini imperfección de rotación simulando recortes de revista en mobile
             />
           ))}
         </div>

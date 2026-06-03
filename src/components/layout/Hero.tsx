@@ -15,21 +15,17 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  Store,
+  Trophy,
 } from "lucide-react";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-
 import { heroSlides } from "@/components/data/data";
 
 const Hero = ({
   setActiveCategory,
 }: any) => {
-  const [current, setCurrent] =
-    useState(0);
-
-  const { pageConfig } =
-    usePageConfig();
+  const [current, setCurrent] = useState(0);
+  const { pageConfig } = usePageConfig();
 
   // =====================================
   // DYNAMIC SLIDES
@@ -38,26 +34,20 @@ const Hero = ({
   const slides = useMemo(() => {
     const dynamicSlide = {
       id: "store-main",
-
       title:
         pageConfig?.storeName ||
-        "GestionOK",
-
+        "MYA SPORTS",
       subtitle:
         pageConfig?.slogan ||
-        "Tu tienda online",
-
+        "⚡ CULTURA DEPORTIVA Y URBANA",
       description:
         pageConfig?.description ||
-        "Descubrí productos únicos con una experiencia moderna y premium.",
-
+        "Especialistas en botines de alta gama y calzado streetwear seleccionado para jugadores exigentes.",
       image:
         pageConfig?.banner ||
-        "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop",
-
+        "https://images.unsplash.com/photo-1579952365116-7a5ed211daef?q=80&w=2000&auto=format&fit=crop",
       ctaText:
-        "Explorar catálogo",
-
+        "EXPLORAR DROP",
       targetCategory: null,
     };
 
@@ -80,8 +70,7 @@ const Hero = ({
       );
     }, 6000);
 
-    return () =>
-      clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [current, slides.length]);
 
   // =====================================
@@ -135,8 +124,7 @@ const Hero = ({
     }
   };
 
-  const currentSlide =
-    slides[current];
+  const currentSlide = slides[current];
 
   // =====================================
   // COLORS
@@ -144,7 +132,7 @@ const Hero = ({
 
   const primaryColor =
     pageConfig?.primaryColor ||
-    "#06b6d4";
+    "#00f0ff"; // Por defecto Cyan Eléctrico si no viene configurado
 
   return (
     <div
@@ -159,7 +147,7 @@ const Hero = ({
       "
     >
       {/* ===================================== */}
-      {/* BACKGROUND */}
+      {/* BACKGROUND WITH HARD BG GRADIENT */}
       {/* ===================================== */}
 
       <AnimatePresence mode="wait">
@@ -175,26 +163,25 @@ const Hero = ({
             opacity: 0,
           }}
           transition={{
-            duration: 0.7,
+            duration: 0.6,
+            ease: "easeInOut"
           }}
           className="absolute inset-0"
           style={{
-            willChange:
-              "opacity",
+            willChange: "opacity",
           }}
         >
-          {/* IMAGE WRAPPER */}
-
+          {/* IMAGE WRAPPER WITH ACCENTUATED SCALE DOWN EFFECT */}
           <motion.div
             initial={{
-              scale: 1.06,
+              scale: 1.1,
             }}
             animate={{
               scale: 1,
             }}
             transition={{
-              duration: 8,
-              ease: "linear",
+              duration: 6,
+              ease: "easeOut",
             }}
             className="
               absolute inset-0
@@ -202,97 +189,86 @@ const Hero = ({
               transform-gpu
             "
             style={{
-              willChange:
-                "transform",
+              willChange: "transform",
             }}
           >
             <img
-              src={
-                currentSlide.image
-              }
-              alt={
-                currentSlide.title
-              }
+              src={currentSlide.image}
+              alt={currentSlide.title}
               className="
                 w-full
                 h-full
                 object-cover
-                opacity-80
+                opacity-70
                 pointer-events-none
                 select-none
+                filter grayscale-[30%] brightness-[85%]
               "
               draggable={false}
             />
           </motion.div>
 
-          {/* OVERLAYS */}
-
+          {/* OVERLAYS - EDITORIAL CONTRAST */}
           <div
-            className="
-              absolute inset-0 z-10
-            "
+            className="absolute inset-0 z-10"
             style={{
               background:
-                "linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.6), rgba(0,0,0,0.15))",
+                "linear-gradient(to right, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.2) 100%)",
             }}
           />
 
           <div
-            className="
-              absolute inset-0 z-10
-            "
+            className="absolute inset-0 z-10"
             style={{
               background:
-                "linear-gradient(to top, rgba(0,0,0,0.9), transparent, rgba(0,0,0,0.35))",
+                "linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 60%, rgba(0,0,0,0.4) 100%)",
             }}
           />
 
-          {/* AMBIENT LIGHT */}
+          {/* BACKGROUND SPORT TEXTURE (SUBTLE SCANLINES EFFECT) */}
+          <div className="absolute inset-0 z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,_rgba(0,0,0,0.25)_50%),_linear-gradient(90deg,_rgba(255,0,0,0.03),_rgba(0,255,255,0.03),_rgba(0,0,255,0.03))] bg-[size:100%_4px,_6px_100%] opacity-40 pointer-events-none" />
 
+          {/* AMBIENT GLOW */}
           <div
-            className="
-              absolute inset-0 z-10 opacity-20
-            "
+            className="absolute inset-0 z-10 opacity-15"
             style={{
-              background: `radial-gradient(circle at center, ${primaryColor} 0%, transparent 70%)`,
-              willChange:
-                "opacity",
+              background: `radial-gradient(circle at 10% 50%, ${primaryColor} 0%, transparent 65%)`,
+              willChange: "opacity",
             }}
           />
         </motion.div>
       </AnimatePresence>
 
       {/* ===================================== */}
-      {/* CONTENT */}
+      {/* CONTENT (RUDGED AND ASYMMETRIC) */}
       {/* ===================================== */}
 
-      <div className="relative z-20 max-w-7xl mx-auto px-6 h-full flex items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide.id}
             initial={{
               opacity: 0,
-              y: 30,
+              x: -20,
             }}
             animate={{
               opacity: 1,
-              y: 0,
+              x: 0,
             }}
             exit={{
               opacity: 0,
-              y: -10,
+              x: 10,
             }}
             transition={{
-              duration: 0.45,
+              duration: 0.4,
+              ease: "easeOut"
             }}
-            className="max-w-3xl"
+            className="max-w-4xl"
             style={{
-              willChange:
-                "transform, opacity",
+              willChange: "transform, opacity",
             }}
           >
-            {/* BADGE */}
-
+            {/* TECHNICAL BADGE */}
             <motion.div
               initial={{
                 opacity: 0,
@@ -305,45 +281,38 @@ const Hero = ({
               transition={{
                 delay: 0.1,
               }}
-              className="mb-6"
+              className="mb-5"
             >
               <span
                 className="
                   inline-flex
                   items-center
                   gap-2
-                  px-5
-                  py-2
-                  rounded-full
-                  border
-                  backdrop-blur-md
-                  text-xs
+                  px-4
+                  py-1.5
+                  border-l-2
+                  bg-white/5
+                  backdrop-blur-xs
+                  text-[11px]
                   uppercase
-                  tracking-[0.35em]
+                  tracking-[0.3em]
                   font-black
                 "
                 style={{
-                  borderColor: `${primaryColor}40`,
-                  color:
-                    primaryColor,
-                  background:
-                    `${primaryColor}10`,
+                  borderLeftColor: primaryColor,
+                  color: primaryColor,
                 }}
               >
-                <Store size={14} />
-
-                {
-                  currentSlide.subtitle
-                }
+                <Trophy size={12} className="stroke-[2.5]" />
+                {currentSlide.subtitle}
               </span>
             </motion.div>
 
-            {/* TITLE */}
-
+            {/* TITLE - EXTRA BOLD / ITALIC STRIKE */}
             <motion.h1
               initial={{
                 opacity: 0,
-                y: 15,
+                y: 20,
               }}
               animate={{
                 opacity: 1,
@@ -354,23 +323,22 @@ const Hero = ({
               }}
               className="
                 text-5xl
-                md:text-7xl
-                lg:text-8xl
+                sm:text-7xl
+                md:text-8xl
+                lg:text-9xl
                 font-black
                 uppercase
                 italic
                 tracking-tighter
-                leading-[0.9]
+                leading-[0.85]
                 text-white
+                drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]
               "
             >
-              {
-                currentSlide.title
-              }
+              {currentSlide.title}
             </motion.h1>
 
-            {/* DESCRIPTION */}
-
+            {/* DESCRIPTION - TECHNICAL CAPS */}
             <motion.p
               initial={{
                 opacity: 0,
@@ -384,80 +352,70 @@ const Hero = ({
                 delay: 0.2,
               }}
               className="
-                mt-8
-                text-lg
-                md:text-xl
+                mt-6
+                text-xs
+                sm:text-sm
+                md:text-base
                 text-neutral-300
+                uppercase
+                tracking-wider
                 leading-relaxed
-                max-w-2xl
-                font-light
+                max-w-xl
+                font-semibold
+                border-t border-white/10 pt-4
               "
             >
-              {
-                currentSlide.description
-              }
+              {currentSlide.description}
             </motion.p>
 
-            {/* CTA */}
-
+            {/* CTA - INDUSTRIAL HARD BOX BUTTON */}
             <motion.div
               initial={{
                 opacity: 0,
-                y: 15,
+                scale: 0.98,
               }}
               animate={{
                 opacity: 1,
-                y: 0,
+                scale: 1,
               }}
               transition={{
                 delay: 0.25,
               }}
-              className="flex flex-wrap gap-4 mt-10"
+              className="flex flex-wrap gap-4 mt-8"
             >
               <button
                 onClick={() =>
-                  handleHeroCta(
-                    currentSlide.targetCategory
-                  )
+                  handleHeroCta(currentSlide.targetCategory)
                 }
                 className="
                   group
                   relative
                   overflow-hidden
                   px-8
-                  py-5
-                  rounded-2xl
+                  py-4
                   font-black
                   uppercase
-                  tracking-[0.2em]
-                  text-sm
+                  tracking-[0.25em]
+                  text-xs
                   flex items-center
-                  gap-3
+                  gap-4
                   transition-all
                   duration-300
-                  hover:scale-[1.03]
-                  active:scale-[0.98]
+                  active:scale-[0.97]
                 "
                 style={{
-                  background:
-                    primaryColor,
+                  background: primaryColor,
                   color: "#000",
-                  boxShadow: `0 0 40px ${primaryColor}35`,
-                  willChange:
-                    "transform",
                 }}
               >
-                {/* Hover Overlay */}
-
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
+                {/* Clean Hover Overlay */}
+                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                
                 <span className="relative z-10">
-                  {
-                    currentSlide.ctaText
-                  }
+                  {currentSlide.ctaText || "COMPRAR COLOQUE"}
                 </span>
-
-                <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                
+                <ArrowRight className="relative z-10 w-4 h-4 stroke-[3] group-hover:translate-x-1.5 transition-transform duration-300" />
               </button>
             </motion.div>
           </motion.div>
@@ -465,148 +423,96 @@ const Hero = ({
       </div>
 
       {/* ===================================== */}
-      {/* NAVIGATION */}
+      {/* NAVIGATION - FLAT SQUARE CONTROLS */}
       {/* ===================================== */}
 
-      <div className="absolute bottom-8 right-8 z-30 flex gap-3">
+      <div className="absolute bottom-6 right-4 sm:right-8 z-30 flex gap-1">
         <button
           onClick={handlePrev}
           className="
             group
-            relative
-            overflow-hidden
-            w-14
-            h-14
-            rounded-2xl
-            border
-            border-white/10
-            bg-black/30
-            backdrop-blur-md
+            w-12
+            h-12
+            bg-neutral-900/80
+            hover:bg-black
+            border border-neutral-800
             flex
             items-center
             justify-center
-            text-white
-            transition-all
-            duration-300
-            hover:scale-105
-            active:scale-90
+            text-white/60
+            hover:text-white
+            transition-colors
+            duration-200
+            active:scale-95
           "
         >
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background: `${primaryColor}20`,
-            }}
-          />
-
-          <ChevronLeft className="relative z-10 w-5 h-5 group-hover:-translate-x-0.5 transition-transform duration-300" />
+          <ChevronLeft className="w-5 h-5 stroke-[2.5] group-hover:-translate-x-0.5 transition-transform" />
         </button>
 
         <button
           onClick={handleNext}
           className="
             group
-            relative
-            overflow-hidden
-            w-14
-            h-14
-            rounded-2xl
-            border
-            border-white/10
-            bg-black/30
-            backdrop-blur-md
+            w-12
+            h-12
+            bg-neutral-900/80
+            hover:bg-black
+            border border-neutral-800
             flex
             items-center
             justify-center
-            text-white
-            transition-all
-            duration-300
-            hover:scale-105
-            active:scale-90
+            text-white/60
+            hover:text-white
+            transition-colors
+            duration-200
+            active:scale-95
           "
         >
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background: `${primaryColor}20`,
-            }}
-          />
-
-          <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-0.5 transition-transform duration-300" />
+          <ChevronRight className="w-5 h-5 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
       {/* ===================================== */}
-      {/* INDICATORS */}
+      {/* INDICATORS - BOTTOM LINE PROGRESS */}
       {/* ===================================== */}
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
-        {slides.map(
-          (slide, index) => {
-            const active =
-              index === current;
+      <div className="absolute bottom-6 left-4 sm:left-8 z-30 flex items-center gap-2">
+        {slides.map((slide, index) => {
+          const active = index === current;
 
-            return (
-              <button
-                key={slide.id}
-                onClick={() =>
-                  handleDotClick(
-                    index
-                  )
+          return (
+            <button
+              key={slide.id}
+              onClick={() => handleDotClick(index)}
+              className={`
+                relative
+                h-1
+                transition-all
+                duration-300
+                ${
+                  active
+                    ? "w-12"
+                    : "w-4 opacity-40 hover:opacity-75"
                 }
-                className={`
-                  relative
-                  overflow-hidden
-                  rounded-full
-                  transition-all
-                  duration-300
-
-                  ${
-                    active
-                      ? "w-14 h-2.5"
-                      : "w-2.5 h-2.5 hover:w-6"
-                  }
-                `}
-                style={{
-                  background:
-                    active
-                      ? primaryColor
-                      : "#ffffff40",
-
-                  boxShadow:
-                    active
-                      ? `0 0 20px ${primaryColor}80`
-                      : "none",
-
-                  willChange:
-                    "transform",
-                }}
-              >
-                {active && (
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                    }}
-                    animate={{
-                      opacity: 1,
-                    }}
-                    exit={{
-                      opacity: 0,
-                    }}
-                    transition={{
-                      duration: 0.2,
-                    }}
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        primaryColor,
-                    }}
-                  />
-                )}
-              </button>
-            );
-          }
-        )}
+              `}
+              style={{
+                background: active ? primaryColor : "#ffffff",
+              }}
+            >
+              {active && (
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 6, ease: "linear" }}
+                  className="absolute inset-0 origin-left"
+                  style={{
+                    background: primaryColor,
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
