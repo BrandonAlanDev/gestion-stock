@@ -1,18 +1,14 @@
-import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Geist_Mono } from "next/font/google";
-import LayoutComponent from "@/components/LayoutComponent";
 import { auth } from "@/auth";
-import RouteLoader from "@/components/RouteLoader";
-import AppGate from "@/components/AppGate";
-import { getBrandingConfig } from "@/actions/page-config.actions";
-import {
-  getPageConfig,
-} from "@/actions/page-config.actions";
-
-import {
-  PageConfigProvider,
-} from "@/components/providers/PageConfigProvider";
+import type { Metadata } from "next";
+import AppGate from "@/components/layout/AppGate";
+import { Geist, Geist_Mono } from "next/font/google";
+import QueryProvider from "@/providers/QueryProvider";
+import RouteLoader from "@/components/layout/RouteLoader";
+import LayoutComponent from "@/components/layout/LayoutComponent";
+import { getPageConfig } from "@/actions/page-config/general.actions";
+import { getBrandingConfig } from "@/actions/page-config/branding.actions";
+import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,17 +33,20 @@ export default async function RootLayout({
   const session = await auth();
   const branding = await getBrandingConfig();
   const pageConfig = await getPageConfig();
+
   return (
-    <html lang="es" className="dark"> 
+    <html lang="es" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden bg-black text-white`}>
-        <PageConfigProvider pageConfig={pageConfig}>
-          <LayoutComponent session={session} branding={branding}>
-            <AppGate>
-              <RouteLoader />
-              {children}
-            </AppGate>
-          </LayoutComponent>
-        </PageConfigProvider>
+        <QueryProvider>
+          <PageConfigProvider pageConfig={pageConfig}>
+            <LayoutComponent>
+              <AppGate>
+                <RouteLoader />
+                {children}
+              </AppGate>
+            </LayoutComponent>
+          </PageConfigProvider>
+        </QueryProvider>
       </body>
     </html>
   );

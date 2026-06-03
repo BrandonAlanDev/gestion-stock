@@ -14,3 +14,18 @@ export function serializeData<T>(data: T): T {
     )
   );
 }
+
+export function extractPublicId(url: string): string | null {
+  try {
+    const parts = url.split('/');
+    const uploadIndex = parts.findIndex(p => p === 'upload');
+    if (uploadIndex !== -1) {
+      const pathParts = parts.slice(uploadIndex + 2);
+      const fileName = pathParts.join('/');
+      return fileName.split('.')[0];
+    }
+  } catch (e) {
+    console.error("Error extracting public ID", e);
+  }
+  return null;
+}
