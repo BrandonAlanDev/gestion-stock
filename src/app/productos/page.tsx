@@ -1,26 +1,5 @@
-import { getGarments } from "@/actions/garments";
+import CatalogoClient from "@/components/products/views/CatalogoClient";
 
-import { getCategories } from "@/actions/garments";
-
-import CatalogoClient from "@/components/catalogo/CatalogoClient";
-
-export default async function CatalogoPage() {
-  // =========================================
-  // DATA
-  // =========================================
-
-  const garments = await getGarments();
-
-  const categories = await getCategories();
-
-  // =========================================
-  // RENDER
-  // =========================================
-
-  return (
-    <CatalogoClient
-      garments={garments}
-      categories={categories}
-    />
-  );
+export default function CatalogoPage() {
+  return <CatalogoClient />;
 }

@@ -64,6 +64,7 @@ export const variantSchema = z.object({
 export const garmentSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   price: z.coerce.number().positive(),
+  maxPrice: z.coerce.number().positive().optional().nullable(),
   cost: z.coerce.number().positive(),
   description: z.string().optional(),
   categoryId: z.string().min(1, "La categoría es obligatoria"),
