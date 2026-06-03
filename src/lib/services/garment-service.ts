@@ -20,7 +20,7 @@ export async function getGarmentsPaginated(
     prisma.garment.findMany({
       where,
       include: {
-        images: { orderBy: { order: "asc" } }, 
+        images: { orderBy: { order: "asc" } },
         variants: {
           include: { size: true, color: true },
           take: 5,
@@ -68,6 +68,7 @@ export async function updateGarmentWithDetails(
   data: {
     name: string;
     price: number;
+    maxPrice?: number | null;
     cost: number;
     description?: string;
     categoryId: string;
@@ -84,7 +85,7 @@ export async function updateGarmentWithDetails(
     images: string[]; // URLs finales de Cloudinary
   }
 ) {
-  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
 
   // 1. Actualizar datos básicos
   await prisma.garment.update({
@@ -92,6 +93,7 @@ export async function updateGarmentWithDetails(
     data: {
       name,
       price,
+      maxPrice: (typeof maxPrice === 'number' ? maxPrice : null) as any,// Aseguramos que sea number o null
       cost,
       description,
       categoryId,

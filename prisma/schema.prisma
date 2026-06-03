@@ -88,6 +88,7 @@ model Garment {
   name          String
   description   String?          @db.Text
   price         Decimal          @db.Decimal(10, 2)
+  maxPrice      Decimal?       @db.Decimal(10, 2)
   cost          Decimal          @db.Decimal(10, 2)
   active        Boolean          @default(true)
   
