@@ -6,7 +6,7 @@ import { getBoardOptions } from "@/actions/board-options";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const WA_NUMBER = "5492235000000";
+const WA_NUMBER = "5492234214414";
 
 const T = {
   surface: "#ffffff",
@@ -137,7 +137,7 @@ export default function PersonalizadoPage() {
   function buildMsg() {
     const vol   = s.volumen ? `\n• Volumen: ${s.volumen} L` : "";
     const notas = s.notas.trim() ? `\n• Notas: ${s.notas}` : "";
-    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}${notas}\n\nQuedo a la espera de más info. Gracias!`;
+    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}\n Notas:${s.notas}\n\nQuedo a la espera de más info. Gracias!`;
   }
 
   async function handleSend() {
