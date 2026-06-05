@@ -24,6 +24,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   const [formData, setFormData] = useState({
     name: "",
     price: "",
+    maxPrice: "",
     cost: "",
     description: "",
     categoryId: "",
@@ -42,6 +43,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
       name: garment.name || "",
       price: garment.price?.toString() || "",
       cost: garment.cost?.toString() || "",
+      maxPrice: garment.maxPrice?.toString() || "",
       description: garment.description || "",
       categoryId: garment.categoryId || "",
       subCategoryId: garment.subCategoryId || "",
@@ -192,6 +194,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     setFormData({
       name: "",
       price: "",
+      maxPrice: "",
       cost: "",
       description: "",
       categoryId: "",
@@ -227,10 +230,13 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     }
 
     const imageUrls = finalImages.map(img => img.url);
+    
+    // Construcción del objeto final con maxPrice corregido
     const payload = {
       name: formData.name,
       price: Number(formData.price),
       cost: Number(formData.cost),
+      maxPrice: formData.maxPrice ? Number(formData.maxPrice) : null, // 👈 Solución aquí
       description: formData.description,
       categoryId: formData.categoryId,
       subCategoryId: formData.subCategoryId || null,
