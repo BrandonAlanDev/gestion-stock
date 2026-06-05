@@ -58,7 +58,7 @@ const Hero = () => {
           height="100%"
           slideWidth="0 0 33.333333%"
           gap="0.5rem"
-          autoplayDelay={1000}
+          autoplayDelay={2000}
           loop={true}
           showArrows={true}
           slidesToScroll={1}
