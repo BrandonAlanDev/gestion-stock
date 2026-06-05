@@ -21,6 +21,7 @@ type CarouselProps = {
   showDots?: boolean;
   arrowClassName?: string;
   dotClassName?: string;
+  slidesToScroll?: number;
   className?: string;
 };
 
@@ -36,21 +37,14 @@ export default function Carousel({
   arrowClassName = "",
   dotClassName = "",
   className = "",
+  slidesToScroll = 1,
 }: CarouselProps) {
-  // FIX: usamos useRef para que el plugin no se re-cree en cada render.
-  // Sin esto, Embla puede re-inicializar el carrusel y producir parpadeos.
   const refAutoplay = useRef(
     Autoplay({ delay: autoplayDelay, stopOnInteraction: false })
   );
 
-  /*
-   * align: "start" es el correcto para slides de ancho completo (100%).
-   * Con "center", Embla intenta centrar cada slide dentro del viewport
-   * lo que puede generar saltos raros al hacer el wrap del loop.
-   * Con "start" cada slide ocupa exactamente el viewport → wrap limpio.
-   */
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop, align: "start", slidesToScroll: 3 },
+    { loop, align: "start", slidesToScroll },
     autoplayDelay > 0 ? [refAutoplay.current] : []
   );
 
@@ -99,13 +93,6 @@ export default function Carousel({
   }
 
   return (
-    /*
-     * FIX PRINCIPAL: la altura se define aquí, en el wrapper exterior.
-     * Antes estaba solo en el viewport interior, donde `height: 100%`
-     * se calculaba contra este div sin altura → colapsaba a 0px.
-     * Ahora el viewport y los slides usan `h-full` para heredar
-     * correctamente desde este wrapper con dimensión concreta.
-     */
     <div className={`relative w-full ${className}`} style={{ height }}>
       {/* El viewport de Embla ocupa el 100% del wrapper */}
       <div className="overflow-hidden h-full" ref={emblaRef}>

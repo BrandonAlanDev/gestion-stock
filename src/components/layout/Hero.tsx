@@ -58,9 +58,10 @@ const Hero = () => {
           height="100%"
           slideWidth="0 0 33.333333%"
           gap="0.5rem"
-          autoplayDelay={2000}
+          autoplayDelay={1000}
           loop={true}
           showArrows={true}
+          slidesToScroll={1}
           showDots={false}
           arrowClassName="bg-white/10 border border-white/20 hover:bg-white/20"
         />
