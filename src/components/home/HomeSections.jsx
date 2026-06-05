@@ -11,187 +11,139 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 const CATEGORY_GRID = [
   {
     id: "tablas",
-    label: "Tablas",
-    sublabel: "Todos nuestros modelos",
-
+    label: "TABLAS",
+    sublabel: "Tablas en stock",
     href: "/productos?categoria=tablas",
     image: "/images/new.jpg",
-    accent: "from-blue-900/80 via-blue-900/40 to-transparent",
   },
   {
     id: "indumentaria",
-    label: "Indumentaria",
-    sublabel: "Remeras · Jeans · Calzado",
-    href: "/productos/indumentaria",
-    image: "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&q=80",
-    accent: "from-slate-900/80 via-slate-900/30 to-transparent",
+    label: "INDUMENTARIA",
+    sublabel: "Nuestra colección",
+    href: "/productos?categoria=indumentaria",
+    image: "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=1200&q=80",
   },
   {
     id: "trajes",
-    label: "Trajes",
-    sublabel: "Wetsuits · Rashguards",
-    href: "/productos/trajes",
+    label: "TRAJES DE NEOPRENE",
+    sublabel: "Trajes disponibles",
+    href: "/productos?categoria=trajes de neopreno",
     image: "/images/products/traje.jpg",
-    accent: "from-cyan-900/80 via-cyan-900/30 to-transparent",
   },
   {
     id: "accesorios",
-    label: "Accesorios",
-    sublabel: "Quillas · Leashes · Wax",
-    href: "/productos/accesorios",
-    image: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=600&q=80",
-    accent: "from-slate-900/80 via-slate-900/30 to-transparent",
+    label: "ACCESORIOS",
+    sublabel: "Quillas · Pitas · Grips",
+    href: "/productos?categoria=accesorios",
+    image: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=1200&q=80",
   },
   {
     id: "escuela",
-    label: "Escuela de Surf",
-    sublabel: "Clases · Niveles · Paquetes",
+    label: "ESCUELA DE SURF",
+    sublabel: "Clases y Clínicas",
     href: "/escuela",
     image: "/images/escuela.jpg",
-    accent: "from-teal-900/80 via-teal-900/30 to-transparent",
   },
   {
     id: "personalizado",
-    label: "Personalizado",
-    sublabel: "Diseños a medida · Custom boards",
+    label: "CUSTOM WORK",
+    sublabel: "Diseñá a Medida",
     href: "/personalizado",
-    image: "/images/shape.jpg",
-    accent: "from-indigo-900/80 via-indigo-900/30 to-transparent",
+    image: "/images/personalizado.jpg",
   },
   {
     id: "arreglos",
-    label: "Arreglos",
-    sublabel: "Reparaciones · Mantenimiento",
+    label: "REPARACIONES",
+    sublabel: "Taller técnico y mantenimiento",
     href: "/arreglos",
     image: "/images/arreglos.jpg",
-    accent: "from-orange-900/80 via-orange-900/30 to-transparent",
+  },
+  {
+    id: "plan-ahorro",
+    label: "PLAN DE AHORRO",
+    sublabel: "Financiación adjudicada y cuotas fijas",
+    href: "/plan-de-ahorro",
+    image: "/images/ahorro.jpg",
   },
 ];
 
-// --- TARJETA DE CATEGORÍA ---
-const CategoryCard = ({ cat, index, tall }) => {
+// --- TARJETA DE CATEGORÍA (LOOKBOOK EDITORIAL EXPANDIDO) ---
+const CategoryCard = ({ cat, index }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <Link href={cat.href} passHref legacyBehavior>
       <motion.a
-        className={`relative block overflow-hidden cursor-pointer group ${tall ? 'h-full' : 'h-[42vw]'}`}
+        className="relative block overflow-hidden cursor-pointer group bg-neutral-100 border border-neutral-200/40 w-full h-[50vh] md:h-[70vh] lg:h-[80vh]"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, delay: index * 0.02 }}
       >
+        {/* Imagen de fondo extendida */}
         <motion.div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center grayscale-[15%] group-hover:grayscale-0 transition-all duration-1000"
           style={{ backgroundImage: `url(${cat.image})` }}
-          animate={{ scale: hovered ? 1.05 : 1 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          animate={{ scale: hovered ? 1.04 : 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         />
-        <div className={`absolute inset-0 bg-gradient-to-t ${cat.accent} transition-opacity duration-300`} />
-        <motion.div
-          className="absolute inset-0 bg-slate-900/20"
-          animate={{ opacity: hovered ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
-        />
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-          <motion.p
-            className="text-white/60 text-xs font-semibold tracking-widest uppercase mb-1"
-            animate={{ opacity: hovered ? 1 : 0.7, y: hovered ? 0 : 4 }}
-            transition={{ duration: 0.3 }}
-          >
-            {cat.sublabel}
-          </motion.p>
-          <div className="flex items-end justify-between">
-            <h3 className="text-white font-bold text-xl md:text-2xl tracking-tight leading-tight">
+
+        {/* Degradado técnico para contraste de legibilidad tipográfica */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-95 group-hover:via-black/35 transition-all duration-300" />
+
+        {/* Bloque de Textos y Controles */}
+        <div className="absolute inset-0 p-8 md:p-14 flex flex-col justify-end z-10">
+          <p className="text-cyan-400 text-[10px] md:text-xs font-black tracking-[0.35em] uppercase mb-2">
+            // {cat.sublabel}
+          </p>
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-white font-black text-2xl md:text-4xl tracking-tighter uppercase leading-none italic">
               {cat.label}
             </h3>
-            <motion.div
-              className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center backdrop-blur-sm"
-              animate={{
-                x: hovered ? 0 : 6,
-                opacity: hovered ? 1 : 0,
-                backgroundColor: hovered ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.1)'
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <ArrowRight className={`w-4 h-4 ${hovered ? 'text-slate-900' : 'text-white'}`} />
-            </motion.div>
           </div>
         </div>
-        <motion.div
-          className="absolute inset-0 border-2 border-white/20"
-          animate={{ opacity: hovered ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
-        />
       </motion.a>
     </Link>
   );
 };
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL (FEATURED SECTION - TOTAL FULL SCREEN) ---
 export default function FeaturedSection() {
-    const { pageConfig } = usePageConfig();
+  const { pageConfig } = usePageConfig();
+
   return (
-    <section id="featured" className="w-full py-16">
-      {/* Encabezado */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-        <div>
-          <span className="text-xs font-bold tracking-widest uppercase text-cyan-500 mb-2 block">
-            {pageConfig?.location || "Argentina"}
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-            Somos NEWSURFBOARD
-          </h2>
+    <section id="featured" className="w-full bg-white py-16 border-t-2 border-black overflow-hidden">
+
+      {/* Encabezado Editorial - Manteniendo márgenes controlados de respiro antes del grid */}
+      <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b-2 border-black pb-6">
+          <div>
+            <span className="text-[10px] font-black tracking-[0.4em] text-neutral-400 uppercase block mb-1">
+              {pageConfig?.location || "SANTA CLARA DEL MAR"}
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black text-black tracking-tighter uppercase italic leading-none">
+              UNIDADES & SERVICIOS
+            </h2>
+          </div>
         </div>
       </div>
 
-      <div className="hidden md:grid grid-cols-3 grid-rows-3 gap-[2px] h-[80vh] px-4 sm:px-6 lg:px-8">
-
-        {/* div1 — Tablas: col 1, rows 1-2 */}
-        <div className="row-span-2 col-start-1 row-start-1">
-          <CategoryCard cat={CATEGORY_GRID[0]} index={0} tall />
+      {/* CONTENEDOR DEL GRID SIN LÍMITES NI PADDINGS (PANTALLA COMPLETA) */}
+      <div className="w-full">
+        {/* Usamos gap-0 para que las imágenes queden perfectamente unidas sin espacio blanco lateral */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+          {CATEGORY_GRID.map((cat, index) => (
+            <CategoryCard
+              key={cat.id}
+              cat={cat}
+              index={index}
+            />
+          ))}
         </div>
-
-        {/* div2 — Indumentaria: col 2, row 1 */}
-        <div className="col-start-2 row-start-1">
-          <CategoryCard cat={CATEGORY_GRID[1]} index={1} tall />
-        </div>
-
-        {/* div4 — Trajes: col 2, row 2 */}
-        <div className="col-start-2 row-start-2">
-          <CategoryCard cat={CATEGORY_GRID[2]} index={2} tall />
-        </div>
-
-        {/* div5 — Accesorios: col 1, row 3 */}
-        <div className="col-start-1 row-start-3">
-          <CategoryCard cat={CATEGORY_GRID[3]} index={3} tall />
-        </div>
-
-        {/* div6 — Escuela: col 2, row 3 */}
-        <div className="col-start-2 row-start-3">
-          <CategoryCard cat={CATEGORY_GRID[4]} index={4} tall />
-        </div>
-
-        {/* div9 — Personalizado: col 3, row 1 */}
-        <div className="col-start-3 row-start-1">
-          <CategoryCard cat={CATEGORY_GRID[5]} index={5} tall />
-        </div>
-
-        {/* div10 — Arreglos: col 3, rows 2-3 */}
-        <div className="row-span-2 col-start-3 row-start-2">
-          <CategoryCard cat={CATEGORY_GRID[6]} index={6} tall />
-        </div>
-
       </div>
 
-      {/* ── MOBILE: 2 columnas full width ── */}
-      <div className="grid grid-cols-2 gap-[2px] md:hidden px-4">
-        {CATEGORY_GRID.map((cat, index) => (
-          <CategoryCard key={cat.id} cat={cat} index={index} />
-        ))}
-      </div>
     </section>
   );
 }

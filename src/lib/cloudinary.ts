@@ -1,3 +1,4 @@
+// src/lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -8,27 +9,14 @@ cloudinary.config({
 
 export default cloudinary;
 
-// =====================================
-// EXTRAER PUBLIC ID
-// =====================================
-
-export function extractPublicId(
-  url: string
-) {
+// ⚠️ ASEGURATE DE QUE DIGA "export function" AQUÍ:
+export function extractPublicId(url: string) {
   try {
-    const parts =
-      url.split("/upload/")[1];
-
-    const clean =
-      parts.replace(
-        /v\d+\//,
-        ""
-      );
-
-    return clean.replace(
-      /\.[^/.]+$/,
-      ""
-    );
+    if (!url.includes("/upload/")) return null;
+    
+    const parts = url.split("/upload/")[1];
+    const clean = parts.replace(/v\d+\//, "");
+    return clean.replace(/\.[^/.]+$/, "");
   } catch {
     return null;
   }

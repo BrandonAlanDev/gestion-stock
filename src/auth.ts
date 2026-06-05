@@ -1,36 +1,36 @@
-import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
-import { authConfig } from "./auth.config";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import { loginSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
+import NextAuth from "next-auth";
+import { prisma } from "@/lib/prisma";
+import { loginSchema } from "@/lib/zod";
+import { authConfig } from "./auth.config";
+import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import Credentials from "next-auth/providers/credentials";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma) as any, 
+  adapter: PrismaAdapter(prisma) as any,
   session: { strategy: "jwt" },
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true, 
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       authorize: async (credentials) => {
         const { email, password } = await loginSchema.parseAsync(credentials);
-        
+
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.password) return null;
 
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
 
-        return { 
-          id: user.id, 
-          name: user.name, 
-          email: user.email, 
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
           role: user.role,
           telefono: user.telefono,
           image: user.image
@@ -55,24 +55,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      if (token.id) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { id: true, name: true, role: true, telefono: true, image: true }
-          });
-
-
-          if (!dbUser) return {};
-          token.name = dbUser.name;
-          token.role = dbUser.role;
-          token.telefono = dbUser.telefono;
-          token.image = dbUser.image;
-        } catch (error) {
-          console.error("Error validando usuario en Prisma:", error);
-        }
-      }
-
       return token;
     },
     async session({ session, token }) {
@@ -86,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.telefono = token.telefono as string | null;
         session.user.image = token.image as string | null;
         session.user.name = token.name as string | null;
-      } 
+      }
 
       return session;
     },

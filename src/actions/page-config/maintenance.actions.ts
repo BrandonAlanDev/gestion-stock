@@ -1,14 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-
 import cloudinary from "@/lib/cloudinary";
-
-import { extractPublicId }
-from "@/lib/cloudinary";
-
-import { RESET_DATA }
-from "./shared/reset-data";
+import { revalidateTag } from "next/cache";
+import { extractPublicId } from "@/lib/cloudinary";
+import { RESET_DATA } from "@/actions/page-config/shared/reset-data"
 
 export async function clearPageConfig() {
   try {
@@ -51,15 +47,11 @@ export async function clearPageConfig() {
         data: RESET_DATA,
       });
 
-    return {
-      ok: true,
-      pageConfig,
-    };
+    revalidateTag("page-config");
+    revalidateTag("branding-config");
+
+    return { ok: true, pageConfig };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Error al limpiar configuración",
-    };
+    return { ok: false, error: "Error al limpiar configuración" };
   }
 }

@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {getBrandingConfig} from "@/actions/page-config.actions";
-
 import {
   Package,
   Tags,
@@ -18,24 +16,15 @@ import {
   Home,
   Store,
   ShieldCheck,
+  ShoppingCart,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { is } from "zod/v4/locales";
+import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-interface HeaderProps {
-  cartCount: number;
-  onOpenCart: () => void;
-  branding: any;
-}
-
-export default function Header({
-  cartCount,
-  onOpenCart,
-  branding,
-}: HeaderProps) {
+export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -44,12 +33,12 @@ export default function Header({
 
   const isHomeTop = pathname === "/" && !scrolled;
 
+  const { cartCount, openCart } = useCart();
+
   const { data: session, status } = useSession();
-  const pageConfig =
-  usePageConfig();
+  const pageConfig = usePageConfig();
 
   useEffect(() => {
-
     const handleScroll = () => {
       setScrolled(window.scrollY > 0);
     };
@@ -98,6 +87,11 @@ export default function Header({
       label: "Catálogo",
       icon: Store,
     },
+    {
+      href: "/plan-de-ahorro",
+      label: "Plan de Ahorro",
+      icon: Package,
+    }
   ];
 
   const adminLinks = [
@@ -167,6 +161,20 @@ export default function Header({
 
         {/* Actions */}
         <div className={`flex items-center gap-3 p-3 transition-all duration-300 rounded-2xl text-cyan-400 `}>
+          {/* Botón del carrito */}
+          <button
+            onClick={openCart}
+            className="relative p-2 rounded-xl transition-all duration-300 hover:text-cyan-400 hover:bg-white/10 text-white"
+            aria-label="Abrir carrito"
+          >
+            {/*<ShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 text-black text-xs font-bold rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}*/}
+          </button>
+
           {session?.user ? (
             <>
               {/* User Info */}
@@ -218,54 +226,28 @@ export default function Header({
         <div className="w-full">
           <nav className="flex flex-col md:flex-row md:items-center md:justify-between md:px-6 w-full p-6 gap-6">
             <div>
-
-            {/* Logged User Mobile */}
-            {session?.user && (
-              <div className="flex flex-col gap-1 border-b border-neutral-800 pb-4">
-                <span className="text-white font-bold">
-                  {session.user.name}
-                </span>
-
-                {session.user.role === "ADMIN" && (
-                  <span className="text-cyan-500 text-sm font-medium">
-                    Administrador
+              {/* Logged User Mobile */}
+              {session?.user && (
+                <div className="flex flex-col gap-1 border-b border-neutral-800 pb-4">
+                  <span className="text-white font-bold">
+                    {session.user.name}
                   </span>
-                )}
-              </div>
-            )}
+
+                  {session.user.role === "ADMIN" && (
+                    <span className="text-cyan-500 text-sm font-medium">
+                      Administrador
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col md:flex-row gap-4 gap-4">
-            {/* USER LINKS */}
-            {userLinks.map((link) => {
-              const Icon = link.icon;
-
-              return (
-                <Button
-                  key={link.href}
-                  variant={"blanco"}
-                >
-                  <Link
-                    onClick={() => setIsMenuOpen(false)}
-                    href={link.href}
-                    className={linkStyle(link.href)}
-                  >
-                    <Icon size={20} />
-                    {link.label}
-                  </Link>
-                </Button>
-              );
-            })}
-
-            {/* ADMIN LINKS */}
-            {session?.user?.role === "ADMIN" &&
-              adminLinks.map((link) => {
+              {/* USER LINKS */}
+              {userLinks.map((link) => {
                 const Icon = link.icon;
 
                 return (
-                  <Button
-                    key={link.href}
-                    variant={"blanco"}
-                  >
+                  <Button key={link.href} variant={"blanco"}>
                     <Link
                       onClick={() => setIsMenuOpen(false)}
                       href={link.href}
@@ -277,14 +259,30 @@ export default function Header({
                   </Button>
                 );
               })}
+
+              {/* ADMIN LINKS */}
+              {session?.user?.role === "ADMIN" &&
+                adminLinks.map((link) => {
+                  const Icon = link.icon;
+
+                  return (
+                    <Button key={link.href} variant={"blanco"}>
+                      <Link
+                        onClick={() => setIsMenuOpen(false)}
+                        href={link.href}
+                        className={linkStyle(link.href)}
+                      >
+                        <Icon size={20} />
+                        {link.label}
+                      </Link>
+                    </Button>
+                  );
+                })}
             </div>
 
             {/* Login / Logout */}
             {session?.user ? (
-              <Button
-                variant={"rojo"}
-                onClick={handleLogout}
-              >
+              <Button variant={"rojo"} onClick={handleLogout}>
                 <div className="flex items-center gap-2 p-3">
                   <LogOut size={18} />
                   Salir
