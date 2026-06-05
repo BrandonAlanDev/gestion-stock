@@ -88,6 +88,7 @@ model Garment {
   name          String
   description   String?          @db.Text
   price         Decimal          @db.Decimal(10, 2)
+  maxPrice      Decimal?       @db.Decimal(10, 2)
   cost          Decimal          @db.Decimal(10, 2)
   active        Boolean          @default(true)
   
@@ -302,3 +303,67 @@ enum MovementType {
   OUT
 }
 
+// --- TABLAS PERSONALIZADAS ---
+
+model CustomBoard {
+  id         String   @id @default(cuid())
+  tipo       String
+  largo      String
+  ancho      String
+  espesor    String
+  volumen    String?
+  material   String
+  cola       String
+  killaTipo  String
+  killaCount String
+  notas      String?  @db.Text
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// --- CONFIGURACIÓN DE TABLAS PERSONALIZADAS ---
+
+model BoardTypeOption {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  svgPath String? @db.Text // Path para dibujar la tabla
+  active  Boolean @default(true)
+
+  allowedTails   BoardTailOption[]
+  allowedFins    BoardFinOption[]
+  allowedConfigs BoardFinConfigOption[]
+}
+
+model BoardMaterialOption {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  active      Boolean @default(true)
+}
+
+model BoardTailOption {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  svgPath String? @db.Text // Path para dibujar la cola
+  active  Boolean @default(true)
+
+  boardTypes BoardTypeOption[]
+}
+
+model BoardFinOption {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  active  Boolean @default(true)
+
+  boardTypes BoardTypeOption[]
+}
+
+model BoardFinConfigOption {
+  id      String  @id @default(cuid())
+  name    String  @unique // Ej: "Thruster", "Quad"
+  count   Int     // Ej: 3, 4
+  active  Boolean @default(true)
+
+  boardTypes BoardTypeOption[]
+}
