@@ -1,8 +1,5 @@
-import {
-  getPageConfig,
-  updatePageConfig,
-  clearPageConfig,
-} from "@/actions/page-config.actions";
+import {getPageConfig} from "@/actions/page-config/general.actions";
+import {clearPageConfig} from "@/actions/page-config/maintenance.actions";
 
 import PageConfigForm from "@/components/admin/page-config/PageConfigForm";
 
