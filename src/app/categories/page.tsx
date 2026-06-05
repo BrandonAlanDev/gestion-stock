@@ -1,8 +1,8 @@
-import { getCategories } from "@/actions/garments";
+import { getCategories } from "@/actions/categories";
 import { getSizeTypes } from "@/actions/sizes";
-import ManageCategoryModal from "@/components/garment/ManageCategoryModal";
-import AddSubCategoryForm from "@/components/garment/AddSubCategoryForm";
-import DeleteSubBtn from "@/components/garment/DeleteSubBtn";
+import ManageCategoryModal from "@/components/categories/modals/ManageCategoryModal";
+import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
+import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
 import { Tag, Layers, FolderDot } from "lucide-react";
 
 export const dynamic = "force-dynamic";
