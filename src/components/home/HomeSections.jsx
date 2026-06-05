@@ -63,7 +63,7 @@ const CATEGORY_GRID = [
     label: "PLAN DE AHORRO",
     sublabel: "Financiación adjudicada y cuotas fijas",
     href: "/plan-de-ahorro",
-    image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&q=80",
+    image: "/images/ahorro.jpg",
   },
 ];
 
