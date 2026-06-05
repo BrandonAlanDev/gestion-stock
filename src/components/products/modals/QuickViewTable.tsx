@@ -47,6 +47,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
               <th className="px-8 py-6" style={{ color: "#083d42" }}>Producto</th>
               <th className="px-8 py-6">Talle / Variantes</th>
               <th className="px-8 py-6 text-right" style={{ color: "#0d5c63" }}>Precio Venta</th>
+              <th className="px-8 py-6 text-right" style={{ color: "#0d5c63" }}>Precio Máximo</th>
               <th className="px-8 py-6 text-right">Stock Total</th>
               <th className="px-8 py-6 text-right" style={{ color: "#4a7c80" }}>Precio Costo</th>
               <th className="px-8 py-6">Categoría</th>
@@ -111,6 +112,11 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   {/* Precio venta */}
                   <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0d5c63" }}>
                     ${Number(item.price).toLocaleString("es-AR")}
+                  </td>
+                  
+                  {/* Precio máximo */}
+                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0d5c63" }}>
+                    ${Number(item.maxPrice || 0).toLocaleString("es-AR")}
                   </td>
 
                   {/* Stock */}

@@ -21,7 +21,7 @@ export async function createGarment(data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
     let mappedImages: { srcImage: string; order: number }[] = [];
@@ -32,6 +32,7 @@ export async function createGarment(data: any) {
     const garment = await garmentService.createGarment({
       name,
       price,
+      maxPrice: maxPrice || null,
       cost,
       description,
       categoryId,
@@ -110,7 +111,7 @@ export async function updateGarment(id: string, data: any) {
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
-  const { name, price, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
+  const { name, price, maxPrice,   cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
   try {
     const existingImages = await prisma.garmentImage.findMany({ where: { garmentId: id } });
@@ -140,6 +141,7 @@ export async function updateGarment(id: string, data: any) {
     const updatedGarment = await garmentService.updateGarmentWithDetails(id, {
       name,
       price,
+      maxPrice: maxPrice || null,
       cost,
       description: description || "",
       categoryId,

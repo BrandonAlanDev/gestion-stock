@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Instagram, Facebook, Youtube, Twitter, Music2Icon, Linkedin } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
+
 const LINKS = {
   tienda: [
     { label: "Tablas", href: "/productos?categoria=tablas" },
@@ -47,12 +48,12 @@ export function Footer({
             {/* Redes */}
             <div className="flex items-center gap-3 pt-1">
               {[
-                { icon: Instagram, href: pageConfig?.pageConfig?.instagram},
-                { icon: Facebook,  href: pageConfig?.pageConfig?.facebook},
-                { icon: Youtube,   href: pageConfig?.pageConfig?.youtube},
-                { icon : Linkedin,  href: pageConfig?.pageConfig?.linkedin},
-                { icon: Twitter,   href: pageConfig?.pageConfig?.x},
-                { icon: Music2Icon, href: pageConfig?.pageConfig?.tiktok},
+                { icon: Instagram, href: pageConfig?.pageConfig?.instagram },
+                { icon: Facebook, href: pageConfig?.pageConfig?.facebook },
+                { icon: Youtube, href: pageConfig?.pageConfig?.youtube },
+                { icon: Linkedin, href: pageConfig?.pageConfig?.linkedin },
+                { icon: Twitter, href: pageConfig?.pageConfig?.x },
+                { icon: Music2Icon, href: pageConfig?.pageConfig?.tiktok },
               ].map(({ icon: Icon, href }, index) => (
                 <a
                   key={index}
@@ -132,6 +133,7 @@ export function Footer({
           </button>
         </div>
       </div>
+
     </footer>
   );
 }
