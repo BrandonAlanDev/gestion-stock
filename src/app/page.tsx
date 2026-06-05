@@ -1,4 +1,4 @@
-import HomeClient from "@/components/HomeClient";
+import HomeClient from "@/components/home/HomeClient";
 
 void function onclick() { console.log("Booking clicked"); }
 

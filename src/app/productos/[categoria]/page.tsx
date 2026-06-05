@@ -1,18 +1,14 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Package, Layers } from "lucide-react";
-import CategoryContentClient from "@/components/catalogo/CategoryContentClient";
+import { ArrowLeft } from "lucide-react";
+import CategoryContentClient from "@/components/categories/view/CategoryContentClient";
+import Pagination from "@/components/ui/pagination";
+import * as categoryService from "@/lib/services/category-service";
+import * as garmentService from "@/lib/services/garment-service";
 
-// Genera las rutas estáticas para cada categoría activa
 export async function generateStaticParams() {
-  const categories = await prisma.category.findMany({
-    where: { active: true },
-    select: { name: true },
-  });
-  return categories.map((c) => ({
-    categoria: c.name.toLowerCase(),
-  }));
+  const categories = await categoryService.getCategoriesFull();
+  return categories.map((c) => ({ categoria: c.name.toLowerCase() }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ categoria: string }> }) {
@@ -25,44 +21,39 @@ export async function generateMetadata({ params }: { params: Promise<{ categoria
 
 export default async function CategoriaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ categoria: string }>;
+  searchParams?: Promise<{ page?: string; limit?: string; subcategory?: string }>;
 }) {
   const { categoria } = await params;
+  const sp = await searchParams;
+  const currentPage = Number(sp?.page) || 1;
+  const limit = Number(sp?.limit) || 12;
+  const subCategoryId = sp?.subcategory || undefined;
+
   const categoryName = decodeURIComponent(categoria);
 
-  // Traemos la categoría, sus subcategorías y TODOS los productos asociados activos
-  const category = await prisma.category.findFirst({
-    where: { name: categoryName, active: true },
-    include: {
-      subCategories: {
-        where: { active: true },
-        orderBy: { name: "asc" },
-      },
-      garments: {
-        where: { active: true },
-        orderBy: { name: "asc" },
-        include: {
-          images: { orderBy: { order: "asc" } },
-          variants: {
-            include: { size: true, color: true },
-            orderBy: { size: { order: "asc" } },
-          },
-          subCategory: true,
-        },
-      },
-      _count: { select: { garments: { where: { active: true } } } },
-    },
-  });
-
+  // 1. Obtener categoría (sin productos)
+  const category = await categoryService.getCategoryByName(categoryName);
   if (!category) notFound();
+
+  // 2. Productos paginados y filtrados por subcategoría (si corresponde)
+  const { garments, total } = await garmentService.getGarmentsPaginated(
+    currentPage,
+    limit,
+    category.id,
+    undefined, // search — no se usa en la página pública
+    subCategoryId
+  );
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="min-h-screen bg-white pt-24">
-      {/* Header - Limpio en Blanco y Cyan */}
+      {/* Header */}
       <div className="bg-neutral-50 border-b border-neutral-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
           <Link
             href="/"
@@ -73,7 +64,7 @@ export default async function CategoriaPage({
           </Link>
           <div>
             <span className="text-xs font-black tracking-widest uppercase text-cyan-500 mb-1 block">
-              Catalogo Oficial
+              Catálogo Oficial
             </span>
             <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-neutral-900 leading-none">
               {category.name}
@@ -82,10 +73,20 @@ export default async function CategoriaPage({
         </div>
       </div>
 
-      {/* Enviamos toda la data al componente interactivo del cliente */}
-      <CategoryContentClient 
-        subCategories={category.subCategories} 
-        garments={category.garments} 
+      {/* Sidebar + Grid */}
+      <CategoryContentClient
+        subCategories={category.subCategories}
+        garments={garments}
+        selectedSubId={subCategoryId || "all"}
+        basePath={`/productos/${categoria}`}
+      />
+
+      {/* Paginación */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        basePath={`/productos/${categoria}`}
+        searchParams={{ subcategory: subCategoryId }}
       />
     </div>
   );
