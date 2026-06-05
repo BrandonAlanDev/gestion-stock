@@ -152,7 +152,7 @@ export default function Header() {
           >
             <input 
               type="text" 
-              placeholder="BUSCAR MODELO O TERRENO..." 
+              placeholder="BUSCAR..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent text-white text-[10px] font-bold uppercase tracking-wider placeholder:text-white/30 focus:outline-none w-full pr-6"
