@@ -87,6 +87,11 @@ export default function Header() {
       label: "Catálogo",
       icon: Store,
     },
+    {
+      href: "/plan-de-ahorro",
+      label: "Plan de Ahorro",
+      icon: Package,
+    }
   ];
 
   const adminLinks = [
@@ -162,12 +167,12 @@ export default function Header() {
             className="relative p-2 rounded-xl transition-all duration-300 hover:text-cyan-400 hover:bg-white/10 text-white"
             aria-label="Abrir carrito"
           >
-            <ShoppingCart size={24} />
+            {/*<ShoppingCart size={24} />
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 text-black text-xs font-bold rounded-full flex items-center justify-center">
                 {cartCount}
               </span>
-            )}
+            )}*/}
           </button>
 
           {session?.user ? (
