@@ -145,7 +145,7 @@ export default function Header() {
 
           <nav className="flex flex-col w-full gap-4">
             
-            {/* FILA 1: Links de usuario (Siempre 3 columnas perfectas en móvil) */}
+            {/* FILA 1: Links de usuario */}
             <div className="grid grid-cols-3 gap-2 w-full">
               {userLinks.map((link) => {
                 const Icon = link.icon;
@@ -173,7 +173,7 @@ export default function Header() {
               </div>
             )}
 
-            {/* FILA 2: Funciones de Admin (Flex-wrap fluido para acomodarse prolijo) */}
+            {/* FILA 2: Funciones de Admin */}
             {session?.user?.role === "ADMIN" && (
               <div className="flex flex-wrap gap-2 w-full justify-start">
                 {adminLinks.map((link) => {
@@ -198,15 +198,16 @@ export default function Header() {
               </div>
             )}
 
-            {/* Botón de Salir / Iniciar Sesión en la base del menú */}
-            <div className="pt-4 border-t border-neutral-800/40 mt-2">
+            {/* Sección de cierre/inicio de sesión minimalista */}
+            <div className="pt-4 border-t border-neutral-800/40 mt-2 flex justify-center">
               {session?.user ? (
-                <Button variant={"rojo"} onClick={handleLogout} className="w-full justify-center py-5">
-                  <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs">
-                    <LogOut size={16} />
-                    Salir de la cuenta
-                  </div>
-                </Button>
+                <button 
+                  onClick={handleLogout} 
+                  className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-500 hover:text-red-400 transition-colors py-2 px-4 cursor-pointer"
+                >
+                  <LogOut size={14} />
+                  Salir de la cuenta
+                </button>
               ) : (
                 <Button variant={"blanco"} className="w-full justify-center py-5">
                   <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs text-neutral-800">
