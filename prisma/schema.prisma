@@ -5,11 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql" 
+  provider     = "mysql"
   relationMode = "prisma"
 }
-
-// --- AUTENTICACIÓN ---
 
 model account {
   id                String  @id @default(cuid())
@@ -44,103 +42,82 @@ model user {
   account       account[]
 }
 
-enum user_role {
-  USER
-  ADMIN
-}
-
-// --- PRODUCTOS Y CATEGORÍAS ---
-
 model Category {
   id            String        @id @default(cuid())
   name          String        @unique
   active        Boolean       @default(true)
-  subCategories SubCategory[]
-  garments      Garment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  subCategories SubCategory[]
+  garments      Garment[]
 }
 
 model SubCategory {
-  id          String    @id @default(cuid())
-  name        String
-  active      Boolean   @default(true)
-  
-  // Relación con Categoría
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
-  
-  // NUEVO: La curva de talles ahora vive acá 
-  sizeTypeId  String?
-  sizeType    SizeType? @relation(fields: [sizeTypeId], references: [id])
-  
-  garments    Garment[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  name       String
+  active     Boolean   @default(true)
+  categoryId String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  sizeTypeId String?
+  category   Category  @relation(fields: [categoryId], references: [id])
+  sizeType   SizeType? @relation(fields: [sizeTypeId], references: [id])
+  garments   Garment[]
 
   @@unique([name, categoryId])
   @@index([categoryId])
-  @@index([sizeTypeId]) // Añadido índice para optimizar búsquedas por talle
+  @@index([sizeTypeId])
 }
 
 model Garment {
   id            String           @id @default(cuid())
   name          String
-  description   String?          @db.Text
   price         Decimal          @db.Decimal(10, 2)
-  maxPrice      Decimal?       @db.Decimal(10, 2)
-  cost          Decimal          @db.Decimal(10, 2)
+  description   String?          @db.Text
   active        Boolean          @default(true)
-  
-  // Relaciones
   categoryId    String
-  category      Category         @relation(fields: [categoryId], references: [id])
-  subCategoryId String?
-  subCategory   SubCategory?      @relation(fields: [subCategoryId], references: [id])
   supplierId    String?
-  supplier      Provider?        @relation(fields: [supplierId], references: [id])
-  
-  variants      GarmentVariant[]
-  images        GarmentImage[]   // Relación para las 4 fotos
-
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  cost          Decimal          @db.Decimal(10, 2)
+  subCategoryId String?
+  maxPrice      Decimal?         @db.Decimal(10, 2)
+  category      Category         @relation(fields: [categoryId], references: [id])
+  subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
+  supplier      Provider?        @relation(fields: [supplierId], references: [id])
+  variants      GarmentVariant[]
+  images        GarmentImage[]
 
   @@index([categoryId])
   @@index([subCategoryId])
   @@index([supplierId])
 }
 
-// Modelo para manejar múltiples fotos
 model GarmentImage {
-  id        String   @id @default(cuid())
-  srcImage  String   @db.Text
+  id        String  @id @default(cuid())
+  srcImage  String  @db.Text
   alt       String?
-  order     Int      @default(0) // Para decidir cuál es la principal (0)
+  order     Int     @default(0)
   garmentId String
-  garment   Garment  @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  garment   Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
 
   @@index([garmentId])
 }
 
-// --- STOCK Y VARIANTES ---
-
 model GarmentVariant {
-  id        String     @id @default(cuid())
-  sku       String?    @unique
-  stock     Int        @default(0)
-  garmentId String
-  sizeId    String?
-  colorId   String?
-  garment   Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
-  size      Size?      @relation(fields: [sizeId], references: [id])
-  color     Color?     @relation(fields: [colorId], references: [id])
+  id         String     @id @default(cuid())
+  sku        String?    @unique
+  stock      Int        @default(0)
+  garmentId  String
+  sizeId     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  colorId    String?
   attributes Json?
-
-  movements Movement[]
-
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  garment    Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  size       Size?      @relation(fields: [sizeId], references: [id])
+  color      Color?     @relation(fields: [colorId], references: [id])
+  movements  Movement[]
 
   @@unique([garmentId, sizeId, colorId])
   @@index([garmentId])
@@ -149,19 +126,19 @@ model GarmentVariant {
 }
 
 model SizeType {
-  id         String     @id @default(cuid())
-  name       String     @unique
-  active     Boolean    @default(true)
-  sizes      Size[]
+  id            String        @id @default(cuid())
+  name          String        @unique
+  active        Boolean       @default(true)
+  sizes         Size[]
   subCategories SubCategory[]
 }
 
 model Size {
   id         String           @id @default(cuid())
-  value      String
-  order      Int              @default(0)
   active     Boolean          @default(true)
+  order      Int              @default(0)
   sizeTypeId String
+  value      String
   sizeType   SizeType         @relation(fields: [sizeTypeId], references: [id])
   variants   GarmentVariant[]
 
@@ -177,17 +154,15 @@ model Color {
   variants GarmentVariant[]
 }
 
-// --- PROVEEDORES Y MOVIMIENTOS ---
-
 model Provider {
   id        String            @id @default(cuid())
   name      String            @unique
   active    Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
   details   String?
   contacts  ContactProvider[]
   garments  Garment[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
 }
 
 model ContactProvider {
@@ -196,9 +171,9 @@ model ContactProvider {
   type       String
   idProvider String
   active     Boolean  @default(true)
-  provider   Provider @relation(fields: [idProvider], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  provider   Provider @relation(fields: [idProvider], references: [id], onDelete: Cascade)
 
   @@unique([contact, idProvider])
   @@index([idProvider])
@@ -211,99 +186,51 @@ model Movement {
   priceAtTime    Decimal        @db.Decimal(10, 2)
   note           String?
   variantId      String
-  garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   createdAt      DateTime       @default(now())
+  garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@index([variantId])
 }
 
 model PageConfig {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // =========================
-  // INFORMACIÓN DEL NEGOCIO
-  // =========================
-  storeName   String
-  description String? @db.Text
-  slogan      String?
-
-  // =========================
-  // BRANDING
-  // =========================
-  logo        String? @db.Text
-  favicon     String? @db.Text
-  banner      String? @db.Text
-
-  primaryColor   String? @default("#000000")
-  secondaryColor String? @default("#FFFFFF")
-
-  // =========================
-  // ECOMMERCE
-  // =========================
-  ecommerceEnabled Boolean @default(true)
-  cartEnabled      Boolean @default(true)
-  checkoutEnabled  Boolean @default(true)
-
-  // =========================
-  // CONTACTO
-  // =========================
-  phone      String?
-  whatsapp   String?
-  email      String?
-
-  // =========================
-  // UBICACIÓN
-  // =========================
-  locationEnabled Boolean @default(false)
-
-  address  String?
-  city     String?
-  province String?
-  country  String?
-
-  postalCode String?
-
-  mapsUrl String? @db.Text
-
-  // =========================
-  // REDES SOCIALES
-  // =========================
-  instagram String? @db.Text
-  facebook  String? @db.Text
-  tiktok    String? @db.Text
-  x         String? @db.Text
-  youtube   String? @db.Text
-  linkedin  String? @db.Text
-
-  // =========================
-  // CONFIGURACIONES GENERALES
-  // =========================
-  currency String @default("ARS")
-  language String @default("es")
-
-  maintenanceMode Boolean @default(false)
-
-  // =========================
-  // SEO
-  // =========================
-  metaTitle       String?
-  metaDescription String? @db.Text
-
-  // =========================
-  // OPCIONALES FUTUROS
-  // =========================
-  termsAndConditions String? @db.Text
-  privacyPolicy      String? @db.Text
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  storeName          String
+  description        String?  @db.Text
+  slogan             String?
+  logo               String?  @db.Text
+  favicon            String?  @db.Text
+  banner             String?  @db.Text
+  primaryColor       String?  @default("#000000")
+  secondaryColor     String?  @default("#FFFFFF")
+  ecommerceEnabled   Boolean  @default(true)
+  cartEnabled        Boolean  @default(true)
+  checkoutEnabled    Boolean  @default(true)
+  phone              String?
+  whatsapp           String?
+  email              String?
+  locationEnabled    Boolean  @default(false)
+  address            String?
+  city               String?
+  province           String?
+  country            String?
+  postalCode         String?
+  mapsUrl            String?  @db.Text
+  instagram          String?  @db.Text
+  facebook           String?  @db.Text
+  tiktok             String?  @db.Text
+  x                  String?  @db.Text
+  youtube            String?  @db.Text
+  linkedin           String?  @db.Text
+  currency           String   @default("ARS")
+  language           String   @default("es")
+  maintenanceMode    Boolean  @default(false)
+  metaTitle          String?
+  metaDescription    String?  @db.Text
+  termsAndConditions String?  @db.Text
+  privacyPolicy      String?  @db.Text
 }
-
-enum MovementType {
-  IN
-  OUT
-}
-
-// --- TABLAS PERSONALIZADAS ---
 
 model CustomBoard {
   id         String   @id @default(cuid())
@@ -317,19 +244,15 @@ model CustomBoard {
   killaTipo  String
   killaCount String
   notas      String?  @db.Text
-
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
-// --- CONFIGURACIÓN DE TABLAS PERSONALIZADAS ---
-
 model BoardTypeOption {
-  id      String  @id @default(cuid())
-  name    String  @unique
-  svgPath String? @db.Text // Path para dibujar la tabla
-  active  Boolean @default(true)
-
+  id             String                 @id @default(cuid())
+  name           String                 @unique
+  svgPath        String?                @db.Text
+  active         Boolean                @default(true)
   allowedTails   BoardTailOption[]
   allowedFins    BoardFinOption[]
   allowedConfigs BoardFinConfigOption[]
@@ -343,27 +266,61 @@ model BoardMaterialOption {
 }
 
 model BoardTailOption {
-  id      String  @id @default(cuid())
-  name    String  @unique
-  svgPath String? @db.Text // Path para dibujar la cola
-  active  Boolean @default(true)
-
+  id         String            @id @default(cuid())
+  name       String            @unique
+  svgPath    String?           @db.Text
+  active     Boolean           @default(true)
   boardTypes BoardTypeOption[]
 }
 
 model BoardFinOption {
-  id      String  @id @default(cuid())
-  name    String  @unique
-  active  Boolean @default(true)
-
+  id         String            @id @default(cuid())
+  name       String            @unique
+  active     Boolean           @default(true)
   boardTypes BoardTypeOption[]
 }
 
 model BoardFinConfigOption {
-  id      String  @id @default(cuid())
-  name    String  @unique // Ej: "Thruster", "Quad"
-  count   Int     // Ej: 3, 4
-  active  Boolean @default(true)
-
+  id         String            @id @default(cuid())
+  name       String            @unique
+  count      Int
+  active     Boolean           @default(true)
   boardTypes BoardTypeOption[]
+}
+
+model BoardFinConfigOptionToBoardTypeOption {
+  A String
+  B String
+
+  @@unique([A, B], map: "_BoardFinConfigOptionToBoardTypeOption_AB_unique")
+  @@index([B], map: "_BoardFinConfigOptionToBoardTypeOption_B_index")
+  @@map("_BoardFinConfigOptionToBoardTypeOption")
+}
+
+model BoardFinOptionToBoardTypeOption {
+  A String
+  B String
+
+  @@unique([A, B], map: "_BoardFinOptionToBoardTypeOption_AB_unique")
+  @@index([B], map: "_BoardFinOptionToBoardTypeOption_B_index")
+  @@map("_BoardFinOptionToBoardTypeOption")
+}
+
+model BoardTailOptionToBoardTypeOption {
+  A String
+  B String
+
+  @@unique([A, B], map: "_BoardTailOptionToBoardTypeOption_AB_unique")
+  @@index([B], map: "_BoardTailOptionToBoardTypeOption_B_index")
+  @@map("_BoardTailOptionToBoardTypeOption")
+}
+
+enum user_role {
+  USER
+  ADMIN
+}
+
+enum MovementType {
+  IN
+  OUT
 }
