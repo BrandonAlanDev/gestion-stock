@@ -124,7 +124,7 @@ export default function FeaturedSection() {
               {pageConfig?.location || "SANTA CLARA DEL MAR"}
             </span>
             <h2 className="text-4xl md:text-6xl font-black text-black tracking-tighter uppercase italic leading-none">
-              UNIDADES & SERVICIOS
+              CATALOGO Y SERVICIOS
             </h2>
           </div>
         </div>
