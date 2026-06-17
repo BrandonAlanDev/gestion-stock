@@ -193,7 +193,7 @@ model Movement {
 }
 
 model PageConfig {
-  id                 String   @id @default(cuid())
+  id                 Int   @id @default(1)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   storeName          String
@@ -323,4 +323,71 @@ enum user_role {
 enum MovementType {
   IN
   OUT
+}
+
+model CustomPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  subtitle    String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sections    CustomSection[]
+
+  @@map("CustomPages")
+}
+
+model CustomSection {
+  id          String   @id @default(cuid())
+
+  pageId      String
+  page        CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  type        SectionType
+
+  title       String?
+  subtitle    String?
+
+  order       Int      @default(0)
+
+  config      Json?
+
+  items       CustomSectionItem[]
+
+  @@map("CustomPageSections")
+}
+
+model CustomSectionItem {
+  id          String   @id @default(cuid())
+
+  sectionId   String
+  section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+
+  image       String?
+  icon        String?
+
+  link        String?
+
+  order       Int      @default(0)
+
+  config      Json?
+
+  @@map("CustomPageItems")
+}
+
+enum SectionType {
+  HERO
+  TEXT
+  CARDS
+  FAQ
+  TIMELINE
+  CTA
+  GALLERY
+  FEATURES
 }
