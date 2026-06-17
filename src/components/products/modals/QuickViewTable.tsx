@@ -30,26 +30,26 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
     <>
       {/* ── TABLA ── */}
       <div
-        className="overflow-x-auto rounded-[2.5rem] shadow-lg"
-        style={{ border: "1px solid #b2dede", background: "#ffffff" }}
+        className="overflow-x-auto rounded-[2rem] shadow-sm border"
+        style={{ borderColor: "#e2e8f0", background: "#ffffff" }}
       >
         <table className="w-full text-left border-collapse">
           <thead>
             <tr
-              className="text-[9px] uppercase font-black"
+              className="text-[9px] uppercase font-black border-b"
               style={{
-                borderBottom: "1px solid #b2dede",
-                color: "#4a7c80",
+                borderColor: "#e2e8f0",
+                color: "#64748b",
                 letterSpacing: "0.3em",
               }}
             >
               <th className="px-8 py-6">Ref. SKU</th>
-              <th className="px-8 py-6" style={{ color: "#083d42" }}>Producto</th>
+              <th className="px-8 py-6" style={{ color: "#0f172a" }}>Producto</th>
               <th className="px-8 py-6">Talle / Variantes</th>
-              <th className="px-8 py-6 text-right" style={{ color: "#0d5c63" }}>Precio Venta</th>
-              <th className="px-8 py-6 text-right" style={{ color: "#0d5c63" }}>Precio Máximo</th>
+              <th className="px-8 py-6 text-right" style={{ color: "#0891b2" }}>Precio Venta</th>
+              <th className="px-8 py-6 text-right" style={{ color: "#0891b2" }}>Precio Máximo</th>
               <th className="px-8 py-6 text-right">Stock Total</th>
-              <th className="px-8 py-6 text-right" style={{ color: "#4a7c80" }}>Precio Costo</th>
+              <th className="px-8 py-6 text-right" style={{ color: "#64748b" }}>Precio Costo</th>
               <th className="px-8 py-6">Categoría</th>
               <th className="px-8 py-6">Proveedor</th>
               <th className="px-8 py-6 text-right">Acciones</th>
@@ -62,13 +62,13 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
               return (
                 <tr
                   key={item.id}
-                  className="text-sm transition-all group"
-                  style={{ borderBottom: "1px solid #e0f5f5" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0fafa")}
+                  className="text-sm transition-all group border-b"
+                  style={{ borderColor: "#f1f5f9" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6, 182, 212, 0.03)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   {/* SKU */}
-                  <td className="px-8 py-5 font-mono text-[10px]" style={{ color: "#4a7c80" }}>
+                  <td className="px-8 py-5 font-mono text-[10px]" style={{ color: "#64748b" }}>
                     {item.variants?.[0]?.sku || "---"}
                   </td>
 
@@ -76,7 +76,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   <td className="px-8 py-5">
                     <div
                       className="font-bold uppercase tracking-tighter italic text-base leading-none"
-                      style={{ color: "#083d42" }}
+                      style={{ color: "#0f172a" }}
                     >
                       {item.name}
                     </div>
@@ -88,18 +88,18 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                       {item.variants?.map((v: any) => (
                         <div
                           key={v.id}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
-                          style={{ background: "#e0f5f5", border: "1px solid #b2dede" }}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg border"
+                          style={{ background: "#f8fafc", borderColor: "#e2e8f0" }}
                         >
-                          <span className="text-[9px] font-black uppercase" style={{ color: "#083d42" }}>
+                          <span className="text-[9px] font-black uppercase" style={{ color: "#0f172a" }}>
                             {v.size?.value || (v.attributes as any)?.customSize || "S/T"}
                           </span>
                           {v.color && (
                             <div
-                              className="flex items-center gap-1 pl-1.5 ml-0.5"
-                              style={{ borderLeft: "1px solid #b2dede" }}
+                              className="flex items-center gap-1 pl-1.5 ml-0.5 border-l"
+                              style={{ borderColor: "#e2e8f0" }}
                             >
-                              <span className="text-[8px] font-bold uppercase tracking-tighter" style={{ color: "#4a7c80" }}>
+                              <span className="text-[8px] font-bold uppercase tracking-tighter" style={{ color: "#64748b" }}>
                                 {v.color.name}
                               </span>
                             </div>
@@ -110,35 +110,35 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   </td>
 
                   {/* Precio venta */}
-                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0d5c63" }}>
+                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0891b2" }}>
                     ${Number(item.price).toLocaleString("es-AR")}
                   </td>
                   
                   {/* Precio máximo */}
-                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0d5c63" }}>
+                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#0891b2" }}>
                     ${Number(item.maxPrice || 0).toLocaleString("es-AR")}
                   </td>
 
                   {/* Stock */}
                   <td className="px-8 py-5 text-right font-mono font-bold">
-                    <span style={{ color: totalStock <= 0 ? "#e05050" : "#083d42" }}>
+                    <span style={{ color: totalStock <= 0 ? "#ef4444" : "#0f172a" }}>
                       {totalStock}
                     </span>
                   </td>
 
                   {/* Precio costo */}
-                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#4a7c80" }}>
+                  <td className="px-8 py-5 text-right font-mono font-bold" style={{ color: "#64748b" }}>
                     ${Number(item.cost || 0).toLocaleString("es-AR")}
                   </td>
 
                   {/* Categoría */}
                   <td className="px-8 py-5">
                     <span
-                      className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest"
+                      className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
                       style={{
-                        background: "#e0f5f5",
-                        border: "1px solid #b2dede",
-                        color: "#0d5c63",
+                        background: "rgba(6, 182, 212, 0.06)",
+                        borderColor: "#c2f3f8",
+                        color: "#0891b2",
                       }}
                     >
                       {item.category?.name || "Gral"}
@@ -151,14 +151,14 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                       <button
                         onClick={() => setSelectedProvider(item.supplier)}
                         className="text-[11px] font-black uppercase italic tracking-tight transition-all hover:underline underline-offset-4"
-                        style={{ color: "#4ab8b8" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#0d5c63")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "#4ab8b8")}
+                        style={{ color: "#06b6d4" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#0891b2")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#06b6d4")}
                       >
                         {item.supplier.name}
                       </button>
                     ) : (
-                      <span className="text-[10px] uppercase font-bold italic" style={{ color: "#b2dede" }}>
+                      <span className="text-[10px] uppercase font-bold italic" style={{ color: "#cbd5e1" }}>
                         Sin Asignar
                       </span>
                     )}
@@ -177,9 +177,9 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                       <button
                         onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                         className="transition-colors"
-                        style={{ color: "#b2dede" }}
-                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#e05050")}
-                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#b2dede")}
+                        style={{ color: "#cbd5e1" }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#ef4444")}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#cbd5e1")}
                       >
                         <Trash2 size={16} />
                       </button>
