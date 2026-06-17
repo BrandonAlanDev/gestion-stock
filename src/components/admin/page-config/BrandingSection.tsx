@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageIcon, Save } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
@@ -46,6 +46,33 @@ export default function BrandingSection({
       config?.secondaryColor || "#ffffff",
   });
 
+  useEffect(() => {
+    setForm({
+      storeName:
+        config?.storeName || "GestionOK",
+      slogan:
+        config?.slogan || "",
+
+      description:
+        config?.description || "",
+
+      logo:
+        config?.logo || "",
+
+      banner:
+        config?.banner || "",
+
+      favicon:
+        config?.favicon || "",
+
+      primaryColor:
+        config?.primaryColor || "#06b6d4",
+
+      secondaryColor:
+        config?.secondaryColor || "#ffffff",
+    });
+  }, [config]);
+
   const handleChange = (
     key: string,
     value: any
@@ -57,6 +84,7 @@ export default function BrandingSection({
   };
 
   const handleSave = () => {
+    console.log("FORM", form);
     startTransition(async () => {
       const res =
         await updateBrandingConfig(

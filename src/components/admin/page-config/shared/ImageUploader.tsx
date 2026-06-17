@@ -29,31 +29,45 @@ export default function ImageUploader({
   const handleUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file =
-      e.target.files?.[0];
+    const file = e.target.files?.[0];
 
     if (!file) return;
 
     setUploading(true);
 
     try {
-      const reader =
-        new FileReader();
+      const formData = new FormData();
 
-      reader.readAsDataURL(file);
+      formData.append("file", file);
 
-      reader.onloadend = () => {
-        onChange(
-          reader.result as string
-        );
-
-        setUploading(false);
-      };
-    } catch {
-      toast.error(
-        "Error al subir imagen"
+      const res = await fetch(
+        "/api/upload-image",
+        {
+          method: "POST",
+          body: formData,
+        }
       );
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || "Error al subir"
+        );
+      }
+
+      onChange(data.url);
+
+      toast.success(
+        "Imagen subida correctamente"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error al subir imagen"
+      );
+    } finally {
       setUploading(false);
     }
   };
