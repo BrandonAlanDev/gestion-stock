@@ -5,6 +5,7 @@ import PageConfigForm from "@/components/admin/page-config/PageConfigForm";
 
 export default async function PageConfigPage() {
   const { pageConfig } = await getPageConfig();
+  console.log(pageConfig);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-8 pt-24">
