@@ -1,4 +1,3 @@
-// components/product/ProductoView.tsx
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -108,13 +107,13 @@ export default function ProductoView({ product }: ProductProps) {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-100">
+    <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-cyan-100">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
 
         {/* BOTÓN VOLVER ATRÁS */}
         <button
           onClick={() => router.back()}
-          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:text-black transition-colors mb-8"
+          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:text-cyan-600 transition-colors mb-8"
         >
           <ArrowLeft size={14} className="transform group-hover:-translate-x-1 transition-transform" />
           Volver al catálogo
@@ -131,7 +130,7 @@ export default function ProductoView({ product }: ProductProps) {
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
                     className={`w-16 h-20 overflow-hidden bg-gray-50/50 rounded-md transition-all border ${selectedImage === img.srcImage
-                      ? "border-black opacity-100"
+                      ? "border-cyan-500 ring-1 ring-cyan-500 opacity-100"
                       : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                   >
@@ -141,7 +140,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            <div className="w-full bg-gray-50/40 rounded-xl p-8 flex items-center justify-center min-h-[450px] md:min-h-[650px]">
+            <div className="w-full bg-slate-50/50 rounded-xl p-8 flex items-center justify-center min-h-[450px] md:min-h-[650px]">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -158,7 +157,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             {/* ENCABEZADO */}
             <div className="space-y-4">
-              <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-widest text-cyan-600">
                 {product.category?.name}
                 {product.subCategory?.name && ` / ${product.subCategory.name}`}
               </p>
@@ -183,11 +182,11 @@ export default function ProductoView({ product }: ProductProps) {
 
             <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
               {esTabla ? (
-                <p className="text-2xl font-light text-gray-800">
+                <p className="text-2xl font-semibold text-cyan-600">
                   USD {Number(product.price).toLocaleString("es-AR")}  {product.maxPrice !== null ? `- ${Number(product.maxPrice).toLocaleString("es-AR")}` : ""}
                 </p>
               ) : (
-                <p className="text-2xl font-light text-gray-800">
+                <p className="text-2xl font-bold text-gray-900">
                   $ {Number(product.price).toLocaleString("es-AR")}
                 </p>
               )}
@@ -204,7 +203,7 @@ export default function ProductoView({ product }: ProductProps) {
                       onClick={() => setSelectedColor(color.name)}
                       title={color.name}
                       className={`w-8 h-8 rounded-full border transition-all ${selectedColor === color.name
-                        ? "ring-2 ring-black ring-offset-2 scale-105"
+                        ? "ring-2 ring-cyan-500 ring-offset-2 scale-105"
                         : "border-gray-200"
                         }`}
                       style={{ backgroundColor: color.hex || "#000" }}
@@ -233,7 +232,7 @@ export default function ProductoView({ product }: ProductProps) {
             {/* LOGÍSTICA */}
             <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <Truck className="w-3.5 h-3.5 text-gray-400" />
+                <Truck className="w-3.5 h-3.5 text-cyan-500" />
                 <p>Envíos y logística a coordinar para todo el país.</p>
               </div>
             </div>
@@ -241,7 +240,7 @@ export default function ProductoView({ product }: ProductProps) {
             {/* ACCIÓN PRINCIPAL */}
             <button
               onClick={handleWhatsApp}
-              className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-lg text-xs font-medium uppercase tracking-widest transition-colors"
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md shadow-cyan-500/10 transition-colors"
             >
               {esTabla ? "Consultar con el vendedor" : "Consultar por WhatsApp"}
             </button>
@@ -250,7 +249,7 @@ export default function ProductoView({ product }: ProductProps) {
 
         {/* DESCRIPCIÓN */}
         <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-cyan-600 mb-6">
             Product Overview
           </h2>
           <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">

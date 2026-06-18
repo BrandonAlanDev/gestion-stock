@@ -25,31 +25,29 @@ export default function LocationCard({
     if (googleMapsUrl) {
       window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
     } else {
-      // Si no hay URL específica, busca directamente la dirección en Google Maps
       const encodedAddress = encodeURIComponent(`${address}, ${city}`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
+      window.open(`http://googleusercontent.com/maps.google.com/${encodedAddress}`, "_blank");
     }
   };
 
   return (
     <div 
-      className="w-full max-w-md p-6 shadow-xl border transition-all hover:shadow-2xl"
+      className="w-full max-w-md p-6 shadow-xl border border-neutral-200 transition-all hover:shadow-2xl hover:shadow-cyan-500/5"
       style={{ 
-        background: "#ffffff", 
-        borderColor: "#b2dede", 
+        background: "#ffffff", // Fondo Blanco
         borderRadius: "24px" 
       }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 mb-4 border-b" style={{ borderColor: "#b2dede" }}>
-        <div className="p-3 rounded-xl" style={{ background: "#f0fafa", color: "#0d5c63" }}>
+      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-neutral-100">
+        <div className="p-3 rounded-xl bg-cyan-50 text-cyan-500">
           <MapPin size={24} className="animate-bounce" />
         </div>
         <div>
-          <h3 className="text-lg font-black uppercase italic" style={{ color: "#083d42" }}>
+          <h3 className="text-lg font-black uppercase italic text-neutral-800">
             {title}
           </h3>
-          <p className="text-sm font-semibold" style={{ color: "#4a7c80" }}>
+          <p className="text-sm font-semibold text-cyan-600">
             {city}
           </p>
         </div>
@@ -59,29 +57,28 @@ export default function LocationCard({
       <div className="space-y-4 my-5 text-sm">
         {/* Dirección */}
         <div className="flex items-start gap-3">
-          <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: "#0d5c63" }} />
-          <span className="font-medium" style={{ color: "#0d2b2e" }}>
+          <MapPin size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
+          <span className="font-medium text-neutral-700">
             {address}
           </span>
         </div>
 
         {/* Horarios */}
         <div className="flex items-start gap-3">
-          <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: "#0d5c63" }} />
+          <Clock size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
           <div>
-            <p className="font-bold" style={{ color: "#0d2b2e" }}>{days}</p>
-            <p className="text-xs" style={{ color: "#4a7c80" }}>{hours}</p>
+            <p className="font-bold text-neutral-700">{days}</p>
+            <p className="text-xs text-neutral-500">{hours}</p>
           </div>
         </div>
 
         {/* Teléfono (Opcional) */}
         {phone && (
           <div className="flex items-start gap-3">
-            <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: "#0d5c63" }} />
+            <Phone size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
             <a 
               href={`tel:${phone.replace(/\s+/g, '')}`} 
-              className="font-medium hover:underline transition-all" 
-              style={{ color: "#0d2b2e" }}
+              className="font-medium hover:underline text-neutral-700 hover:text-cyan-600 transition-colors" 
             >
               {phone}
             </a>
@@ -89,19 +86,23 @@ export default function LocationCard({
         )}
       </div>
 
-      {/* Botón de Cómo Llegar */}
+      {/* Botón de Cómo Llegar (Cian con texto blanco) */}
       <button
         type="button"
         onClick={handleDirectionsClick}
-        className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group"
+        className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group cursor-pointer"
         style={{
-          background: "#0d5c63",
-          color: "#ffffff",
+          background: "#06b6d4", // cyan-500
+          color: "#ffffff",      // Texto blanco
           borderRadius: "14px",
           fontSize: "13px",
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = "#083d42")}
-        onMouseLeave={e => (e.currentTarget.style.background = "#0d5c63")}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = "#0891b2"; // cyan-600
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = "#06b6d4"; // cyan-500
+        }}
       >
         <Navigation size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         Cómo llegar
