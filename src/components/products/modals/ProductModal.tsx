@@ -17,15 +17,15 @@ interface Props {
   onSuccess?: () => void;
 }
 
-// ── Estilos reutilizables ──────────────────────────────────────────────
+// ── Estilos reutilizables adaptados a la paleta Cyan ───────────────────
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  background: "#f0fafa",
-  border: "1px solid #b2dede",
+  background: "#f8fafc", // Fondo slate-50 más limpio
+  border: "1px solid #c2f3f8", // Borde suave cyan
   borderRadius: "12px",
   padding: "12px",
   fontSize: "14px",
-  color: "#0d2b2e",
+  color: "#0f172a", // Texto oscuro slate-900
   outline: "none",
 };
 
@@ -98,36 +98,36 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     createPortal(
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto"
-        style={{ background: "rgba(7,26,24,0.75)", backdropFilter: "blur(6px)" }}
+        style={{ background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(6px)" }} // Backdrop optimizado
       >
         <div
-          className="w-full max-w-4xl my-auto shadow-2xl relative"
-          style={{ background: "#ffffff", border: "1px solid #b2dede", borderRadius: "24px" }}
+          className="w-full max-w-4xl my-auto shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+          style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "24px" }}
         >
           {/* Header */}
           <div
             className="p-6 flex justify-between items-center sticky top-0 z-10"
             style={{
-              borderBottom: "1px solid #b2dede",
+              borderBottom: "1px solid #e2e8f0",
               background: "#ffffff",
               borderRadius: "24px 24px 0 0",
             }}
           >
             <h2
               className="text-xl font-black uppercase italic flex items-center gap-2"
-              style={{ color: "#083d42" }}
+              style={{ color: "#0f172a" }}
             >
               {isEdit
-                ? <Edit3 size={20} style={{ color: "#0d5c63" }} />
-                : <Package size={20} style={{ color: "#0d5c63" }} />}
+                ? <Edit3 size={20} style={{ color: "#06b6d4" }} />
+                : <Package size={20} style={{ color: "#06b6d4" }} />}
               {isEdit ? "Editar Producto" : "Nuevo Producto"}
             </h2>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              style={{ color: "#4a7c80" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#083d42")}
-              onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#4a7c80")}
+              style={{ color: "#94a3b8", transition: "color 0.2s" }}
+              onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#0f172a")}
+              onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#94a3b8")}
             >
               <X size={24} />
             </button>
@@ -165,24 +165,24 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
               </select>
             </div>
 
-            {/* MODIFICADO - Fila 2: Precio base, Precio techo (maxPrice), Costo, Proveedor */}
+            {/* Fila 2: Precio base, Precio techo (maxPrice), Costo, Proveedor */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <input
                 type="number" step="0.01" placeholder="Precio venta (Base)"
-                style={{ ...inputStyle, color: "#0d5c63", fontWeight: 600 }}
+                style={{ ...inputStyle, color: "#0891b2", fontWeight: 600 }}
                 value={formData.price}
                 onChange={(e) => setField("price", e.target.value)}
                 required
               />
               <input
                 type="number" step="0.01" placeholder="Precio techo (Opcional)"
-                style={{ ...inputStyle, color: "#e06666", fontWeight: 600 }}
+                style={{ ...inputStyle, color: "#ef4444", fontWeight: 600 }}
                 value={formData.maxPrice || ""}
                 onChange={(e) => setField("maxPrice", e.target.value)}
               />
               <input
                 type="number" step="0.01" placeholder="Precio costo"
-                style={{ ...inputStyle, color: "#4a7c80", fontWeight: 600 }}
+                style={{ ...inputStyle, color: "#64748b", fontWeight: 600 }}
                 value={formData.cost}
                 onChange={(e) => setField("cost", e.target.value)}
                 required
@@ -209,11 +209,11 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <div className="space-y-4">
               <div
                 className="flex justify-between pb-2"
-                style={{ borderBottom: "1px solid #b2dede" }}
+                style={{ borderBottom: "1px solid #e2e8f0" }}
               >
                 <span
                   className="text-[10px] font-black uppercase tracking-widest"
-                  style={{ color: "#4a7c80" }}
+                  style={{ color: "#64748b" }}
                 >
                   Variantes
                 </span>
@@ -222,7 +222,10 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                   disabled={!formData.subCategoryId}
                   onClick={addVariant}
                   className="text-[10px] font-bold uppercase transition-colors"
-                  style={{ color: formData.subCategoryId ? "#0d5c63" : "#b2dede", cursor: formData.subCategoryId ? "pointer" : "not-allowed" }}
+                  style={{ 
+                    color: formData.subCategoryId ? "#06b6d4" : "#cbd5e1", 
+                    cursor: formData.subCategoryId ? "pointer" : "not-allowed" 
+                  }}
                 >
                   + Agregar Variante
                 </button>
@@ -256,17 +259,16 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 font-black uppercase transition-all"
+              className="w-full py-4 font-black uppercase tracking-wider text-sm transition-all shadow-md shadow-cyan-500/10"
               style={{
-                background: loading ? "#b2dede" : "#0d5c63",
+                background: loading ? "#c2f3f8" : "#06b6d4",
                 color: "#ffffff",
                 borderRadius: "16px",
-                fontSize: "14px",
                 border: "none",
                 cursor: loading ? "not-allowed" : "pointer",
               }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#083d42"; }}
-              onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#0d5c63"; }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#0891b2"; }}
+              onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#06b6d4"; }}
             >
               {loading ? "Procesando..." : isEdit ? "Guardar Cambios" : "Crear Producto"}
             </button>
@@ -280,26 +282,26 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     <button
       onClick={() => setIsOpen(true)}
       className="text-[10px] font-bold uppercase transition-colors"
-      style={{ color: "#4a7c80" }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#0d5c63")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#4a7c80")}
+      style={{ color: "#64748b" }}
+      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#06b6d4")}
+      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#64748b")}
     >
       Editar
     </button>
   ) : (
     <button
       onClick={() => setIsOpen(true)}
-      className="font-bold uppercase px-4 py-2 transition-all"
+      className="font-bold uppercase px-4 py-2 transition-all shadow-md shadow-cyan-500/10"
       style={{
-        background: "#0d5c63",
+        background: "#06b6d4",
         color: "#ffffff",
         borderRadius: "10px",
         fontSize: "13px",
         border: "none",
         cursor: "pointer",
       }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = "#083d42")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = "#0d5c63")}
+      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = "#0891b2")}
+      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = "#06b6d4")}
     >
       + Nuevo Producto
     </button>
