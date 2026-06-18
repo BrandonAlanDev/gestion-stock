@@ -62,7 +62,7 @@ const ProductCard = ({ product }: Props) => {
           {isNew && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ background: "#0d5c63", color: "#ffffff", borderRadius: "4px" }}
+              style={{ background: "#06b6d4", color: "#ffffff", borderRadius: "4px" }} // <-- Cambiado a Cyan de la marca
             >
               Nuevo
             </span>
@@ -70,7 +70,7 @@ const ProductCard = ({ product }: Props) => {
           {totalStock <= 0 && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ background: "rgba(0,0,0,0.06)", color: "#4a7c80", borderRadius: "4px" }}
+              style={{ background: "rgba(6,182,212,0.1)", color: "#0891b2", borderRadius: "4px" }} // <-- Ajustado a un Cyan lavado con texto oscuro
             >
               Consultar stock
             </span>
@@ -79,7 +79,7 @@ const ProductCard = ({ product }: Props) => {
 
         <div
           className="overflow-hidden mb-5 relative"
-          style={{ background: "#f4f7f7", borderRadius: "12px", aspectRatio: "3 / 4" }}
+          style={{ background: "#f8fafc", borderRadius: "12px", aspectRatio: "3 / 4" }} // <-- Un fondo levemente más limpio (slate-50)
         >
           <Image
             src={images[currentImage] || "/images/placeholder.avif"}
@@ -94,7 +94,7 @@ const ProductCard = ({ product }: Props) => {
           {/* Nombre superpuesto */}
           <h3
             className="absolute bottom-4 left-0 right-0 text-center font-black uppercase italic px-3 line-clamp-2"
-            style={{ color: "#083d42", fontSize: "22px", letterSpacing: "-0.02em" }}
+            style={{ color: "#0f172a", fontSize: "22px", letterSpacing: "-0.02em" }} // <-- Cambiado a Slate-900 para que contraste y no compita con el cyan del fondo
           >
             {product.name}
           </h3>

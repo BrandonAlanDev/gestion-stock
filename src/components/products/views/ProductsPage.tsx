@@ -136,7 +136,7 @@ const ProductsPage = ({
             <p className="text-slate-500 mt-2">Explora lo último en deporte.</p>
           </div>
           <select
-            className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-accent outline-none cursor-pointer text-teal-400 font-bold"
+            className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-cyan-500 outline-none cursor-pointer text-cyan-500 font-bold"
             onChange={(e) => {
               const [key, order] = e.target.value.split("-");
               setSortConfig({ key, order });
@@ -158,8 +158,8 @@ const ProductsPage = ({
             <div className="space-y-2">
               <button
                 onClick={handleClearAllCategories}
-                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold ${selectedCat === "Todos"
-                  ? "bg-primary text-teal-400"
+                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedCat === "Todos"
+                  ? "bg-cyan-500/10 text-cyan-600"
                   : "text-slate-600 hover:bg-slate-100"
                   }`}
               >
@@ -174,14 +174,14 @@ const ProductsPage = ({
                   <div key={cat.id}>
                     <button
                       onClick={() => handleCategoryClick(cat)}
-                      className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm ${isCurrentCatSelected
-                        ? "bg-primary text-teal-400"
+                      className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCurrentCatSelected
+                        ? "bg-cyan-500/10 text-cyan-600 font-semibold"
                         : "text-slate-600 hover:bg-slate-100"
                         }`}
                     >
                       <span>{cat.name}</span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180 text-teal-400" : ""}`}
+                        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180 text-cyan-500" : ""}`}
                       />
                     </button>
                     <AnimatePresence>
@@ -194,9 +194,9 @@ const ProductsPage = ({
                         >
                           <button
                             onClick={() => handleTodoSubClick(cat.name)}
-                            className={`block text-left px-3 py-1.5 text-xs ${isCurrentCatSelected && selectedSub === "Todos"
-                              ? "text-teal-400 font-bold"
-                              : "text-slate-500"
+                            className={`block text-left px-3 py-1.5 text-xs transition-colors ${isCurrentCatSelected && selectedSub === "Todos"
+                              ? "text-cyan-500 font-bold"
+                              : "text-slate-500 hover:text-slate-800"
                               }`}
                           >
                             • Todo {cat.name}
@@ -209,9 +209,9 @@ const ProductsPage = ({
                               <button
                                 key={sub.id}
                                 onClick={() => handleSubCategoryClick(cat.name, sub.name)}
-                                className={`block text-left px-3 py-1.5 text-xs ${isSubActive
-                                  ? "text-teal-400 font-bold"
-                                  : "text-slate-500"
+                                className={`block text-left px-3 py-1.5 text-xs transition-colors ${isSubActive
+                                  ? "text-cyan-500 font-bold"
+                                  : "text-slate-500 hover:text-slate-800"
                                   }`}
                               >
                                 {sub.name}
@@ -236,12 +236,12 @@ const ProductsPage = ({
                 ))}
               </div>
             ) : (
-              <div className="h-96 flex flex-col items-center justify-center bg-white rounded-3xl border-dashed border-slate-200">
+              <div className="h-96 flex flex-col items-center justify-center bg-white rounded-3xl border-dashed border-slate-200 border-2">
                 <SlidersHorizontal className="w-12 h-12 text-slate-300 mb-4" />
                 <p className="text-slate-500 font-medium">No se encontraron productos</p>
                 <button
                   onClick={handleClearAllCategories}
-                  className="mt-4 text-accent font-bold hover:underline"
+                  className="mt-4 text-cyan-500 font-bold hover:text-cyan-600 hover:underline transition-colors"
                 >
                   Limpiar filtros
                 </button>

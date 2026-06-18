@@ -14,21 +14,21 @@ export default async function CategoriesAdminPage() {
   ]);
 
   return (
-    <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+    <div className="p-8 min-h-screen pt-24" style={{ background: "#f8fafc", color: "#0f172a" }}>
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1
             className="text-3xl font-black uppercase italic flex items-center gap-3"
-            style={{ color: "#083d42" }}
+            style={{ color: "#0f172a" }}
           >
-            <Tag style={{ color: "#0d5c63" }} />
+            <Tag style={{ color: "#06b6d4" }} />
             Estructura de Catálogo
           </h1>
           <p
             className="text-[10px] font-black uppercase mt-1"
-            style={{ color: "#4a7c80", letterSpacing: "0.4em" }}
+            style={{ color: "#64748b", letterSpacing: "0.4em" }}
           >
             Gestión de categorías y subgrupos de NewSurfBoard
           </p>
@@ -41,23 +41,23 @@ export default async function CategoriesAdminPage() {
         {categories.map((cat: any) => (
           <div
             key={cat.id}
-            className="flex flex-col relative"
+            className="flex flex-col relative border shadow-sm"
             style={{
               background: "#ffffff",
-              border: "1px solid #b2dede",
-              borderRadius: "2.5rem",
+              borderColor: "#e2e8f0",
+              borderRadius: "2rem",
               padding: "1.5rem",
             }}
           >
             {/* Badge + edit */}
             <div className="flex justify-between items-start mb-4">
               <div
-                className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase"
+                className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase border"
                 style={{
-                  color: "#0d5c63",
-                  background: "rgba(13,92,99,0.08)",
-                  border: "1px solid rgba(13,92,99,0.2)",
-                  borderRadius: "10px",
+                  color: "#0891b2",
+                  background: "rgba(6, 182, 212, 0.06)",
+                  borderColor: "#c2f3f8",
+                  borderRadius: "8px",
                 }}
               >
                 <FolderDot size={12} />
@@ -69,7 +69,7 @@ export default async function CategoriesAdminPage() {
             {/* Nombre categoría */}
             <h3
               className="text-2xl font-black uppercase italic mb-6"
-              style={{ color: "#083d42" }}
+              style={{ color: "#0f172a" }}
             >
               {cat.name}
             </h3>
@@ -78,7 +78,7 @@ export default async function CategoriesAdminPage() {
             <div className="flex-1 space-y-3">
               <h4
                 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
-                style={{ color: "#4a7c80" }}
+                style={{ color: "#64748b" }}
               >
                 <Layers size={12} /> Subcategorías Actuales
               </h4>
@@ -87,23 +87,23 @@ export default async function CategoriesAdminPage() {
                 {cat.subCategories?.map((sub: any) => (
                   <div
                     key={sub.id}
-                    className="flex justify-between items-center p-3"
+                    className="flex justify-between items-center p-3 border"
                     style={{
-                      background: "#f0fafa",
-                      border: "1px solid #b2dede",
-                      borderRadius: "16px",
+                      background: "#f8fafc",
+                      borderColor: "#e2e8f0",
+                      borderRadius: "14px",
                     }}
                   >
                     <div>
                       <p
                         className="text-xs font-bold uppercase"
-                        style={{ color: "#083d42" }}
+                        style={{ color: "#0f172a" }}
                       >
                         {sub.name}
                       </p>
                       <p
-                        className="text-[8px] font-black uppercase"
-                        style={{ color: "#4ab8b8" }}
+                        className="text-[8px] font-black uppercase mt-0.5"
+                        style={{ color: "#06b6d4" }}
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
@@ -113,15 +113,15 @@ export default async function CategoriesAdminPage() {
                 ))}
 
                 {(!cat.subCategories || cat.subCategories.length === 0) && (
-                  <p className="text-[10px] italic" style={{ color: "#b2dede" }}>
-                    No hay subcategorías.
+                  <p className="text-[10px] italic px-1" style={{ color: "#94a3b8" }}>
+                    No hay subcategorías registradas.
                   </p>
                 )}
               </div>
             </div>
 
             {/* Formulario agregar subcategoría */}
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #e0f5f5" }}>
+            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #f1f5f9" }}>
               <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} />
             </div>
           </div>
