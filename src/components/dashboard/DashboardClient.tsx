@@ -47,15 +47,15 @@ export default function DashboardClient() {
   };
 
   return (
-    <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+    <div className="p-8 min-h-screen pt-24" style={{ background: "#f8fafc", color: "#0f172a" }}>
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3" style={{ color: "#083d42" }}>
-            <span className="w-2 h-8 rounded-full inline-block" style={{ background: "#0d5c63" }} />
+          <h1 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3" style={{ color: "#0f172a" }}>
+            <span className="w-2 h-8 rounded-full inline-block" style={{ background: "#06b6d4" }} />
             Gestión de Inventario
           </h1>
-          <p className="text-[10px] font-black uppercase mt-1 ml-5" style={{ color: "#4a7c80", letterSpacing: "0.4em" }}>
+          <p className="text-[10px] font-black uppercase mt-1 ml-5" style={{ color: "#0891b2", letterSpacing: "0.4em" }}>
             Control de Stock y Operaciones
           </p>
         </div>
@@ -83,10 +83,10 @@ export default function DashboardClient() {
 
       {/* TABLA */}
       {isLoading && (
-        <div className="text-center py-12 text-[#4a7c80]">Cargando productos...</div>
+        <div className="text-center py-12 text-cyan-600 font-medium">Cargando productos...</div>
       )}
       {isError && (
-        <div className="text-center py-12 text-red-500">Error: {(error as Error).message}</div>
+        <div className="text-center py-12 text-red-500 font-medium">Error: {(error as Error).message}</div>
       )}
       {!isLoading && !isError && (
         <>
@@ -101,7 +101,7 @@ export default function DashboardClient() {
           {/* PAGINACIÓN */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between text-sm mt-6">
-              <span className="text-[#4a7c80] font-medium">
+              <span className="text-slate-500 font-medium">
                 Página {page} de {totalPages}
               </span>
               <div className="flex gap-2">
@@ -109,7 +109,7 @@ export default function DashboardClient() {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   className="px-4 py-2 rounded-xl font-bold uppercase text-xs tracking-wider transition-all disabled:opacity-50"
-                  style={{ background: "#e0f5f5", color: "#0d5c63" }}
+                  style={{ background: "rgba(6, 182, 212, 0.08)", color: "#0891b2" }}
                 >
                   ← Anterior
                 </button>
@@ -117,7 +117,7 @@ export default function DashboardClient() {
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   className="px-4 py-2 rounded-xl font-bold uppercase text-xs tracking-wider transition-all disabled:opacity-50"
-                  style={{ background: "#e0f5f5", color: "#0d5c63" }}
+                  style={{ background: "rgba(6, 182, 212, 0.08)", color: "#0891b2" }}
                 >
                   Siguiente →
                 </button>
