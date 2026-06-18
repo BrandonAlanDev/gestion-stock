@@ -8,11 +8,12 @@ import { Loader2 } from "lucide-react";
 
 const WA_NUMBER = "5492234214414";
 
+// --- NUEVA PALETA BASADA EN CIAN ---
 const T = {
   surface: "#ffffff",
-  tealDk:  "#0d5c63",
-  tealMd:  "#1a8a8a",
-  accent:  "rgba(13,92,99,0.10)",
+  cyanDk:  "#0891b2", // Cian oscuro para textos destacados y badges
+  cyanMd:  "#06b6d4", // Cian principal de la marca
+  accent:  "rgba(6,182,212,0.06)", // Fondo muy sutil para selecciones activas
 } as const;
 
 type BoardType = {
@@ -49,8 +50,8 @@ function WhatsAppIcon() {
 function StepBadge({ n }: { n: number }) {
   return (
     <span style={{
-      width:24, height:24, borderRadius:"50%", background: T.tealDk, color:"#e8f5f5",
-      fontSize:11, fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+      width:24, height:24, borderRadius:"50%", background: T.cyanMd, color:"#ffffff",
+      fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
     }}>{n}</span>
   );
 }
@@ -59,10 +60,10 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   return (
     <button onClick={onClick} style={{
       padding:"8px 16px", borderRadius:8, fontSize:13, cursor:"pointer", transition:"all 0.12s",
-      fontWeight: active ? 500 : 400,
-      border: active ? `1.5px solid ${T.tealMd}` : "0.5px solid #d1d5db",
+      fontWeight: active ? 700 : 400,
+      border: active ? `1.5px solid ${T.cyanMd}` : "0.5px solid #d1d5db",
       background: active ? T.accent : T.surface,
-      color: active ? T.tealDk : "#6b7280",
+      color: active ? T.cyanDk : "#6b7280",
     }}>{label}</button>
   );
 }
@@ -91,7 +92,7 @@ function BoardPreview({ state, options }: { state: State; options: BoardOptions 
   const fins = FIN_POSITIONS[configObj?.count ?? 0] ?? [];
   return (
     <svg width="60" height="160" viewBox="0 0 60 160" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink:0 }}>
-      <path d={boardPath} fill={T.tealMd} opacity={0.9} />
+      <path d={boardPath} fill={T.cyanMd} opacity={0.9} />
       <path d={tailPath}  fill="none" stroke="white" strokeWidth={1.5} opacity={0.6} />
       {fins.map(([cx,cy],i) => <ellipse key={i} cx={cx} cy={cy} rx={3} ry={6} fill="white" opacity={0.75} />)}
     </svg>
@@ -151,8 +152,8 @@ export default function PersonalizadoPage() {
 
   if (!options) {
     return (
-      <main style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f4f7f7" }}>
-        <Loader2 className="animate-spin" size={48} color={T.tealMd} />
+      <main style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f8fafc" }}>
+        <Loader2 className="animate-spin" size={48} color={T.cyanMd} />
       </main>
     );
   }
@@ -163,18 +164,18 @@ export default function PersonalizadoPage() {
   const validConfigs = sel?.allowedConfigs.map(c => c.name) ?? [];
 
   return (
-    <main style={{ minHeight:"100vh", background:"#f4f7f7", paddingTop:40, paddingBottom:60, paddingLeft:16, paddingRight:16 }}>
+    <main style={{ minHeight:"100vh", background:"#f8fafc", paddingTop:110, paddingBottom:60, paddingLeft:16, paddingRight:16 }}>
       <div style={{ maxWidth:640, margin:"0 auto" }}>
 
         <div style={{ marginBottom:28 }}>
-          <p style={{ fontSize:11, fontWeight:600, letterSpacing:3, textTransform:"uppercase", color:T.tealMd, marginBottom:4 }}>NewSurfBoard</p>
-          <h1 style={{ fontSize:28, fontWeight:600, color:"#0d1f1f", margin:"0 0 4px" }}>Diseñá tu tabla</h1>
-          <p style={{ fontSize:14, color:"#6b7280", margin:0 }}>Personalizá cada detalle y te mandamos el pedido por WhatsApp.</p>
+          <p style={{ fontSize:11, fontWeight:600, letterSpacing:3, textTransform:"uppercase", color:T.cyanMd, marginBottom:4 }}>NewSurfBoard</p>
+          <h1 style={{ fontSize:28, fontWeight:900, textTransform:"uppercase", letterSpacing:"-0.03em", fontStyle:"italic", color:"#0f172a", margin:"0 0 4px" }}>Diseñá tu tabla</h1>
+          <p style={{ fontSize:14, color:"#64748b", margin:0 }}>Personalizá cada detalle y te mandamos el pedido por WhatsApp.</p>
         </div>
 
         {/* Tipo */}
         <div style={card}>
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={1} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Tipo de tabla</span></div>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={1} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Tipo de tabla</span></div>
           <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
             {options.types.map(t => <Chip key={t.name} label={t.name} active={s.tipo===t.name} onClick={() => toggle("tipo")(t.name)} />)}
           </div>
@@ -184,7 +185,7 @@ export default function PersonalizadoPage() {
           <div>
             {/* Medidas */}
             <div style={card}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={2} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Medidas</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={2} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Medidas</span></div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
                 {([
                   { key:"largo" as const, label:"Largo", unit:"pies", ph:"6.2", min:4, max:12, step:0.1 },
@@ -193,10 +194,10 @@ export default function PersonalizadoPage() {
                   { key:"volumen" as const, label:"Volumen (opcional)", unit:"litros", ph:"32", min:20, max:100, step:0.5 },
                 ]).map(({ key, label, unit, ph, min, max, step }) => (
                   <div key={key}>
-                    <label style={{ display:"block", fontSize:11, fontWeight:500, color:"#9ca3af", textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>{label}</label>
+                    <label style={{ display:"block", fontSize:11, fontWeight:600, color:"#94a3b8", textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>{label}</label>
                     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                       <input type="number" value={s[key]} onChange={onInput(key)} placeholder={ph} min={min} max={max} step={step} style={{ ...inputSt, flex:1 }} />
-                      <span style={{ fontSize:11, color:"#9ca3af", whiteSpace:"nowrap" }}>{unit}</span>
+                      <span style={{ fontSize:11, color:"#94a3b8", whiteSpace:"nowrap" }}>{unit}</span>
                     </div>
                   </div>
                 ))}
@@ -205,7 +206,7 @@ export default function PersonalizadoPage() {
 
             {/* Material */}
             <div style={card}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={3} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Material de laminado</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={3} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Material de laminado</span></div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                 {options.materials.map(({ name, description }) => (
                   <Chip key={name} label={`${name}${description ? ` — ${description}` : ''}`} active={s.material===name} onClick={() => toggle("material")(name)} />
@@ -215,34 +216,34 @@ export default function PersonalizadoPage() {
 
             {/* Cola */}
             <div style={card}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={4} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Tipo de cola</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={4} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Tipo de cola</span></div>
               {validTails.length > 0
                 ? <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>{validTails.map(name => <Chip key={name} label={name} active={s.cola===name} onClick={() => toggle("cola")(name)} />)}</div>
-                : <p style={{ fontSize:13, color:"#6b7280", margin:0 }}>Este modelo no tiene opciones de cola especificadas.</p>}
+                : <p style={{ fontSize:13, color:"#64748b", margin:0 }}>Este modelo no tiene opciones de cola especificadas.</p>}
             </div>
 
             {/* Killas */}
             <div style={card}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={5} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Sistema de anclaje</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={5} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Sistema de anclaje</span></div>
               {validFins.length > 0
                 ? <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:20 }}>{validFins.map(name => <Chip key={name} label={name} active={s.killaTipo===name} onClick={() => toggle("killaTipo")(name)} />)}</div>
-                : <p style={{ fontSize:13, color:"#6b7280", margin:0, marginBottom:20 }}>Sin sistemas especificados.</p>}
+                : <p style={{ fontSize:13, color:"#64748b", margin:0, marginBottom:20 }}>Sin sistemas especificados.</p>}
 
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={6} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Configuración de killas</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={6} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Configuración de killas</span></div>
               {validConfigs.length > 0
                 ? <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>{validConfigs.map(name => <Chip key={name} label={name} active={s.killaCount===name} onClick={() => toggle("killaCount")(name)} />)}</div>
-                : <p style={{ fontSize:13, color:"#6b7280", margin:0 }}>Sin configuraciones especificadas.</p>}
+                : <p style={{ fontSize:13, color:"#64748b", margin:0 }}>Sin configuraciones especificadas.</p>}
             </div>
 
             {/* Notas */}
             <div style={card}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={7} /><span style={{ fontSize:14, fontWeight:500, color:"#1a2e2e" }}>Detalles adicionales</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={7} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Detalles adicionales</span></div>
               <textarea value={s.notas} onChange={onInput("notas")} rows={3} placeholder="Color, diseño de deck, grip, observaciones..." style={{ ...inputSt, resize:"vertical", lineHeight:1.6, padding:"10px 12px" }} />
             </div>
 
             {/* Preview */}
-            <div style={{ ...card, border:`0.5px solid ${T.tealDk}44` }}>
-              <p style={{ fontSize:11, fontWeight:600, letterSpacing:2, textTransform:"uppercase", color:T.tealMd, marginBottom:16 }}>Resumen de tu tabla</p>
+            <div style={{ ...card, border:`1px solid ${T.cyanMd}33` }}>
+              <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:"uppercase", color:T.cyanMd, marginBottom:16 }}>// Resumen de tu tabla</p>
               <div style={{ display:"flex", gap:20, alignItems:"flex-start" }}>
                 <BoardPreview state={s} options={options} />
                 <div style={{ flex:1, minWidth:0 }}>
@@ -262,11 +263,13 @@ export default function PersonalizadoPage() {
 
             {/* CTA */}
             <button onClick={complete ? handleSend : undefined} disabled={!complete || isSubmitting} style={{
-              width:"100%", padding:"16px", borderRadius:10, border:"none", fontSize:15, fontWeight:500,
+              width:"100%", padding:"16px", borderRadius:12, border:"none", fontSize:13, fontWeight:900,
+              textTransform:"uppercase", letterSpacing:1,
               cursor:(complete && !isSubmitting) ? "pointer" : "not-allowed",
-              background: complete ? "#25d366" : "#e5e7eb",
-              color: complete ? "#fff" : "#9ca3af",
-              display:"flex", alignItems:"center", justifyContent:"center", gap:12, transition:"background 0.15s",
+              background: complete ? T.cyanMd : "#e2e8f0",
+              color: complete ? "#fff" : "#94a3b8",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:12, transition:"all 0.2s",
+              boxShadow: complete ? "0 4px 14px rgba(6,182,212,0.3)" : "none"
             }}>
               {isSubmitting
                 ? <><Loader2 className="animate-spin" /> Guardando pedido...</>
