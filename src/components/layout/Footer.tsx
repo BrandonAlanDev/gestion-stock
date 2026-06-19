@@ -40,7 +40,6 @@ export function Footer({
           <div className="md:col-span-2 space-y-5">
             <span className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
               {pageConfig?.pageConfig?.storeName || <>GESTION<span className="text-cyan-500">OK</span></>}
-
             </span>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
               {pageConfig?.pageConfig?.description || "Tu tienda online de respaldo para tu comercio físico. Gestiona tu stock, exhibe tus productos y llega a más clientes con nuestra plataforma de ecommerce integrada."}
@@ -68,45 +67,51 @@ export function Footer({
             </div>
           </div>
 
-          {/* Tienda */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Tienda
-            </p>
-            <ul className="space-y-3">
-              {LINKS.tienda.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
-                  >
-                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* NUEVO CONTENEDOR: En móvil fuerza 2 columnas y en escritorio mantiene el flujo original */}
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-2 md:col-span-2">
+            
+            {/* Tienda */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Tienda
+              </p>
+              <ul className="space-y-3">
+                {LINKS.tienda.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
+                    >
+                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Info */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Información
-            </p>
-            <ul className="space-y-3">
-              {LINKS.info.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
-                  >
-                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Info */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Información
+              </p>
+              <ul className="space-y-3">
+                {LINKS.info.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
+                    >
+                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-cyan-500" />
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div> {/* Fin contenedor de columnas móviles */}
+
         </div>
       </div>
 
