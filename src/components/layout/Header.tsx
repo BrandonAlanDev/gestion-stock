@@ -9,8 +9,6 @@ import {
   Truck,
   Ruler,
   LogOut,
-  Menu,
-  X,
   User,
   History,
   Home,
@@ -67,6 +65,10 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.refresh();
@@ -82,8 +84,8 @@ export default function Header() {
     { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package }
   ];
 
-  // Cambiado de '/dashboard' a '/admin' para coincidir con tu nuevo layout
   const adminLinks = [
+    //{ href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard", label: "Productos", icon: Package },
     { href: "/categories", label: "Categorías", icon: Tags },
     { href: "/provider", label: "Proveedores", icon: Truck },
@@ -93,117 +95,210 @@ export default function Header() {
 
   if (status === "loading") return null;
 
+  const isAdmin = session?.user?.role === "ADMIN";
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${
-        isHomeTop && !isMenuOpen
-          ? "border-transparent bg-transparent"
-          : "backdrop-blur-xl shadow-sm"
-      }`}
-      style={{
-        backgroundColor: isHomeTop && !isMenuOpen ? "transparent" : secondaryColor,
-        borderColor: isHomeTop && !isMenuOpen ? "transparent" : overlayColor,
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-        
-        {/* LOGO Y NOMBRE */}
-        <Link href="/" className="flex items-center gap-3 z-50 transition-opacity hover:opacity-80">
-          {pageConfig?.pageConfig?.logo ? (
-            <img
-              src={pageConfig.pageConfig.logo}
-              alt="Logo"
-              className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-lg object-cover shadow-sm"
-            />
-          ) : (
-            <div
-              className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-lg flex items-center justify-center border"
-              style={{ backgroundColor: overlayColor, borderColor: primaryColor }}
-            >
-              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke={primaryColor} strokeWidth="2" strokeLinecap="round">
-                <path d="M2 12 Q6 6 12 12 Q18 18 22 12" />
-              </svg>
-            </div>
-          )}
-          <span
-            className="text-[16px] sm:text-lg font-bold tracking-tight"
-            style={{ color: currentTextColor }}
-          >
-            {pageConfig?.pageConfig?.storeName || (
-              <>GESTION<span style={{ color: primaryColor }}>OK</span></>
-            )}
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-2 sm:gap-4 z-50">
-          {session?.user?.role === "ADMIN" && (
-            <Link
-              href="/admin" 
-              className="hidden sm:flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all hover:opacity-80"
-              style={{
-                backgroundColor: isMenuOpen || !isHomeTop ? overlayColor : "rgba(255,255,255,0.15)",
-                color: currentTextColor,
-              }}
-            >
-              <LayoutDashboard size={14} style={{ color: primaryColor }} />
-              Panel Admin
-            </Link>
-          )}
-
-          <button
-            className="p-2.5 rounded-xl transition-colors cursor-pointer hover:scale-105 active:scale-95"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{ 
-              color: currentTextColor,
-              backgroundColor: isMenuOpen ? overlayHoverColor : "transparent"
-            }}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </div>
-
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out border-t ${
-          isMenuOpen ? "max-h-[85vh] opacity-100 overflow-y-auto shadow-2xl" : "max-h-0 opacity-0"
+    <>
+      {/* HEADER PRINCIPAL */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${
+          isHomeTop && !isMenuOpen
+            ? "border-transparent bg-transparent"
+            : "backdrop-blur-xl shadow-sm"
         }`}
         style={{
-          backgroundColor: secondaryColor,
-          borderColor: overlayColor,
+          backgroundColor: isHomeTop && !isMenuOpen ? "transparent" : secondaryColor,
+          borderColor: isHomeTop && !isMenuOpen ? "transparent" : overlayColor,
         }}
       >
-        <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           
-          {session?.user && (
-            <div className="flex items-center justify-between pb-4 sm:pb-6 border-b" style={{ borderColor: overlayColor }}>
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-inner"
-                  style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-                >
-                  {session.user.name?.[0]?.toUpperCase() || "U"}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm sm:text-base font-bold" style={{ color: headerTextColor }}>{session.user.name}</span>
-                  <span className="text-xs sm:text-sm opacity-60" style={{ color: headerTextColor }}>{session.user.email}</span>
-                </div>
-              </div>
-              
-              <button
-                onClick={handleLogout}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors hover:bg-red-500/10 text-red-500/80 hover:text-red-500"
+          {/* LOGO Y NOMBRE */}
+          <Link href="/" className="flex items-center gap-3 z-50 transition-opacity hover:opacity-80">
+            {pageConfig?.pageConfig?.logo ? (
+              <img
+                src={pageConfig.pageConfig.logo}
+                alt="Logo"
+                className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-lg object-cover shadow-sm"
+              />
+            ) : (
+              <div
+                className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-lg flex items-center justify-center border"
+                style={{ backgroundColor: overlayColor, borderColor: primaryColor }}
               >
-                <LogOut size={14} />
-                Salir
-              </button>
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke={primaryColor} strokeWidth="2" strokeLinecap="round">
+                  <path d="M2 12 Q6 6 12 12 Q18 18 22 12" />
+                </svg>
+              </div>
+            )}
+            <span
+              className="text-[16px] sm:text-lg font-bold tracking-tight"
+              style={{ color: currentTextColor }}
+            >
+              {pageConfig?.pageConfig?.storeName || (
+                <>GESTION<span style={{ color: primaryColor }}>OK</span></>
+              )}
+            </span>
+          </Link>
+
+          {/* BOTONES DERECHOS - SIEMPRE ARRIBA POR LA CAPA z-[110] */}
+          <div className="flex items-center gap-2 sm:gap-4 z-[110]">
+            {isAdmin && (
+              <Link
+                href="/admin" 
+                className="hidden sm:flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all hover:opacity-80"
+                style={{
+                  backgroundColor: isMenuOpen || !isHomeTop ? overlayColor : "rgba(255,255,255,0.15)",
+                  color: currentTextColor,
+                }}
+              >
+                <LayoutDashboard size={14} style={{ color: primaryColor }} />
+                Panel Admin
+              </Link>
+            )}
+
+            {/* BOTÓN HAMBURGUESA / CRUZ */}
+            <button
+              className="w-11 h-11 flex flex-col items-center justify-center gap-[6px] rounded-xl transition-colors cursor-pointer hover:scale-105 active:scale-95 group relative"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{ 
+                backgroundColor: isMenuOpen ? overlayHoverColor : "transparent"
+              }}
+            >
+              <span 
+                className={`w-6 h-[2px] rounded-full transition-all duration-300 origin-center ${
+                  isMenuOpen ? "rotate-45 translate-y-[8px]" : ""
+                }`}
+                style={{ backgroundColor: currentTextColor }}
+              />
+              <span 
+                className={`w-6 h-[2px] rounded-full transition-all duration-300 ${
+                  isMenuOpen ? "opacity-0 scale-x-0" : ""
+                }`}
+                style={{ backgroundColor: currentTextColor }}
+              />
+              <span 
+                className={`w-6 h-[2px] rounded-full transition-all duration-300 origin-center ${
+                  isMenuOpen ? "-rotate-45 -translate-y-[8px]" : ""
+                }`}
+                style={{ backgroundColor: currentTextColor }}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* MENU DESPLEGABLE EN PC */}
+        <div 
+          className="hidden sm:block overflow-hidden transition-all duration-300 ease-in-out backdrop-blur-md"
+          style={{
+            maxHeight: isMenuOpen ? "200px" : "0px",
+            backgroundColor: isDarkBg ? "rgba(0, 0, 0, 0.75)" : "rgba(255, 255, 255, 0.75)"
+          }}
+        >
+          <div className="max-w-4xl mx-auto py-6 px-6 flex flex-col gap-4">
+            {session?.user && (
+              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlayColor }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                    {session.user.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold" style={{ color: headerTextColor }}>{session.user.name}</span>
+                    <span className="text-[10px] opacity-60" style={{ color: headerTextColor }}>{session.user.email}</span>
+                  </div>
+                </div>
+                <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
+                  <LogOut size={14} /> Salir
+                </button>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-center gap-4">
+              {userLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
+                    style={{ 
+                      backgroundColor: isDarkBg ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", 
+                      color: headerTextColor 
+                    }}
+                  >
+                    <Icon size={16} style={{ color: primaryColor }} />
+                    <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* OVERLAY DE FONDO PARA CELULAR */}
+      {isMenuOpen && (
+        <div 
+          onClick={() => setIsMenuOpen(false)} 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] transition-opacity duration-300 sm:hidden"
+        />
+      )}
+
+      {/* =========================================
+         SIDEBAR LATERAL (CELULAR) - CON SEPARACIÓN A LA CRUZ
+         ========================================= */}
+      <aside 
+        className={`fixed inset-y-0 left-0 w-72 max-w-[78vw] h-full z-[100] flex flex-col justify-between p-6 transition-transform duration-300 ease-in-out sm:hidden backdrop-blur-lg ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ 
+          backgroundColor: isDarkBg ? "rgba(15, 15, 15, 0.75)" : "rgba(255, 255, 255, 0.75)", 
+        }}
+      >
+        <div 
+          className="space-y-6 overflow-y-auto flex-1 pt-16 pr-2"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          <style dangerouslySetInnerHTML={{__html: `
+            div::-webkit-scrollbar { display: none !important; }
+          `}} />
+
+          {/* NOMBRE DE LA TIENDA */}
+          <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: overlayColor }}>
+            <span className="text-sm font-black tracking-widest uppercase italic" style={{ color: headerTextColor }}>
+              {pageConfig?.pageConfig?.storeName || "VALEN"}
+            </span>
+          </div>
+
+          {/* SESIÓN DE USUARIO */}
+          {session?.user && (
+            <div className="flex items-center gap-3 py-2 px-1">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0"
+                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+              >
+                {session.user.name?.[0]?.toUpperCase() || "U"}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold truncate" style={{ color: headerTextColor }}>
+                  {session.user.name}
+                </span>
+                <span className="text-xs opacity-60 truncate" style={{ color: headerTextColor }}>
+                  {session.user.email}
+                </span>
+              </div>
             </div>
           )}
 
+          {/* LINKS DE NAVEGACIÓN */}
           <div className="flex flex-col gap-2">
             <span className="text-[10px] uppercase tracking-widest font-bold mb-1 px-2 opacity-50" style={{ color: headerTextColor }}>
               Navegación
             </span>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <nav className="flex flex-col gap-1.5">
               {userLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
@@ -211,28 +306,27 @@ export default function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex-1 flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl transition-all hover:scale-[1.02]"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
                     style={{
                       backgroundColor: isActive ? primaryColor : overlayColor,
                       color: isActive ? primaryTextColor : headerTextColor,
                     }}
                   >
-                    <Icon size={18} style={{ opacity: isActive ? 1 : 0.7 }} />
-                    <span className="text-sm font-semibold truncate">{link.label}</span>
+                    <Icon size={16} style={{ opacity: isActive ? 1 : 0.7 }} />
+                    <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
                   </Link>
                 );
               })}
-            </div>
+            </nav>
           </div>
 
-          {session?.user?.role === "ADMIN" && (
-            <div className="flex flex-col gap-2">
+          {/* LINKS DE ADMINISTRACIÓN */}
+          {isAdmin && (
+            <div className="flex flex-col gap-2 pt-2">
               <span className="text-[10px] uppercase tracking-widest font-bold mb-1 px-2 flex items-center gap-1.5" style={{ color: primaryColor }}>
                 <ShieldCheck size={12} /> Administración
               </span>
-              
-              <div className="flex flex-wrap gap-2">
+              <nav className="flex flex-col gap-1.5">
                 {adminLinks.map((link) => {
                   const Icon = link.icon;
                   const isActive = pathname === link.href;
@@ -240,8 +334,7 @@ export default function Header() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex-1 min-w-[140px] sm:min-w-[160px] flex items-center gap-2.5 px-3.5 py-3 rounded-lg border transition-all hover:bg-white/5"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border"
                       style={{
                         backgroundColor: isActive ? primaryColor : "transparent",
                         borderColor: isActive ? primaryColor : overlayColor,
@@ -249,53 +342,37 @@ export default function Header() {
                       }}
                     >
                       <Icon size={16} style={{ opacity: isActive ? 1 : 0.6 }} />
-                      <span className="text-xs sm:text-sm font-semibold truncate">{link.label}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
                     </Link>
                   );
                 })}
-              </div>
+              </nav>
             </div>
           )}
-
-          {/* Autenticación & Logout en Mobile */}
-          <div className="sm:hidden pt-2 mt-2 border-t" style={{ borderColor: overlayColor }}>
-            {session?.user ? (
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-center w-full gap-2 py-3 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity text-red-500/80 hover:text-red-500 hover:bg-red-500/5"
-              >
-                <LogOut size={16} />
-                Cerrar Sesión
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center justify-center w-full gap-2 py-3.5 rounded-xl font-bold uppercase tracking-wide text-sm transition-transform hover:scale-[1.02] shadow-md"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-              >
-                <User size={18} />
-                Iniciar Sesión
-              </Link>
-            )}
-          </div>
-          
-          {!session?.user && (
-            <div className="hidden sm:block pt-4 border-t" style={{ borderColor: overlayColor }}>
-              <Link
-                href="/login"
-                onClick={() => setIsMenuOpen(false)}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold uppercase tracking-wide text-sm transition-transform hover:scale-[1.02] shadow-md"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-              >
-                <User size={18} />
-                Iniciar Sesión
-              </Link>
-            </div>
-          )}
-
         </div>
-      </div>
-    </header>
+
+        {/* PIE DEL SIDEBAR (LOGOUT / LOGIN) */}
+        <div className="pt-4 border-t space-y-2" style={{ borderColor: overlayColor }}>
+          {session?.user ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wide text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+            >
+              <span>Cerrar Sesión</span>
+              <LogOut size={16} />
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center justify-center w-full gap-2 py-3.5 rounded-xl font-bold uppercase tracking-wide text-sm"
+              style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+            >
+              <User size={18} />
+              Iniciar Sesión
+            </Link>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
