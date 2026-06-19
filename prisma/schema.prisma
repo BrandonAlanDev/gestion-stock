@@ -193,7 +193,7 @@ model Movement {
 }
 
 model PageConfig {
-  id                 Int   @id @default(1)
+  id                 Int      @id @default(1)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   storeName          String
@@ -315,6 +315,48 @@ model BoardTailOptionToBoardTypeOption {
   @@map("_BoardTailOptionToBoardTypeOption")
 }
 
+model CustomPage {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  title     String
+  subtitle  String?         @db.Text
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  sections  CustomSection[]
+
+  @@map("CustomPages")
+}
+
+model CustomSection {
+  id       String              @id @default(cuid())
+  pageId   String
+  type     SectionType
+  title    String?
+  subtitle String?             @db.Text
+  order    Int                 @default(0)
+  config   Json?
+  page     CustomPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  items    CustomSectionItem[]
+
+  @@map("CustomPageSections")
+}
+
+model CustomSectionItem {
+  id          String        @id @default(cuid())
+  sectionId   String
+  title       String
+  description String?       @db.Text
+  image       String?
+  icon        String?
+  link        String?
+  order       Int           @default(0)
+  config      Json?
+  section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@map("CustomPageItems")
+}
+
 enum user_role {
   USER
   ADMIN
@@ -323,62 +365,6 @@ enum user_role {
 enum MovementType {
   IN
   OUT
-}
-
-model CustomPage {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  subtitle    String?
-  isActive    Boolean  @default(true)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  sections    CustomSection[]
-
-  @@map("CustomPages")
-}
-
-model CustomSection {
-  id          String   @id @default(cuid())
-
-  pageId      String
-  page        CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
-
-  type        SectionType
-
-  title       String?
-  subtitle    String?
-
-  order       Int      @default(0)
-
-  config      Json?
-
-  items       CustomSectionItem[]
-
-  @@map("CustomPageSections")
-}
-
-model CustomSectionItem {
-  id          String   @id @default(cuid())
-
-  sectionId   String
-  section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-
-  title       String
-  description String?
-
-  image       String?
-  icon        String?
-
-  link        String?
-
-  order       Int      @default(0)
-
-  config      Json?
-
-  @@map("CustomPageItems")
 }
 
 enum SectionType {
