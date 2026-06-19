@@ -1,10 +1,12 @@
 "use client";
+
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
 import { X, Package, Edit3 } from "lucide-react";
 import { getGarmentById } from "@/actions/garments";
 import { useProductForm } from "@/hooks/useProductForm";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import VariantRow from "@/components/products/forms/VariantRow";
 import ImageUploader from "@/components/products/forms/ImageUploader";
 
@@ -17,28 +19,54 @@ interface Props {
   onSuccess?: () => void;
 }
 
-// ── Estilos reutilizables adaptados a la paleta Cyan ───────────────────
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  background: "#f8fafc", // Fondo slate-50 más limpio
-  border: "1px solid #c2f3f8", // Borde suave cyan
-  borderRadius: "12px",
-  padding: "12px",
-  fontSize: "14px",
-  color: "#0f172a", // Texto oscuro slate-900
-  outline: "none",
-};
-
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  cursor: "pointer",
-};
+// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
 
 export default function ProductModal({ categories, sizes, providers, colors, garment, onSuccess }: Props) {
+  const pageConfig = usePageConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [fullGarment, setFullGarment] = useState<any>(null);
+
+  // Variables dinámicas de color
+  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
+  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
+
+  // Cálculos de legibilidad y contraste
+  const textColor = getContrastColor(secondaryColor);
+  const primaryTextColor = getContrastColor(primaryColor);
+  const isDarkBg = textColor === "#ffffff";
+
+  // Diseños de componentes basados en opacidad y contrastes dinámicos
+  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
+  const inputBg = isDarkBg ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.02)";
+  const backdropBg = isDarkBg ? "rgba(0, 0, 0, 0.7)" : "rgba(15, 23, 42, 0.5)";
+
+  // Configuración de estilos dinámicos de inputs y selectores
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    backgroundColor: inputBg,
+    border: `1px solid ${overlayBorder}`,
+    borderRadius: "12px",
+    padding: "12px",
+    fontSize: "14px",
+    color: textColor,
+    outline: "none",
+  };
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    cursor: "pointer",
+  };
 
   useEffect(() => {
     if (garment) {
@@ -87,7 +115,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     } catch (error) {
       toast.error("Ocurrió un error");
     } finally {
-      setLoading(false);
+      loading && setLoading(false);
     }
   };
 
@@ -98,36 +126,35 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     createPortal(
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto"
-        style={{ background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(6px)" }} // Backdrop optimizado
+        style={{ backgroundColor: backdropBg, backdropFilter: "blur(6px)" }}
       >
         <div
           className="w-full max-w-4xl my-auto shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
-          style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "24px" }}
+          style={{ backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}`, borderRadius: "24px" }}
         >
           {/* Header */}
           <div
             className="p-6 flex justify-between items-center sticky top-0 z-10"
             style={{
-              borderBottom: "1px solid #e2e8f0",
-              background: "#ffffff",
+              borderBottom: `1px solid ${overlayBorder}`,
+              backgroundColor: secondaryColor,
               borderRadius: "24px 24px 0 0",
             }}
           >
             <h2
               className="text-xl font-black uppercase italic flex items-center gap-2"
-              style={{ color: "#0f172a" }}
+              style={{ color: textColor }}
             >
               {isEdit
-                ? <Edit3 size={20} style={{ color: "#06b6d4" }} />
-                : <Package size={20} style={{ color: "#06b6d4" }} />}
+                ? <Edit3 size={20} style={{ color: primaryColor }} />
+                : <Package size={20} style={{ color: primaryColor }} />}
               {isEdit ? "Editar Producto" : "Nuevo Producto"}
             </h2>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              style={{ color: "#94a3b8", transition: "color 0.2s" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#0f172a")}
-              onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#94a3b8")}
+              className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
+              style={{ color: textColor }}
             >
               <X size={24} />
             </button>
@@ -150,18 +177,22 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 required
               >
-                <option value="">Categoría...</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="" style={{ backgroundColor: secondaryColor }}>Categoría...</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id} style={{ backgroundColor: secondaryColor }}>{c.name}</option>
+                ))}
               </select>
               <select
-                style={{ ...selectStyle, opacity: !formData.categoryId ? 0.5 : 1 }}
+                style={{ ...selectStyle, opacity: !formData.categoryId ? 0.4 : 1 }}
                 value={formData.subCategoryId}
                 onChange={(e) => handleSubCategoryChange(e.target.value)}
                 disabled={!formData.categoryId}
                 required
               >
-                <option value="">Subcategoría...</option>
-                {availableSubCategories.map((sc: any) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+                <option value="" style={{ backgroundColor: secondaryColor }}>Subcategoría...</option>
+                {availableSubCategories.map((sc: any) => (
+                  <option key={sc.id} value={sc.id} style={{ backgroundColor: secondaryColor }}>{sc.name}</option>
+                ))}
               </select>
             </div>
 
@@ -169,20 +200,20 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <input
                 type="number" step="0.01" placeholder="Precio venta (Base)"
-                style={{ ...inputStyle, color: "#0891b2", fontWeight: 600 }}
+                style={{ ...inputStyle, color: primaryColor, fontWeight: 700 }}
                 value={formData.price}
                 onChange={(e) => setField("price", e.target.value)}
                 required
               />
               <input
                 type="number" step="0.01" placeholder="Precio techo (Opcional)"
-                style={{ ...inputStyle, color: "#ef4444", fontWeight: 600 }}
+                style={{ ...inputStyle, color: "#ef4444", fontWeight: 700 }}
                 value={formData.maxPrice || ""}
                 onChange={(e) => setField("maxPrice", e.target.value)}
               />
               <input
                 type="number" step="0.01" placeholder="Precio costo"
-                style={{ ...inputStyle, color: "#64748b", fontWeight: 600 }}
+                style={{ ...inputStyle, opacity: 0.6, fontWeight: 700 }}
                 value={formData.cost}
                 onChange={(e) => setField("cost", e.target.value)}
                 required
@@ -192,8 +223,10 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 value={formData.supplierId}
                 onChange={(e) => setField("supplierId", e.target.value)}
               >
-                <option value="">Proveedor...</option>
-                {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="" style={{ backgroundColor: secondaryColor }}>Proveedor...</option>
+                {providers.map((p) => (
+                  <option key={p.id} value={p.id} style={{ backgroundColor: secondaryColor }}>{p.name}</option>
+                ))}
               </select>
             </div>
 
@@ -209,11 +242,11 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <div className="space-y-4">
               <div
                 className="flex justify-between pb-2"
-                style={{ borderBottom: "1px solid #e2e8f0" }}
+                style={{ borderBottom: `1px solid ${overlayBorder}` }}
               >
                 <span
-                  className="text-[10px] font-black uppercase tracking-widest"
-                  style={{ color: "#64748b" }}
+                  className="text-[10px] font-black uppercase tracking-widest opacity-50"
+                  style={{ color: textColor }}
                 >
                   Variantes
                 </span>
@@ -221,9 +254,10 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                   type="button"
                   disabled={!formData.subCategoryId}
                   onClick={addVariant}
-                  className="text-[10px] font-bold uppercase transition-colors"
+                  className="text-[10px] font-bold uppercase transition-opacity"
                   style={{ 
-                    color: formData.subCategoryId ? "#06b6d4" : "#cbd5e1", 
+                    color: formData.subCategoryId ? primaryColor : textColor, 
+                    opacity: formData.subCategoryId ? 1 : 0.3,
                     cursor: formData.subCategoryId ? "pointer" : "not-allowed" 
                   }}
                 >
@@ -259,16 +293,16 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 font-black uppercase tracking-wider text-sm transition-all shadow-md shadow-cyan-500/10"
+              className="w-full py-4 font-black uppercase tracking-wider text-sm transition-all shadow-md cursor-pointer"
               style={{
-                background: loading ? "#c2f3f8" : "#06b6d4",
-                color: "#ffffff",
+                backgroundColor: loading ? overlayBorder : primaryColor,
+                color: primaryTextColor,
                 borderRadius: "16px",
                 border: "none",
-                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1
               }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#0891b2"; }}
-              onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#06b6d4"; }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.9)"; }}
+              onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = "none"; }}
             >
               {loading ? "Procesando..." : isEdit ? "Guardar Cambios" : "Crear Producto"}
             </button>
@@ -281,27 +315,26 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   const trigger = isEdit ? (
     <button
       onClick={() => setIsOpen(true)}
-      className="text-[10px] font-bold uppercase transition-colors"
-      style={{ color: "#64748b" }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = "#06b6d4")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = "#64748b")}
+      className="text-[10px] font-bold uppercase transition-colors cursor-pointer opacity-50 hover:opacity-100"
+      style={{ color: textColor }}
+      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = primaryColor)}
+      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = textColor)}
     >
       Editar
     </button>
   ) : (
     <button
       onClick={() => setIsOpen(true)}
-      className="font-bold uppercase px-4 py-2 transition-all shadow-md shadow-cyan-500/10"
+      className="font-bold uppercase px-4 py-2 transition-all shadow-md cursor-pointer"
       style={{
-        background: "#06b6d4",
-        color: "#ffffff",
+        backgroundColor: primaryColor,
+        color: primaryTextColor,
         borderRadius: "10px",
         fontSize: "13px",
         border: "none",
-        cursor: "pointer",
       }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = "#0891b2")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = "#06b6d4")}
+      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.9)")}
+      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = "none")}
     >
       + Nuevo Producto
     </button>
