@@ -82,6 +82,7 @@ export default function Header() {
     { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package }
   ];
 
+  // Cambiado de '/dashboard' a '/admin' para coincidir con tu nuevo layout
   const adminLinks = [
     { href: "/dashboard", label: "Productos", icon: Package },
     { href: "/categories", label: "Categorías", icon: Tags },
@@ -137,7 +138,7 @@ export default function Header() {
         <div className="flex items-center gap-2 sm:gap-4 z-50">
           {session?.user?.role === "ADMIN" && (
             <Link
-              href="/dashboard"
+              href="/admin" 
               className="hidden sm:flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all hover:opacity-80"
               style={{
                 backgroundColor: isMenuOpen || !isHomeTop ? overlayColor : "rgba(255,255,255,0.15)",
@@ -267,7 +268,6 @@ export default function Header() {
                 Cerrar Sesión
               </button>
             ) : (
-              // Login
               <Link
                 href="/login"
                 onClick={() => setIsMenuOpen(false)}
