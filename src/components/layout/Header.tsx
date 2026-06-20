@@ -79,19 +79,10 @@ export default function Header() {
      LINKS DE NAVEGACIÓN
      ========================================= */
   const userLinks = [
-    { href: "/", label: "Home", icon: Home },
     { href: "/productos", label: "Catálogo", icon: Store },
     { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package }
   ];
 
-  const adminLinks = [
-    //{ href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard", label: "Productos", icon: Package },
-    { href: "/categories", label: "Categorías", icon: Tags },
-    { href: "/provider", label: "Proveedores", icon: Truck },
-    { href: "/sizes", label: "Talles", icon: Ruler },
-    { href: "/movements", label: "Historial", icon: History },
-  ];
 
   if (status === "loading") return null;
 
@@ -143,6 +134,14 @@ export default function Header() {
 
           {/* BOTONES DERECHOS - SIEMPRE ARRIBA POR LA CAPA z-[110] */}
           <div className="flex items-center gap-2 sm:gap-4 z-[110]">
+            {!session && (<Link
+              href="/login"
+              className="flex items-center justify-center w-full gap-2 py-3.5 rounded-xl font-bold uppercase tracking-wide text-sm"
+              style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+            >
+              <User size={18} />
+              Iniciar Sesión
+            </Link>)}
             {isAdmin && (
               <Link
                 href="/admin" 
@@ -319,36 +318,6 @@ export default function Header() {
               })}
             </nav>
           </div>
-
-          {/* LINKS DE ADMINISTRACIÓN */}
-          {isAdmin && (
-            <div className="flex flex-col gap-2 pt-2">
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-1 px-2 flex items-center gap-1.5" style={{ color: primaryColor }}>
-                <ShieldCheck size={12} /> Administración
-              </span>
-              <nav className="flex flex-col gap-1.5">
-                {adminLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border"
-                      style={{
-                        backgroundColor: isActive ? primaryColor : "transparent",
-                        borderColor: isActive ? primaryColor : overlayColor,
-                        color: isActive ? primaryTextColor : headerTextColor,
-                      }}
-                    >
-                      <Icon size={16} style={{ opacity: isActive ? 1 : 0.6 }} />
-                      <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
         </div>
 
         {/* PIE DEL SIDEBAR (LOGOUT / LOGIN) */}
