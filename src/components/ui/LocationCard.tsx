@@ -3,38 +3,46 @@ import { MapPin, Clock, Phone, Navigation } from "lucide-react";
 
 interface LocationCardProps {
   title?: string;
-  address: string;
-  city: string;
-  hours: string;
-  days: string;
-  phone?: string;
-  googleMapsUrl?: string;
+  days?: string;
+  hours?: string;
+  config: {
+    address: string | null;
+    city: string | null;
+    province?: string | null;
+    phone?: string | null;
+    whatsapp?: string | null;
+    mapsUrl?: string | null;
+  };
 }
 
 export default function LocationCard({
   title = "Nuestra Ubicación",
-  address,
-  city,
-  hours,
-  days,
-  phone,
-  googleMapsUrl,
+  days = "Lunes a Viernes",
+  hours = "09:00 - 18:00",
+  config,
 }: LocationCardProps) {
   
+  const { address, city, province, phone, whatsapp, mapsUrl } = config;
+
+  if (!address) return null;
+
   const handleDirectionsClick = () => {
-    if (googleMapsUrl) {
-      window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
+    if (mapsUrl) {
+      window.open(mapsUrl, "_blank", "noopener,noreferrer");
     } else {
-      const encodedAddress = encodeURIComponent(`${address}, ${city}`);
-      window.open(`http://googleusercontent.com/maps.google.com/${encodedAddress}`, "_blank");
+      const fullAddress = `${address}${city ? `, ${city}` : ""}${province ? `, ${province}` : ""}`;
+      const encodedAddress = encodeURIComponent(fullAddress);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
     }
   };
+
+  const contactPhone = whatsapp || phone;
 
   return (
     <div 
       className="w-full max-w-md p-6 shadow-xl border border-neutral-200 transition-all hover:shadow-2xl hover:shadow-cyan-500/5"
       style={{ 
-        background: "#ffffff", // Fondo Blanco
+        background: "#ffffff",
         borderRadius: "24px" 
       }}
     >
@@ -47,15 +55,16 @@ export default function LocationCard({
           <h3 className="text-lg font-black uppercase italic text-neutral-800">
             {title}
           </h3>
-          <p className="text-sm font-semibold text-cyan-600">
-            {city}
-          </p>
+          {city && (
+            <p className="text-sm font-semibold text-cyan-600">
+              {city}{province ? `, ${province}` : ""}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Detalles del Lugar */}
       <div className="space-y-4 my-5 text-sm">
-        {/* Dirección */}
         <div className="flex items-start gap-3">
           <MapPin size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
           <span className="font-medium text-neutral-700">
@@ -63,7 +72,6 @@ export default function LocationCard({
           </span>
         </div>
 
-        {/* Horarios */}
         <div className="flex items-start gap-3">
           <Clock size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
           <div>
@@ -72,36 +80,35 @@ export default function LocationCard({
           </div>
         </div>
 
-        {/* Teléfono (Opcional) */}
-        {phone && (
+        {contactPhone && (
           <div className="flex items-start gap-3">
             <Phone size={18} className="mt-0.5 flex-shrink-0 text-cyan-500" />
             <a 
-              href={`tel:${phone.replace(/\s+/g, '')}`} 
+              href={`tel:${contactPhone.replace(/\s+/g, '')}`} 
               className="font-medium hover:underline text-neutral-700 hover:text-cyan-600 transition-colors" 
             >
-              {phone}
+              {contactPhone}
             </a>
           </div>
         )}
       </div>
 
-      {/* Botón de Cómo Llegar (Cian con texto blanco) */}
+      {/* Botón de Cómo Llegar */}
       <button
         type="button"
         onClick={handleDirectionsClick}
         className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group cursor-pointer"
         style={{
-          background: "#06b6d4", // cyan-500
-          color: "#ffffff",      // Texto blanco
+          background: "#06b6d4",
+          color: "#ffffff",
           borderRadius: "14px",
           fontSize: "13px",
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.background = "#0891b2"; // cyan-600
+          e.currentTarget.style.background = "#0891b2";
         }}
         onMouseLeave={e => {
-          e.currentTarget.style.background = "#06b6d4"; // cyan-500
+          e.currentTarget.style.background = "#06b6d4";
         }}
       >
         <Navigation size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
