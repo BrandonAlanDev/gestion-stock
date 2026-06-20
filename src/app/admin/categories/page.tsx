@@ -1,36 +1,73 @@
-import { getCategories } from "@/actions/categories";
-import { getSizeTypes } from "@/actions/sizes";
+"use client";
+
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import ManageCategoryModal from "@/components/categories/modals/ManageCategoryModal";
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
 import { Tag, Layers, FolderDot } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getCategories } from "@/actions/categories";
+import { getSizeTypes } from "@/actions/sizes";
 
-export const dynamic = "force-dynamic";
+// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
 
-export default async function CategoriesAdminPage() {
-  const [categories, sizeTypes] = await Promise.all([
-    getCategories(),
-    getSizeTypes(),
-  ]);
+export default function CategoriesAdminPage() {
+  const pageConfig = usePageConfig();
+  const [categories, setCategories] = useState<any[]>([]);
+  const [sizeTypes, setSizeTypes] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  // Carga de datos del lado del cliente compartiendo la consistencia de estados
+  useEffect(() => {
+    Promise.all([getCategories(), getSizeTypes()]).then(([catData, sizeData]) => {
+      setCategories(catData || []);
+      setSizeTypes(sizeData || []);
+      setMounted(true);
+    });
+  }, []);
+
+  // Variables dinámicas de color
+  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
+  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
+
+  // Cálculos de legibilidad y contraste
+  const textColor = getContrastColor(secondaryColor);
+  const isDarkBg = textColor === "#ffffff";
+
+  // Estilos y bordes dinámicos basados en opacidad
+  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
+  const innerCardBg = isDarkBg ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.02)";
+  const pageBackground = isDarkBg ? "#0f172a" : "#f8fafc";
+
+  if (!mounted) return null;
 
   return (
-    <div className="p-8 min-h-screen pt-24" style={{ background: "#f8fafc", color: "#0f172a" }}>
+    <div className=" ml-60 p-6 sm:p-8 w-full mt-18 " style={{ backgroundColor: pageBackground, color: textColor }}>
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1
             className="text-3xl font-black uppercase italic flex items-center gap-3"
-            style={{ color: "#0f172a" }}
+            style={{ color: textColor }}
           >
-            <Tag style={{ color: "#06b6d4" }} />
+            <Tag style={{ color: primaryColor }} />
             Estructura de Catálogo
           </h1>
           <p
-            className="text-[10px] font-black uppercase mt-1"
-            style={{ color: "#64748b", letterSpacing: "0.4em" }}
+            className="text-[10px] font-black uppercase mt-1 opacity-50"
+            style={{ color: textColor, letterSpacing: "0.4em" }}
           >
-            Gestión de categorías y subgrupos de NewSurfBoard
+            Gestión de categorías y subgrupos
           </p>
         </div>
         <ManageCategoryModal sizeTypes={sizeTypes} />
@@ -43,8 +80,8 @@ export default async function CategoriesAdminPage() {
             key={cat.id}
             className="flex flex-col relative border shadow-sm"
             style={{
-              background: "#ffffff",
-              borderColor: "#e2e8f0",
+              backgroundColor: secondaryColor,
+              borderColor: overlayBorder,
               borderRadius: "2rem",
               padding: "1.5rem",
             }}
@@ -54,9 +91,9 @@ export default async function CategoriesAdminPage() {
               <div
                 className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase border"
                 style={{
-                  color: "#0891b2",
-                  background: "rgba(6, 182, 212, 0.06)",
-                  borderColor: "#c2f3f8",
+                  color: primaryColor,
+                  backgroundColor: isDarkBg ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.03)",
+                  borderColor: overlayBorder,
                   borderRadius: "8px",
                 }}
               >
@@ -69,7 +106,7 @@ export default async function CategoriesAdminPage() {
             {/* Nombre categoría */}
             <h3
               className="text-2xl font-black uppercase italic mb-6"
-              style={{ color: "#0f172a" }}
+              style={{ color: textColor }}
             >
               {cat.name}
             </h3>
@@ -77,8 +114,8 @@ export default async function CategoriesAdminPage() {
             {/* Subcategorías */}
             <div className="flex-1 space-y-3">
               <h4
-                className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
-                style={{ color: "#64748b" }}
+                className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 opacity-60"
+                style={{ color: textColor }}
               >
                 <Layers size={12} /> Subcategorías Actuales
               </h4>
@@ -89,21 +126,21 @@ export default async function CategoriesAdminPage() {
                     key={sub.id}
                     className="flex justify-between items-center p-3 border"
                     style={{
-                      background: "#f8fafc",
-                      borderColor: "#e2e8f0",
+                      backgroundColor: innerCardBg,
+                      borderColor: overlayBorder,
                       borderRadius: "14px",
                     }}
                   >
                     <div>
                       <p
                         className="text-xs font-bold uppercase"
-                        style={{ color: "#0f172a" }}
+                        style={{ color: textColor }}
                       >
                         {sub.name}
                       </p>
                       <p
                         className="text-[8px] font-black uppercase mt-0.5"
-                        style={{ color: "#06b6d4" }}
+                        style={{ color: primaryColor }}
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
@@ -113,7 +150,7 @@ export default async function CategoriesAdminPage() {
                 ))}
 
                 {(!cat.subCategories || cat.subCategories.length === 0) && (
-                  <p className="text-[10px] italic px-1" style={{ color: "#94a3b8" }}>
+                  <p className="text-[10px] italic px-1 opacity-40" style={{ color: textColor }}>
                     No hay subcategorías registradas.
                   </p>
                 )}
@@ -121,7 +158,7 @@ export default async function CategoriesAdminPage() {
             </div>
 
             {/* Formulario agregar subcategoría */}
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #f1f5f9" }}>
+            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: `1px solid ${overlayBorder}` }}>
               <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} />
             </div>
           </div>

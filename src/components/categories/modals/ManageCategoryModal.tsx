@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory } from "@/actions/categories";
 import { X, Edit2, Trash2, Tag, Loader2, Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +12,19 @@ interface ManageCategoryModalProps {
   variant?: "admin" | "tienda";
 }
 
+// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
+
 export default function ManageCategoryModal({ sizeTypes, category, variant = "tienda" }: ManageCategoryModalProps) {
+  const pageConfig = usePageConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
@@ -25,6 +38,16 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
   useEffect(() => {
     if (category) setFormData({ name: category.name || "" });
   }, [category]);
+
+  // Variables dinámicas de color para la variante tienda
+  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#0d5c63";
+  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
+  const textColor = getContrastColor(secondaryColor);
+  const isDarkBg = textColor === "#ffffff";
+
+  // Diseños reactivos basados en opacidades de la variante tienda
+  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)";
+  const innerBg = isDarkBg ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)";
 
   const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,49 +104,50 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     else { toast.success("Subcategoría removida"); }
   };
 
-  // ── ESTILOS POR VARIANTE ────────────────────────────────
+  // ── ESTILOS DINÁMICOS POR VARIANTE ────────────────────────────────
+  // ── ESTILOS DINÁMICOS POR VARIANTE ────────────────────────────────
   const styles = {
     overlay: isAdmin
       ? "bg-black/90 backdrop-blur-md"
-      : { background: "rgba(7,26,24,0.75)", backdropFilter: "blur(6px)" },
+      : { background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" },
     card: isAdmin
       ? "bg-neutral-950 border border-neutral-800"
-      : { background: "#ffffff", border: "1px solid #b2dede" },
+      : { backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}` },
     cardRounded: "rounded-[2.5rem]",
-    barColor: isEdit ? (isAdmin ? "bg-blue-500" : "#4ab8b8") : (isAdmin ? "bg-amber-500" : "#0d5c63"),
-    titleColor: isAdmin ? "text-white" : "#083d42",
-    titleIconColor: isEdit ? (isAdmin ? "text-blue-500" : "#4ab8b8") : (isAdmin ? "text-amber-500" : "#0d5c63"),
-    closeColor: isAdmin ? "text-neutral-500 hover:text-white" : "#4a7c80",
-    labelColor: isAdmin ? "text-neutral-500" : "#4a7c80",
+    barColor: isEdit ? (isAdmin ? "bg-blue-500" : primaryColor) : (isAdmin ? "bg-amber-500" : primaryColor),
+    titleColor: isAdmin ? "text-white" : textColor,
+    titleIconColor: isEdit ? (isAdmin ? "text-blue-500" : primaryColor) : (isAdmin ? "text-amber-500" : primaryColor),
+    closeColor: isAdmin ? "text-neutral-500 hover:text-white" : textColor,
+    labelColor: isAdmin ? "text-neutral-500" : textColor,
     labelLetterSpacing: "0.2em",
     input: isAdmin
       ? "bg-neutral-900 border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-neutral-700 transition-all font-medium"
-      : { background: "#f0fafa", border: "1px solid #b2dede", borderRadius: "16px", padding: "14px 16px", color: "#0d2b2e", fontSize: "14px", fontWeight: 500, outline: "none", width: "100%" },
+      : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}`, borderRadius: "16px", padding: "14px 16px", color: textColor, fontSize: "14px", fontWeight: 500, outline: "none", width: "100%" },
     deleteBtn: isAdmin
       ? "px-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all"
       : { background: "rgba(224,80,80,0.08)", border: "1px solid rgba(224,80,80,0.25)", color: "#e05050", borderRadius: "16px", padding: "0 16px", transition: "all" },
     submitBtn: isEdit
       ? (isAdmin
           ? "border-neutral-800 text-white hover:bg-neutral-900 w-full font-black uppercase italic rounded-2xl h-12"
-          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: "1px solid #b2dede", background: "#f0fafa", color: "#083d42", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" })
+          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: `1px solid ${overlayBorder}`, backgroundColor: innerBg, color: textColor, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" })
       : (isAdmin
           ? "w-full font-black uppercase italic rounded-2xl h-12 bg-amber-500 text-black"
-          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: "none", background: "#0d5c63", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }),
-    subListBg: isAdmin ? "bg-neutral-900/50 border-neutral-800/60" : { background: "#f0fafa", border: "1px solid #b2dede" },
-    subTextColor: isAdmin ? "text-white" : "#083d42",
-    subSizeColor: isAdmin ? "text-neutral-500" : "#4a7c80",
-    subDeleteColor: isAdmin ? "text-neutral-600 hover:text-red-500" : "#b2dede",
-    addSubBg: isAdmin ? "bg-neutral-900/30 border-neutral-800/80" : { background: "#f0fafa", border: "1px solid #b2dede" },
-    addSubTitle: isAdmin ? "text-amber-500" : "#0d5c63",
+          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: "none", backgroundColor: primaryColor, color: getContrastColor(primaryColor), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }),
+    subListBg: isAdmin ? "bg-neutral-900/50 border-neutral-800/60" : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}` },
+    subTextColor: isAdmin ? "text-white" : textColor,
+    subSizeColor: isAdmin ? "text-neutral-500" : textColor,
+    subDeleteColor: isAdmin ? "text-neutral-600 hover:text-red-500" : overlayBorder,
+    addSubBg: isAdmin ? "bg-neutral-900/30 border-neutral-800/80" : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}` },
+    addSubTitle: isAdmin ? "text-amber-500" : primaryColor,
     addSubInput: isAdmin
       ? "bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white outline-none focus:border-neutral-700"
-      : { background: "#f0fafa", border: "1px solid #b2dede", borderRadius: "12px", padding: "10px 12px", color: "#0d2b2e", fontSize: "12px", outline: "none", width: "100%" },
+      : { backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}`, borderRadius: "12px", padding: "10px 12px", color: textColor, fontSize: "12px", outline: "none", width: "100%" },
     addSubBtn: isAdmin
       ? "w-full bg-neutral-800 hover:bg-amber-500 hover:text-black text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all flex items-center justify-center gap-1 disabled:opacity-40"
-      : { background: "#0d5c63", color: "#ffffff", borderRadius: "10px", border: "none", cursor: "pointer", fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" },
-    dividerColor: isAdmin ? "border-neutral-900" : "#e0f5f5",
-    emptyTextColor: isAdmin ? "text-neutral-600" : "#b2dede",
-    sectionTitleColor: isAdmin ? "text-neutral-400" : "#4a7c80",
+      : { backgroundColor: primaryColor, color: getContrastColor(primaryColor), borderRadius: "10px", border: "none", cursor: "pointer", fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" },
+    dividerColor: isAdmin ? "border-neutral-900" : overlayBorder,
+    emptyTextColor: isAdmin ? "text-neutral-600" : overlayBorder,
+    sectionTitleColor: isAdmin ? "text-neutral-400" : textColor,
   };
 
   return (
@@ -138,18 +162,18 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
           }
           style={!isAdmin ? {
             padding: "10px",
-            background: "#f0fafa",
-            border: "1px solid #b2dede",
+            backgroundColor: innerBg,
+            border: `1px solid ${overlayBorder}`,
             borderRadius: "12px",
-            color: "#4a7c80",
+            color: textColor,
           } : undefined}
           onMouseEnter={!isAdmin ? e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "#0d5c63";
-            (e.currentTarget as HTMLButtonElement).style.color = "#0d5c63";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = primaryColor;
+            (e.currentTarget as HTMLButtonElement).style.color = primaryColor;
           } : undefined}
           onMouseLeave={!isAdmin ? e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "#b2dede";
-            (e.currentTarget as HTMLButtonElement).style.color = "#4a7c80";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = overlayBorder;
+            (e.currentTarget as HTMLButtonElement).style.color = textColor || '';
           } : undefined}
         >
           <Edit2 size={16} />
@@ -162,16 +186,16 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
             : "font-black uppercase italic tracking-tighter transition-all"
           }
           style={!isAdmin ? {
-            background: "#0d5c63",
-            color: "#ffffff",
+            backgroundColor: primaryColor,
+            color: getContrastColor(primaryColor),
             borderRadius: "12px",
             padding: "10px 20px",
             fontSize: "13px",
             border: "none",
             cursor: "pointer",
           } : undefined}
-          onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.background = "#083d42") : undefined}
-          onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.background = "#0d5c63") : undefined}
+          onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
+          onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
         >
           + Nueva Categoría
         </button>
@@ -190,7 +214,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
             {/* Barra superior */}
             <div
               className={`absolute top-0 left-0 w-full h-1 ${isAdmin ? styles.barColor as string : ''}`}
-              style={!isAdmin ? { height: "4px", background: styles.barColor as string } : undefined}
+              style={!isAdmin ? { height: "4px", backgroundColor: styles.barColor as string } : undefined}
             />
 
             <div className="p-8 space-y-6">
@@ -207,8 +231,8 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                   onClick={() => setIsOpen(false)}
                   className={isAdmin ? styles.closeColor as string : ''}
                   style={!isAdmin ? { color: styles.closeColor as string } : undefined}
-                  onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.color = "#083d42") : undefined}
-                  onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.color = styles.closeColor as string) : undefined}
+                  onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.7") : undefined}
+                  onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
                 >
                   <X size={24} />
                 </button>
@@ -218,7 +242,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
               <form onSubmit={handleSubmitCategory} className="space-y-4">
                 <div className="space-y-2">
                   <label
-                    className={`text-[10px] font-black uppercase ml-1 ${isAdmin ? styles.labelColor as string : ''}`}
+                    className={`text-[10px] font-black uppercase ml-1 opacity-70 ${isAdmin ? styles.labelColor as string : ''}`}
                     style={!isAdmin ? { color: styles.labelColor as string, letterSpacing: styles.labelLetterSpacing } : { letterSpacing: styles.labelLetterSpacing }}
                   >
                     Categoría Principal
@@ -231,8 +255,8 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                       onChange={e => setFormData({ name: e.target.value })}
                       placeholder="Ej: Wetsuits, Tablas, Accesorios"
                       required
-                      onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = "#4ab8b8") : undefined}
-                      onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = "#b2dede") : undefined}
+                      onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
+                      onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
                     />
                     {isEdit && (
                       <button
@@ -242,11 +266,11 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                         className={isAdmin ? styles.deleteBtn as string : ''}
                         style={!isAdmin ? styles.deleteBtn as React.CSSProperties : undefined}
                         onMouseEnter={!isAdmin ? e => {
-                          (e.currentTarget as HTMLButtonElement).style.background = "#e05050";
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#e05050";
                           (e.currentTarget as HTMLButtonElement).style.color = "#fff";
                         } : undefined}
                         onMouseLeave={!isAdmin ? e => {
-                          (e.currentTarget as HTMLButtonElement).style.background = "rgba(224,80,80,0.08)";
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(224,80,80,0.08)";
                           (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
                         } : undefined}
                       >
@@ -263,11 +287,11 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                   style={!isAdmin ? styles.submitBtn as React.CSSProperties : undefined}
                   onMouseEnter={!isAdmin && !loading ? e => {
                     const btn = e.currentTarget as HTMLButtonElement;
-                    btn.style.background = isEdit ? "#e0f5f5" : "#083d42";
+                    btn.style.opacity = "0.9";
                   } : undefined}
                   onMouseLeave={!isAdmin && !loading ? e => {
                     const btn = e.currentTarget as HTMLButtonElement;
-                    btn.style.background = isEdit ? "#f0fafa" : "#0d5c63";
+                    btn.style.opacity = "1";
                   } : undefined}
                 >
                   {loading
@@ -279,14 +303,14 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
               {/* Subcategorías — solo en edición */}
               {isEdit && (
                 <div
-                  className={`space-y-4 pt-6 ${isAdmin ? 'border-t ' + styles.dividerColor : ''}`}
-                  style={!isAdmin ? { borderTop: `1px solid ${styles.dividerColor}` } : undefined}
+                  className={`space-y-4 pt-6 border-t`}
+                  style={{ borderColor: typeof styles.dividerColor === 'string' ? styles.dividerColor : overlayBorder }}
                 >
                   <h3
                     className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${isAdmin ? styles.sectionTitleColor as string : ''}`}
                     style={!isAdmin ? { color: styles.sectionTitleColor as string } : undefined}
                   >
-                    <Layers size={14} className={isAdmin ? "text-amber-500" : ''} style={!isAdmin ? { color: "#4ab8b8" } : undefined} />
+                    <Layers size={14} className={isAdmin ? "text-amber-500" : ''} style={!isAdmin ? { color: primaryColor } : undefined} />
                     Subcategorías y Curvas de Talles
                   </h3>
 
@@ -306,7 +330,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                             {sub.name}
                           </span>
                           <span
-                            className={`text-[9px] font-bold uppercase tracking-wider ${isAdmin ? styles.subSizeColor as string : ''}`}
+                            className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${isAdmin ? styles.subSizeColor as string : ''}`}
                             style={!isAdmin ? { color: styles.subSizeColor as string } : undefined}
                           >
                             Talles: {sub.sizeType?.name || "Estándar / Único"}
@@ -316,16 +340,22 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                           type="button"
                           onClick={() => handleDeleteSub(sub.id)}
                           className={isAdmin ? styles.subDeleteColor as string : ''}
-                          style={!isAdmin ? { color: styles.subDeleteColor as string } : undefined}
-                          onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.color = "#e05050") : undefined}
-                          onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.color = styles.subDeleteColor as string) : undefined}
+                          style={!isAdmin ? { color: textColor, opacity: 0.4 } : undefined}
+                          onMouseEnter={!isAdmin ? e => {
+                            (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
+                            (e.currentTarget as HTMLButtonElement).style.opacity = "1";
+                          } : undefined}
+                          onMouseLeave={!isAdmin ? e => {
+                            (e.currentTarget as HTMLButtonElement).style.color = textColor || '';
+                            (e.currentTarget as HTMLButtonElement).style.opacity = "0.4";
+                          } : undefined}
                         >
                           <X size={14} />
                         </button>
                       </div>
                     ))}
                     {(!category.subCategories || category.subCategories.length === 0) && (
-                      <p className={`text-[11px] italic pl-1 ${isAdmin ? styles.emptyTextColor as string : ''}`} style={!isAdmin ? { color: styles.emptyTextColor as string } : undefined}>
+                      <p className={`text-[11px] italic pl-1 opacity-50`} style={{ color: textColor }}>
                         No hay subcategorías en este grupo.
                       </p>
                     )}
@@ -352,20 +382,20 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                         onChange={e => setSubData({ ...subData, name: e.target.value })}
                         placeholder="Nombre (Ej: Adultos)"
                         required
-                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = "#4ab8b8") : undefined}
-                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = "#b2dede") : undefined}
+                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
+                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
                       />
                       <select
                         className={isAdmin ? styles.addSubInput as string : ''}
                         style={!isAdmin ? { ...styles.addSubInput as React.CSSProperties, cursor: "pointer" } : { cursor: "pointer" }}
                         value={subData.sizeTypeId}
                         onChange={e => setSubData({ ...subData, sizeTypeId: e.target.value })}
-                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = "#4ab8b8") : undefined}
-                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = "#b2dede") : undefined}
+                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
+                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
                       >
-                        <option value="">Curva estándar...</option>
+                        <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>Curva estándar...</option>
                         {sizeTypes.map((st: any) => (
-                          <option key={st.id} value={st.id}>{st.name}</option>
+                          <option key={st.id} value={st.id} style={{ backgroundColor: secondaryColor, color: textColor }}>{st.name}</option>
                         ))}
                       </select>
                     </div>
@@ -375,8 +405,8 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                       disabled={subLoading || !subData.name}
                       className={`${isAdmin ? styles.addSubBtn as string : ''} flex items-center justify-center gap-1`}
                       style={!isAdmin ? { ...styles.addSubBtn as React.CSSProperties, opacity: subLoading || !subData.name ? 0.6 : 1, cursor: subLoading || !subData.name ? "not-allowed" : "pointer" } : undefined}
-                      onMouseEnter={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.background = "#083d42") : undefined}
-                      onMouseLeave={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.background = "#0d5c63") : undefined}
+                      onMouseEnter={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
+                      onMouseLeave={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
                     >
                       {subLoading
                         ? <Loader2 className="animate-spin" size={12} />
