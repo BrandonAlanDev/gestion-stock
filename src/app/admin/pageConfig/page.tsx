@@ -8,7 +8,7 @@ export default async function PageConfigPage() {
   console.log(pageConfig);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-8 pt-24">
+    <div className=" ml-60 p-6 sm:p-8 w-full mt-18  bg-neutral-950 text-white  transition-colors duration-200">
       <div className="max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
