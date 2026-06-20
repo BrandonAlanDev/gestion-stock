@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { createCustomBoard } from "@/actions/custom-boards";
 import { getBoardOptions } from "@/actions/board-options";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 const WA_NUMBER = "5492234214414";
 
@@ -100,14 +102,17 @@ function BoardPreview({ state, options }: { state: State; options: BoardOptions 
 }
 
 const card: React.CSSProperties = {
-  background: T.surface, borderRadius:16, border:"0.5px solid #e5e7eb", padding:"1.5rem", marginBottom:"1rem",
+  background: T.surface, borderRadius: 24, border: `2px solid ${T.border}`, padding: "1.5rem", marginBottom: "1rem",
 };
 const inputSt: React.CSSProperties = {
-  border:"0.5px solid #d1d5db", borderRadius:8, padding:"8px 12px", fontSize:14,
-  outline:"none", background:"#fff", color:"#1a2e2e", width:"100%",
+  border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 14,
+  outline: "none", background: "#fff", color: "#083d42", width: "100%",
 };
 
 export default function PersonalizadoPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
+  
   const [options, setOptions] = useState<BoardOptions | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [s, setS] = useState<State>({ tipo:"", largo:"", ancho:"", espesor:"", volumen:"", material:"", cola:"", killaTipo:"", killaCount:"", notas:"" });
@@ -167,7 +172,12 @@ export default function PersonalizadoPage() {
     <main style={{ minHeight:"100vh", background:"#f8fafc", paddingTop:110, paddingBottom:60, paddingLeft:16, paddingRight:16 }}>
       <div style={{ maxWidth:640, margin:"0 auto" }}>
 
-        <div style={{ marginBottom:28 }}>
+        <div style={{ marginBottom:28, position: "relative" }}>
+          {isAdmin && (
+            <Link href="/admin/personalizado" style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 6, background: T.cyanDk, color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+              <Settings2 size={14} /> Configurar
+            </Link>
+          )}
           <p style={{ fontSize:11, fontWeight:600, letterSpacing:3, textTransform:"uppercase", color:T.cyanMd, marginBottom:4 }}>NewSurfBoard</p>
           <h1 style={{ fontSize:28, fontWeight:900, textTransform:"uppercase", letterSpacing:"-0.03em", fontStyle:"italic", color:"#0f172a", margin:"0 0 4px" }}>Diseñá tu tabla</h1>
           <p style={{ fontSize:14, color:"#64748b", margin:0 }}>Personalizá cada detalle y te mandamos el pedido por WhatsApp.</p>
