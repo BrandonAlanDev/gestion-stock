@@ -168,17 +168,9 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Escritorio: columna fija de 240px */}
+      {/* Off‑canvas para TODAS las pantallas (móvil y escritorio) */}
       <aside
-        className="hidden md:flex flex-col w-60 h-screen sticky top-0 p-6 border-r overflow-y-auto flex-shrink-0"
-        style={{ backgroundColor: secondaryColor, borderColor: overlayColor }}
-      >
-        {sidebarContent}
-      </aside>
-
-      {/* Móvil: panel deslizante de 240px, máximo 80vw */}
-      <aside
-        className={`md:hidden fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${
+        className={`fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
@@ -188,10 +180,11 @@ export default function Sidebar({
         {sidebarContent}
       </aside>
 
+      {/* Overlay para cerrar el menú (todas las pantallas) */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="md:hidden fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
         />
       )}
     </>
