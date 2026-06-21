@@ -60,7 +60,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
     <>
       {/* ── TABLA ── */}
       <div
-        className="overflow-x-auto rounded-[2rem] shadow-sm border"
+        className="overflow-x-auto rounded-[1.0rem] shadow-sm border"
         style={{ borderColor: overlayBorder, backgroundColor: secondaryColor }}
       >
         <table className="w-full text-left border-collapse">

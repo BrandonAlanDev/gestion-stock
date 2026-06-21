@@ -72,9 +72,9 @@ export default function LocationSection({
   };
 
   return (
-    <section className="rounded-[2rem] border border-neutral-900 bg-black/40 overflow-hidden">
+    <section className="rounded-[1.0rem] border border-neutral-900 bg-black/40 overflow-hidden">
       <div className="border-b border-neutral-900 px-8 py-6 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+        <div className="w-12 h-12 rounded-[1.0rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
           <MapPin size={22} />
         </div>
 

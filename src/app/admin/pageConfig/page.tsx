@@ -14,7 +14,7 @@ export default async function PageConfigPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div>
             <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-4">
-              <span className="w-2 h-10 rounded-full bg-cyan-500" />
+              <span className="w-2 h-10 rounded-[1.0rem] bg-cyan-500" />
               Configuración de Página
             </h1>
 
@@ -29,7 +29,7 @@ export default async function PageConfigPage() {
               await clearPageConfig();
             }}
           >
-            <button className="px-6 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
+            <button className="px-6 py-3 rounded-[1.0rem] bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
               Resetear Configuración
             </button>
           </form>

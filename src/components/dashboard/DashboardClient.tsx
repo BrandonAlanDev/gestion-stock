@@ -77,7 +77,7 @@ export default function DashboardClient() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3" style={{ color: textColor }}>
-            <span className="w-2 h-8 rounded-full inline-block" style={{ backgroundColor: primaryColor }} />
+            <span className="w-2 h-8 rounded-[1.0rem] inline-block" style={{ backgroundColor: primaryColor }} />
             Gestión de Inventario
           </h1>
           <p className="text-[10px] font-black uppercase mt-1 ml-5 opacity-70" style={{ color: textColor, letterSpacing: "0.4em" }}>

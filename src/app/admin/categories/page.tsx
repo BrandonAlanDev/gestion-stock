@@ -82,7 +82,7 @@ export default function CategoriesAdminPage() {
             style={{
               backgroundColor: secondaryColor,
               borderColor: overlayBorder,
-              borderRadius: "2rem",
+              borderRadius: "1rem",
               padding: "1.5rem",
             }}
           >
