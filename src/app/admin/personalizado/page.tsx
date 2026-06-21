@@ -21,7 +21,7 @@ export default async function AdminPersonalizadoPage() {
   const { types, tails, fins, configs, materials } = data;
 
   return (
-    <div className=" ml-60 p-6 sm:p-8 w-full mt-18" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+    <div className="p-6 sm:p-8 w-full" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
