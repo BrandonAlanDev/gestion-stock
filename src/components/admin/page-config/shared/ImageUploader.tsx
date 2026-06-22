@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import {
   ImageIcon,
 } from "lucide-react";
@@ -17,6 +18,15 @@ interface Props {
     value: string
   ) => void;
 }
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
 
 export default function ImageUploader({
   label,
@@ -25,7 +35,7 @@ export default function ImageUploader({
 }: Props) {
   const [uploading, setUploading] =
     useState(false);
-
+  const pageConfig = usePageConfig();
   const handleUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -73,13 +83,21 @@ export default function ImageUploader({
   };
 
   return (
-    <div>
-      <label className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-500 block mb-3">
+    <div className="flex flex-col gap-2"
+    style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor)
+     }}  >
+      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3"
+      style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor)
+       }}
+      >
         {label}
       </label>
 
-      <div className="rounded-[2rem] border border-neutral-800 bg-neutral-950 overflow-hidden">
-        <div className="aspect-video relative bg-black flex items-center justify-center">
+      <div className="rounded-[2rem] border overflow-hidden"
+      style={{ borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor),
+        backgroundColor: pageConfig?.pageConfig?.primaryColor.concat("33")
+      }}>
+        <div className="aspect-video relative flex items-center justify-center">
           {value ? (
             <Image
               src={value}
@@ -91,18 +109,25 @@ export default function ImageUploader({
             <div className="text-center">
               <ImageIcon
                 size={42}
-                className="mx-auto text-neutral-700 mb-3"
+                className="mx-auto mb-3"
               />
 
-              <p className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-600">
+              <p className="text-[10px] uppercase tracking-[0.3em] font-black">
                 Sin Imagen
               </p>
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-neutral-900">
-          <label className="h-12 rounded-2xl bg-cyan-500 text-black text-[10px] uppercase tracking-[0.3em] font-black flex items-center justify-center cursor-pointer">
+        <div className="p-4 border-t "
+        style={{ borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor),
+          backgroundColor: pageConfig?.pageConfig?.secondaryColor
+        }}>
+          <label className="h-12 rounded-2xl text-[10px] uppercase tracking-[0.3em] font-black flex items-center justify-center cursor-pointer"
+          style={{ backgroundColor: pageConfig?.pageConfig?.primaryColor,
+            color: getContrastColor(pageConfig?.pageConfig?.primaryColor)
+          }}
+          >
             {uploading
               ? "Procesando..."
               : "Subir Imagen"}
