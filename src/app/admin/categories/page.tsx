@@ -51,8 +51,8 @@ export default function CategoriesAdminPage() {
   if (!mounted) return null;
 
   return (
-    <div className=" ml-60 p-6 sm:p-8 w-full mt-18 " style={{ backgroundColor: pageBackground, color: textColor }}>
 
+    <div className=" md:ml-60 p-6 sm:p-8 w-full mt-18 " style={{ backgroundColor: pageBackground, color: textColor }}>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
@@ -82,7 +82,7 @@ export default function CategoriesAdminPage() {
             style={{
               backgroundColor: secondaryColor,
               borderColor: overlayBorder,
-              borderRadius: "2rem",
+              borderRadius: "1rem",
               padding: "1.5rem",
             }}
           >

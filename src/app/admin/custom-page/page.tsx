@@ -36,7 +36,7 @@ export default function CustomPagesPage() {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  
+
   const [selectedPage, setSelectedPage] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -75,7 +75,7 @@ export default function CustomPagesPage() {
     setIsProcessing(true);
     try {
       let pageId = selectedPage?.id;
-      
+
       if (!pageId) {
         const newPage = await createCustomPage({
           title: formData.title,
@@ -121,17 +121,18 @@ export default function CustomPagesPage() {
   return (
     <>
       <div
-        className="ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200 min-h-screen"
+
+        className="md:ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200 min-h-screen"
         style={{ backgroundColor: secondaryColor }}
       >
         <div className="max-w-7xl mx-auto space-y-6">
-          
-          <div className="rounded-3xl border backdrop-blur-xl p-6 bg-white/50">
+
+          <div className="rounded-[1.0rem] border backdrop-blur-xl p-6 bg-white/50">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="flex flex-row gap-2 items-center">
                   <span style={{ color: primaryColor }}><Settings size={28} /></span>
-                  <h1 className="font-black text-3xl">Páginas Dinámicas</h1>
+                  <h1 className="font-black text-3xl text-black">Páginas Dinámicas</h1>
                 </div>
                 <p className="text-sm text-gray-500 mt-1 font-medium">
                   Gestiona el contenido estructurado de las landing pages.
@@ -140,7 +141,7 @@ export default function CustomPagesPage() {
 
               <button
                 onClick={handleOpenCreate}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-transform active:scale-95 shadow-md hover:opacity-90"
+                className="flex items-center gap-2 px-6 py-3 rounded-[1.0rem] font-bold transition-transform active:scale-95 shadow-md hover:opacity-90"
                 style={{ backgroundColor: primaryColor, color: contrastColor }}
               >
                 <Plus size={20} />
@@ -148,23 +149,23 @@ export default function CustomPagesPage() {
               </button>
             </div>
           </div>
-
-          <div className="rounded-3xl border bg-white overflow-hidden shadow-sm">
+          <div className="rounded-[1.0rem] border bg-white overflow-hidden shadow-sm">
             {pages.map((page) => (
               <div
                 key={page.id}
-                className="flex items-center justify-between p-5 border-b last:border-b-0 hover:bg-gray-50 transition-colors"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors gap-3"
               >
-                <div className="flex items-center gap-4">
+                {/* Izquierda: ícono + título + slug */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[1.0rem] flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: `${primaryColor}15` }}
                   >
-                    <Globe size={22} color={primaryColor} />
+                    <Globe size={20} color={primaryColor} className="sm:size-[22px]" />
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-lg leading-tight">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-800 text-base sm:text-lg leading-tight truncate">
                       {page.title}
                     </h3>
                     <p className="text-sm font-medium text-gray-400 mt-0.5">
@@ -173,9 +174,10 @@ export default function CustomPagesPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* Derecha: estado + botones */}
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   <span
-                    className="px-3 py-1 rounded-full text-xs font-black tracking-wide"
+                    className="px-3 py-1 rounded-[1.0rem] text-xs font-black tracking-wide"
                     style={{
                       backgroundColor: page.isActive ? "#22c55e20" : "#ef444420",
                       color: page.isActive ? "#16a34a" : "#dc2626",
@@ -184,53 +186,53 @@ export default function CustomPagesPage() {
                     {page.isActive ? "ACTIVA" : "INACTIVA"}
                   </span>
 
-                  <div className="flex items-center gap-1 ml-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <button
                       onClick={() => handleOpenView(page)}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 transition-colors border border-transparent"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = `${primaryColor}20`;
                         e.currentTarget.style.color = primaryColor;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "inherit";
+                        e.currentTarget.style.backgroundColor = '';
+                        e.currentTarget.style.color = '';
                       }}
                       title="Ver estructura"
                     >
-                      <Eye size={18} />
+                      <Eye size={16} className="sm:size-[18px]" />
                     </button>
 
                     <button
                       onClick={() => handleOpenEdit(page)}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 transition-colors border border-transparent"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = `${primaryColor}20`;
                         e.currentTarget.style.color = primaryColor;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "inherit";
+                        e.currentTarget.style.backgroundColor = '';
+                        e.currentTarget.style.color = '';
                       }}
                       title="Editar constructor"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={16} className="sm:size-[18px]" />
                     </button>
 
                     <button
                       onClick={() => handleOpenDelete(page)}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 transition-colors border border-transparent"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = `#ef444420`;
-                        e.currentTarget.style.color = `#ef4444`;
+                        e.currentTarget.style.backgroundColor = '#ef444420';
+                        e.currentTarget.style.color = '#ef4444';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "inherit";
+                        e.currentTarget.style.backgroundColor = '';
+                        e.currentTarget.style.color = '';
                       }}
                       title="Eliminar"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} className="sm:size-[18px]" />
                     </button>
                   </div>
                 </div>
@@ -239,7 +241,7 @@ export default function CustomPagesPage() {
 
             {!loading && pages.length === 0 && (
               <div className="p-16 text-center flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                <div className="w-16 h-16 rounded-[1.0rem] flex items-center justify-center mb-4" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                   <Globe size={32} />
                 </div>
                 <h3 className="font-black text-xl text-gray-700">No hay páginas dinámicas creadas</h3>
@@ -250,11 +252,11 @@ export default function CustomPagesPage() {
             )}
           </div>
         </div>
-      </div>
+      </div >
 
-      <PageBuilderModal 
-        isOpen={isBuilderOpen} 
-        onClose={() => setIsBuilderOpen(false)} 
+      <PageBuilderModal
+        isOpen={isBuilderOpen}
+        onClose={() => setIsBuilderOpen(false)}
         initialData={selectedPage}
         onSave={handleSavePage}
         isSaving={isProcessing}
@@ -262,17 +264,17 @@ export default function CustomPagesPage() {
         contrastColor={contrastColor}
       />
 
-      <ViewPageModal 
-        isOpen={isViewerOpen} 
-        onClose={() => setIsViewerOpen(false)} 
+      <ViewPageModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
         page={selectedPage}
         primaryColor={primaryColor}
         contrastColor={contrastColor}
       />
 
-      <DeleteConfirmModal 
-        isOpen={isDeleteOpen} 
-        onClose={() => setIsDeleteOpen(false)} 
+      <DeleteConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
         itemName={selectedPage?.title}
         isDeleting={isProcessing}
