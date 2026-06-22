@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { ProductProps } from "../types";
 import WhatsAppOrderForm from "../forms/WhatsAppOrder";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 const WS_NUMBER = "2235644043";
 const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
@@ -14,6 +15,9 @@ const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 export default function ProductoView({ product }: ProductProps) {
   const { addToCart } = useCart();
   const router = useRouter();
+  const { pageConfig } = usePageConfig();
+  
+  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -26,23 +30,17 @@ export default function ProductoView({ product }: ProductProps) {
     return BOARD_CATEGORIES.some((cat) => name.includes(cat));
   }, [product.category]);
 
-  // 📐 SEPARACIÓN DE IMÁGENES CONTROLADA ÚNICAMENTE AQUÍ:
-  // Si es tabla, la posición 0 exacta es el Logo.
   const logoImage = esTabla ? product.images?.[0]?.srcImage : null;
 
-  // Si es tabla, las fotos reales de exhibición arrancan desde el índice 1 en adelante.
-  // Si NO es tabla, se usan todas las imágenes (desde el índice 0).
   const productImages = useMemo(() => {
     if (!product.images) return [];
     return esTabla ? product.images.slice(1) : product.images;
   }, [product.images, esTabla]);
 
-  // Estado para la imagen grande seleccionada (va a tomar el índice 0 de las fotos reales, o sea, la foto 1 original)
   const [selectedImage, setSelectedImage] = useState(
     productImages[0]?.srcImage || "/images/placeholder.avif"
   );
 
-  // Sincroniza la galería principal por si cambia el producto en caliente
   useEffect(() => {
     if (productImages[0]?.srcImage) {
       setSelectedImage(productImages[0].srcImage);
@@ -107,13 +105,14 @@ export default function ProductoView({ product }: ProductProps) {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-cyan-100">
+    <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-200">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
 
         {/* BOTÓN VOLVER ATRÁS */}
         <button
           onClick={() => router.back()}
-          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:text-cyan-600 transition-colors mb-8"
+          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:opacity-75 transition-colors mb-8"
+          style={{ color: primaryColor }}
         >
           <ArrowLeft size={14} className="transform group-hover:-translate-x-1 transition-transform" />
           Volver al catálogo
@@ -121,7 +120,7 @@ export default function ProductoView({ product }: ProductProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-12 lg:gap-20 items-start">
 
-          {/* BLOQUE IZQUIERDO: GALERÍA DE FOTOS REALES */}
+          {/* BLOQUE IZQUIERDO: GALERÍA */}
           <div className="flex flex-col-reverse md:flex-row gap-6">
             {productImages.length > 1 && (
               <div className="flex md:flex-col gap-3 flex-shrink-0">
@@ -130,9 +129,13 @@ export default function ProductoView({ product }: ProductProps) {
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
                     className={`w-16 h-20 overflow-hidden bg-gray-50/50 rounded-md transition-all border ${selectedImage === img.srcImage
-                      ? "border-cyan-500 ring-1 ring-cyan-500 opacity-100"
+                      ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
-                      }`}
+                    }`}
+                    style={{ 
+                      borderColor: selectedImage === img.srcImage ? primaryColor : "transparent",
+                      boxShadow: selectedImage === img.srcImage ? `0 0 0 1px ${primaryColor}` : "none"
+                    }}
                   >
                     <img src={img.srcImage} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -155,14 +158,12 @@ export default function ProductoView({ product }: ProductProps) {
           {/* BLOQUE DERECHO: DETALLES */}
           <div className="flex flex-col space-y-8 lg:sticky lg:top-32">
 
-            {/* ENCABEZADO */}
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-cyan-600">
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: primaryColor }}>
                 {product.category?.name}
                 {product.subCategory?.name && ` / ${product.subCategory.name}`}
               </p>
 
-              {/* LOGO CENTRADO (Extraído del índice 0 original) */}
               {esTabla && logoImage && (
                 <div className="w-full flex justify-center mb-4 select-none">
                   <div className="w-full max-w-[140px] h-auto">
@@ -182,8 +183,8 @@ export default function ProductoView({ product }: ProductProps) {
 
             <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
               {esTabla ? (
-                <p className="text-2xl font-semibold text-cyan-600">
-                  USD {Number(product.price).toLocaleString("es-AR")}  {product.maxPrice !== null ? `- ${Number(product.maxPrice).toLocaleString("es-AR")}` : ""}
+                <p className="text-2xl font-semibold" style={{ color: primaryColor }}>
+                  USD {Number(product.price).toLocaleString("es-AR")}
                 </p>
               ) : (
                 <p className="text-2xl font-bold text-gray-900">
@@ -192,7 +193,6 @@ export default function ProductoView({ product }: ProductProps) {
               )}
             </div>
 
-            {/* COLOR */}
             {hasColors && (
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Color</h3>
@@ -203,17 +203,20 @@ export default function ProductoView({ product }: ProductProps) {
                       onClick={() => setSelectedColor(color.name)}
                       title={color.name}
                       className={`w-8 h-8 rounded-full border transition-all ${selectedColor === color.name
-                        ? "ring-2 ring-cyan-500 ring-offset-2 scale-105"
+                        ? "ring-2 ring-offset-2 scale-105"
                         : "border-gray-200"
-                        }`}
-                      style={{ backgroundColor: color.hex || "#000" }}
+                      }`}
+                      style={{ 
+                        backgroundColor: color.hex || "#000",
+                        borderColor: selectedColor === color.name ? primaryColor : "#e5e7eb",
+                        boxShadow: selectedColor === color.name ? `0 0 0 2px ${primaryColor}` : "none"
+                      }}
                     />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* MEDIDAS */}
             {hasSizes && (
               <div className="space-y-3 text-center lg:text-left">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -229,27 +232,25 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            {/* LOGÍSTICA */}
             <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <Truck className="w-3.5 h-3.5 text-cyan-500" />
+                <Truck className="w-3.5 h-3.5" style={{ color: primaryColor }} />
                 <p>Envíos y logística a coordinar para todo el país.</p>
               </div>
             </div>
 
-            {/* ACCIÓN PRINCIPAL */}
             <button
               onClick={handleWhatsApp}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md shadow-cyan-500/10 transition-colors"
+              className="w-full text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition-colors"
+              style={{ backgroundColor: primaryColor }}
             >
               {esTabla ? "Consultar con el vendedor" : "Consultar por WhatsApp"}
             </button>
           </div>
         </div>
 
-        {/* DESCRIPCIÓN */}
         <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-cyan-600 mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: primaryColor }}>
             Product Overview
           </h2>
           <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">
@@ -261,7 +262,6 @@ export default function ProductoView({ product }: ProductProps) {
 
       </div>
 
-      {/* MODAL WHATSAPP */}
       {showOrderForm && esTabla && (
         <WhatsAppOrderForm product={product} onClose={() => setShowOrderForm(false)} />
       )}

@@ -12,10 +12,21 @@ import Textarea from "./shared/Textarea";
 
 interface Props {
   config: any;
+  primaryColor?: string;
+  secondaryColor?: string;
+}
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
 export default function BrandingSection({
-  config,
+  config,primaryColor,secondaryColor
 }: Props) {
   const [isPending, startTransition] =
     useTransition();
@@ -103,10 +114,23 @@ export default function BrandingSection({
   };
 
   return (
-    <section className="rounded-[2rem] border border-neutral-900 bg-black/40 backdrop-blur-xl overflow-hidden">
+
+    <section className="rounded-[2rem] border  overflow-hidden"
+      style={{
+        backgroundColor:secondaryColor || "black",
+        color:getContrastColor(secondaryColor || "black"),
+        borderColor:getContrastColor(secondaryColor || "black")
+      }}
+    >
       <div className="border-b border-neutral-900 px-8 py-6 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-          <ImageIcon size={22} />
+        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border flex items-center justify-center"
+          style={{
+            backgroundColor:primaryColor?.concat("33"),
+            color:primaryColor || "black",
+            borderColor:primaryColor || "black"
+          }}
+        >
+          <ImageIcon size={22}/>
         </div>
 
         <div>
@@ -114,7 +138,9 @@ export default function BrandingSection({
             Branding
           </h2>
 
-          <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 font-bold">
+          <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 font-bold"
+          style={{ color: getContrastColor(secondaryColor || "black")}}
+          >
             Logos · Colores · Apariencia
           </p>
         </div>
@@ -190,7 +216,7 @@ export default function BrandingSection({
         />
 
         <div>
-          <label className="text-xs font-black uppercase tracking-[0.3em] text-neutral-500 mb-3 block">
+          <label className="text-xs font-black uppercase tracking-[0.3em] mb-3 block">
             Color Principal
           </label>
 
@@ -208,7 +234,7 @@ export default function BrandingSection({
         </div>
 
         <div>
-          <label className="text-xs font-black uppercase tracking-[0.3em] text-neutral-500 mb-3 block">
+          <label className="text-xs font-black uppercase tracking-[0.3em] mb-3 block">
             Color Secundario
           </label>
 
@@ -230,7 +256,13 @@ export default function BrandingSection({
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="h-14 px-8 rounded-2xl bg-cyan-500 text-black font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3"
+          className="h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3 hover:cursor-pointer opacity-90 hover:opacity-100 transition"
+          style={{
+            backgroundColor: form.primaryColor,
+            color: getContrastColor(
+              form.primaryColor
+            ),
+          }}
         >
           <Save size={18} />
 

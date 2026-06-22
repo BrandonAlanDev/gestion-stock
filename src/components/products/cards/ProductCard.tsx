@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface Props {
   product: any;
@@ -11,18 +12,18 @@ interface Props {
 }
 
 const ProductCard = ({ product }: Props) => {
+  const { pageConfig } = usePageConfig();
+  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  // 📐 CONVENCIÓN: posición 0 = logo. Fotos reales arrancan en la 1.
-  // Si solo hay 1 imagen (el logo), la usamos igual para no quedar en blanco.
   const images =
     product.images?.length > 1
       ? product.images.slice(1).map((img: any) => img.srcImage)
       : product.images?.map((img: any) => img.srcImage) || [];
 
-  // Hover slider
   useEffect(() => {
     if (!isHovering || images.length <= 1) {
       setCurrentImage(0);
@@ -56,13 +57,12 @@ const ProductCard = ({ product }: Props) => {
       className="select-none group relative"
     >
       <Link href={`/productos/item/${product.id}`} className="block">
-
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isNew && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ background: "#06b6d4", color: "#ffffff", borderRadius: "4px" }} // <-- Cambiado a Cyan de la marca
+              style={{ backgroundColor: primaryColor, color: "#ffffff", borderRadius: "4px" }}
             >
               Nuevo
             </span>
@@ -70,7 +70,7 @@ const ProductCard = ({ product }: Props) => {
           {totalStock <= 0 && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ background: "rgba(6,182,212,0.1)", color: "#0891b2", borderRadius: "4px" }} // <-- Ajustado a un Cyan lavado con texto oscuro
+              style={{ backgroundColor: `${primaryColor}1A`, color: primaryColor, borderRadius: "4px" }}
             >
               Consultar stock
             </span>
@@ -79,7 +79,7 @@ const ProductCard = ({ product }: Props) => {
 
         <div
           className="overflow-hidden mb-5 relative"
-          style={{ background: "#f8fafc", borderRadius: "12px", aspectRatio: "3 / 4" }} // <-- Un fondo levemente más limpio (slate-50)
+          style={{ background: "#f8fafc", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
             src={images[currentImage] || "/images/placeholder.avif"}
@@ -94,12 +94,11 @@ const ProductCard = ({ product }: Props) => {
           {/* Nombre superpuesto */}
           <h3
             className="absolute bottom-4 left-0 right-0 text-center font-black uppercase italic px-3 line-clamp-2"
-            style={{ color: "#0f172a", fontSize: "22px", letterSpacing: "-0.02em" }} // <-- Cambiado a Slate-900 para que contraste y no compita con el cyan del fondo
+            style={{ color: primaryColor, fontSize: "22px", letterSpacing: "-0.02em" }}
           >
             {product.name}
           </h3>
         </div>
-
       </Link>
     </motion.div>
   );
