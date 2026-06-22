@@ -24,6 +24,7 @@ export default function MovementsPage() {
   useEffect(() => { getMovements().then(d => { setMovements(d); setLoading(false); }); }, []);
 
   return (
+
     <div style={{ backgroundColor: background, color: contrast, minHeight: "100vh" }} className=" md:ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200">
       <div className="mb-12 max-w-6xl mx-auto">
         <h1 className="text-3xl font-black uppercase italic flex items-center gap-3">
@@ -32,7 +33,7 @@ export default function MovementsPage() {
         </h1>
       </div>
 
-      <div className="max-w-6xl mx-auto overflow-x-auto rounded-[2.5rem] bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
+      <div className="max-w-6xl mx-auto overflow-x-auto rounded-[1.0rem] bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-white/20 text-[9px] uppercase tracking-[0.3em] font-black opacity-70">

@@ -49,6 +49,7 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
   };
 
   return (
+
     <section className="rounded-[2rem] border overflow-hidden"
       style={{
         backgroundColor:secondaryColor || "black",

@@ -1,10 +1,12 @@
 "use client";
+
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Filter, SlidersHorizontal, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/ui/pagination";
 import ProductCard from "../cards/ProductCard";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface Props {
   garments: any[];
@@ -27,6 +29,10 @@ const ProductsPage = ({
 }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { pageConfig } = usePageConfig();
+  
+  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+  
   const categoriaParam = searchParams.get("categoria");
   const subcategoriaParam = searchParams.get("subcategoria");
 
@@ -36,7 +42,6 @@ const ProductsPage = ({
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Sincronizar categoría y acordeón con la URL
   useEffect(() => {
     if (!categoriaParam) {
       setSelectedCat("Todos");
@@ -55,14 +60,12 @@ const ProductsPage = ({
     }
   }, [categoriaParam, categories]);
 
-  // Sincronizar subcategoría seleccionada con la URL
   useEffect(() => {
     if (!subcategoriaParam) {
       setSelectedSub("Todos");
       return;
     }
     const decoded = decodeURIComponent(subcategoriaParam).trim().toLowerCase();
-    // Verificar que la subcategoría exista en la categoría actual
     const cat = categories.find(
       (c: any) => c.name.trim().toLowerCase() === decodeURIComponent(categoriaParam || "").trim().toLowerCase()
     );
@@ -80,7 +83,6 @@ const ProductsPage = ({
     }
   }, [subcategoriaParam, categories, categoriaParam]);
 
-  // Solo ordenar (sin filtrar localmente)
   const processedProducts = useMemo(() => {
     return [...garments].sort((a, b) => {
       let valA: any, valB: any;
@@ -99,44 +101,39 @@ const ProductsPage = ({
     });
   }, [garments, sortConfig]);
 
-  // Manejo de categoría
   const handleCategoryClick = (cat: any) => {
     onFilterChange?.(cat.name);
   };
 
-  // Manejo de "Todo {cat.name}"
   const handleTodoSubClick = (catName: string) => {
     onFilterChange?.(catName);
   };
 
-  // Manejo de subcategoría (con transición para loading)
   const handleSubCategoryClick = (catName: string, subName: string) => {
     onFilterChange?.(catName, subName);
   };
 
-  // Limpiar todo
   const handleClearAllCategories = () => {
     onFilterChange?.();
   };
 
   return (
     <div className="pt-24 min-h-screen bg-slate-50 relative">
-      {/* Overlay de carga durante transición */}
       {isPending && (
         <div className="fixed inset-0 z-50 bg-white/70 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+          <Loader2 className="w-10 h-10 animate-spin" style={{ color: primaryColor }} />
         </div>
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-slate-900">Catálogo Completo</h1>
             <p className="text-slate-500 mt-2">Explora lo último en deporte.</p>
           </div>
           <select
-            className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-cyan-500 outline-none cursor-pointer text-cyan-500 font-bold"
+            className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 outline-none cursor-pointer font-bold"
+            style={{ '--tw-ring-color': primaryColor, color: primaryColor } as React.CSSProperties}
             onChange={(e) => {
               const [key, order] = e.target.value.split("-");
               setSortConfig({ key, order });
@@ -150,7 +147,6 @@ const ProductsPage = ({
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* SIDEBAR */}
           <aside className="w-full lg:w-64">
             <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2 text-slate-900">
               <Filter className="w-4 h-4" /> Categorías
@@ -159,9 +155,13 @@ const ProductsPage = ({
               <button
                 onClick={handleClearAllCategories}
                 className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedCat === "Todos"
-                  ? "bg-cyan-500/10 text-cyan-600"
+                  ? "bg-opacity-10 font-bold"
                   : "text-slate-600 hover:bg-slate-100"
                   }`}
+                style={{ 
+                  backgroundColor: selectedCat === "Todos" ? `${primaryColor}1A` : undefined,
+                  color: selectedCat === "Todos" ? primaryColor : undefined
+                }}
               >
                 Todos los productos
               </button>
@@ -175,13 +175,18 @@ const ProductsPage = ({
                     <button
                       onClick={() => handleCategoryClick(cat)}
                       className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCurrentCatSelected
-                        ? "bg-cyan-500/10 text-cyan-600 font-semibold"
+                        ? "bg-opacity-10 font-semibold"
                         : "text-slate-600 hover:bg-slate-100"
                         }`}
+                      style={{ 
+                        backgroundColor: isCurrentCatSelected ? `${primaryColor}1A` : undefined,
+                        color: isCurrentCatSelected ? primaryColor : undefined
+                      }}
                     >
                       <span>{cat.name}</span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180 text-cyan-500" : ""}`}
+                        className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                        style={{ color: isOpen ? primaryColor : undefined }}
                       />
                     </button>
                     <AnimatePresence>
@@ -195,24 +200,24 @@ const ProductsPage = ({
                           <button
                             onClick={() => handleTodoSubClick(cat.name)}
                             className={`block text-left px-3 py-1.5 text-xs transition-colors ${isCurrentCatSelected && selectedSub === "Todos"
-                              ? "text-cyan-500 font-bold"
+                              ? "font-bold"
                               : "text-slate-500 hover:text-slate-800"
                               }`}
+                            style={{ color: isCurrentCatSelected && selectedSub === "Todos" ? primaryColor : undefined }}
                           >
                             • Todo {cat.name}
                           </button>
                           {cat.subCategories.map((sub: any) => {
-                            const isSubActive =
-                              isCurrentCatSelected &&
-                              selectedSub === sub.name.toLowerCase();
+                            const isSubActive = isCurrentCatSelected && selectedSub === sub.name.toLowerCase();
                             return (
                               <button
                                 key={sub.id}
                                 onClick={() => handleSubCategoryClick(cat.name, sub.name)}
                                 className={`block text-left px-3 py-1.5 text-xs transition-colors ${isSubActive
-                                  ? "text-cyan-500 font-bold"
+                                  ? "font-bold"
                                   : "text-slate-500 hover:text-slate-800"
                                   }`}
+                                style={{ color: isSubActive ? primaryColor : undefined }}
                               >
                                 {sub.name}
                               </button>
@@ -227,7 +232,6 @@ const ProductsPage = ({
             </div>
           </aside>
 
-          {/* PRODUCTOS */}
           <div className="flex-1">
             {processedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -241,7 +245,8 @@ const ProductsPage = ({
                 <p className="text-slate-500 font-medium">No se encontraron productos</p>
                 <button
                   onClick={handleClearAllCategories}
-                  className="mt-4 text-cyan-500 font-bold hover:text-cyan-600 hover:underline transition-colors"
+                  className="mt-4 font-bold hover:underline transition-colors"
+                  style={{ color: primaryColor }}
                 >
                   Limpiar filtros
                 </button>

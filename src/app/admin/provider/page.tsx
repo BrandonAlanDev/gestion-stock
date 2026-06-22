@@ -70,6 +70,7 @@ function ProvidersContent() {
   };
 
   return (
+
     <div style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }} className="transition-colors duration-200 md:ml-60 p-6 sm:p-8 pt-24 w-full">
       <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
         
@@ -79,7 +80,7 @@ function ProvidersContent() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-black/10 border border-white/5 p-6 rounded-3xl relative space-y-4 shadow-xl overflow-hidden">
+        <form onSubmit={handleSubmit} className="bg-black/10 border border-white/5 p-6 rounded-[1.0rem] relative space-y-4 shadow-xl overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: accent }} />
           <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: accent }}>
             <Layers size={14} /> {editingId ? "Modificar Registro" : "Nuevo Ingreso"}
