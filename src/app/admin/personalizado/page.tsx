@@ -21,7 +21,8 @@ export default async function AdminPersonalizadoPage() {
   const { types, tails, fins, configs, materials } = data;
 
   return (
-    <div className=" ml-60 p-6 sm:p-8 w-full mt-18" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+
+    <div className=" md:ml-60 p-6 sm:p-8 w-full mt-18" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
@@ -41,7 +42,7 @@ export default async function AdminPersonalizadoPage() {
         <div className="lg:col-span-2 space-y-6">
           <BoardTypesList types={types} tails={tails} fins={fins} configs={configs} />
 
-          <div className="flex flex-col p-6 rounded-[2.5rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+          <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
             <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
               <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
                 <FileText size={20} style={{ color: "#0d5c63" }} /> Materiales
@@ -51,7 +52,7 @@ export default async function AdminPersonalizadoPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {materials.length === 0 && <p className="text-sm italic text-[#4a7c80]">No hay materiales.</p>}
               {materials.map((mat: any) => (
-                <div key={mat.id} className="p-4 rounded-2xl flex justify-between items-center" style={{ background: "#f0fafa", border: "1px solid #b2dede" }}>
+                <div key={mat.id} className="p-4 rounded-[1.0rem] flex justify-between items-center" style={{ background: "#f0fafa", border: "1px solid #b2dede" }}>
                   <div>
                     <h3 className="text-sm font-black uppercase" style={{ color: "#083d42" }}>{mat.name}</h3>
                     {mat.description && <p className="text-[10px] text-[#4a7c80] mt-1">{mat.description}</p>}
@@ -66,7 +67,7 @@ export default async function AdminPersonalizadoPage() {
         {/* COLUMNA 2: ATRIBUTOS (Colas, Sistemas, Configs) */}
         <div className="space-y-6">
           
-          <div className="flex flex-col p-6 rounded-[2.5rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+          <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
             <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
               <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
                 <Waves size={20} style={{ color: "#0d5c63" }} /> Colas
@@ -76,7 +77,7 @@ export default async function AdminPersonalizadoPage() {
             <div className="space-y-3">
               {tails.length === 0 && <p className="text-sm italic text-[#4a7c80]">No hay colas.</p>}
               {tails.map((tail: any) => (
-                <div key={tail.id} className="flex justify-between items-center p-3 rounded-xl" style={{ background: "#f0fafa", border: "1px solid #b2dede" }}>
+                <div key={tail.id} className="flex justify-between items-center p-3 rounded-[1.0rem]" style={{ background: "#f0fafa", border: "1px solid #b2dede" }}>
                   <span className="text-xs font-bold uppercase text-[#0d2b2e]">{tail.name}</span>
                   <ManageTailModal tail={tail} />
                 </div>
@@ -84,7 +85,7 @@ export default async function AdminPersonalizadoPage() {
             </div>
           </div>
 
-          <div className="flex flex-col p-6 rounded-[2.5rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+          <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
             <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
               <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
                 <Settings2 size={20} style={{ color: "#0d5c63" }} /> Sistemas de Quillas
@@ -102,7 +103,7 @@ export default async function AdminPersonalizadoPage() {
             </div>
           </div>
 
-          <div className="flex flex-col p-6 rounded-[2.5rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+          <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
             <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
               <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
                 <Layers size={20} style={{ color: "#0d5c63" }} /> Configs. Quillas
