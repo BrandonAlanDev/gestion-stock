@@ -71,6 +71,7 @@ export default function SizesPage() {
   return (
     <div 
       style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }}
+
       className="transition-colors duration-200 md:ml-60 p-6 sm:p-8 pt-24 w-full"
     >
       <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
@@ -89,7 +90,7 @@ export default function SizesPage() {
 
         <form 
           onSubmit={handleCreateGroup} 
-          className="bg-black/10 border border-white/5 p-6 rounded-3xl shadow-xl relative overflow-hidden"
+          className="bg-black/10 border border-white/5 p-6 rounded-[1.0rem] shadow-xl relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: accent }} />
           <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: accent }}>
@@ -97,14 +98,14 @@ export default function SizesPage() {
           </h3>
           <div className="flex gap-3">
             <input 
-              className="flex-1 bg-black/20 border border-white/10 rounded-xl p-3 text-sm placeholder:opacity-50 focus:ring-1 outline-none"
+              className="flex-1 bg-black/20 border border-white/10 rounded-[1.0rem] p-3 text-sm placeholder:opacity-50 focus:ring-1 outline-none"
               placeholder="Nombre del grupo (ej: Calzados, Remeras...)"
               value={newTypeName}
               onChange={e => setNewTypeName(e.target.value)}
             />
             <button 
               type="submit" 
-              className="font-bold uppercase tracking-tighter px-8 rounded-xl hover:opacity-90 transition-all shadow-md text-sm"
+              className="font-bold uppercase tracking-tighter px-8 rounded-[1.0rem] hover:opacity-90 transition-all shadow-md text-sm"
               style={{ backgroundColor: accent, color: accentTextColor }}
             >
               Crear Grupo
@@ -116,7 +117,7 @@ export default function SizesPage() {
           {loading ? (
             <div className="col-span-full text-center py-20 animate-pulse">Sincronizando curvas...</div>
           ) : sizeTypes.map(type => (
-            <div key={type.id} className="bg-black/10 border border-white/5 rounded-[2.5rem] p-6 space-y-6 shadow-md transition-all">
+            <div key={type.id} className="bg-black/10 border border-white/5 rounded-[1.0rem] p-6 space-y-6 shadow-md transition-all">
               <div className="flex justify-between items-center border-b border-white/10 pb-4">
                 <h3 className="font-black text-lg italic uppercase tracking-tighter flex items-center gap-2">
                   <ChevronRight style={{ color: accent }} size={18} />

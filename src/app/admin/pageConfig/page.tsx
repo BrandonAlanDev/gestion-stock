@@ -19,6 +19,7 @@ export default async function PageConfigPage() {
   console.log(pageConfig);
 
   return (
+
     <div className=" md:ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200"
     style={{ backgroundColor: getContrastColor(getContrastColor(pageConfig?.secondaryColor || "black")) ,
     color:getContrastColor(pageConfig?.secondaryColor || "black"),
@@ -29,6 +30,7 @@ export default async function PageConfigPage() {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div>
+
             <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-4" style={{ color: pageConfig?.primaryColor || "black" }} >
               <span className="w-2 h-10 rounded-full" style={{ backgroundColor: pageConfig?.primaryColor || "black" }} />
               Configuración de Página
@@ -45,7 +47,7 @@ export default async function PageConfigPage() {
               await clearPageConfig();
             }}
           >
-            <button className="px-6 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
+            <button className="px-6 py-3 rounded-[1.0rem] bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
               Resetear Configuración
             </button>
           </form>

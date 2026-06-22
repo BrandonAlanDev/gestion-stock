@@ -28,7 +28,7 @@ export default function BoardTypesList({ types, tails, fins, configs }: BoardTyp
   const currentItems = types.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <div className="flex flex-col p-6 rounded-[2.5rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+    <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
       <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
         <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
           <LayoutTemplate size={20} style={{ color: "#0d5c63" }} /> Modelos de Tabla
@@ -39,7 +39,7 @@ export default function BoardTypesList({ types, tails, fins, configs }: BoardTyp
       <div className="space-y-4">
         {types.length === 0 && <p className="text-sm italic text-[#4a7c80]">No hay modelos configurados.</p>}
         {currentItems.map((type: any) => (
-          <div key={type.id} className="p-5 rounded-2xl border" style={{ background: "#f0fafa", borderColor: "#b2dede" }}>
+          <div key={type.id} className="p-5 rounded-[1.0rem] border" style={{ background: "#f0fafa", borderColor: "#b2dede" }}>
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-black uppercase" style={{ color: "#083d42" }}>{type.name}</h3>
@@ -49,19 +49,19 @@ export default function BoardTypesList({ types, tails, fins, configs }: BoardTyp
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="bg-white p-3 rounded-xl border border-[#e0f5f5]">
+              <div className="bg-white p-3 rounded-[1.0rem] border border-[#e0f5f5]">
                 <span className="text-[9px] font-black uppercase text-[#4a7c80] flex items-center gap-1 mb-2"><Waves size={10} /> Colas</span>
                 <div className="flex flex-wrap gap-1">
                   {type.allowedTails.map((t: any) => <span key={t.id} className="text-[10px] bg-[#0d5c63]/10 text-[#0d5c63] px-2 py-1 rounded-md font-bold">{t.name}</span>)}
                 </div>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-[#e0f5f5]">
+              <div className="bg-white p-3 rounded-[1.0rem] border border-[#e0f5f5]">
                 <span className="text-[9px] font-black uppercase text-[#4a7c80] flex items-center gap-1 mb-2"><Settings2 size={10} /> Sistemas</span>
                 <div className="flex flex-wrap gap-1">
                   {type.allowedFins.map((f: any) => <span key={f.id} className="text-[10px] bg-[#0d5c63]/10 text-[#0d5c63] px-2 py-1 rounded-md font-bold">{f.name}</span>)}
                 </div>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-[#e0f5f5]">
+              <div className="bg-white p-3 rounded-[1.0rem] border border-[#e0f5f5]">
                 <span className="text-[9px] font-black uppercase text-[#4a7c80] flex items-center gap-1 mb-2"><Layers size={10} /> Configs</span>
                 <div className="flex flex-wrap gap-1">
                   {type.allowedConfigs.map((c: any) => <span key={c.id} className="text-[10px] bg-[#0d5c63]/10 text-[#0d5c63] px-2 py-1 rounded-md font-bold">{c.name}</span>)}

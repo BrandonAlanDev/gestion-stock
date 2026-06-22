@@ -114,6 +114,7 @@ export default function BrandingSection({
   };
 
   return (
+
     <section className="rounded-[2rem] border  overflow-hidden"
       style={{
         backgroundColor:secondaryColor || "black",

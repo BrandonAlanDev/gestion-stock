@@ -82,6 +82,7 @@ export default function SocialsSection({
   };
 
   return (
+
     <section className="rounded-[2rem] border border-neutral-900 bg-black/40 overflow-hidden"
       style={{
         backgroundColor:secondaryColor || "black",

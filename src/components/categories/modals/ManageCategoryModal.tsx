@@ -113,7 +113,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     card: isAdmin
       ? "bg-neutral-950 border border-neutral-800"
       : { backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}` },
-    cardRounded: "rounded-[2.5rem]",
+    cardRounded: "rounded-[1.0rem]",
     barColor: isEdit ? (isAdmin ? "bg-blue-500" : primaryColor) : (isAdmin ? "bg-amber-500" : primaryColor),
     titleColor: isAdmin ? "text-white" : textColor,
     titleIconColor: isEdit ? (isAdmin ? "text-blue-500" : primaryColor) : (isAdmin ? "text-amber-500" : primaryColor),
@@ -121,18 +121,18 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     labelColor: isAdmin ? "text-neutral-500" : textColor,
     labelLetterSpacing: "0.2em",
     input: isAdmin
-      ? "bg-neutral-900 border border-neutral-800 rounded-2xl p-4 text-white outline-none focus:border-neutral-700 transition-all font-medium"
-      : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}`, borderRadius: "16px", padding: "14px 16px", color: textColor, fontSize: "14px", fontWeight: 500, outline: "none", width: "100%" },
+      ? "bg-neutral-900 border border-neutral-800 rounded-[1.0rem] p-4 text-white outline-none focus:border-neutral-700 transition-all font-medium"
+      : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}`, borderRadius: "12px", padding: "14px 16px", color: textColor, fontSize: "14px", fontWeight: 500, outline: "none", width: "100%" },
     deleteBtn: isAdmin
-      ? "px-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all"
-      : { background: "rgba(224,80,80,0.08)", border: "1px solid rgba(224,80,80,0.25)", color: "#e05050", borderRadius: "16px", padding: "0 16px", transition: "all" },
+      ? "px-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[1.0rem] transition-all"
+      : { background: "rgba(224,80,80,0.08)", border: "1px solid rgba(224,80,80,0.25)", color: "#e05050", borderRadius: "12px", padding: "0 16px", transition: "all" },
     submitBtn: isEdit
       ? (isAdmin
-          ? "border-neutral-800 text-white hover:bg-neutral-900 w-full font-black uppercase italic rounded-2xl h-12"
-          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: `1px solid ${overlayBorder}`, backgroundColor: innerBg, color: textColor, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" })
+          ? "border-neutral-800 text-white hover:bg-neutral-900 w-full font-black uppercase italic rounded-[1.0rem] h-12"
+          : { height: "48px", borderRadius: "12px", fontSize: "13px", border: `1px solid ${overlayBorder}`, backgroundColor: innerBg, color: textColor, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" })
       : (isAdmin
-          ? "w-full font-black uppercase italic rounded-2xl h-12 bg-amber-500 text-black"
-          : { height: "48px", borderRadius: "16px", fontSize: "13px", border: "none", backgroundColor: primaryColor, color: getContrastColor(primaryColor), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }),
+          ? "w-full font-black uppercase italic rounded-[1.0rem] h-12 bg-amber-500 text-black"
+          : { height: "48px", borderRadius: "12px", fontSize: "13px", border: "none", backgroundColor: primaryColor, color: getContrastColor(primaryColor), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }),
     subListBg: isAdmin ? "bg-neutral-900/50 border-neutral-800/60" : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}` },
     subTextColor: isAdmin ? "text-white" : textColor,
     subSizeColor: isAdmin ? "text-neutral-500" : textColor,
@@ -140,10 +140,10 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     addSubBg: isAdmin ? "bg-neutral-900/30 border-neutral-800/80" : { backgroundColor: innerBg, border: `1px solid ${overlayBorder}` },
     addSubTitle: isAdmin ? "text-amber-500" : primaryColor,
     addSubInput: isAdmin
-      ? "bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white outline-none focus:border-neutral-700"
-      : { backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}`, borderRadius: "12px", padding: "10px 12px", color: textColor, fontSize: "12px", outline: "none", width: "100%" },
+      ? "bg-neutral-950 border border-neutral-800 rounded-[1.0rem] p-3 text-xs text-white outline-none focus:border-neutral-700"
+      : { backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}`, borderRadius: "12px", padding: "14px 16px", color: textColor, fontSize: "14px", fontWeight: 500, outline: "none", width: "100%" },
     addSubBtn: isAdmin
-      ? "w-full bg-neutral-800 hover:bg-amber-500 hover:text-black text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all flex items-center justify-center gap-1 disabled:opacity-40"
+      ? "w-full bg-neutral-800 hover:bg-amber-500 hover:text-black text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-[1.0rem] transition-all flex items-center justify-center gap-1 disabled:opacity-40"
       : { backgroundColor: primaryColor, color: getContrastColor(primaryColor), borderRadius: "10px", border: "none", cursor: "pointer", fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" },
     dividerColor: isAdmin ? "border-neutral-900" : overlayBorder,
     emptyTextColor: isAdmin ? "text-neutral-600" : overlayBorder,
@@ -157,7 +157,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
         <button
           onClick={() => setIsOpen(true)}
           className={isAdmin
-            ? "p-2.5 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 hover:text-amber-500 text-neutral-400 rounded-xl transition-all shadow-xl"
+            ? "p-2.5 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 hover:text-amber-500 text-neutral-400 rounded-[1.0rem] transition-all shadow-xl"
             : "transition-all"
           }
           style={!isAdmin ? {
@@ -182,7 +182,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
         <button
           onClick={() => setIsOpen(true)}
           className={isAdmin
-            ? "font-black uppercase italic tracking-tighter rounded-xl bg-amber-500 text-black px-5 py-2.5"
+            ? "font-black uppercase italic tracking-tighter rounded-[1.0rem] bg-amber-500 text-black px-5 py-2.5"
             : "font-black uppercase italic tracking-tighter transition-all"
           }
           style={!isAdmin ? {
@@ -319,7 +319,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                     {category.subCategories?.map((sub: any) => (
                       <div
                         key={sub.id}
-                        className={`flex justify-between items-center px-4 py-2.5 rounded-xl ${isAdmin ? styles.subListBg as string : ''}`}
+                        className={`flex justify-between items-center px-4 py-2.5 rounded-[1.0rem] ${isAdmin ? styles.subListBg as string : ''}`}
                         style={!isAdmin ? { ...styles.subListBg as React.CSSProperties, borderRadius: "12px" } : undefined}
                       >
                         <div className="flex flex-col">
@@ -364,7 +364,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                   {/* Form agregar subcategoría */}
                   <form
                     onSubmit={handleAddSubCategory}
-                    className={`space-y-3 p-4 rounded-2xl ${isAdmin ? styles.addSubBg as string : ''}`}
+                    className={`space-y-3 p-4 rounded-[1.0rem] ${isAdmin ? styles.addSubBg as string : ''}`}
                     style={!isAdmin ? { ...styles.addSubBg as React.CSSProperties, borderRadius: "16px" } : undefined}
                   >
                     <span
