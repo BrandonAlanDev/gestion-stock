@@ -73,7 +73,7 @@ export default function DashboardClient() {
 
   return (
 
-    <div className=" md:ml-60 p-6 sm:p-8 w-full mt-18 " style={{ backgroundColor: secondaryColor, color: textColor }}>
+    <div className="p-6 sm:p-8 w-full" style={{ backgroundColor: secondaryColor, color: textColor }}>
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>

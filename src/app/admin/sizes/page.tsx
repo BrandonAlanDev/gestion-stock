@@ -72,7 +72,7 @@ export default function SizesPage() {
     <div 
       style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }}
 
-      className="transition-colors duration-200 md:ml-60 p-6 sm:p-8 pt-24 w-full"
+      className="transition-colors duration-200 p-6 sm:p-8 pt-12 w-full"
     >
       <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
         

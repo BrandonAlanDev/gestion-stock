@@ -122,7 +122,7 @@ export default function CustomPagesPage() {
     <>
       <div
 
-        className="md:ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200 min-h-screen"
+        className="p-6 sm:p-8 w-full transition-colors duration-200 min-h-screen"
         style={{ backgroundColor: secondaryColor }}
       >
         <div className="max-w-7xl mx-auto space-y-6">
