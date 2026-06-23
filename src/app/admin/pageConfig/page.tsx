@@ -20,7 +20,7 @@ export default async function PageConfigPage() {
 
   return (
 
-    <div className=" md:ml-60 p-6 sm:p-8 w-full mt-18 transition-colors duration-200"
+    <div className=" p-6 sm:p-8 w-full transition-colors duration-200"
     style={{ backgroundColor: getContrastColor(getContrastColor(pageConfig?.secondaryColor || "black")) ,
     color:getContrastColor(pageConfig?.secondaryColor || "black"),
     borderColor:getContrastColor(pageConfig?.secondaryColor || "black")
