@@ -1,34 +1,46 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { unstable_cache, revalidateTag } from "next/cache";
+import {
+  revalidateTag,
+  unstable_cache,
+} from "next/cache";
+
+type BannerInput = {
+  image?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  text?: string | null;
+  url?: string | null;
+};
 
 type BrandingInput = {
   storeName?: string;
   slogan?: string | null;
   description?: string | null;
   logo?: string | null;
-  banner?: string | null;
   favicon?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+
+  banners?: BannerInput[];
 };
 
 export async function updateBrandingConfig(
   data: BrandingInput
 ) {
   try {
-    const existing =
+    let pageConfig =
       await prisma.pageConfig.findFirst();
 
-    const storeName =
-      data.storeName?.trim() ||
-      existing?.storeName ||
-      "GestionOK";
-
     const payload = {
-      storeName,
+      storeName:
+        data.storeName?.trim() ||
+        pageConfig?.storeName ||
+        "GestionOK",
+
       slogan: data.slogan ?? null,
+
       description:
         data.description ?? null,
 
@@ -41,36 +53,66 @@ export async function updateBrandingConfig(
         "#ffffff",
 
       logo:
-        data.logo ||
-        existing?.logo ||
-        null,
-
-      banner:
-        data.banner ||
-        existing?.banner ||
+        data.logo ??
+        pageConfig?.logo ??
         null,
 
       favicon:
-        data.favicon ||
-        existing?.favicon ||
+        data.favicon ??
+        pageConfig?.favicon ??
         null,
     };
 
-    console.log(
-      "BRANDING PAYLOAD",
-      payload
-    );
-
-    const pageConfig = existing
-      ? await prisma.pageConfig.update({
-          where: {
-            id: existing.id,
-          },
-          data: payload,
-        })
-      : await prisma.pageConfig.create({
+    if (!pageConfig) {
+      pageConfig =
+        await prisma.pageConfig.create({
           data: payload,
         });
+    } else {
+      pageConfig =
+        await prisma.pageConfig.update({
+          where: {
+            id: pageConfig.id,
+          },
+          data: payload,
+        });
+    }
+
+    // Actualiza los banners
+    if (data.banners) {
+      await prisma.banner.deleteMany({
+        where: {
+          pageConfigId: pageConfig.id,
+        },
+      });
+
+      if (data.banners.length > 0) {
+        await prisma.banner.createMany({
+          data: data.banners.map(
+            (banner, index) => ({
+              pageConfigId:
+                pageConfig!.id,
+              order: index + 1,
+              image:
+                banner.image ??
+                null,
+              title:
+                banner.title ??
+                null,
+              subtitle:
+                banner.subtitle ??
+                null,
+              text:
+                banner.text ??
+                null,
+              url:
+                banner.url ??
+                null,
+            })
+          ),
+        });
+      }
+    }
 
     revalidateTag("page-config");
     revalidateTag("branding-config");
@@ -106,10 +148,24 @@ export const getBrandingConfig =
               slogan: true,
               description: true,
               logo: true,
-              banner: true,
               favicon: true,
               primaryColor: true,
               secondaryColor: true,
+
+              banners: {
+                orderBy: {
+                  order: "asc",
+                },
+                select: {
+                  id: true,
+                  order: true,
+                  image: true,
+                  title: true,
+                  subtitle: true,
+                  text: true,
+                  url: true,
+                },
+              },
             },
           });
 
@@ -133,5 +189,8 @@ export const getBrandingConfig =
       }
     },
     ["branding-config"],
-    { revalidate: 3600 }
+    {
+      revalidate: 3600,
+      tags: ["branding-config"],
+    }
   );
