@@ -20,8 +20,6 @@ import {
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-import { heroSlides } from "@/components/data/data";
-
 const Hero = ({
   setActiveCategory,
 }: any) => {
@@ -36,35 +34,70 @@ const Hero = ({
   // =====================================
 
   const slides = useMemo(() => {
-    const dynamicSlide = {
-      id: "store-main",
+  const banners =
+    pageConfig?.banners || [];
 
-      title:
-        pageConfig?.storeName ||
-        "GestionOK",
-
-      subtitle:
-        pageConfig?.slogan ||
-        "Tu tienda online",
-
-      description:
-        pageConfig?.description ||
-        "Descubrí productos únicos con una experiencia moderna y premium.",
-
-      image:
-        pageConfig?.banner ||
-        "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop",
-
-      ctaText:
-        "Explorar catálogo",
-
-      targetCategory: null,
-    };
-
+  if (!banners.length) {
     return [
-      dynamicSlide,
-      ...heroSlides,
+      {
+        id: "default",
+
+        title:
+          pageConfig?.storeName ||
+          "GestionOK",
+
+        subtitle:
+          pageConfig?.slogan ||
+          "Tu tienda online",
+
+        description:
+          pageConfig?.description ||
+          "Descubrí productos únicos con una experiencia moderna y premium.",
+
+        image:
+          "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop",
+
+        ctaText:
+          "Explorar catálogo",
+
+        url: null,
+      },
     ];
+  }
+
+  return banners.map(
+      (banner: any, index: number) => ({
+        id:
+          banner.id ??
+          `banner-${index}`,
+
+        title:
+          banner.title ||
+          pageConfig?.storeName ||
+          "GestionOK",
+
+        subtitle:
+          banner.subtitle ||
+          "",
+
+        description:
+          banner.text ||
+          "",
+
+        image:
+          banner.image ||
+          "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop",
+
+        ctaText:
+          "Ver más",
+
+        url:
+          banner.url || null,
+      }))
+      .filter(
+        (banner: any) =>
+          banner.image
+      );
   }, [pageConfig]);
 
   // =====================================
@@ -112,12 +145,13 @@ const Hero = ({
   };
 
   const handleHeroCta = (
-    category: any
+    slide: any
   ) => {
-    if (category) {
-      setActiveCategory(
-        category
-      );
+    if (slide?.url) {
+      window.location.href =
+        slide.url;
+
+      return;
     }
 
     const section =
@@ -417,7 +451,7 @@ const Hero = ({
               <button
                 onClick={() =>
                   handleHeroCta(
-                    currentSlide.targetCategory
+                    currentSlide
                   )
                 }
                 className="
@@ -468,7 +502,7 @@ const Hero = ({
       {/* NAVIGATION */}
       {/* ===================================== */}
 
-      <div className="absolute bottom-8 right-8 z-30 flex gap-3">
+      <div className="absolute bottom-8 right-8 z-30 flex gap-1 md:gap-3">
         <button
           onClick={handlePrev}
           className="
@@ -540,9 +574,9 @@ const Hero = ({
       {/* INDICATORS */}
       {/* ===================================== */}
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+      <div className="absolute bottom-10 left-1/3 md:left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
         {slides.map(
-          (slide, index) => {
+          (slide: any, index: number) => {
             const active =
               index === current;
 
