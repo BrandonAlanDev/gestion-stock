@@ -98,5 +98,5 @@ export const registerAction = async (prevState: ActionState, formData: FormData)
 };
 
 export const googleLoginAction = async () => {
-  await signIn("google", { redirectTo: "/dashboard" });
+  await signIn("google", { redirectTo: "/" });
 };

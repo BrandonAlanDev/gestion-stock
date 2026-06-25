@@ -32,30 +32,45 @@ export default function BrandingSection({
     useTransition();
 
   const [form, setForm] = useState({
-    storeName:
-      config?.storeName || "GestionOK",
+    storeName: "",
+    slogan: "",
+    description: "",
+    logo: "",
+    favicon: "",
+    primaryColor: "#06b6d4",
+    secondaryColor: "#ffffff",
 
-    slogan:
-      config?.slogan || "",
-
-    description:
-      config?.description || "",
-
-    logo:
-      config?.logo || "",
-
-    banner:
-      config?.banner || "",
-
-    favicon:
-      config?.favicon || "",
-
-    primaryColor:
-      config?.primaryColor || "#06b6d4",
-
-    secondaryColor:
-      config?.secondaryColor || "#ffffff",
-  });
+    banners: [
+        {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+        },
+        {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+        },
+        {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+        },
+        {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+        },
+    ],
+});
 
   useEffect(() => {
     setForm({
@@ -70,8 +85,37 @@ export default function BrandingSection({
       logo:
         config?.logo || "",
 
-      banner:
-        config?.banner || "",
+      banners:
+        config?.banners || [
+          {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+          },
+          {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+          },
+          {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+          },
+          {
+            image: "",
+            title: "",
+            subtitle: "",
+            text: "",
+            url: "",
+          },
+        ],
 
       favicon:
         config?.favicon || "",
@@ -193,16 +237,6 @@ export default function BrandingSection({
           }
         />
 
-        <ImageUploader
-          label="Banner"
-          value={form.banner}
-          onChange={(v) =>
-            handleChange(
-              "banner",
-              v
-            )
-          }
-        />
 
         <ImageUploader
           label="Favicon"
@@ -214,7 +248,64 @@ export default function BrandingSection({
             )
           }
         />
+        {form.banners.map((banner, index) => (
+          <div key={index} className="space-y-4 rounded-xl border p-5">
 
+              <h3 className="font-bold">
+                  Banner {index + 1}
+              </h3>
+
+              <ImageUploader
+                  label="Imagen"
+                  value={banner.image}
+                  onChange={(v) => {
+                      const copy = [...form.banners];
+                      copy[index].image = v;
+                      setForm({ ...form, banners: copy });
+                  }}
+              />
+
+              <Input
+                  label="Título"
+                  value={banner.title}
+                  onChange={(v) => {
+                      const copy = [...form.banners];
+                      copy[index].title = v;
+                      setForm({ ...form, banners: copy });
+                  }}
+              />
+
+              <Input
+                  label="Subtítulo"
+                  value={banner.subtitle}
+                  onChange={(v) => {
+                      const copy = [...form.banners];
+                      copy[index].subtitle = v;
+                      setForm({ ...form, banners: copy });
+                  }}
+              />
+
+              <Textarea
+                  label="Texto"
+                  value={banner.text}
+                  onChange={(v) => {
+                      const copy = [...form.banners];
+                      copy[index].text = v;
+                      setForm({ ...form, banners: copy });
+                  }}
+              />
+
+              <Input
+                  label="URL"
+                  value={banner.url}
+                  onChange={(v) => {
+                      const copy = [...form.banners];
+                      copy[index].url = v;
+                      setForm({ ...form, banners: copy });
+                  }}
+              />
+          </div>
+      ))}
         <div>
           <label className="text-xs font-black uppercase tracking-[0.3em] mb-3 block">
             Color Principal

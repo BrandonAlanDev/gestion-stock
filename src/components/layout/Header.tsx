@@ -71,7 +71,7 @@ export default function Header({
     <>
       {/* HEADER PRINCIPAL: sin altura fija para permitir el dropdown debajo */}
       <header
-        className="fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md"
+        className="fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out"
         style={{
           backgroundColor: isHomeTop ? "transparent" : secondaryColor,
           borderColor: isHomeTop ? "transparent" : overlayColor,
