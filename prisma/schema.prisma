@@ -196,20 +196,25 @@ model PageConfig {
   id                 Int      @id @default(1)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
   storeName          String
   description        String?  @db.Text
   slogan             String?
+
   logo               String?  @db.Text
   favicon            String?  @db.Text
-  banner             String?  @db.Text
+
   primaryColor       String?  @default("#000000")
   secondaryColor     String?  @default("#FFFFFF")
+
   ecommerceEnabled   Boolean  @default(true)
   cartEnabled        Boolean  @default(true)
   checkoutEnabled    Boolean  @default(true)
+
   phone              String?
   whatsapp           String?
   email              String?
+
   locationEnabled    Boolean  @default(false)
   address            String?
   city               String?
@@ -217,19 +222,45 @@ model PageConfig {
   country            String?
   postalCode         String?
   mapsUrl            String?  @db.Text
+
   instagram          String?  @db.Text
   facebook           String?  @db.Text
   tiktok             String?  @db.Text
   x                  String?  @db.Text
   youtube            String?  @db.Text
   linkedin           String?  @db.Text
+
   currency           String   @default("ARS")
   language           String   @default("es")
+
   maintenanceMode    Boolean  @default(false)
+
   metaTitle          String?
   metaDescription    String?  @db.Text
+
   termsAndConditions String?  @db.Text
   privacyPolicy      String?  @db.Text
+
+  banners Banner[]
+}
+
+model Banner {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order         Int
+
+  image         String? @db.Text
+  title         String?
+  subtitle      String?
+  text          String? @db.Text
+  url           String? @db.Text
+
+  pageConfigId  Int
+  pageConfig    PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([pageConfigId, order])
 }
 
 model CustomBoard {
