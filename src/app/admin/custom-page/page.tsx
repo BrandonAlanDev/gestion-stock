@@ -122,19 +122,21 @@ export default function CustomPagesPage() {
     <>
       <div
 
-        className="p-6 sm:p-8 w-full transition-colors duration-200 min-h-screen"
+        className="p-6 sm:p-8 w-full transition-colors duration-200 min-h-screen mt-12"
         style={{ backgroundColor: secondaryColor }}
       >
         <div className="max-w-7xl mx-auto space-y-6">
 
-          <div className="rounded-[1.0rem] border backdrop-blur-xl p-6 bg-white/50">
+          <div className="rounded-[1.0rem] border backdrop-blur-xl p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="flex flex-row gap-2 items-center">
-                  <span style={{ color: primaryColor }}><Settings size={28} /></span>
-                  <h1 className="font-black text-3xl text-black">Páginas Dinámicas</h1>
+                  <span style={{ color:  primaryColor }}><Settings size={28} /></span>
+                  <h1 className="font-black text-3xl" style={{ color: primaryColor }}>
+                    Páginas Dinámicas
+                  </h1>
                 </div>
-                <p className="text-sm text-gray-500 mt-1 font-medium">
+                <p className="text-sm mt-1 font-medium" style={{ color: getContrastColor(secondaryColor) }}>
                   Gestiona el contenido estructurado de las landing pages.
                 </p>
               </div>
@@ -149,11 +151,11 @@ export default function CustomPagesPage() {
               </button>
             </div>
           </div>
-          <div className="rounded-[1.0rem] border bg-white overflow-hidden shadow-sm">
+          <div className="rounded-[1.0rem] border overflow-hidden shadow-sm" >
             {pages.map((page) => (
               <div
                 key={page.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors gap-3"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border-b last:border-b-0 transition-colors gap-3"
               >
                 {/* Izquierda: ícono + título + slug */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -165,11 +167,11 @@ export default function CustomPagesPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <h3 className="font-bold text-gray-800 text-base sm:text-lg leading-tight truncate">
+                    <h3 style={{ color: primaryColor }} className="font-bold text-base sm:text-lg leading-tight truncate">
                       {page.title}
                     </h3>
-                    <p className="text-sm font-medium text-gray-400 mt-0.5">
-                      /{page.slug} • {page.sections?.length || 0} secciones
+                    <p className="text-sm font-medium" style={{ color: getContrastColor(secondaryColor) }}>
+                      {`/page/?title=${page.title}    `}{"  •  "}{page.sections?.length || 0} secciones
                     </p>
                   </div>
                 </div>
@@ -261,7 +263,7 @@ export default function CustomPagesPage() {
         onSave={handleSavePage}
         isSaving={isProcessing}
         primaryColor={primaryColor}
-        contrastColor={contrastColor}
+        secondaryColor={secondaryColor}
       />
 
       <ViewPageModal
@@ -269,7 +271,7 @@ export default function CustomPagesPage() {
         onClose={() => setIsViewerOpen(false)}
         page={selectedPage}
         primaryColor={primaryColor}
-        contrastColor={contrastColor}
+        secondaryColor={secondaryColor}
       />
 
       <DeleteConfirmModal
@@ -278,6 +280,8 @@ export default function CustomPagesPage() {
         onConfirm={handleDeleteConfirm}
         itemName={selectedPage?.title}
         isDeleting={isProcessing}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
       />
     </>
   );
