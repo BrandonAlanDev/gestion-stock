@@ -25,8 +25,8 @@ export default function MovementsPage() {
 
   return (
 
-    <div style={{ backgroundColor: background, color: contrast, minHeight: "100vh" }} className=" p-6 sm:p-8 w-full mt-18 transition-colors duration-200">
-      <div className="mb-12 max-w-6xl mx-auto">
+    <div style={{ backgroundColor: background, color: contrast, minHeight: "100vh" }} className=" p-6 sm:p-8 w-full transition-colors duration-200">
+      <div className="my-12 max-w-6xl mx-auto">
         <h1 className="text-3xl font-black uppercase italic flex items-center gap-3">
           <span className="w-2 h-8 rounded-full" style={{ backgroundColor: accent }} />
           Historial de Movimientos

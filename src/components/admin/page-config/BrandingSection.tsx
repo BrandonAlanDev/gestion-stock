@@ -3,9 +3,11 @@
 import { ImageIcon, Save } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-
-import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
-
+import {
+    updateBrandingConfig,
+    createBanner,
+    deleteBanner,
+} from "@/actions/page-config/branding.actions";
 import ImageUploader from "./shared/ImageUploader";
 import Input from "./shared/Input";
 import Textarea from "./shared/Textarea";
@@ -42,6 +44,7 @@ export default function BrandingSection({
 
     banners: [
         {
+            id: 0,
             image: "",
             title: "",
             subtitle: "",
@@ -49,6 +52,7 @@ export default function BrandingSection({
             url: "",
         },
         {
+            id: 1,
             image: "",
             title: "",
             subtitle: "",
@@ -56,6 +60,7 @@ export default function BrandingSection({
             url: "",
         },
         {
+            id: 2,
             image: "",
             title: "",
             subtitle: "",
@@ -63,6 +68,7 @@ export default function BrandingSection({
             url: "",
         },
         {
+            id: 3,
             image: "",
             title: "",
             subtitle: "",
@@ -251,9 +257,69 @@ export default function BrandingSection({
         {form.banners.map((banner, index) => (
           <div key={index} className="space-y-4 rounded-xl border p-5">
 
-              <h3 className="font-bold">
-                  Banner {index + 1}
-              </h3>
+              <div
+                  style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 20,
+                  }}
+              >
+                  <h3
+                      style={{
+                          fontWeight: 900,
+                          color: getContrastColor(
+                              form.secondaryColor
+                          ),
+                      }}
+                  >
+                      Banner {index + 1}
+                  </h3>
+
+                  <button
+                      onClick={async () => {
+                          if (
+                              !confirm(
+                                  "¿Estás seguro que deseas eliminar este banner?"
+                              )
+                          )
+                              return;
+
+                          if (!banner.id) return;
+
+                          const res = await deleteBanner(
+                              banner.id
+                          );
+
+                          if (!res.ok) {
+                              toast.error(res.error);
+                              return;
+                          }
+
+                          setForm(prev => ({
+                              ...prev,
+                              banners: prev.banners.filter(
+                                  (_, i) => i !== index
+                              ),
+                          }));
+
+                          toast.success(
+                              "Banner eliminado"
+                          );
+                      }}
+                      style={{
+                          backgroundColor: "#dc2626",
+                          color: "#fff",
+                          border: `2px solid #dc2626`,
+                          borderRadius: 14,
+                          padding: "10px 18px",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                      }}
+                  >
+                      Eliminar
+                  </button>
+              </div>
 
               <ImageUploader
                   label="Imagen"
@@ -306,6 +372,46 @@ export default function BrandingSection({
               />
           </div>
       ))}
+      <div className="md:col-span-2 flex justify-center">
+        <button
+            onClick={() => {
+                startTransition(async () => {
+                    const res = await createBanner();
+                    if (!res.ok) {
+                      toast.error(res.error);
+                      return;
+                    }
+
+                    if (!res.banner) return;
+
+                    setForm(prev => ({
+                      ...prev,
+                      banners: [
+                        ...prev.banners,
+                        {
+                          id: res.banner.id,
+                          image: "",
+                          title: "",
+                          subtitle: "",
+                          text: "",
+                          url: "",
+                        },
+                      ],
+                    }));
+
+                    toast.success("Banner agregado");
+                });
+            }}
+            className="h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] hover:cursor-pointer transition"
+            style={{
+                backgroundColor: form.primaryColor,
+                color: getContrastColor(form.primaryColor),
+                border: `2px solid ${form.primaryColor}`,
+            }}
+        >
+            + Agregar Banner
+        </button>
+    </div>
         <div>
           <label className="text-xs font-black uppercase tracking-[0.3em] mb-3 block">
             Color Principal
