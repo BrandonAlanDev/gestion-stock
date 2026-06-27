@@ -194,3 +194,67 @@ export const getBrandingConfig =
       tags: ["branding-config"],
     }
   );
+
+  export async function createBanner() {
+  try {
+    const pageConfig = await prisma.pageConfig.findFirst();
+
+    if (!pageConfig)
+      return {
+        ok: false,
+        error: "No existe PageConfig",
+      };
+
+    const lastBanner = await prisma.banner.findFirst({
+      where: {
+        pageConfigId: pageConfig.id,
+      },
+      orderBy: {
+        order: "desc",
+      },
+    });
+
+    const banner = await prisma.banner.create({
+      data: {
+        pageConfigId: pageConfig.id,
+        order: (lastBanner?.order ?? 0) + 1,
+        image: "",
+        title: "",
+        subtitle: "",
+        text: "",
+        url: "",
+      },
+    });
+
+    revalidateTag("branding-config");
+
+    return {
+      ok: true,
+      banner,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      error: "Error al crear banner",
+    };
+  }
+}
+
+export async function deleteBanner(id: number) {
+  try {
+    await prisma.banner.delete({
+      where: { id },
+    });
+
+    revalidateTag("branding-config");
+
+    return {
+      ok: true,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      error: "Error al eliminar banner",
+    };
+  }
+}
