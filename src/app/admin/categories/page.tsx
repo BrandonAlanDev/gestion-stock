@@ -54,7 +54,7 @@ export default function CategoriesAdminPage() {
 
     <div className=" p-6 sm:p-8 w-full " style={{ backgroundColor: pageBackground, color: textColor }}>
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-12">
+      <div className="flex justify-between items-center my-12">
         <div>
           <h1
             className="text-3xl font-black uppercase italic flex items-center gap-3"

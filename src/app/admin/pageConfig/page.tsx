@@ -26,7 +26,7 @@ export default async function PageConfigPage() {
     borderColor:getContrastColor(pageConfig?.secondaryColor || "black")
     }}
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto my-12">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div>
