@@ -72,7 +72,7 @@ function ProvidersContent() {
   return (
 
     <div style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }} className="transition-colors duration-200 p-6 sm:p-8 pt-12 w-full">
-      <div className="p-8 max-w-6xl mx-auto space-y-8 pt-24">
+      <div className="p-8 max-w-6xl mx-auto space-y-8 pt-12">
         
         <div className="flex justify-between items-end border-b pb-6 font-black italic uppercase tracking-tighter" style={{ borderColor: `${textColor}20` }}>
           <h1 className="text-3xl flex items-center gap-3">
