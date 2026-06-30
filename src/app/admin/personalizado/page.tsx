@@ -1,5 +1,5 @@
 import { getBoardAdminOptions } from "@/actions/admin-personalizado";
-import { Wrench, Tag, Layers, Waves, FileText, LayoutTemplate, Settings2 } from "lucide-react";
+import { Wrench, Tag, Layers, Waves, FileText, LayoutTemplate, Settings2, Clock } from "lucide-react";
 
 import BoardTypesList from "@/components/admin-personalizado/BoardTypesList";
 
@@ -8,6 +8,7 @@ import ManageTailModal from "@/components/admin-personalizado/ManageTailModal";
 import ManageFinModal from "@/components/admin-personalizado/ManageFinModal";
 import ManageFinConfigModal from "@/components/admin-personalizado/ManageFinConfigModal";
 import ManageMaterialModal from "@/components/admin-personalizado/ManageMaterialModal";
+import ManageDeliveryModal from "@/components/admin-personalizado/ManageDeliveryModal";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function AdminPersonalizadoPage() {
     return <div className="p-8 pt-24 text-red-500 font-bold text-center">Error cargando configuraciones.</div>;
   }
 
-  const { types, tails, fins, configs, materials } = data;
+  const { types, tails, fins, configs, materials, deliveryOptions } = data;
 
   return (
 
@@ -119,6 +120,29 @@ export default async function AdminPersonalizadoPage() {
                     <p className="text-[10px] text-[#4ab8b8] font-black uppercase tracking-widest">{conf.count} Quillas</p>
                   </div>
                   <ManageFinConfigModal config={conf} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* TIEMPOS DE ENTREGA */}
+          <div className="flex flex-col p-6 rounded-[1.0rem]" style={{ background: "#ffffff", border: "1px solid #b2dede" }}>
+            <div className="flex justify-between items-center mb-6 border-b border-[#e0f5f5] pb-4">
+              <h2 className="text-xl font-black uppercase italic flex items-center gap-2" style={{ color: "#083d42" }}>
+                <Clock size={20} style={{ color: "#0d5c63" }} /> Tiempos de Entrega
+              </h2>
+              <ManageDeliveryModal />
+            </div>
+            <div className="space-y-3">
+              {deliveryOptions.length === 0 && <p className="text-sm italic text-[#4a7c80]">No hay opciones de entrega.</p>}
+              {(deliveryOptions as any[]).map((d) => (
+                <div key={d.id} className="flex justify-between items-center p-3 rounded-[1.0rem]" style={{ background: "#f0fafa", border: "1px solid #b2dede" }}>
+                  <div>
+                    <p className="text-xs font-bold uppercase text-[#0d2b2e]">{d.label}</p>
+                    {d.description && <p className="text-[10px] text-[#4a7c80] mt-1">{d.description}</p>}
+                    {!d.active && <p className="text-[10px] text-red-400 font-bold uppercase mt-1">Inactivo</p>}
+                  </div>
+                  <ManageDeliveryModal delivery={d} />
                 </div>
               ))}
             </div>
