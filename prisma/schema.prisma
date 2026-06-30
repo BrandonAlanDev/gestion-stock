@@ -196,25 +196,19 @@ model PageConfig {
   id                 Int      @id @default(1)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-
   storeName          String
   description        String?  @db.Text
   slogan             String?
-
   logo               String?  @db.Text
   favicon            String?  @db.Text
-
   primaryColor       String?  @default("#000000")
   secondaryColor     String?  @default("#FFFFFF")
-
   ecommerceEnabled   Boolean  @default(true)
   cartEnabled        Boolean  @default(true)
   checkoutEnabled    Boolean  @default(true)
-
   phone              String?
   whatsapp           String?
   email              String?
-
   locationEnabled    Boolean  @default(false)
   address            String?
   city               String?
@@ -222,61 +216,53 @@ model PageConfig {
   country            String?
   postalCode         String?
   mapsUrl            String?  @db.Text
-
   instagram          String?  @db.Text
   facebook           String?  @db.Text
   tiktok             String?  @db.Text
   x                  String?  @db.Text
   youtube            String?  @db.Text
   linkedin           String?  @db.Text
-
   currency           String   @default("ARS")
   language           String   @default("es")
-
   maintenanceMode    Boolean  @default(false)
-
   metaTitle          String?
   metaDescription    String?  @db.Text
-
   termsAndConditions String?  @db.Text
   privacyPolicy      String?  @db.Text
-
-  banners Banner[]
+  banners            Banner[]
 }
 
 model Banner {
-  id            Int      @id @default(autoincrement())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  order         Int
-
-  image         String? @db.Text
-  title         String?
-  subtitle      String?
-  text          String? @db.Text
-  url           String? @db.Text
-
-  pageConfigId  Int
-  pageConfig    PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  order        Int
+  image        String?    @db.Text
+  title        String?
+  subtitle     String?
+  text         String?    @db.Text
+  url          String?    @db.Text
+  pageConfigId Int
+  pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
 
   @@unique([pageConfigId, order])
 }
 
 model CustomBoard {
-  id         String   @id @default(cuid())
-  tipo       String
-  largo      String
-  ancho      String
-  espesor    String
-  volumen    String?
-  material   String
-  cola       String
-  killaTipo  String
-  killaCount String
-  notas      String?  @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(cuid())
+  tipo           String
+  largo          String
+  ancho          String
+  espesor        String
+  volumen        String?
+  material       String
+  cola           String
+  killaTipo      String
+  killaCount     String
+  notas          String?  @db.Text
+  deliveryOption String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model BoardTypeOption {
@@ -309,6 +295,15 @@ model BoardFinOption {
   name       String            @unique
   active     Boolean           @default(true)
   boardTypes BoardTypeOption[]
+}
+
+model BoardDeliveryOption {
+  id          String   @id @default(cuid())
+  label       String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model BoardFinConfigOption {
@@ -386,6 +381,32 @@ model CustomSectionItem {
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@map("CustomPageItems")
+}
+
+model Homegrid {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String
+  style     Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  grids     Grid[]
+}
+
+model Grid {
+  id         String   @id @default(cuid())
+  title      String
+  subtitle   String
+  image      String   @db.Text
+  active     Boolean  @default(true)
+  url        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  homegridId String
+  homegrid   Homegrid @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+
+  @@index([homegridId])
 }
 
 enum user_role {

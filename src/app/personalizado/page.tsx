@@ -25,12 +25,14 @@ type BoardType = {
   allowedConfigs: { id: string; name: string; count: number }[];
 };
 type BoardMaterial = { id: string; name: string; description: string | null };
-type BoardOptions = { types: BoardType[]; materials: BoardMaterial[] };
+type BoardDelivery = { id: string; label: string; description: string | null };
+type BoardOptions = { types: BoardType[]; materials: BoardMaterial[]; deliveryOptions: BoardDelivery[] };
 
 type State = {
   tipo: string; largo: string; ancho: string; espesor: string;
   volumen: string; material: string; cola: string;
   killaTipo: string; killaCount: string; notas: string;
+  deliveryOption: string;
 };
 
 const FIN_POSITIONS: Record<number, [number, number][]> = {
@@ -115,7 +117,7 @@ export default function PersonalizadoPage() {
   
   const [options, setOptions] = useState<BoardOptions | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [s, setS] = useState<State>({ tipo:"", largo:"", ancho:"", espesor:"", volumen:"", material:"", cola:"", killaTipo:"", killaCount:"", notas:"" });
+  const [s, setS] = useState<State>({ tipo:"", largo:"", ancho:"", espesor:"", volumen:"", material:"", cola:"", killaTipo:"", killaCount:"", notas:"", deliveryOption:"" });
 
   useEffect(() => {
     getBoardOptions().then(data => setOptions(data)).catch(console.error);
@@ -138,17 +140,17 @@ export default function PersonalizadoPage() {
   const onInput = (key: keyof State) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setS(prev => ({ ...prev, [key]: e.target.value }));
 
-  const complete = !!(s.tipo && s.largo && s.ancho && s.espesor && s.material && s.cola && s.killaTipo && s.killaCount);
+  const complete = !!(s.tipo && s.largo && s.ancho && s.espesor && s.material && s.cola && s.killaTipo && s.killaCount && s.deliveryOption);
 
   function buildMsg() {
     const vol   = s.volumen ? `\n• Volumen: ${s.volumen} L` : "";
     const notas = s.notas.trim() ? `\n• Notas: ${s.notas}` : "";
-    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}\n Notas:${s.notas}\n\nQuedo a la espera de más info. Gracias!`;
+    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}\n• Entrega estimada: ${s.deliveryOption}\n Notas:${s.notas}\n\nQuedo a la espera de más info. Gracias!`;
   }
 
   async function handleSend() {
     setIsSubmitting(true);
-    const res = await createCustomBoard(s);
+    const res = await createCustomBoard({ ...s, deliveryOption: s.deliveryOption });
     setIsSubmitting(false);
     if (res.error) { toast.error(res.error); return; }
     toast.success("Pedido registrado correctamente.");
@@ -251,6 +253,24 @@ export default function PersonalizadoPage() {
               <textarea value={s.notas} onChange={onInput("notas")} rows={3} placeholder="Color, diseño de deck, grip, observaciones..." style={{ ...inputSt, resize:"vertical", lineHeight:1.6, padding:"10px 12px" }} />
             </div>
 
+            {/* Fecha de entrega */}
+            <div style={card}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}><StepBadge n={8} /><span style={{ fontSize:14, fontWeight:600, textTransform:"uppercase", color:"#0f172a" }}>Fecha de entrega</span></div>
+              {options.deliveryOptions.length > 0
+                ? <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                    {options.deliveryOptions.map(({ label, description }) => (
+                      <Chip
+                        key={label}
+                        label={description ? `${label} — ${description}` : label}
+                        active={s.deliveryOption === label}
+                        onClick={() => toggle("deliveryOption")(label)}
+                      />
+                    ))}
+                  </div>
+                : <p style={{ fontSize:13, color:"#64748b", margin:0 }}>No hay fechas de entrega configuradas.</p>
+              }
+            </div>
+
             {/* Preview */}
             <div style={{ ...card, border:`1px solid ${T.cyanMd}33` }}>
               <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:"uppercase", color:T.cyanMd, marginBottom:16 }}>// Resumen de tu tabla</p>
@@ -266,6 +286,7 @@ export default function PersonalizadoPage() {
                   <SpecRow label="Cola"     value={s.cola} />
                   <SpecRow label="Sistema"  value={s.killaTipo} />
                   <SpecRow label="Killas"   value={s.killaCount} />
+                  <SpecRow label="Entrega"  value={s.deliveryOption} />
                   {s.notas.trim() && <SpecRow label="Notas" value={s.notas.length>60 ? s.notas.slice(0,60)+"…" : s.notas} />}
                 </div>
               </div>
@@ -285,7 +306,7 @@ export default function PersonalizadoPage() {
                 ? <><Loader2 className="animate-spin" /> Guardando pedido...</>
                 : complete
                   ? <><WhatsAppIcon />Enviar pedido por WhatsApp</>
-                  : "Completá tipo, medidas, material, cola y killas"}
+                  : "Completá tipo, medidas, material, cola, killas y entrega"}
             </button>
           </div>
         )}
