@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 ========================================= */
 export async function getBoardAdminOptions() {
   try {
-    const [types, tails, fins, configs, materials] = await Promise.all([
+    const [types, tails, fins, configs, materials, deliveryOptions] = await Promise.all([
       prisma.boardTypeOption.findMany({
         include: {
           allowedTails: true,
@@ -21,9 +21,10 @@ export async function getBoardAdminOptions() {
       prisma.boardFinOption.findMany({ orderBy: { name: "asc" } }),
       prisma.boardFinConfigOption.findMany({ orderBy: { count: "asc" } }),
       prisma.boardMaterialOption.findMany({ orderBy: { name: "asc" } }),
+      prisma.boardDeliveryOption.findMany({ orderBy: { createdAt: "asc" } }),
     ]);
 
-    return { success: true, data: { types, tails, fins, configs, materials } };
+    return { success: true, data: { types, tails, fins, configs, materials, deliveryOptions } };
   } catch (error: any) {
     console.error("Error fetching admin board options:", error);
     return { success: false, error: "Error al cargar las opciones" };
@@ -227,5 +228,49 @@ export async function deleteBoardMaterial(id: string) {
     return { success: true };
   } catch (error) {
     return { success: false, error: "Error al eliminar el material." };
+  }
+}
+
+/* =========================================
+   OPCIONES DE ENTREGA
+========================================= */
+export async function createDeliveryOption(data: { label: string; description?: string }) {
+  try {
+    const created = await prisma.boardDeliveryOption.create({
+      data: { label: data.label, description: data.description || null },
+    });
+    revalidatePath("/admin/personalizado");
+    revalidatePath("/personalizado");
+    return { success: true, data: created };
+  } catch (error) {
+    return { success: false, error: "Error al crear la opción de entrega." };
+  }
+}
+
+export async function updateDeliveryOption(
+  id: string,
+  data: { label: string; description?: string; active: boolean }
+) {
+  try {
+    const updated = await prisma.boardDeliveryOption.update({
+      where: { id },
+      data: { label: data.label, description: data.description || null, active: data.active },
+    });
+    revalidatePath("/admin/personalizado");
+    revalidatePath("/personalizado");
+    return { success: true, data: updated };
+  } catch (error) {
+    return { success: false, error: "Error al actualizar la opción de entrega." };
+  }
+}
+
+export async function deleteDeliveryOption(id: string) {
+  try {
+    await prisma.boardDeliveryOption.delete({ where: { id } });
+    revalidatePath("/admin/personalizado");
+    revalidatePath("/personalizado");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Error al eliminar la opción de entrega." };
   }
 }

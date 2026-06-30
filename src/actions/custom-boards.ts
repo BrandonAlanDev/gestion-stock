@@ -13,6 +13,7 @@ export type CustomBoardInput = {
   killaTipo: string;
   killaCount: string;
   notas?: string;
+  deliveryOption?: string;
 };
 
 export async function createCustomBoard(data: CustomBoardInput) {
@@ -29,6 +30,7 @@ export async function createCustomBoard(data: CustomBoardInput) {
         killaTipo: data.killaTipo,
         killaCount: data.killaCount,
         notas: data.notas || null,
+        deliveryOption: data.deliveryOption || null,
       },
     });
 
