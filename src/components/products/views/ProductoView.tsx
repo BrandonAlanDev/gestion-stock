@@ -4,16 +4,14 @@ import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Truck, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { useCart } from "@/context/CartContext";
 import { ProductProps } from "../types";
 import WhatsAppOrderForm from "../forms/WhatsAppOrder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import ProductAction from "@/components/ui/ProductAction";
 
-const WS_NUMBER = "2235644043";
 const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 
 export default function ProductoView({ product }: ProductProps) {
-  const { addToCart } = useCart();
   const router = useRouter();
   const { pageConfig } = usePageConfig();
   
@@ -21,7 +19,6 @@ export default function ProductoView({ product }: ProductProps) {
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [sizeError, setSizeError] = useState(false);
   const [showOrderForm, setShowOrderForm] = useState(false);
 
   // 📐 Determinar si el producto pertenece a la categoría Tablas
@@ -84,25 +81,6 @@ export default function ProductoView({ product }: ProductProps) {
   const hasSizes = sizes.length > 0;
   const hasColors = colors.length > 0;
   const hasDescription = product.description && product.description.trim() !== "";
-
-  const handleWhatsApp = () => {
-    if (esTabla) {
-      setShowOrderForm(true);
-      return;
-    }
-
-    const lines = [
-      `Hola! Me interesa este producto 👋`,
-      ``,
-      `*${product.name}*`,
-      `Precio: $${Number(product.price).toLocaleString("es-AR")}`,
-      product.category?.name ? `Categoría: ${product.category.name}` : null,
-      selectedSize ? `Talle: ${selectedSize}` : null,
-      selectedColor ? `Color: ${selectedColor}` : null,
-    ].filter(Boolean).join("\n");
-
-    window.open(`https://wa.me/${WS_NUMBER}?text=${encodeURIComponent(lines)}`, "_blank");
-  };
 
   return (
     <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-200">
@@ -239,13 +217,14 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             </div>
 
-            <button
-              onClick={handleWhatsApp}
-              className="w-full text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition-colors"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {esTabla ? "Consultar con el vendedor" : "Consultar por WhatsApp"}
-            </button>
+            {/* INTEGRACIÓN DEL COMPONENTE DE ACCIÓN */}
+            <ProductAction 
+              product={product} 
+              size={selectedSize} 
+              color={selectedColor} 
+              esTabla={esTabla} 
+            />
+
           </div>
         </div>
 
@@ -261,10 +240,6 @@ export default function ProductoView({ product }: ProductProps) {
         </div>
 
       </div>
-
-      {showOrderForm && esTabla && (
-        <WhatsAppOrderForm product={product} onClose={() => setShowOrderForm(false)} />
-      )}
     </div>
   );
 }
