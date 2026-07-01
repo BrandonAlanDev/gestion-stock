@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 
 export async function getBoardOptions() {
   try {
-    const [types, materials, deliveryOptions] = await Promise.all([
+    const [types, materials, deliveryOptions, pageConfig] = await Promise.all([
       prisma.boardTypeOption.findMany({
         where: { active: true },
         orderBy: { name: "asc" },
@@ -16,12 +16,13 @@ export async function getBoardOptions() {
       }),
       prisma.boardMaterialOption.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
       prisma.boardDeliveryOption.findMany({ where: { active: true }, orderBy: { createdAt: "asc" } }),
+      prisma.pageConfig.findUnique({ where: { id: 1 }, select: { whatsapp: true } }),
     ]);
 
-    return { types, materials, deliveryOptions };
+    return { types, materials, deliveryOptions, whatsapp: pageConfig?.whatsapp ?? null };
   } catch (error) {
     console.error("Error fetching board options:", error);
-    return { types: [], materials: [], deliveryOptions: [] };
+    return { types: [], materials: [], deliveryOptions: [], whatsapp: null };
   }
 }
 

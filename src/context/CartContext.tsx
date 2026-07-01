@@ -37,9 +37,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Efecto para guardar el carrito en localStorage cada vez que cambie
   useEffect(() => {
-    // Solo guardar si cartItems no es el array vacío inicial, para evitar sobreescribir al cargar
     if (cartItems.length > 0) {
        localStorage.setItem("tech_cart", JSON.stringify(cartItems));
     }

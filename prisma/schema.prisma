@@ -388,6 +388,9 @@ model Homegrid {
   title     String
   subtitle  String
   style     Int
+  columns   String   @default("md:grid-cols-2") 
+  gap       String   @default("gap-0")
+  cardHeight String  @default("h-[70vh]")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
