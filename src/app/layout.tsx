@@ -1,4 +1,5 @@
 import "./globals.css";
+import { cache } from "react";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
 import AppGate from "@/components/layout/AppGate";
@@ -20,23 +21,80 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Gestión de Stock",
-  description: "Sistema de gestión de stock - Administra tus productos de manera eficiente.",
-};
+const getCachedPageConfig = cache(async () => {
+  return await getPageConfig();
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { pageConfig } = await getCachedPageConfig();
+
+  return {
+    title:
+      pageConfig?.metaTitle ??
+      pageConfig?.storeName ??
+      "Gestión de Stock",
+
+    description:
+      pageConfig?.metaDescription ??
+      pageConfig?.description ??
+      "Sistema de gestión de stock",
+
+    icons: {
+      icon: pageConfig?.favicon ?? "/favicon.ico",
+      shortcut: pageConfig?.favicon ?? "/favicon.ico",
+      apple: pageConfig?.favicon ?? "/favicon.ico",
+    },
+
+    openGraph: {
+      title:
+        pageConfig?.metaTitle ??
+        pageConfig?.storeName ??
+        "Gestión de Stock",
+
+      description:
+        pageConfig?.metaDescription ??
+        pageConfig?.description ??
+        "",
+
+      images: pageConfig?.logo
+        ? [
+            {
+              url: pageConfig.logo,
+            },
+          ]
+        : [],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title:
+        pageConfig?.metaTitle ??
+        pageConfig?.storeName ??
+        "Gestión de Stock",
+
+      description:
+        pageConfig?.metaDescription ??
+        pageConfig?.description ??
+        "",
+
+      images: pageConfig?.logo ? [pageConfig.logo] : [],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  const branding = await getBrandingConfig();
-  const pageConfig = await getPageConfig();
+  await auth();
+  const pageConfig = await getCachedPageConfig();
 
   return (
     <html lang="es" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden bg-black text-white`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden bg-black text-white`}
+      >
         <QueryProvider>
           <PageConfigProvider pageConfig={pageConfig}>
             <LayoutComponent>
