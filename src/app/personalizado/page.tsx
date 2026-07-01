@@ -8,8 +8,6 @@ import { Loader2, Settings2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-const WA_NUMBER = "5492234214414";
-
 // --- NUEVA PALETA BASADA EN CIAN ---
 const T = {
   surface: "#ffffff",
@@ -26,7 +24,7 @@ type BoardType = {
 };
 type BoardMaterial = { id: string; name: string; description: string | null };
 type BoardDelivery = { id: string; label: string; description: string | null };
-type BoardOptions = { types: BoardType[]; materials: BoardMaterial[]; deliveryOptions: BoardDelivery[] };
+type BoardOptions = { types: BoardType[]; materials: BoardMaterial[]; deliveryOptions: BoardDelivery[]; whatsapp: string | null };
 
 type State = {
   tipo: string; largo: string; ancho: string; espesor: string;
@@ -149,12 +147,17 @@ export default function PersonalizadoPage() {
   }
 
   async function handleSend() {
+    const waNumber = options?.whatsapp;
+    if (!waNumber) {
+      toast.error("No hay número de WhatsApp configurado. Contactá al administrador.");
+      return;
+    }
     setIsSubmitting(true);
     const res = await createCustomBoard({ ...s, deliveryOption: s.deliveryOption });
     setIsSubmitting(false);
     if (res.error) { toast.error(res.error); return; }
     toast.success("Pedido registrado correctamente.");
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildMsg())}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(buildMsg())}`, "_blank", "noopener,noreferrer");
   }
 
   if (!options) {
