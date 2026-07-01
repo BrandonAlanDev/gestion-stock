@@ -10,8 +10,8 @@ const CATEGORY_GRID = [
   { id: "indumentaria", label: "INDUMENTARIA", sublabel: "Nuestra colección", href: "/productos?categoria=indumentaria", image: "/images/products/Indumentaria.jpeg" },
   { id: "trajes", label: "TRAJES DE NEOPRENE", sublabel: "Trajes disponibles", href: "/productos?categoria=trajes de neopreno", image: "/images/products/Neoprenos.jpeg" },
   { id: "accesorios", label: "ACCESORIOS", sublabel: "Quillas · Pitas · Grips", href: "/productos?categoria=accesorios", image: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=1200&q=80" },
-  { id: "escuela", label: "ESCUELA DE SURF", sublabel: "Clases y Clínicas", href: "/escuela", image: "/images/escuela.jpg" },
-  { id: "personalizado", label: "CUSTOM WORK", sublabel: "Diseñá a Medida", href: "/personalizado", image: "/images/personalizado.jpg" },
+  { id: "escuela", label: "ESCUELA DE SURF", sublabel: "Clases y Clínicas", href: "/escuela", image: "/images/products/Escuelasurf.jpeg" },
+  { id: "personalizado", label: "CUSTOM WORK", sublabel: "Diseñá a Medida", href: "/personalizado", image: "/images/products/CustomWorks.jpeg" },
   { id: "arreglos", label: "REPARACIONES", sublabel: "Taller técnico y mantenimiento", href: "/arreglos", image: "/images/arreglos.jpg" },
   { id: "plan-ahorro", label: "PLAN DE AHORRO", sublabel: "Financiación adjudicada y cuotas fijas", href: "/plan-de-ahorro", image: "/images/ahorro.jpg" },
 ];
