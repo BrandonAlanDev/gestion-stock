@@ -1,11 +1,15 @@
 "use client";
 
-import { Grid3X3, Images, Columns, Plus, Trash2, Pencil } from "lucide-react";
-import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
-import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
-import GridModal from "@/components/admin/page-config/GridModal";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2, Pencil } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import GridModal from "@/components/admin/page-config/GridModal";
+import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
+import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
+import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
+
+import { SelectItem } from "@/components/admin/destination-picker/types";
 
 export default function HomeSectionsConfig({ config, primaryColor = "#a80000", secondaryColor = "#ffffff" }: any) {
   const [isPending, startTransition] = useTransition();
@@ -16,11 +20,42 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGrid, setEditingGrid] = useState<any>(null);
 
+  const [products, setProducts] = useState<SelectItem[]>([]);
+  const [categories, setCategories] = useState<SelectItem[]>([]);
+
   const router = useRouter();
 
   useEffect(() => {
     setLayout(config?.featuredLayout?.toLowerCase() ?? "grid");
-    setGrids(config?.homegrid?.grids || []);
+    const rawGrids = config?.homegrid?.grids || [];
+    const gridsWithDestination = rawGrids.map((grid: any) => ({
+      ...grid,
+      destination: {
+        type: grid.linkType?.toLowerCase() || "none",
+        value: grid.linkValue || "",
+      },
+    }));
+    setGrids(gridsWithDestination); async function loadPickers() {
+
+      const productsData = await getProductsPicker();
+      const categoriesData = await getCategoriesPicker();
+
+      setProducts(
+        productsData.map((p: any) => ({
+          id: p.id,
+          label: p.name,
+        }))
+      );
+
+      setCategories(
+        categoriesData.map((c: any) => ({
+          id: c.id,
+          label: c.name,
+        }))
+      );
+    }
+
+    loadPickers();
   }, [config]);
 
   const handleAddOrEdit = (data: any) => {
@@ -44,17 +79,20 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
     // si no existe, lanzamos un error más descriptivo para saber qué pasa
     const homeGridId = config?.homegrid?.id;
 
-    if (!homeGridId) {
-      console.error("DEBUG: Estructura de config recibida:", config);
-      toast.error("No se encontró el ID del HomeGrid. Recarga la página o contacta al soporte.");
-      return;
-    }
-
     startTransition(async () => {
       try {
+        const gridsForServer = grids.map((g: any) => ({
+          id: g.id, // necesario para identificar si es edición? El server action usa delete + create, así que no importa
+          title: g.title,
+          subtitle: g.subtitle,
+          image: g.image,
+          linkType: g.destination?.type?.toUpperCase() || "NONE",
+          linkValue: g.destination?.value || "",
+        }));
+
         const [layoutRes, gridRes] = await Promise.all([
           updateSectionVisibility({ featuredLayout: layout }),
-          updateHomeGrids(homeGridId, grids)
+          updateHomeGrids(homeGridId, gridsForServer)
         ]);
 
         if (!layoutRes.ok || !gridRes.ok) {
@@ -118,6 +156,8 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
         onClose={() => setIsModalOpen(false)}
         onSave={handleAddOrEdit}
         initialData={editingGrid}
+        products={products}
+        categories={categories}
       />
     </section>
   );

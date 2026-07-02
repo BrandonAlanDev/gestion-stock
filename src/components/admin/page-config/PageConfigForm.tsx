@@ -12,7 +12,7 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 export default function PageConfigForm({ config }: any) {
   const { pageConfig } = usePageConfig();
 
-  const data = pageConfig || config;
+  const data = (pageConfig && Object.keys(pageConfig).length > 0) ? pageConfig : config;
 
   return (
     <div className="space-y-8">

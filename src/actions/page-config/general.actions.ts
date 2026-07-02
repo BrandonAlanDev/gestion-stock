@@ -41,7 +41,7 @@ export async function getPageConfig() {
         termsAndConditions: true,
         privacyPolicy: true,
         featuredLayout: true,
-        
+
         // Mantenemos tus banners
         banners: {
           orderBy: {
@@ -58,8 +58,9 @@ export async function getPageConfig() {
             style: true,
             columns: true,
             grids: {
-              where: { active: true },
-              orderBy: { createdAt: "asc" },
+              orderBy: {
+                title: "asc",
+              },
             },
           },
         },
@@ -71,6 +72,7 @@ export async function getPageConfig() {
       pageConfig,
     };
   } catch (error) {
+    console.error("Error real:", error.message);
     console.error(error);
     return {
       ok: false,

@@ -1,15 +1,33 @@
 "use client";
 
+import { X, Upload } from "lucide-react";
 import { useState } from "react";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
+import { Destination, SelectItem } from "@/components/admin/destination-picker/types";
+import DestinationPicker from "@/components/admin/destination-picker/DestinationPicker";
 
-export default function GridModal({ isOpen, onClose, onSave, initialData }: any) {
-  const [formData, setFormData] = useState(initialData || { 
-    title: "", 
-    subtitle: "", 
-    url: "", 
-    image: "" 
-  });
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: any) => void;
+  initialData: any;
+  products: SelectItem[];
+  categories: SelectItem[];
+}
+
+export default function GridModal({ isOpen, onClose, onSave, initialData, products, categories }: Props) {
+  const [formData, setFormData] = useState(
+    initialData || {
+      destination: {
+        title: "",
+        subtitle: "",
+        image: "",
+        destination: {
+          type: "none",
+          value: "",
+        },
+      }
+    }
+  );
 
   // Manejador para convertir el archivo subido a Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,23 +52,28 @@ export default function GridModal({ isOpen, onClose, onSave, initialData }: any)
         </div>
 
         <div className="space-y-4">
-          <input 
-            placeholder="Título" 
+          <input
+            placeholder="Título"
             className="w-full p-4 border rounded-xl"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
-          <input 
-            placeholder="Subtítulo" 
+          <input
+            placeholder="Subtítulo"
             className="w-full p-4 border rounded-xl"
             value={formData.subtitle}
-            onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
           />
-          <input 
-            placeholder="URL (Link)" 
-            className="w-full p-4 border rounded-xl"
-            value={formData.url}
-            onChange={(e) => setFormData({...formData, url: e.target.value})}
+          <DestinationPicker
+            value={formData.destination}
+            products={products}
+            categories={categories}
+            onChange={(destination: Destination) =>
+              setFormData({
+                ...formData,
+                destination,
+              })
+            }
           />
 
           {/* Selector de archivos */}
@@ -58,17 +81,17 @@ export default function GridModal({ isOpen, onClose, onSave, initialData }: any)
             <label className="block text-sm font-bold mb-2">Imagen de la sección</label>
             <div className="flex items-center gap-4">
               <label className="flex-1 border-2 border-dashed rounded-xl p-4 flex items-center justify-center cursor-pointer hover:bg-neutral-50">
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
                 <span className="flex items-center gap-2 text-neutral-500">
                   <Upload size={20} /> Seleccionar archivo
                 </span>
               </label>
-              
+
               {/* Previsualización de la imagen */}
               {formData.image && (
                 <div className="w-16 h-16 rounded-lg overflow-hidden border">
@@ -79,7 +102,7 @@ export default function GridModal({ isOpen, onClose, onSave, initialData }: any)
           </div>
         </div>
 
-        <button 
+        <button
           onClick={() => onSave(formData)}
           className="mt-8 w-full py-4 bg-black text-white font-black rounded-xl hover:opacity-90 transition-opacity"
         >

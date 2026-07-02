@@ -3,24 +3,20 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { FeaturedLayout } from "../../../generated/prisma";
-import {v2 as cloudinary} from "cloudinary";
-
-interface UpdateConfigData {
-  featuredLayout?: string;
-}
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import cloudinary from "@/lib/cloudinary";
 
 interface GridItem {
   id?: string;
   title: string;
   subtitle: string;
   image: string;
-  url?: string;
+  linkType:
+  | "NONE"
+  | "CATEGORY"
+  | "PRODUCT"
+  | "PAGE"
+  | "EXTERNAL";
+  linkValue?: string;
 }
 
 export async function updateSectionVisibility(data: UpdateConfigData) {
@@ -28,8 +24,8 @@ export async function updateSectionVisibility(data: UpdateConfigData) {
     await prisma.pageConfig.update({
       where: { id: 1 },
       data: {
-        featuredLayout: data.featuredLayout 
-          ? (data.featuredLayout.toUpperCase() as FeaturedLayout) 
+        featuredLayout: data.featuredLayout
+          ? (data.featuredLayout.toUpperCase() as FeaturedLayout)
           : undefined,
       },
     });
@@ -43,8 +39,12 @@ export async function updateSectionVisibility(data: UpdateConfigData) {
   }
 }
 
-export async function updateHomeGrids(homegridId: string, grids: GridItem[]) {
+export async function updateHomeGrids(
+  homegridId: string | undefined | null,
+  grids: GridItem[]
+) {
   try {
+    // 1. Subir imágenes a Cloudinary si son data:image
     const processedGrids = await Promise.all(
       grids.map(async (g) => {
         if (g.image.startsWith("data:image")) {
@@ -57,22 +57,50 @@ export async function updateHomeGrids(homegridId: string, grids: GridItem[]) {
       })
     );
 
-    await prisma.$transaction(async (tx) => {
-      await tx.grid.deleteMany({ where: { homegridId: homegridId } });
-      
+    // 2. Usar una transacción para crear Homegrid si no existe
+    const finalHomegridId = await prisma.$transaction(async (tx) => {
+      let targetHomegridId = homegridId;
+
+      // Si no hay homegridId, crear el Homegrid y asociarlo al PageConfig
+      if (!targetHomegridId) {
+        const newHomegrid = await tx.homegrid.create({
+          data: {
+            title: "Home Destacado",      // valores por defecto, se pueden personalizar
+            subtitle: "",
+            style: 1,                    // o el valor por defecto que quieras
+            columns: "md:grid-cols-2",
+          },
+        });
+
+        // Asociar el Homegrid al PageConfig con id = 1
+        await tx.pageConfig.update({
+          where: { id: 1 },
+          data: { homegridId: newHomegrid.id },
+        });
+
+        targetHomegridId = newHomegrid.id;
+      }
+
+      // 3. Eliminar todos los grids existentes del Homegrid
+      await tx.grid.deleteMany({ where: { homegridId: targetHomegridId } });
+
+      // 4. Insertar los nuevos grids
       await tx.grid.createMany({
         data: processedGrids.map((g) => ({
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,
-          url: g.url || "",
-          homegridId: homegridId,
+          linkType: g.linkType,
+          linkValue: g.linkValue,
+          homegridId: targetHomegridId,
         })),
       });
+
+      return targetHomegridId;
     });
 
     revalidatePath("/admin/pageConfig");
-    return { ok: true };
+    return { ok: true, homegridId: finalHomegridId };
   } catch (error) {
     console.error("Error en updateHomeGrids:", error);
     return { ok: false, error: "No se pudieron actualizar las secciones" };
