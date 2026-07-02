@@ -10,6 +10,8 @@ import {
   ChevronDown,
   AlertTriangle,
 } from "lucide-react";
+import { usePageConfig } from "../providers/PageConfigProvider";
+import LocationCard from "../ui/LocationCard";
 
 // --- INTERFACES BASADAS EN TU PRISMA SCHEMA ---
 export interface CustomItem {
@@ -293,6 +295,8 @@ function FaqSection({ section }: { section: CustomSection }) {
 
 // 6. CTA DE ADHESIÓN / CONTACTO
 function CtaSection({ section }: { section: CustomSection }) {
+  const { pageConfig} = usePageConfig();
+  const config = pageConfig || {};
   const btnText = section.config?.buttonText || "ESCRIBINOS";
   const btnLink = section.config?.buttonLink || "#";
 
@@ -327,10 +331,21 @@ function CtaSection({ section }: { section: CustomSection }) {
           </div>
         </div>
         <div className="lg:col-span-5 p-8 md:p-14 flex items-center justify-center" style={{ background: "#f0fafa" }}>
-           {/* Acá puedes integrar tu LocationCard real si lo configuras en la BD */}
-           <div className="w-full max-w-sm text-center font-black" style={{ color: "#0d5c63" }}>
-              // CONTACTO DIRECTO
-           </div>
+          {/* Acá puedes integrar tu LocationCard real si lo configuras en la BD */}
+          <section 
+                    className="flex items-center justify-center border-t-2" 
+                    style={{ 
+                      backgroundColor: pageConfig.secondaryColor || "#f8fafc",
+                      borderColor: `${pageConfig.primaryColor}20`|| "#b2dede"  
+                    }}
+                  >
+                    <LocationCard
+                      title="Nuestra Sucursal Central"
+                      days="Lunes a Sábados"
+                      hours="09:00 hs a 20:00 hs"
+                      config={config}
+                    />
+                  </section>
         </div>
       </section>
     );
