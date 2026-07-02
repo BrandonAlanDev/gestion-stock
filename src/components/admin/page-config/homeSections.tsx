@@ -11,11 +11,11 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
   const [isPending, startTransition] = useTransition();
   const [layout, setLayout] = useState(config?.featuredLayout?.toLowerCase() ?? "grid");
   const [grids, setGrids] = useState(config?.homegrid?.grids || []);
-  
+
   // Estados para el Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGrid, setEditingGrid] = useState<any>(null);
-  
+
   const router = useRouter();
 
   useEffect(() => {
@@ -40,20 +40,31 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
   };
 
   const handleSave = async () => {
-    if (!config?.homegrid?.id) {
-      toast.error("Error: No se encontró el ID del HomeGrid");
+    // Intentamos obtener el ID de la configuración, 
+    // si no existe, lanzamos un error más descriptivo para saber qué pasa
+    const homeGridId = config?.homegrid?.id;
+
+    if (!homeGridId) {
+      console.error("DEBUG: Estructura de config recibida:", config);
+      toast.error("No se encontró el ID del HomeGrid. Recarga la página o contacta al soporte.");
       return;
     }
 
     startTransition(async () => {
-      const layoutRes = await updateSectionVisibility({ featuredLayout: layout });
-      const gridRes = await updateHomeGrids(config.homegrid.id, grids);
+      try {
+        const [layoutRes, gridRes] = await Promise.all([
+          updateSectionVisibility({ featuredLayout: layout }),
+          updateHomeGrids(homeGridId, grids)
+        ]);
 
-      if (!layoutRes.ok || !gridRes.ok) {
-        toast.error("Error al guardar cambios");
-      } else {
-        toast.success("Todo guardado correctamente");
-        router.refresh();
+        if (!layoutRes.ok || !gridRes.ok) {
+          toast.error("Error al guardar: " + (layoutRes.error || gridRes.error));
+        } else {
+          toast.success("Todo guardado correctamente");
+          router.refresh();
+        }
+      } catch (e) {
+        toast.error("Error inesperado al guardar");
       }
     });
   };
@@ -65,7 +76,7 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
         <h2 className="text-xl font-black uppercase italic mb-6 text-neutral-900" style={{ color: primaryColor }}>Diseño de Featured Section</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {["grid", "collage", "minimal"].map((type) => (
-            <button key={type} onClick={() => setLayout(type)} 
+            <button key={type} onClick={() => setLayout(type)}
               className={`p-6 rounded-2xl border-2 transition-all ${layout === type ? "border-cyan-500 bg-cyan-50" : "border-neutral-200"}`}>
               {type.toUpperCase()}
             </button>
