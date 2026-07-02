@@ -182,12 +182,14 @@ export default function ArreglosPage() {
             <div className="text-[9px] font-black mb-4 text-neutral-400">// COORDENADAS DE INGRESO</div>
             <LocationCard
               title="Nuestra Sucursal Central"
-              address="Av. Montreal 1153"
-              city="Santa Clara del Mar, Buenos Aires"
-              days="Lunes a Sábados"
-              hours="09:00 hs a 20:00 hs"
-              phone="+54 223 XXX-XXXX"
-              googleMapsUrl="https://maps.google.com/?q=Av.+Montreal+1153,+Santa+Clara+del+Mar"
+              days= "Lunes a Sábados"
+              hours= "09:00 hs a 20:00 hs"
+              config={{
+                address: "Av. Montreal 1153",
+                city: "Santa Clara del Mar, Buenos Aires",
+                phone: "+5492234492044",
+                mapsUrl: "https://maps.google.com/?q=Av.+Montreal+1153,+Santa+Clara+del+Mar"
+              }}
             />
           </div>
         </div>
