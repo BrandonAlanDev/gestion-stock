@@ -99,6 +99,8 @@ export default function HomeSectionsConfig({ config, primaryColor = "#a80000", s
           toast.error("Error al guardar: " + (layoutRes.error || gridRes.error));
         } else {
           toast.success("Todo guardado correctamente");
+          setIsModalOpen(false);
+          setEditingGrid(null);
           router.refresh();
         }
       } catch (e) {

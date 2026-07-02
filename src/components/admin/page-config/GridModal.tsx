@@ -94,8 +94,18 @@ export default function GridModal({ isOpen, onClose, onSave, initialData, produc
 
               {/* Previsualización de la imagen */}
               {formData.image && (
-                <div className="w-16 h-16 rounded-lg overflow-hidden border">
-                  <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                <div className="relative inline-block"> {/* Este contenedor NO tiene overflow-hidden */}
+                  <div className="w-16 h-16 overflow-hidden select-none rounded">
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, image: "" })}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors shadow-md border border-white"
+                    title="Quitar imagen"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
               )}
             </div>
