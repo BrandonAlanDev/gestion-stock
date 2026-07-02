@@ -1,8 +1,8 @@
 "use client";
 
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 
 interface CategoryCardProps {
   cat: {
@@ -20,8 +20,8 @@ interface CategoryCardProps {
 export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: CategoryCardProps) => {
   const [hovered, setHovered] = useState(false);
 
-  const variantStyles = variant === 'grid' 
-    ? "h-[60vh] md:h-[80vh] min-h-[400px]" 
+  const variantStyles = variant === 'grid'
+    ? "h-[60vh] md:h-[80vh] min-h-[400px]"
     : variant === 'minimal'
       ? "h-[40vh] min-h-[300px]"
       : "h-full min-h-[250px]";

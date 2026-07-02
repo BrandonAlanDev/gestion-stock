@@ -4,18 +4,19 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import LayoutGrid from "./LayoutGrid";
 import LayoutCollage from "./LayoutCollage";
 import LayoutMinimal from "./LayoutMinimal";
+import mapGridToCard from "@/helpers/GridToCard";
 
 export default function FeaturedSection() {
   const { pageConfig } = usePageConfig();
-  
+
   // 1. Obtenemos el layout desde la BD
   const primaryColor = pageConfig?.primaryColor || "#06b6d4";
   const layout = pageConfig?.featuredLayout?.toLowerCase() || "grid";
 
   // 2. Obtenemos los datos dinámicos desde el modelo Homegrid
   // Ajusta esto según cómo venga tu objeto pageConfig (probablemente pageConfig.homegrid)
-  const homeData = pageConfig?.homegrid; 
-  const categories = homeData?.grids || []; // Si no hay datos, array vacío
+  const homeData = pageConfig?.homegrid;
+  const categories = (homeData?.grids || []).map(mapGridToCard);
 
   if (categories.length === 0) return null; // O un skeleton
 
