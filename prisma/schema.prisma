@@ -206,6 +206,7 @@ model PageConfig {
   ecommerceEnabled   Boolean  @default(true)
   cartEnabled        Boolean  @default(true)
   checkoutEnabled    Boolean  @default(true)
+  featuredLayout FeaturedLayout @default(GRID)
   phone              String?
   whatsapp           String?
   email              String?
@@ -230,6 +231,8 @@ model PageConfig {
   termsAndConditions String?  @db.Text
   privacyPolicy      String?  @db.Text
   banners            Banner[]
+  homegrid        Homegrid? @relation(fields: [homegridId], references: [id])
+  homegridId      String?   // Esto crea la clave foránea
 }
 
 model Banner {
@@ -389,12 +392,11 @@ model Homegrid {
   subtitle  String
   style     Int
   columns   String   @default("md:grid-cols-2") 
-  gap       String   @default("gap-0")
-  cardHeight String  @default("h-[70vh]")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   grids     Grid[]
+  pageConfigs     PageConfig[]
 }
 
 model Grid {
@@ -431,4 +433,10 @@ enum SectionType {
   CTA
   GALLERY
   FEATURES
+}
+
+enum FeaturedLayout {
+  GRID
+  COLLAGE
+  MINIMAL
 }
