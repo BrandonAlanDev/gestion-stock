@@ -4,155 +4,116 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-interface ItemCarrito {
-  id: string;
-  name: string;
-  price: number | string;
-  image?:string;
-  shipping?: string;
-  qty: number;
+function getContrastColor(hex: string) {
+  if (!hex) return "#000000";
+  hex = hex.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
 }
 
-interface CartSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  cartItems: ItemCarrito[];
-  updateQty: (id: string, delta: number) => void;
-  removeItem: (id: string) => void;
-}
-
-const parsearPrecio = (valor: number | string): number => {
-  if (typeof valor === "number") return valor;
-  if (!valor) return 0;
-  return parseFloat(valor.toString().replace(/[^0-9.-]+/g, "")) || 0;
-};
-
-export default function CartSidebar({
-  isOpen,
-  onClose,
-  cartItems,
-  updateQty,
-  removeItem,
-}: CartSidebarProps) {
+export default function CartSidebar({ isOpen, onClose, cartItems, updateQty, removeItem }: any) {
   const { pageConfig } = usePageConfig();
   const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+  const secondaryColor = pageConfig?.secondaryColor || "#FFFFFF";
+  
+  const textColor = getContrastColor(secondaryColor);
+  const isDarkBg = textColor === "#ffffff";
+  const WS_NUMBER = pageConfig?.whatsapp || "2235644043";
 
-  const subtotal = useMemo(() =>
-    cartItems.reduce((acc, item) => acc + parsearPrecio(item.price) * item.qty, 0),
+  const subtotal = useMemo(() => 
+    cartItems.reduce((acc: number, item: any) => acc + (parseFloat(item.price) * item.qty), 0), 
     [cartItems]
   );
 
-  const costoEnvio = useMemo(() => {
-    if (cartItems.length === 0) return 0;
-    const costos = cartItems.map((item) => {
-      const texto = item.shipping?.toLowerCase() || "";
-      if (texto.includes("gratis")) return 0;
-      const coincidencia = texto.match(/\d+/);
-      return coincidencia ? parseInt(coincidencia[0], 10) : 0;
+  const handleCheckout = () => {
+    let mensaje = "🛍️ *¡Hola! Quiero realizar un pedido:*\n\n";
+    
+    cartItems.forEach((item: any) => {
+      mensaje += `*Producto:* ${item.name}\n`;
+      if (item.sku) mensaje += `*SKU:* ${item.sku}\n`;
+      mensaje += `*Cantidad:* ${item.qty}\n`;
+      mensaje += `*Precio:* $${parseFloat(item.price).toLocaleString()}\n - $${parseFloat(item.maxPrice).toLocaleString()}`;
+      
+      if (item.size) mensaje += `*Talle:* ${item.size}\n`;
+      if (item.color) mensaje += `*Color:* ${item.color}\n`;
+      
+      // Si el item tiene un JSON de atributos técnicos
+      if (item.attributes && typeof item.attributes === 'object') {
+        Object.entries(item.attributes).forEach(([key, value]) => {
+          mensaje += `*${key.charAt(0).toUpperCase() + key.slice(1)}:* ${value}\n`;
+        });
+      }
+      
+      if (item.description) mensaje += `*Notas:* ${item.description}\n`;
+      mensaje += `────────────────────\n`;
     });
-    return Math.max(...costos);
-  }, [cartItems]);
 
-  const total = subtotal + costoEnvio;
+    mensaje += `\n💰 *TOTAL A PAGAR:* $${subtotal.toLocaleString()}`;
+    mensaje += `\n\nQuedo atento a la confirmación, gracias.`;
+
+    const url = `https://wa.me/${WS_NUMBER}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
+          
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
-
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[101] flex flex-col"
+            className="fixed top-0 right-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col"
+            style={{ backgroundColor: secondaryColor, color: textColor }}
           >
-            <div className="p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: primaryColor }}>
-                <ShoppingBag className="w-5 h-5" /> Carrito
+            <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: isDarkBg ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} /> Carrito
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
-              </button>
+              <button onClick={onClose} className="p-2 hover:opacity-70"><X className="w-6 h-6" /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {cartItems.length === 0 ? (
-                <div className="text-center py-20 text-gray-400">
-                  <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>Tu carrito está vacío</p>
-                </div>
-              ) : (
-                cartItems.map((item) => {
-                  const imagenSrc = item.image || "/images/placeholder.avif";
-                  return (
-                    <div key={item.id} className="flex gap-4">
-                      <Image
-                        src={imagenSrc}
-                        alt={item.name}
-                        width={80}
-                        height={80}
-                        className="w-20 h-20 object-cover rounded-lg bg-gray-50"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-sm leading-tight text-gray-900">{item.name}</h3>
-                        <p className="text-xs text-gray-500 mb-2">{item.shipping}</p>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center border rounded-lg px-2 py-1 gap-3" style={{ borderColor: primaryColor }}>
-                            <button onClick={() => updateQty(item.id, -1)} className="hover:opacity-70 transition-opacity">
-                              <Minus className="w-3 h-3" style={{ color: primaryColor }} />
-                            </button>
-                            <span className="text-sm font-bold text-gray-900">{item.qty}</span>
-                            <button onClick={() => updateQty(item.id, 1)} className="hover:opacity-70 transition-opacity">
-                              <Plus className="w-3 h-3" style={{ color: primaryColor }} />
-                            </button>
-                          </div>
-                          <span className="font-bold text-gray-900">
-                            ${(parsearPrecio(item.price) * item.qty).toLocaleString()}
-                          </span>
-                        </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {cartItems.map((item: any) => (
+                <div key={item.id} className="flex gap-4 p-3 rounded-xl" style={{ backgroundColor: isDarkBg ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)" }}>
+                  <Image src={item.image || "/placeholder.png"} alt={item.name} width={70} height={70} className="rounded-lg object-cover" />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-sm">{item.name}</h3>
+                    <p className="text-[10px] opacity-70">
+                      {item.size && `Talle: ${item.size} `}
+                      {item.color && `| Color: ${item.color}`}
+                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => updateQty(item.id, -1)} className="p-1 rounded bg-black/10"><Minus size={10} /></button>
+                        <span className="text-xs font-bold">{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, 1)} className="p-1 rounded bg-black/10"><Plus size={10} /></button>
                       </div>
+                      <span className="font-bold text-xs">${(parseFloat(item.price) * item.qty).toLocaleString()}</span>
                     </div>
-                  );
-                })
-              )}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {cartItems.length > 0 && (
-              <div className="p-6 bg-gray-50 border-t space-y-3">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="font-medium text-gray-900">${subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Envío</span>
-                  <span className="font-medium" style={{ color: costoEnvio === 0 ? "#16a34a" : "inherit" }}>
-                    {costoEnvio === 0 ? "Gratis" : `$${costoEnvio.toLocaleString()}`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xl font-bold border-t pt-3 text-gray-900">
+              <div className="p-6 border-t" style={{ borderColor: isDarkBg ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
+                <div className="flex justify-between text-lg font-bold mb-4">
                   <span>Total</span>
-                  <span>${total.toLocaleString()}</span>
+                  <span>${subtotal.toLocaleString()}</span>
                 </div>
-                <Link
-                  href="/paycart"
-                  onClick={onClose}
-                  className="w-full text-white py-4 rounded-xl font-bold mt-4 flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                <button
+                  onClick={handleCheckout}
+                  className="w-full py-4 rounded-xl font-black uppercase tracking-widest text-white transition-transform hover:scale-[1.02]"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  Ir a pagar <ArrowRight className="w-4 h-4" />
-                </Link>
+                  Confirmar Pedido <ArrowRight size={16} className="inline ml-2" />
+                </button>
               </div>
             )}
           </motion.div>

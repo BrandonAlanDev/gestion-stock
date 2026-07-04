@@ -14,7 +14,8 @@ interface ProductActionProps {
 }
 
 export default function ProductAction({ product, size, color, esTabla = false }: ProductActionProps) {
-    const { addToCart } = useCart();
+    // 1. Extraemos openCart del contexto
+    const { addToCart, openCart } = useCart(); 
     const { pageConfig } = usePageConfig();
     const [showOrderForm, setShowOrderForm] = useState(false);
 
@@ -25,6 +26,7 @@ export default function ProductAction({ product, size, color, esTabla = false }:
         if (pageConfig?.cartEnabled) {
             const imageIndex = esTabla ? 1 : 0;
             const imageToSave = product.images?.[imageIndex]?.srcImage || product.images?.[0]?.srcImage;
+            
             addToCart({
                 id: product.id,
                 name: product.name,
@@ -33,12 +35,17 @@ export default function ProductAction({ product, size, color, esTabla = false }:
                 color,
                 image: imageToSave 
             });
+
+            // 2. Abrimos el carrito automáticamente al agregar
+            openCart(); 
             return;
         }
+
         if (esTabla) {
             setShowOrderForm(true);
             return;
         }
+
         const lines = [
             `Hola! Me interesa: *${product.name}*`,
             size ? `Talle: ${size}` : null
