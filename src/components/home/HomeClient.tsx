@@ -1,6 +1,6 @@
 "use client";
 
-import ProductLayout from "@/components/products/layouts/ProductLayout";
+import ProductLayout from "@/components/providers/products/layouts/ProductLayout";
 import LocationCard from "@/components/ui/LocationCard";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 

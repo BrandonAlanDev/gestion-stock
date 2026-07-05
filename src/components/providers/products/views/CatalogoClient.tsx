@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import ProductsPage from "@/components/products/views/ProductsPage";
+import ProductsPage from "@/components/providers/products/views/ProductsPage";
 import { useCatalogGarments } from "@/hooks/useCatalogGarments";
 import { useCatalogCategories } from "@/hooks/useCatalogCategories";
 import { useSearchParams, useRouter } from "next/navigation";
