@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Destination, SelectItem } from "@/components/admin/destination-picker/types";
 import DestinationPicker from "@/components/admin/destination-picker/DestinationPicker";
 
@@ -15,21 +15,32 @@ interface Props {
 }
 
 export default function GridModal({ isOpen, onClose, onSave, initialData, products, categories }: Props) {
+
   const [formData, setFormData] = useState(
     initialData || {
+      title: "",
+      subtitle: "",
+      image: "",
       destination: {
-        title: "",
-        subtitle: "",
-        image: "",
-        destination: {
-          type: "none",
-          value: "",
-        },
-      }
+        type: "none",
+        value: "",
+      },
     }
   );
 
-  // Manejador para convertir el archivo subido a Base64
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        title: "",
+        subtitle: "",
+        image: "",
+        destination: { type: "none", value: "" },
+      });
+    }
+  }, [initialData, isOpen]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -55,13 +66,15 @@ export default function GridModal({ isOpen, onClose, onSave, initialData, produc
           <input
             placeholder="Título"
             className="w-full p-4 border rounded-xl"
-            value={formData.title}
+
+            value={formData.title || ""}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
           <input
             placeholder="Subtítulo"
             className="w-full p-4 border rounded-xl"
-            value={formData.subtitle}
+
+            value={formData.subtitle || ""}
             onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
           />
           <DestinationPicker
@@ -76,7 +89,6 @@ export default function GridModal({ isOpen, onClose, onSave, initialData, produc
             }
           />
 
-          {/* Selector de archivos */}
           <div className="mt-4">
             <label className="block text-sm font-bold mb-2">Imagen de la sección</label>
             <div className="flex items-center gap-4">
@@ -92,9 +104,8 @@ export default function GridModal({ isOpen, onClose, onSave, initialData, produc
                 </span>
               </label>
 
-              {/* Previsualización de la imagen */}
               {formData.image && (
-                <div className="relative inline-block"> {/* Este contenedor NO tiene overflow-hidden */}
+                <div className="relative inline-block">
                   <div className="w-16 h-16 overflow-hidden select-none rounded">
                     <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
                   </div>

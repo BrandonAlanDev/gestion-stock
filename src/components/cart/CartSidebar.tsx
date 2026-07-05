@@ -5,8 +5,7 @@ import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useState, useMemo } from "react";
 import CartItemRow from "@/context/CartItemRow";
-import WhatsAppOrderForm from "../products/forms/WhatsAppOrder";
-
+import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
