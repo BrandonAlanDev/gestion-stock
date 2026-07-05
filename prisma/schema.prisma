@@ -193,43 +193,46 @@ model Movement {
 }
 
 model PageConfig {
-  id                 Int      @id @default(1)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                 Int            @id @default(1)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   storeName          String
-  description        String?  @db.Text
+  description        String?        @db.Text
   slogan             String?
-  logo               String?  @db.Text
-  favicon            String?  @db.Text
-  primaryColor       String?  @default("#000000")
-  secondaryColor     String?  @default("#FFFFFF")
-  ecommerceEnabled   Boolean  @default(true)
-  cartEnabled        Boolean  @default(true)
-  checkoutEnabled    Boolean  @default(true)
+  logo               String?        @db.Text
+  favicon            String?        @db.Text
+  primaryColor       String?        @default("#000000")
+  secondaryColor     String?        @default("#FFFFFF")
+  ecommerceEnabled   Boolean        @default(true)
+  cartEnabled        Boolean        @default(true)
+  checkoutEnabled    Boolean        @default(true)
+  featuredLayout     FeaturedLayout @default(GRID)
   phone              String?
   whatsapp           String?
   email              String?
-  locationEnabled    Boolean  @default(false)
+  locationEnabled    Boolean        @default(false)
   address            String?
   city               String?
   province           String?
   country            String?
   postalCode         String?
-  mapsUrl            String?  @db.Text
-  instagram          String?  @db.Text
-  facebook           String?  @db.Text
-  tiktok             String?  @db.Text
-  x                  String?  @db.Text
-  youtube            String?  @db.Text
-  linkedin           String?  @db.Text
-  currency           String   @default("ARS")
-  language           String   @default("es")
-  maintenanceMode    Boolean  @default(false)
+  mapsUrl            String?        @db.Text
+  instagram          String?        @db.Text
+  facebook           String?        @db.Text
+  tiktok             String?        @db.Text
+  x                  String?        @db.Text
+  youtube            String?        @db.Text
+  linkedin           String?        @db.Text
+  currency           String         @default("ARS")
+  language           String         @default("es")
+  maintenanceMode    Boolean        @default(false)
   metaTitle          String?
-  metaDescription    String?  @db.Text
-  termsAndConditions String?  @db.Text
-  privacyPolicy      String?  @db.Text
+  metaDescription    String?        @db.Text
+  termsAndConditions String?        @db.Text
+  privacyPolicy      String?        @db.Text
   banners            Banner[]
+  homegrid           Homegrid?      @relation(fields: [homegridId], references: [id])
+  homegridId         String? // Esto crea la clave foránea
 }
 
 model Banner {
@@ -384,32 +387,37 @@ model CustomSectionItem {
 }
 
 model Homegrid {
-  id        String   @id @default(cuid())
-  title     String
-  subtitle  String
-  style     Int
-  columns   String   @default("md:grid-cols-2") 
-  gap       String   @default("gap-0")
-  cardHeight String  @default("h-[70vh]")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  grids     Grid[]
+  id          String       @id @default(cuid())
+  title       String
+  subtitle    String
+  style       Int
+  columns     String       @default("md:grid-cols-2")
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  grids       Grid[]
+  pageConfigs PageConfig[]
+}
+
+enum GridLinkType {
+  NONE
+  CATEGORY
+  PRODUCT
+  PAGE
+  EXTERNAL
 }
 
 model Grid {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   title      String
   subtitle   String
-  image      String   @db.Text
-  active     Boolean  @default(true)
-  url        String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  image      String
+  linkType   GridLinkType @default(NONE)
+  linkValue  String?
   homegridId String
-  homegrid   Homegrid @relation(fields: [homegridId], references: [id], onDelete: Cascade)
-
-  @@index([homegridId])
+  homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 enum user_role {
@@ -431,4 +439,10 @@ enum SectionType {
   CTA
   GALLERY
   FEATURES
+}
+
+enum FeaturedLayout {
+  GRID
+  COLLAGE
+  MINIMAL
 }

@@ -7,8 +7,8 @@ import { X, Package, Edit3 } from "lucide-react";
 import { getGarmentById } from "@/actions/garments";
 import { useProductForm } from "@/hooks/useProductForm";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import VariantRow from "@/components/products/forms/VariantRow";
-import ImageUploader from "@/components/products/forms/ImageUploader";
+import VariantRow from "@/components/providers/products/forms/VariantRow";
+import ImageUploader from "@/components/providers/products/forms/ImageUploader";
 
 interface Props {
   categories: any[];
