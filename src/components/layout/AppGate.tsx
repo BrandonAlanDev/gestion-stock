@@ -1,109 +1,66 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import CookieModal from "@/components/legal/CookieModal";
-import PrivacyModal from "@/components/legal/PrivacyModal";
-import TermsModal from "@/components/legal/TermsModal";
-import { Footer } from "@/components/layout/Footer";
+import CookieModal from "../legal/CookieModal";
+import PrivacyModal from "../legal/PrivacyModal";
+import TermsModal from "../legal/TermsModal";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
-  const [acceptedCookies, setAcceptedCookies] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
-
-  const [initialized, setInitialized] = useState(false);
-
-  // 🔍 Inicialización robusta
+  // Evitamos errores de hidratación asegurándonos de que se renderice en el cliente
   useEffect(() => {
-    const cookies = localStorage.getItem("cookiesAcknowledged");
-    const terms = localStorage.getItem("termsAccepted");
-    const privacySeen = localStorage.getItem("privacySeen");
-
-    if (cookies) setAcceptedCookies(true);
-    if (terms) setAcceptedTerms(true);
-
-    // 🔁 reconstrucción del flujo según estado previo
-    if (cookies) {
-      if (!privacySeen) {
-        setTimeout(() => setPrivacyOpen(true), 500);
-      } else if (!terms) {
-        setTimeout(() => setTermsOpen(true), 500);
-      }
-    }
-
-    setInitialized(true);
+    setMounted(true);
   }, []);
 
-  // ✅ aceptar cookies
-  const handleAcceptCookies = () => {
-    localStorage.setItem("cookiesAcknowledged", "true");
-    setAcceptedCookies(true);
-
-    setTimeout(() => {
-      const privacySeen = localStorage.getItem("privacySeen");
-
-      if (!privacySeen) {
-        setPrivacyOpen(true);
-        localStorage.setItem("privacySeen", "true");
-      } else if (!localStorage.getItem("termsAccepted")) {
-        setTermsOpen(true);
-      }
-    }, 1000);
-  };
-
-  // ✅ cerrar privacy
-  const handleClosePrivacy = () => {
-    setPrivacyOpen(false);
-
-    // si no aceptó terms → abrirlo sí o sí
-    if (!localStorage.getItem("termsAccepted")) {
-      setTimeout(() => setTermsOpen(true), 300);
-    }
-  };
-
-  // ✅ aceptar terms
-  const handleAcceptTerms = () => {
-    localStorage.setItem("termsAccepted", "true");
-    setAcceptedTerms(true);
-    setTermsOpen(false);
-  };
-
-  const isFullyAccepted = acceptedCookies && acceptedTerms;
-
-  // ⛔ evitar flicker antes de cargar estado
-  if (!initialized) return null;
+  if (!mounted) return null;
 
   return (
-    <>
-      {/* 🔒 COOKIES BLOQUEAN TODO */}
-      {!acceptedCookies && (
-        <CookieModal onAccept={handleAcceptCookies} />
-      )}
-
-      {/* 🔐 PRIVACY */}
-      <PrivacyModal
-        isOpen={privacyOpen}
-        onClose={handleClosePrivacy}
+    <div className="min-h-screen flex flex-col">
+      {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
+      <CookieModal 
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+        onOpenTerms={() => setIsTermsOpen(true)}
       />
 
-      {/* 📜 TERMS */}
-      <TermsModal
-        isOpen={termsOpen}
-        onClose={handleAcceptTerms}
+      {/* 2. Modales Secundarios (controlados manualmente) */}
+      <PrivacyModal 
+        isOpen={isPrivacyOpen} 
+        onClose={() => setIsPrivacyOpen(false)} 
+      />
+      
+      <TermsModal 
+        isOpen={isTermsOpen} 
+        onClose={() => setIsTermsOpen(false)} 
       />
 
-      {/* 🚫 APP BLOQUEADA HASTA ACEPTAR TODO */}
-      {isFullyAccepted && children}
+      {/* 3. Contenido de la aplicación */}
+      <main className="flex-grow">
+        {children}
+      </main>
 
-      {/* Footer solo si todo está aceptado */}
-      {isFullyAccepted && (
-        <Footer
-          openPrivacy={() => setPrivacyOpen(true)}
-          openTerms={() => setTermsOpen(true)}
-        />
-      )}
-    </>
+      {/* 4. Footer fijo al fondo para volver a leer los términos */}
+      <footer className="bg-black border-t border-gray-800 text-gray-500 py-6 text-center text-sm z-40">
+        <div className="flex justify-center items-center gap-6">
+          <button 
+            onClick={() => setIsPrivacyOpen(true)}
+            className="hover:text-white transition"
+          >
+            Política de Privacidad
+          </button>
+          <span className="text-gray-700">|</span>
+          <button 
+            onClick={() => setIsTermsOpen(true)}
+            className="hover:text-white transition"
+          >
+            Términos y Condiciones
+          </button>
+        </div>
+        <p className="mt-4 text-xs text-gray-600">
+          &copy; {new Date().getFullYear()} - Todos los derechos reservados.
+        </p>
+      </footer>
+    </div>
   );
 }

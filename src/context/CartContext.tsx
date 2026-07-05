@@ -1,104 +1,64 @@
 "use client";
-
 import { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import { toast } from "sonner";
 
-// Define la forma de un item en el carrito y el contexto
-interface CartItem {
-  id: number;
+export interface CartItem {
+  uid: string;
+  id: number | string;
   qty: number;
-  // ...otras propiedades del producto
+  name: string;
+  price: number;
+  image?: string;
+  specs?: any;
 }
 
-interface CartContextType {
-  cartItems: CartItem[];
-  isCartOpen: boolean;
-  openCart: () => void;
-  closeCart: () => void;
-  addToCart: (product: any) => void;
-  updateQty: (id: number, delta: number) => void;
-  removeItem: (id: number) => void;
-  cartCount: number;
-}
+const CartContext = createContext<any>(null);
 
-// Crea el contexto con un valor por defecto (puede ser undefined)
-const CartContext = createContext<CartContextType | undefined>(undefined);
-
-// Crea el Proveedor del Contexto
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Efecto para cargar el carrito desde localStorage al iniciar
   useEffect(() => {
-    const savedCart = localStorage.getItem("tech_cart");
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
+    const saved = localStorage.getItem("tech_cart");
+    if (saved) setCartItems(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    if (cartItems.length > 0) {
-       localStorage.setItem("tech_cart", JSON.stringify(cartItems));
-    }
+    localStorage.setItem("tech_cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
   const addToCart = (product: any) => {
-    setCartItems((prevItems) => {
-      const itemExists = prevItems.find((item) => item.id === product.id);
-      if (itemExists) {
-        return prevItems.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        );
-      }
-      return [...prevItems, { ...product, qty: 1 }];
-    });
-    toast.success(`${product.name} añadido al carrito.`);
-    setIsCartOpen(true);
+    // Generar UID único para que cada vez que se agregue sea una fila nueva
+    const newUid = `${product.id}-${Date.now()}`;
+    const newItem = { ...product, uid: newUid, qty: 1, specs: product.specs || {} };
+    
+    setCartItems((prev) => [...prev, newItem]);
+    toast.success(`${product.name} añadido al carrito`);
+    openCart();
   };
 
-  const updateQty = (id: number, delta: number) => {
-    setCartItems((prevItems) =>
-      prevItems
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.qty + delta;
-            return newQty > 0 ? { ...item, qty: newQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[]
-    );
+  const updateQty = (uid: string, delta: number) => {
+    setCartItems(prev => prev.map(i => i.uid === uid ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
   };
 
-  const removeItem = (id: number) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  const removeItem = (uid: string) => {
+    setCartItems(prev => prev.filter((i) => i.uid !== uid));
+    toast.info("Producto eliminado del carrito");
   };
 
-  const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
-
-  const value = {
-    cartItems,
-    isCartOpen,
-    openCart,
-    closeCart,
-    addToCart,
-    updateQty,
-    removeItem,
-    cartCount,
+  const updateCartItemSpecs = (uid: string, newSpecs: any) => {
+    setCartItems(prev => prev.map(i => i.uid === uid ? { ...i, specs: newSpecs } : i));
+    toast.success("Especificaciones actualizadas");
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={{ cartItems, isCartOpen, openCart, closeCart, addToCart, updateQty, removeItem, updateCartItemSpecs }}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
-// Hook personalizado para usar el contexto fácilmente
-export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart debe ser usado dentro de un CartProvider");
-  }
-  return context;
-}
+export const useCart = () => useContext(CartContext);
