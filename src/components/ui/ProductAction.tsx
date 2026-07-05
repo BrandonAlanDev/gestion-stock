@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ShoppingBag, MessageCircle } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import WhatsAppOrderForm from "@/components/products/forms/WhatsAppOrder";
+import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 
 export default function ProductAction({ product, size, color, esTabla = false }: any) {
     const { addToCart } = useCart();

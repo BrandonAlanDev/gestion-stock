@@ -193,23 +193,23 @@ model Movement {
 }
 
 model PageConfig {
-  id                 Int                       @id @default(1)
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
+  id                 Int            @id @default(1)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   storeName          String
-  description        String?                   @db.Text
+  description        String?        @db.Text
   slogan             String?
-  logo               String?                   @db.Text
-  favicon            String?                   @db.Text
-  primaryColor       String?                   @default("#000000")
-  secondaryColor     String?                   @default("#FFFFFF")
-  ecommerceEnabled   Boolean                   @default(true)
-  cartEnabled        Boolean                   @default(true)
-  checkoutEnabled    Boolean                   @default(true)
+  logo               String?        @db.Text
+  favicon            String?        @db.Text
+  primaryColor       String?        @default("#000000")
+  secondaryColor     String?        @default("#FFFFFF")
+  ecommerceEnabled   Boolean        @default(true)
+  cartEnabled        Boolean        @default(true)
+  checkoutEnabled    Boolean        @default(true)
   phone              String?
   whatsapp           String?
   email              String?
-  locationEnabled    Boolean                   @default(false)
+  locationEnabled    Boolean        @default(false)
   address            String?
   city               String?
   province           String?
@@ -232,6 +232,7 @@ model PageConfig {
   featuredLayout     PageConfig_featuredLayout @default(GRID)
   homegridId         String?
   banners            Banner[]
+  homegrid           Homegrid?      @relation(fields: [homegridId], references: [id])
 }
 
 model Banner {
@@ -386,28 +387,37 @@ model CustomSectionItem {
 }
 
 model Homegrid {
-  id        String   @id @default(cuid())
-  title     String
-  subtitle  String
-  style     Int
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  columns   String   @default("md:grid-cols-2")
-  grids     Grid[]
+  id          String       @id @default(cuid())
+  title       String
+  subtitle    String
+  style       Int
+  columns     String       @default("md:grid-cols-2")
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  grids       Grid[]
+  pageConfigs PageConfig[]
+}
+
+enum GridLinkType {
+  NONE
+  CATEGORY
+  PRODUCT
+  PAGE
+  EXTERNAL
 }
 
 model Grid {
-  id         String        @id @default(cuid())
+  id         String       @id @default(cuid())
   title      String
   subtitle   String
   image      String
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  homegridId String
-  linkType   Grid_linkType @default(NONE)
+  linkType   GridLinkType @default(NONE)
   linkValue  String?
-  homegrid   Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+  homegridId String
+  homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 enum user_role {

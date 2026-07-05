@@ -1,7 +1,7 @@
 "use client";
 
 import { useProductDetail } from "@/hooks/useProductDetail";
-import ProductoView from "@/components/products/views/ProductoView";
+import ProductoView from "@/components/providers/products/views/ProductoView";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 
