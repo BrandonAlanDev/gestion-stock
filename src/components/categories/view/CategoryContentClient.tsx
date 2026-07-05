@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ProductGrid from "@/components/products/grid/ProductGrid";
+import ProductGrid from "@/components/providers/products/grid/ProductGrid";
 import { Package, Layers } from "lucide-react";
 
 interface SubCategory {
