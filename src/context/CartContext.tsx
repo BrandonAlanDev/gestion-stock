@@ -3,6 +3,7 @@ import { createContext, useState, useEffect, useContext, ReactNode } from "react
 import { toast } from "sonner";
 
 export interface CartItem {
+  uid: string;
   id: number | string;
   qty: number;
   name: string;
@@ -26,48 +27,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("tech_cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Funciones de control de visibilidad
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
-  const addToCart = (product: CartItem) => {
-    setCartItems((prev) => {
-      const exists = prev.find((i) => String(i.id) === String(product.id));
-      if (exists) {
-        return prev.map((i) => String(i.id) === String(product.id) ? { ...i, qty: i.qty + 1 } : i);
-      }
-      return [...prev, { ...product, qty: 1 }];
-    });
+  const addToCart = (product: any) => {
+    // Generar UID único para que cada vez que se agregue sea una fila nueva
+    const newUid = `${product.id}-${Date.now()}`;
+    const newItem = { ...product, uid: newUid, qty: 1, specs: product.specs || {} };
+    
+    setCartItems((prev) => [...prev, newItem]);
     toast.success(`${product.name} añadido al carrito`);
     openCart();
   };
 
-  const updateQty = (id: any, delta: number) => {
-    setCartItems(prev => prev.map(i => String(i.id) === String(id) ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
+  const updateQty = (uid: string, delta: number) => {
+    setCartItems(prev => prev.map(i => i.uid === uid ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
   };
 
-  const removeItem = (id: any) => {
-    setCartItems(prev => prev.filter(i => String(i.id) !== String(id)));
+  const removeItem = (uid: string) => {
+    setCartItems(prev => prev.filter((i) => i.uid !== uid));
     toast.info("Producto eliminado del carrito");
   };
 
-  const updateCartItemSpecs = (id: any, specs: any) => {
-    setCartItems(prev => prev.map(i => String(i.id) === String(id) ? { ...i, specs } : i));
+  const updateCartItemSpecs = (uid: string, newSpecs: any) => {
+    setCartItems(prev => prev.map(i => i.uid === uid ? { ...i, specs: newSpecs } : i));
     toast.success("Especificaciones actualizadas");
   };
 
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      isCartOpen, 
-      setIsCartOpen, 
-      openCart, 
-      closeCart, 
-      addToCart, 
-      updateQty, 
-      removeItem, 
-      updateCartItemSpecs 
-    }}>
+    <CartContext.Provider value={{ cartItems, isCartOpen, openCart, closeCart, addToCart, updateQty, removeItem, updateCartItemSpecs }}>
       {children}
     </CartContext.Provider>
   );

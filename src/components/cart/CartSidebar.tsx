@@ -52,7 +52,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     message += `*TOTAL: $${subtotal.toLocaleString()}*`;
 
-    const phone = pageConfig?.whatsapp || "2235644043";
+    const phone = "2235644043";
+    //const phone = pageConfig?.whatsapp || "2235644043";
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
