@@ -44,9 +44,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <CartSidebar
         isOpen={isCartOpen}
         onClose={closeCart}
-        cartItems={cartItems}
-        updateQty={updateQty}
-        removeItem={removeItem}
       />
       <Toaster richColors position="top-right" closeButton />
     </div>
@@ -54,7 +51,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function LayoutComponent({ children }: { children: React.ReactNode }) {
-  return (
+  return ( 
     <SessionWrapper>
       <CartProvider>
         <AppLayout>{children}</AppLayout>

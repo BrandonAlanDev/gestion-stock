@@ -1,163 +1,118 @@
 "use client";
-
-import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { X, ShoppingBag, ArrowRight } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-
-interface ItemCarrito {
-  id: string;
-  name: string;
-  price: number | string;
-  image?:string;
-  shipping?: string;
-  qty: number;
-}
+import { useState, useMemo } from "react";
+import CartItemRow from "@/context/CartItemRow";
+import WhatsAppOrderForm from "../products/forms/WhatsAppOrder";
 
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  cartItems: ItemCarrito[];
-  updateQty: (id: string, delta: number) => void;
-  removeItem: (id: string) => void;
 }
 
-const parsearPrecio = (valor: number | string): number => {
-  if (typeof valor === "number") return valor;
-  if (!valor) return 0;
-  return parseFloat(valor.toString().replace(/[^0-9.-]+/g, "")) || 0;
-};
+// Función auxiliar para contraste
+function getContrastColor(hex: string) {
+  if (!hex) return "#000000";
+  const r = parseInt(hex.replace("#", "").substring(0, 2), 16) || 0;
+  const g = parseInt(hex.replace("#", "").substring(2, 4), 16) || 0;
+  const b = parseInt(hex.replace("#", "").substring(4, 6), 16) || 0;
+  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
+}
 
-export default function CartSidebar({
-  isOpen,
-  onClose,
-  cartItems,
-  updateQty,
-  removeItem,
-}: CartSidebarProps) {
+export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
+  const { cartItems, updateCartItemSpecs } = useCart();
   const { pageConfig } = usePageConfig();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  const primaryColor = pageConfig?.primaryColor || "#000000";
+  const secondaryColor = pageConfig?.secondaryColor || "#FFFFFF";
+  const textColor = getContrastColor(secondaryColor);
 
   const subtotal = useMemo(() =>
-    cartItems.reduce((acc, item) => acc + parsearPrecio(item.price) * item.qty, 0),
+    cartItems.reduce((acc: number, item: any) => acc + (parseFloat(item.price) * item.qty), 0),
     [cartItems]
   );
 
-  const costoEnvio = useMemo(() => {
-    if (cartItems.length === 0) return 0;
-    const costos = cartItems.map((item) => {
-      const texto = item.shipping?.toLowerCase() || "";
-      if (texto.includes("gratis")) return 0;
-      const coincidencia = texto.match(/\d+/);
-      return coincidencia ? parseInt(coincidencia[0], 10) : 0;
-    });
-    return Math.max(...costos);
-  }, [cartItems]);
+  const handleWhatsAppCheckout = () => {
+    let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
-  const total = subtotal + costoEnvio;
+    cartItems.forEach((item: any) => {
+      message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
+
+      // Si el producto tiene especificaciones (specs), las agregamos al mensaje
+      if (item.specs) {
+        Object.entries(item.specs).forEach(([key, value]) => {
+          if (value) message += `   - ${key}: ${value}\n`;
+        });
+      }
+      message += "\n";
+    });
+
+    message += `*TOTAL: $${subtotal.toLocaleString()}*`;
+
+    const phone = "2235644043";
+    //const phone = pageConfig?.whatsapp || "2235644043";
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, "_blank");
+  };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
-
+    <>
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[101] flex flex-col"
+            className="fixed right-0 top-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col p-6"
+            style={{ backgroundColor: secondaryColor, color: textColor }}
           >
-            <div className="p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: primaryColor }}>
-                <ShoppingBag className="w-5 h-5" /> Carrito
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <ShoppingBag style={{ color: primaryColor }} /> Carrito
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
+              <button onClick={onClose}><X /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {cartItems.map((item: any) => (
+                <CartItemRow
+                  key={`${item.id}-${JSON.stringify(item.specs)}`}
+                  item={item}
+                  onEdit={() => setEditingItem(item)}
+                />
+              ))}
+            </div>
+
+            <div className="border-t pt-4 mt-4" style={{ borderColor: `${textColor}20` }}>
+              <div className="flex justify-between font-bold mb-4">
+                <span>Total</span> <span>${subtotal.toLocaleString()}</span>
+              </div>
+              <button
+                onClick={handleWhatsAppCheckout}
+                className="w-full text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Finalizar Pedido <ArrowRight size={16} />
               </button>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {cartItems.length === 0 ? (
-                <div className="text-center py-20 text-gray-400">
-                  <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>Tu carrito está vacío</p>
-                </div>
-              ) : (
-                cartItems.map((item) => {
-                  const imagenSrc = item.image || "/images/placeholder.avif";
-                  return (
-                    <div key={item.id} className="flex gap-4">
-                      <Image
-                        src={imagenSrc}
-                        alt={item.name}
-                        width={80}
-                        height={80}
-                        className="w-20 h-20 object-cover rounded-lg bg-gray-50"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-sm leading-tight text-gray-900">{item.name}</h3>
-                        <p className="text-xs text-gray-500 mb-2">{item.shipping}</p>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center border rounded-lg px-2 py-1 gap-3" style={{ borderColor: primaryColor }}>
-                            <button onClick={() => updateQty(item.id, -1)} className="hover:opacity-70 transition-opacity">
-                              <Minus className="w-3 h-3" style={{ color: primaryColor }} />
-                            </button>
-                            <span className="text-sm font-bold text-gray-900">{item.qty}</span>
-                            <button onClick={() => updateQty(item.id, 1)} className="hover:opacity-70 transition-opacity">
-                              <Plus className="w-3 h-3" style={{ color: primaryColor }} />
-                            </button>
-                          </div>
-                          <span className="font-bold text-gray-900">
-                            ${(parsearPrecio(item.price) * item.qty).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {cartItems.length > 0 && (
-              <div className="p-6 bg-gray-50 border-t space-y-3">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="font-medium text-gray-900">${subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Envío</span>
-                  <span className="font-medium" style={{ color: costoEnvio === 0 ? "#16a34a" : "inherit" }}>
-                    {costoEnvio === 0 ? "Gratis" : `$${costoEnvio.toLocaleString()}`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xl font-bold border-t pt-3 text-gray-900">
-                  <span>Total</span>
-                  <span>${total.toLocaleString()}</span>
-                </div>
-                <Link
-                  href="/paycart"
-                  onClick={onClose}
-                  className="w-full text-white py-4 rounded-xl font-bold mt-4 flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  Ir a pagar <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
           </motion.div>
-        </>
+        )}
+      </AnimatePresence>
+
+      {editingItem && (
+        <WhatsAppOrderForm
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={(id, specs) => {
+            updateCartItemSpecs(id, specs);
+            setEditingItem(null);
+          }}
+        />
       )}
-    </AnimatePresence>
+    </>
   );
 }

@@ -206,7 +206,6 @@ model PageConfig {
   ecommerceEnabled   Boolean        @default(true)
   cartEnabled        Boolean        @default(true)
   checkoutEnabled    Boolean        @default(true)
-  featuredLayout     FeaturedLayout @default(GRID)
   phone              String?
   whatsapp           String?
   email              String?
@@ -216,23 +215,24 @@ model PageConfig {
   province           String?
   country            String?
   postalCode         String?
-  mapsUrl            String?        @db.Text
-  instagram          String?        @db.Text
-  facebook           String?        @db.Text
-  tiktok             String?        @db.Text
-  x                  String?        @db.Text
-  youtube            String?        @db.Text
-  linkedin           String?        @db.Text
-  currency           String         @default("ARS")
-  language           String         @default("es")
-  maintenanceMode    Boolean        @default(false)
+  mapsUrl            String?                   @db.Text
+  instagram          String?                   @db.Text
+  facebook           String?                   @db.Text
+  tiktok             String?                   @db.Text
+  x                  String?                   @db.Text
+  youtube            String?                   @db.Text
+  linkedin           String?                   @db.Text
+  currency           String                    @default("ARS")
+  language           String                    @default("es")
+  maintenanceMode    Boolean                   @default(false)
   metaTitle          String?
-  metaDescription    String?        @db.Text
-  termsAndConditions String?        @db.Text
-  privacyPolicy      String?        @db.Text
+  metaDescription    String?                   @db.Text
+  termsAndConditions String?                   @db.Text
+  privacyPolicy      String?                   @db.Text
+  featuredLayout     PageConfig_featuredLayout @default(GRID)
+  homegridId         String?
   banners            Banner[]
   homegrid           Homegrid?      @relation(fields: [homegridId], references: [id])
-  homegridId         String? // Esto crea la clave foránea
 }
 
 model Banner {
@@ -263,9 +263,9 @@ model CustomBoard {
   killaTipo      String
   killaCount     String
   notas          String?  @db.Text
-  deliveryOption String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  deliveryOption String?
 }
 
 model BoardTypeOption {
@@ -441,7 +441,15 @@ enum SectionType {
   FEATURES
 }
 
-enum FeaturedLayout {
+enum Grid_linkType {
+  NONE
+  CATEGORY
+  PRODUCT
+  PAGE
+  EXTERNAL
+}
+
+enum PageConfig_featuredLayout {
   GRID
   COLLAGE
   MINIMAL
