@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
 import { uploadProductImage } from "@/actions/upload-product-image";
-import type { PendingImage } from "@/components/products/forms/ImageUploader";
+import type { PendingImage } from "@/components/providers/products/forms/ImageUploader";
 
 interface Variant {
   id?: string;

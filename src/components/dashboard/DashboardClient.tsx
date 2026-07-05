@@ -11,8 +11,8 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import Search from "@/components/search/Search";
 import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
-import ProductModal from "@/components/products/modals/ProductModal";
-import QuickViewTable from "@/components/products/modals/QuickViewTable";
+import ProductModal from "@/components/providers/products/modals/ProductModal";
+import QuickViewTable from "@/components/providers/products/modals/QuickViewTable";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
