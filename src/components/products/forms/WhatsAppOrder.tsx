@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 const QUILLA_OPTIONS = ["Single", "Twin", "Tri (Thruster)", "Quad", "2+1", "5 quillas"];
 const COLA_OPTIONS = ["Squash", "Round", "Pin", "Swallow", "Bat tail", "Moon tail"];
@@ -27,6 +28,8 @@ interface FormState {
 }
 
 export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) {
+  const { pageConfig } = usePageConfig();
+  
   // Inicializamos el estado. Si item.specs existe, lo carga, si no, inicia vacío.
   const [form, setForm] = useState<FormState>(item.specs || {
     largo: "", ancho: "", espesor: "", volumen: "",
@@ -47,17 +50,17 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
-        onClick={onClose} 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]" 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]"
       />
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        exit={{ opacity: 0, y: 20 }} 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
         className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none"
       >
         <div className="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[85vh] overflow-y-auto pointer-events-auto border border-gray-100">
@@ -82,12 +85,12 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
                 ].map(({ label, field, placeholder }) => (
                   <div key={field} className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-500">{label}</label>
-                    <input 
-                      type="text" 
-                      value={form[field as keyof typeof form]} 
-                      onChange={(e) => set(field, e.target.value)} 
-                      placeholder={placeholder} 
-                      className={inputCls} 
+                    <input
+                      type="text"
+                      value={form[field as keyof typeof form]}
+                      onChange={(e) => set(field, e.target.value)}
+                      placeholder={placeholder}
+                      className={inputCls}
                     />
                   </div>
                 ))}
@@ -121,22 +124,23 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
                 ))}
               </div>
             </div>
-            
-            <textarea 
-              value={form.notasExtra} 
-              onChange={(e) => set("notasExtra", e.target.value)} 
-              placeholder="Notas adicionales..." 
-              rows={2} 
-              className={`${inputCls} rounded-lg`} 
+
+            <textarea
+              value={form.notasExtra}
+              onChange={(e) => set("notasExtra", e.target.value)}
+              placeholder="Notas adicionales..."
+              rows={2}
+              className={`${inputCls} rounded-lg`}
             />
           </div>
 
           <div className="px-8 pb-8">
-            <button 
-              onClick={() => { onSave(item.id, form); onClose(); }} 
+            <button
+              onClick={() => { onSave(item.id, form); onClose(); }}
               className="w-full flex items-center justify-center gap-2 bg-black text-white py-4 rounded-lg font-medium text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors"
             >
-              <Check size={14} /> Guardar especificaciones
+              <Check size={14} /> 
+              {pageConfig?.cartEnabled ? "Guardar especificaciones" : "Consultar por WhatsApp"}
             </button>
           </div>
         </div>
