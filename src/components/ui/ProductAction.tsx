@@ -27,7 +27,8 @@ export default function ProductAction({ product, size, color, esTabla = false }:
                     price: Number(product.price),
                     size,
                     color,
-                    image: product.images?.[0]?.srcImage
+                    image: product.images?.[0]?.srcImage,
+                    esTabla: false
                 });
             }
             return;
@@ -69,7 +70,8 @@ export default function ProductAction({ product, size, color, esTabla = false }:
                                 name: product.name,
                                 price: Number(product.price),
                                 image: product.images?.[1]?.srcImage || product.images?.[0]?.srcImage,
-                                specs: specs
+                                specs: specs,
+                                esTabla: true
                             });
                         } else {
                             // Si el carrito NO está activo, enviamos el mensaje con las specs directo a WhatsApp
