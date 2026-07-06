@@ -27,3 +27,20 @@ export async function deleteSizeType(id: string) {
     await tx.sizeType.delete({ where: { id } });
   });
 }
+
+export async function updateSizeType(id: string, name: string) {
+  return await prisma.sizeType.update({
+    where: { id },
+    data: { name },
+  });
+}
+
+export async function updateSize(id: string, value: string, order: number) {
+  return await prisma.size.update({
+    where: { id },
+    data: { 
+      value,
+      order 
+    },
+  });
+}

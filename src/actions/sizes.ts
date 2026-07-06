@@ -6,6 +6,8 @@ import * as sizeService from "@/lib/services/size-service";
 
 export const getSizeTypes = getCachedSizeTypes;
 
+// --- GRUPOS DE TALLES (SizeType) ---
+
 export async function createSizeType(name: string) {
   const validateFields = SizeTypeNameSchema.safeParse({ name });
   if (!validateFields.success) {
@@ -19,6 +21,32 @@ export async function createSizeType(name: string) {
     return { error: "Error al crear el grupo" };
   }
 }
+
+export async function updateSizeType(id: string, name: string) {
+  const validateFields = SizeTypeNameSchema.safeParse({ name });
+  if (!validateFields.success) {
+    return { error: validateFields.error.flatten().fieldErrors.name?.[0] };
+  }
+  try {
+    await sizeService.updateSizeType(id, validateFields.data.name);
+    revalidateTag("sizeTypes");
+    return { success: true };
+  } catch (error) {
+    return { error: "Error al actualizar el grupo" };
+  }
+}
+
+export async function deleteSizeType(id: string) {
+  try {
+    await sizeService.deleteSizeType(id);
+    revalidateTag("sizeTypes");
+    return { success: true };
+  } catch (error) {
+    return { error: "No se puede eliminar: El grupo está siendo usado por una Categoría." };
+  }
+}
+
+// --- TALLES (Size) ---
 
 export async function addSizeToType(sizeTypeId: string, value: string, order: number) {
   const validateValue = SizeValueSchema.safeParse(value);
@@ -34,6 +62,20 @@ export async function addSizeToType(sizeTypeId: string, value: string, order: nu
   }
 }
 
+export async function updateSize(id: string, value: string, order: number) {
+  const validateValue = SizeValueSchema.safeParse(value);
+  if (!validateValue.success) {
+    return { error: validateValue.error?.issues?.[0]?.message || "Valor de talle inválido" };
+  }
+  try {
+    await sizeService.updateSize(id, validateValue.data.toUpperCase(), Number(order));
+    revalidateTag("sizeTypes");
+    return { success: true };
+  } catch (error) {
+    return { error: "Error al actualizar el talle" };
+  }
+}
+
 export async function deleteSize(id: string) {
   try {
     await sizeService.deleteSize(id);
@@ -41,15 +83,5 @@ export async function deleteSize(id: string) {
     return { success: true };
   } catch (error) {
     return { error: "No se puede borrar: talle en uso" };
-  }
-}
-
-export async function deleteSizeType(id: string) {
-  try {
-    await sizeService.deleteSizeType(id);
-    revalidateTag("sizeTypes");
-    return { success: true };
-  } catch (error) {
-    return { error: "No se puede eliminar: El grupo está siendo usado por una Categoría." };
   }
 }
