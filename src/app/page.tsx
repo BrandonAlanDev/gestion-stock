@@ -1,11 +1,12 @@
-import prisma from "@/lib/prisma"; // Asegúrate de que esta ruta apunte a tu instancia de Prisma
+import { getPageConfig } from "@/actions/page-config/general.actions";
+import { getCarouselSlides } from "@/actions/page-config/carousel-slides.actions";
 import HomeClient from "@/components/home/HomeClient";
 
 export default async function HomePage() {
-  // Buscamos la configuración global con ID 1
-  const pageConfig = await prisma.pageConfig.findUnique({
-    where: { id: 1 },
-  });
+  const pageConfig = await getPageConfig();
 
-  return <HomeClient pageConfig={pageConfig} />;
+  // Obtenemos los slides del carrusel (caché 1 hora, tag "carousel-slides")
+  const slides = await getCarouselSlides(1); // 1 = pageConfigId (único registro)
+
+  return <HomeClient pageConfig={pageConfig} slides={slides} />;
 }
