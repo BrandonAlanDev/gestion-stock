@@ -28,6 +28,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const { data: session } = useSession();
   const pageConfig = usePageConfig();
+  const config = pageConfig?.pageConfig;
 
   const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
   const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
@@ -50,8 +51,14 @@ export default function Sidebar({
     { href: "/admin/provider", label: "Proveedores", icon: Truck },
     { href: "/admin/sizes", label: "Talles", icon: Ruler },
     { href: "/admin/movements", label: "Historial", icon: History },
-    { href: "/admin/personalizado", label: "Personalizado", icon: Settings },
-    { href: "/admin/custom-page", label: "Páginas", icon: Settings },
+
+    // Enlaces filtrados por la base de datos
+    {
+      href: "/admin/personalizado",
+      label: "Personalizado",
+      icon: Settings,
+      enabled: config ? Boolean(config.personalizadoEnabled) : true
+    },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
 
@@ -61,8 +68,7 @@ export default function Sidebar({
   };
 
   const linkClasses = (active: boolean) =>
-    `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98] ${
-      active ? "" : "hover:bg-opacity-10"
+    `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98] ${active ? "" : "hover:bg-opacity-10"
     }`;
 
   const linkStyle = (active: boolean) => ({
@@ -124,22 +130,24 @@ export default function Sidebar({
           <span className="text-[10px] uppercase tracking-widest font-bold px-2 opacity-50" style={{ color: textColor }}>
             Admin
           </span>
-          {adminLinks.map((link) => {
-            const active = pathname === link.href;
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={onClose}
-                className={linkClasses(active)}
-                style={linkStyle(active)}
-              >
-                <Icon size={16} />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
+          {adminLinks
+            .filter((link) => link.enabled !== false)
+            .map((link) => {
+              const active = pathname === link.href;
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className={linkClasses(active)}
+                  style={linkStyle(active)}
+                >
+                  <Icon size={16} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
         </div>
       )}
 
@@ -170,9 +178,8 @@ export default function Sidebar({
     <>
       {/* Off‑canvas para TODAS las pantallas (móvil y escritorio) */}
       <aside
-        className={`fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         style={{
           backgroundColor: isDarkBg ? "rgba(15,15,15,0.85)" : "rgba(255,255,255,0.85)",
         }}
