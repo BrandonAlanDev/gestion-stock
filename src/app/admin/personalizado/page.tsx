@@ -1,8 +1,9 @@
 import { getBoardAdminOptions } from "@/actions/admin-personalizado";
 import { Wrench, Tag, Layers, Waves, FileText, LayoutTemplate, Settings2, Clock } from "lucide-react";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma"; // Asegúrate de tener tu cliente de prisma aquí
 
 import BoardTypesList from "@/components/admin-personalizado/BoardTypesList";
-
 import ManageBoardTypeModal from "@/components/admin-personalizado/ManageBoardTypeModal";
 import ManageTailModal from "@/components/admin-personalizado/ManageTailModal";
 import ManageFinModal from "@/components/admin-personalizado/ManageFinModal";
@@ -13,6 +14,14 @@ import ManageDeliveryModal from "@/components/admin-personalizado/ManageDelivery
 export const dynamic = "force-dynamic";
 
 export default async function AdminPersonalizadoPage() {
+  // Obtenemos la configuración directamente en el servidor
+  const config = await prisma.pageConfig.findFirst();
+
+  // Validación de seguridad: si es false, redirigimos inmediatamente
+  if (config?.personalizadoEnabled === false) {
+    redirect("/");
+  }
+
   const { data, success } = await getBoardAdminOptions();
   
   if (!success || !data) {
@@ -22,7 +31,6 @@ export default async function AdminPersonalizadoPage() {
   const { types, tails, fins, configs, materials, deliveryOptions } = data;
 
   return (
-
     <div className=" p-6 sm:p-8 w-full mt-12" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
@@ -149,7 +157,6 @@ export default async function AdminPersonalizadoPage() {
           </div>
 
         </div>
-
       </div>
     </div>
   );
