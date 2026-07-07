@@ -41,7 +41,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
 
       // Si el producto tiene especificaciones (specs), las agregamos al mensaje
-      if (item.specs) {
+      if (item.esTabla && item.specs) {
         Object.entries(item.specs).forEach(([key, value]) => {
           if (value) message += `   - ${key}: ${value}\n`;
         });
