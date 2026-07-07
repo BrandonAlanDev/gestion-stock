@@ -19,20 +19,22 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
-      <CookieModal 
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        onOpenTerms={() => setIsTermsOpen(true)}
-      />
+      {!isPrivacyOpen && !isTermsOpen && (
+        <CookieModal
+          onOpenPrivacy={() => setIsPrivacyOpen(true)}
+          onOpenTerms={() => setIsTermsOpen(true)}
+        />
+      )}
 
       {/* 2. Modales Secundarios (controlados manualmente) */}
-      <PrivacyModal 
-        isOpen={isPrivacyOpen} 
-        onClose={() => setIsPrivacyOpen(false)} 
+      <PrivacyModal
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
       />
-      
-      <TermsModal 
-        isOpen={isTermsOpen} 
-        onClose={() => setIsTermsOpen(false)} 
+
+      <TermsModal
+        isOpen={isTermsOpen}
+        onClose={() => setIsTermsOpen(false)}
       />
 
       {/* 3. Contenido de la aplicación */}
@@ -43,14 +45,14 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
       {/* 4. Footer fijo al fondo para volver a leer los términos */}
       <footer className="bg-black border-t border-gray-800 text-gray-500 py-6 text-center text-sm z-40">
         <div className="flex justify-center items-center gap-6">
-          <button 
+          <button
             onClick={() => setIsPrivacyOpen(true)}
             className="hover:text-white transition"
           >
             Política de Privacidad
           </button>
           <span className="text-gray-700">|</span>
-          <button 
+          <button
             onClick={() => setIsTermsOpen(true)}
             className="hover:text-white transition"
           >
