@@ -88,7 +88,7 @@ export default function Header({
             </div>
           )}
           <span className="text-sm font-black uppercase italic" style={{ color: currentTextColor }}>
-            {pageConfig?.pageConfig?.storeName || "VALEN"}
+            {pageConfig?.pageConfig?.storeName || "Gestion OK"}
           </span>
         </Link>
 
