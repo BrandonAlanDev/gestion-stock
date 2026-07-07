@@ -16,6 +16,7 @@ const T = {
   cyanDk: "#0891b2", // Cian oscuro para textos destacados y badges
   cyanMd: "#06b6d4", // Cian principal de la marca
   accent: "rgba(6,182,212,0.06)", // Fondo muy sutil para selecciones activas
+  border: "#d1d5db",
 } as const;
 
 type BoardType = {
@@ -120,13 +121,20 @@ export default function PersonalizadoPage() {
   const [options, setOptions] = useState<BoardOptions | null>(null);
   
   useEffect(() => {
-    if (pageConfig?.pageConfig && Boolean(pageConfig.pageConfig.personalizadoEnabled) === false) {
-      router.replace("/");
+      if (pageConfig?.pageConfig && Boolean(pageConfig.pageConfig.personalizadoEnabled) === false) {
+        router.replace("/");
+      }
+    }, [pageConfig, router]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [s, setS] = useState<State>({ tipo: "", largo: "", ancho: "", espesor: "", volumen: "", material: "", cola: "", killaTipo: "", killaCount: "", notas: "", deliveryOption: "" });
+    useEffect(() => {
+    async function loadOptions() {
+      const data = await getBoardOptions();
+      setOptions(data);
     }
-  }, [pageConfig, router]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [s, setS] = useState<State>({ tipo: "", largo: "", ancho: "", espesor: "", volumen: "", material: "", cola: "", killaTipo: "", killaCount: "", notas: "", deliveryOption: "" });
 
+    loadOptions();
+  }, []);
 
   const toggle = (key: keyof State) => (val: string) =>
     setS(prev => {
