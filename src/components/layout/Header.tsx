@@ -142,7 +142,7 @@ export default function Header({
 
       {mostrarMenuHeader && (
         <div
-          className="hidden sm:block overflow-hidden transition-all duration-300 ease-in-out backdrop-blur-md"
+          className="block overflow-hidden transition-all duration-300 ease-in-out backdrop-blur-md"
           style={{
             maxHeight: isSidebarOpen ? "200px" : "0px",
             backgroundColor: isDarkBg ? "rgba(0, 0, 0, 0.75)" : "rgba(255, 255, 255, 0.75)",
