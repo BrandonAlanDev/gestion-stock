@@ -394,12 +394,25 @@ model Homegrid {
   title       String
   subtitle    String
   style       Int
-  columns     String       @default("md:grid-cols-2")
   active      Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  columns     String       @default("md:grid-cols-2")
   grids       Grid[]
   pageConfigs PageConfig[]
+}
+
+model Grid {
+  id         String       @id @default(cuid())
+  title      String
+  subtitle   String
+  image      String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  homegridId String
+  linkType   GridLinkType @default(NONE)
+  linkValue  String?
+  homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
 }
 
 enum GridLinkType {
@@ -408,19 +421,6 @@ enum GridLinkType {
   PRODUCT
   PAGE
   EXTERNAL
-}
-
-model Grid {
-  id         String       @id @default(cuid())
-  title      String
-  subtitle   String
-  image      String
-  linkType   GridLinkType @default(NONE)
-  linkValue  String?
-  homegridId String
-  homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
 }
 
 enum user_role {
@@ -442,14 +442,6 @@ enum SectionType {
   CTA
   GALLERY
   FEATURES
-}
-
-enum Grid_linkType {
-  NONE
-  CATEGORY
-  PRODUCT
-  PAGE
-  EXTERNAL
 }
 
 enum PageConfig_featuredLayout {
