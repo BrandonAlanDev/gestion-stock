@@ -80,7 +80,7 @@ export default function GridModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div 
-        className="w-full max-w-lg rounded-3xl p-8 shadow-2xl border"
+        className="w-full max-w-lg rounded-3xl p-8 shadow-2xl border max-h-[75vh] md:max-h-[65vh] overflow-y-auto custom-scrollbar"
         style={{
           backgroundColor: secondaryColor,
           color: getContrastColor(secondaryColor),
