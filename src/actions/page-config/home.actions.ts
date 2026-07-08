@@ -1,4 +1,3 @@
-
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -15,6 +14,7 @@ interface GridItem {
   title: string;
   subtitle: string;
   image: string;
+  order: number;
   linkType:
   | "NONE"
   | "CATEGORY"
@@ -88,6 +88,7 @@ export async function updateHomeGrids(
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,
+          order: g.order || 0,
           linkType: g.linkType,
           linkValue: g.linkValue,
           homegridId: targetHomegridId,
