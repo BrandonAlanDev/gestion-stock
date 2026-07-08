@@ -206,9 +206,6 @@ model PageConfig {
   ecommerceEnabled     Boolean                   @default(true)
   cartEnabled          Boolean                   @default(true)
   checkoutEnabled      Boolean                   @default(true)
-  personalizadoEnabled Boolean                   @default(true)
-  escuelaEnabled       Boolean                   @default(true)
-  arreglosEnabled      Boolean                   @default(true)
   phone                String?
   whatsapp             String?
   email                String?
@@ -234,6 +231,9 @@ model PageConfig {
   privacyPolicy        String?                   @db.Text
   featuredLayout       PageConfig_featuredLayout @default(GRID)
   homegridId           String?
+  arreglosEnabled      Boolean                   @default(true)
+  escuelaEnabled       Boolean                   @default(true)
+  personalizadoEnabled Boolean                   @default(true)
   banners              Banner[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
 }
@@ -407,6 +407,7 @@ model Grid {
   title      String
   subtitle   String
   image      String
+  order      Int          @default(0)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   homegridId String
