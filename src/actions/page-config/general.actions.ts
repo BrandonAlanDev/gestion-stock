@@ -58,9 +58,11 @@ export async function getPageConfig() {
             style: true,
             columns: true,
             grids: {
-              orderBy: {
+              orderBy: [{
+                order: "asc",
+              },{
                 title: "asc",
-              },
+              },],
             },
           },
         },
@@ -71,7 +73,7 @@ export async function getPageConfig() {
       ok: true,
       pageConfig,
     };
-  } catch (error) {
+  } catch (error:any) {
     console.error("Error real:", error.message);
     console.error(error);
     return {
