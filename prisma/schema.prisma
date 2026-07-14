@@ -411,12 +411,12 @@ model Grid {
   title      String
   subtitle   String
   image      String
-  order      Int          @default(0)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   homegridId String
   linkType   GridLinkType @default(NONE)
   linkValue  String?
+  order      Int          @default(0)
   homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
 }
 
