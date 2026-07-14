@@ -5,9 +5,9 @@ type UploadImageParams = {
 
   folder: string;
 
-  publicId: string;
+  publicId?: string;
 
-  displayName: string;
+  displayName?: string;
 };
 
 export async function uploadImage({

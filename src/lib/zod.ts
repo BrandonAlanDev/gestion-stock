@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CarouselType } from '../../generated/prisma/client';
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -43,8 +44,6 @@ export const categorySchema = z.object({
 // ==========================================
 // MOVIMIENTOS DE STOCK
 // ==========================================
-const MOVEMENT_TYPES = ["IN", "OUT"] as const;
-
 export const movementSchema = z.object({
   variantId: z.string(),
   type: z.enum(["IN", "OUT"]),
@@ -68,9 +67,9 @@ export const garmentSchema = z.object({
   cost: z.coerce.number().positive(),
   description: z.string().optional(),
   categoryId: z.string().min(1, "La categoría es obligatoria"),
-  
-  subCategoryId: z.string().optional().nullable(), 
-  
+
+  subCategoryId: z.string().optional().nullable(),
+
   supplierId: z.string().optional().nullable(),
   images: z.array(z.string()).optional(),
   variants: z.array(
@@ -142,15 +141,67 @@ export const idSchema = z.string().cuid();
 // SIZES
 
 export const SizeTypeNameSchema = z.object({
-  name:providerNameSchema
+  name: providerNameSchema
 });
 
 export const SizeValueSchema = z.string()
-.min(1, "El valor del talle no puede estar vacío")
-.regex(/^[a-zA-Z0-9.\-\/']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
- 
+  .min(1, "El valor del talle no puede estar vacío")
+  .regex(/^[a-zA-Z0-9.\-\/']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
+
 // COLOR
 export const colorSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   hex: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Formato hex inválido").optional().nullable(),
+});
+
+export const carouselTypeSchema = z.nativeEnum(CarouselType);
+
+// Esquema base para un banner (slide)
+export const bannerBaseSchema = z.object({
+  image: z.string().url("La imagen es obligatoria"),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  text: z.string().optional(),
+  url: z.string().url().optional().or(z.literal("")),
+  order: z.number().int().optional(),
+  active: z.boolean().optional(),
+});
+
+// Esquema dinámico según el tipo de carrusel seleccionado
+export const bannerSchema = (carouselType: CarouselType) => {
+  return bannerBaseSchema.superRefine((data, ctx) => {
+    if (
+      (carouselType === "HERO_TITULO" || carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
+      !data.title
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El título es obligatorio para este tipo de carrusel",
+        path: ["title"],
+      });
+    }
+    if (
+      (carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
+      !data.text
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El texto es obligatorio para este tipo de carrusel",
+        path: ["text"],
+      });
+    }
+    if (carouselType === "HERO_LINK" && !data.url) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El enlace es obligatorio para este tipo de carrusel",
+        path: ["url"],
+      });
+    }
+  });
+};
+
+export const carouselConfigSchema = z.object({
+  carouselType: carouselTypeSchema,
+  carouselAutoplay: z.boolean(),
+  carouselInterval: z.number().int().min(1000),
 });
