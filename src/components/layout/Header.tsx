@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useCart } from "@/context/CartContext";
+import Searchbarfinder from "@/components/home/Searchbarfinder";
 
 function getContrastColor(hex: string) {
   if (!hex) return "#000000";
@@ -91,6 +92,11 @@ export default function Header({
             {pageConfig?.pageConfig?.storeName || "Gestion OK"}
           </span>
         </Link>
+        
+        {/* Buscador en Desktop */}
+        <div className="hidden md:block flex-1 max-w-md mx-4">
+          <Searchbarfinder isHomeTop={isHomeTop} />
+        </div>
 
         <div className="flex items-center gap-3">
           {!session && (
@@ -144,11 +150,17 @@ export default function Header({
         <div
           className="block overflow-hidden transition-all duration-300 ease-in-out backdrop-blur-md"
           style={{
-            maxHeight: isSidebarOpen ? "200px" : "0px",
+            maxHeight: isSidebarOpen ? "400px" : "0px",
             backgroundColor: isDarkBg ? "rgba(0, 0, 0, 0.75)" : "rgba(255, 255, 255, 0.75)",
           }}
         >
           <div className="max-w-4xl mx-auto py-6 px-6 flex flex-col gap-4">
+            
+            {/* Buscador en Mobile */}
+            <div className="md:hidden pb-2">
+              <Searchbarfinder isHomeTop={false} />
+            </div>
+
             {session?.user && (
               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlayColor }}>
                 <div className="flex items-center gap-3">
