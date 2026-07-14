@@ -59,6 +59,7 @@ export default function Sidebar({
       icon: Settings,
       enabled: config ? Boolean(config.personalizadoEnabled) : true
     },
+    { href: "/admin/custom-page", label: "Rutas personalizadas", icon: Settings },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
 
