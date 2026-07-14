@@ -171,7 +171,7 @@ export default function CustomPagesPage() {
                       {page.title}
                     </h3>
                     <p className="text-sm font-medium" style={{ color: getContrastColor(secondaryColor) }}>
-                      {`/page/?title=${page.title}    `}{"  •  "}{page.sections?.length || 0} secciones
+                      {`/page/?title=${page.slug}    `}{"  •  "}{page.sections?.length || 0} secciones
                     </p>
                   </div>
                 </div>
