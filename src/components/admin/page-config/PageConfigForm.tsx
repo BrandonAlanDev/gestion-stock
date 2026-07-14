@@ -6,6 +6,7 @@ import BrandingSection from "@/components/admin/page-config/BrandingSection";
 import SeoSection from "@/components/admin/page-config/SeoSection";
 import SocialsSection from "@/components/admin/page-config/SocialsSection";
 
+import CarouselSection from "@/components/admin/page-config/CarouselSection";
 import HomeSections from "@/components/admin/page-config/homeSections";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
@@ -56,6 +57,14 @@ export default function PageConfigForm({ config }: any) {
         config={data}
         primaryColor={data?.primaryColor}
         secondaryColor={data?.secondaryColor}
+      />
+
+      <CarouselSection
+        initialConfig={{
+          carouselType: pageConfig.carouselType,
+          carouselAutoplay: pageConfig.carouselAutoplay,
+          carouselInterval: pageConfig.carouselInterval,
+        }}
       />
     </div>
   );

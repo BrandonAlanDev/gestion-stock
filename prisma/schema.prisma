@@ -236,6 +236,9 @@ model PageConfig {
   personalizadoEnabled Boolean                   @default(true)
   banners              Banner[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
+  carouselType         CarouselType              @default(HERO_SIMPLE)
+  carouselAutoplay     Boolean                   @default(true)
+  carouselInterval     Int                       @default(4000)
 }
 
 model Banner {
@@ -248,6 +251,7 @@ model Banner {
   subtitle     String?
   text         String?    @db.Text
   url          String?    @db.Text
+  active       Boolean    @default(true) // ← NUEVO
   pageConfigId Int
   pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
 
@@ -449,4 +453,11 @@ enum PageConfig_featuredLayout {
   GRID
   COLLAGE
   MINIMAL
+}
+
+enum CarouselType {
+  HERO_SIMPLE // solo imagen
+  HERO_TITULO // imagen + título
+  HERO_TEXTO // imagen + título + texto
+  HERO_LINK // imagen + título + texto + link
 }
