@@ -15,6 +15,16 @@ export function serializeData<T>(data: T): T {
   );
 }
 
+export function getContrastColor(hexColor: string): string {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
+
 export function extractPublicId(url: string): string | null {
   try {
     const parts = url.split('/');
@@ -28,4 +38,13 @@ export function extractPublicId(url: string): string | null {
     console.error("Error extracting public ID", e);
   }
   return null;
+}
+
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }

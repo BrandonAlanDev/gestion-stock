@@ -9,15 +9,4 @@ cloudinary.config({
 
 export default cloudinary;
 
-// ⚠️ ASEGURATE DE QUE DIGA "export function" AQUÍ:
-export function extractPublicId(url: string) {
-  try {
-    if (!url.includes("/upload/")) return null;
-    
-    const parts = url.split("/upload/")[1];
-    const clean = parts.replace(/v\d+\//, "");
-    return clean.replace(/\.[^/.]+$/, "");
-  } catch {
-    return null;
-  }
-}
+// extractPublicId está en @/lib/utils — importar de allí

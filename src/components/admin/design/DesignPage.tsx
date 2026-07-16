@@ -1,0 +1,88 @@
+"use client";
+
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { ImageIcon, Grid2X2, LayoutDashboard, ListOrdered } from "lucide-react";
+import BrandingSection from "./BrandingSection";
+import HomeSectionsDesign from "./HomeSectionsDesign";
+import CarouselManager from "@/components/admin/carousel/CarouselManager";
+import PageOrderSection from "./PageOrderSection";
+import CollapsibleSection from "./CollapsibleSection";
+
+interface DesignPageProps {
+  pageConfig: Record<string, unknown> | null;
+}
+
+export default function DesignPage({ pageConfig: initialConfig }: DesignPageProps) {
+  const { pageConfig: contextConfig } = usePageConfig();
+  const config = { ...initialConfig, ...contextConfig } as Record<string, unknown>;
+
+  const primaryColor = (config?.primaryColor as string) || "#06b6d4";
+  const secondaryColor = (config?.secondaryColor as string) || "#fafafa";
+
+  return (
+    <div className="space-y-6">
+      <CollapsibleSection
+        title="Branding"
+        subtitle="Logos · Colores · Apariencia"
+        icon={ImageIcon}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      >
+        <div className="p-8">
+          <BrandingSection
+            config={config}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Featured Section"
+        subtitle="Grid · Collage · Minimal"
+        icon={Grid2X2}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      >
+        <div className="p-8">
+          <HomeSectionsDesign
+            config={config}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Carruseles"
+        subtitle="Hero · Banner · Cards"
+        icon={LayoutDashboard}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      >
+        <div className="p-8">
+          <CarouselManager
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Orden de Página"
+        subtitle="Arrastra para reordenar secciones"
+        icon={ListOrdered}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      >
+        <div className="p-8">
+          <PageOrderSection
+            config={config}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
+        </div>
+      </CollapsibleSection>
+    </div>
+  );
+}

@@ -21,6 +21,13 @@ export default function mapGridToCard(grid: any) {
     id: grid.id,
     label: grid.title,
     sublabel: grid.subtitle,
+    subtitleNeon: grid.subtitleNeon || false,
+    subtitleDim: grid.subtitleDim || false,
+    linkStyle: grid.linkStyle || "IMAGE",
+    buttonVariant: grid.buttonVariant || "DEFAULT",
+    buttonText: grid.buttonText || "",
+    buttonBgColor: grid.buttonBgColor || "",
+    buttonTextColor: grid.buttonTextColor || "",
     image: grid.image,
     href,
   };

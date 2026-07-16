@@ -31,7 +31,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           isAdminRoute={isAdminRoute}
         />
 
-        <main className="flex-grow">
+        <main className={`flex-grow ${isAdminRoute ? "pt-16" : ""}`}>
           {children}
         </main>
 

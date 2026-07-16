@@ -7,8 +7,8 @@ import {
   getCustomPages,
   createCustomPage,
   deleteCustomPage,
-  updateCustomPageContent,
 } from "@/actions/custom-page.actions";
+import { updateCustomPageContent } from "@/actions/custom-page-builder.actions";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { DeleteConfirmModal, ViewPageModal, PageBuilderModal } from "@/components/admin/custom-page/Modals";
@@ -171,7 +171,7 @@ export default function CustomPagesPage() {
                       {page.title}
                     </h3>
                     <p className="text-sm font-medium" style={{ color: getContrastColor(secondaryColor) }}>
-                      {`/page/?title=${page.slug}    `}{"  •  "}{page.sections?.length || 0} secciones
+                      {`/page/?title=${page.title}    `}{"  •  "}{page.sections?.length || 0} secciones
                     </p>
                   </div>
                 </div>

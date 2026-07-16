@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { createCategory, updateCategory, deleteCategory, createSubCategory, deleteSubCategory } from "@/actions/categories";
-import { X, Edit2, Trash2, Tag, Loader2, Layers, Plus } from "lucide-react";
+import { createCategory, updateCategory, deleteCategory } from "@/actions/categories";
+import { X, Edit2, Tag, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import CategoryTriggerButton from "./CategoryTriggerButton";
+import SubCategoryManager from "./SubCategoryManager";
 
 interface ManageCategoryModalProps {
   sizeTypes: any[];
@@ -12,7 +14,6 @@ interface ManageCategoryModalProps {
   variant?: "admin" | "tienda";
 }
 
-// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
   const hex = hexColor.replace("#", "");
@@ -27,11 +28,9 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
   const pageConfig = usePageConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [subLoading, setSubLoading] = useState(false);
   const isEdit = !!category;
 
   const [formData, setFormData] = useState({ name: category?.name || "" });
-  const [subData, setSubData] = useState({ name: "", sizeTypeId: "" });
 
   const isAdmin = variant === "admin";
 
@@ -39,13 +38,11 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     if (category) setFormData({ name: category.name || "" });
   }, [category]);
 
-  // Variables dinámicas de color para la variante tienda
   const primaryColor = pageConfig?.pageConfig?.primaryColor || "#0d5c63";
   const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
   const textColor = getContrastColor(secondaryColor);
   const isDarkBg = textColor === "#ffffff";
 
-  // Diseños reactivos basados en opacidades de la variante tienda
   const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)";
   const innerBg = isDarkBg ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)";
 
@@ -78,34 +75,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     else { toast.success("Categoría eliminada"); setIsOpen(false); }
   };
 
-  const handleAddSubCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!subData.name.trim()) return;
-    setSubLoading(true);
-    try {
-      const res = await createSubCategory({
-        name: subData.name,
-        sizeTypeId: subData.sizeTypeId || null,
-        categoryId: category.id,
-      });
-      if (res?.error) { toast.error(res.error); }
-      else { toast.success("Subcategoría añadida"); setSubData({ name: "", sizeTypeId: "" }); }
-    } catch {
-      toast.error("Error al crear subcategoría");
-    } finally {
-      setSubLoading(false);
-    }
-  };
-
-  const handleDeleteSub = async (subId: string) => {
-    if (!confirm("¿Eliminar esta subcategoría de forma permanente?")) return;
-    const res = await deleteSubCategory(subId);
-    if (res?.error) { toast.error(res.error); }
-    else { toast.success("Subcategoría removida"); }
-  };
-
-  // ── ESTILOS DINÁMICOS POR VARIANTE ────────────────────────────────
-  // ── ESTILOS DINÁMICOS POR VARIANTE ────────────────────────────────
   const styles = {
     overlay: isAdmin
       ? "bg-black/90 backdrop-blur-md"
@@ -152,56 +121,17 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
 
   return (
     <>
-      {/* ── TRIGGER ── */}
-      {isEdit ? (
-        <button
-          onClick={() => setIsOpen(true)}
-          className={isAdmin
-            ? "p-2.5 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 hover:text-amber-500 text-neutral-400 rounded-[1.0rem] transition-all shadow-xl"
-            : "transition-all"
-          }
-          style={!isAdmin ? {
-            padding: "10px",
-            backgroundColor: innerBg,
-            border: `1px solid ${overlayBorder}`,
-            borderRadius: "12px",
-            color: textColor,
-          } : undefined}
-          onMouseEnter={!isAdmin ? e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = primaryColor;
-            (e.currentTarget as HTMLButtonElement).style.color = primaryColor;
-          } : undefined}
-          onMouseLeave={!isAdmin ? e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = overlayBorder;
-            (e.currentTarget as HTMLButtonElement).style.color = textColor || '';
-          } : undefined}
-        >
-          <Edit2 size={16} />
-        </button>
-      ) : (
-        <button
-          onClick={() => setIsOpen(true)}
-          className={isAdmin
-            ? "font-black uppercase italic tracking-tighter rounded-[1.0rem] bg-amber-500 text-black px-5 py-2.5"
-            : "font-black uppercase italic tracking-tighter transition-all"
-          }
-          style={!isAdmin ? {
-            backgroundColor: primaryColor,
-            color: getContrastColor(primaryColor),
-            borderRadius: "12px",
-            padding: "10px 20px",
-            fontSize: "13px",
-            border: "none",
-            cursor: "pointer",
-          } : undefined}
-          onMouseEnter={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
-          onMouseLeave={!isAdmin ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
-        >
-          + Nueva Categoría
-        </button>
-      )}
+      <CategoryTriggerButton
+        isEdit={isEdit}
+        isAdmin={isAdmin}
+        primaryColor={primaryColor}
+        innerBg={innerBg}
+        overlayBorder={overlayBorder}
+        textColor={textColor}
+        getContrastColor={getContrastColor}
+        onOpen={() => setIsOpen(true)}
+      />
 
-      {/* ── MODAL ── */}
       {isOpen && (
         <div
           className={`fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto ${isAdmin ? styles.overlay as string : ''}`}
@@ -211,14 +141,12 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
             className={`w-full max-w-lg my-auto relative overflow-hidden shadow-2xl ${isAdmin ? (styles.card as string) : ''} ${styles.cardRounded}`}
             style={!isAdmin ? styles.card as React.CSSProperties : undefined}
           >
-            {/* Barra superior */}
             <div
               className={`absolute top-0 left-0 w-full h-1 ${isAdmin ? styles.barColor as string : ''}`}
               style={!isAdmin ? { height: "4px", backgroundColor: styles.barColor as string } : undefined}
             />
 
             <div className="p-8 space-y-6">
-              {/* Header */}
               <div className="flex justify-between items-center">
                 <h2
                   className={`text-2xl font-black uppercase italic flex items-center gap-3 tracking-tighter ${isAdmin ? styles.titleColor as string : ''}`}
@@ -238,7 +166,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                 </button>
               </div>
 
-              {/* Form categoría principal */}
               <form onSubmit={handleSubmitCategory} className="space-y-4">
                 <div className="space-y-2">
                   <label
@@ -286,12 +213,10 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                   className={isAdmin ? (styles.submitBtn as string) + ' flex items-center justify-center gap-2' : ''}
                   style={!isAdmin ? styles.submitBtn as React.CSSProperties : undefined}
                   onMouseEnter={!isAdmin && !loading ? e => {
-                    const btn = e.currentTarget as HTMLButtonElement;
-                    btn.style.opacity = "0.9";
+                    (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
                   } : undefined}
                   onMouseLeave={!isAdmin && !loading ? e => {
-                    const btn = e.currentTarget as HTMLButtonElement;
-                    btn.style.opacity = "1";
+                    (e.currentTarget as HTMLButtonElement).style.opacity = "1";
                   } : undefined}
                 >
                   {loading
@@ -300,120 +225,18 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                 </button>
               </form>
 
-              {/* Subcategorías — solo en edición */}
               {isEdit && (
-                <div
-                  className={`space-y-4 pt-6 border-t`}
-                  style={{ borderColor: typeof styles.dividerColor === 'string' ? styles.dividerColor : overlayBorder }}
-                >
-                  <h3
-                    className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${isAdmin ? styles.sectionTitleColor as string : ''}`}
-                    style={!isAdmin ? { color: styles.sectionTitleColor as string } : undefined}
-                  >
-                    <Layers size={14} className={isAdmin ? "text-amber-500" : ''} style={!isAdmin ? { color: primaryColor } : undefined} />
-                    Subcategorías y Curvas de Talles
-                  </h3>
-
-                  {/* Lista subcategorías */}
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {category.subCategories?.map((sub: any) => (
-                      <div
-                        key={sub.id}
-                        className={`flex justify-between items-center px-4 py-2.5 rounded-[1.0rem] ${isAdmin ? styles.subListBg as string : ''}`}
-                        style={!isAdmin ? { ...styles.subListBg as React.CSSProperties, borderRadius: "12px" } : undefined}
-                      >
-                        <div className="flex flex-col">
-                          <span
-                            className={`text-xs font-bold uppercase ${isAdmin ? styles.subTextColor as string : ''}`}
-                            style={!isAdmin ? { color: styles.subTextColor as string } : undefined}
-                          >
-                            {sub.name}
-                          </span>
-                          <span
-                            className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${isAdmin ? styles.subSizeColor as string : ''}`}
-                            style={!isAdmin ? { color: styles.subSizeColor as string } : undefined}
-                          >
-                            Talles: {sub.sizeType?.name || "Estándar / Único"}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSub(sub.id)}
-                          className={isAdmin ? styles.subDeleteColor as string : ''}
-                          style={!isAdmin ? { color: textColor, opacity: 0.4 } : undefined}
-                          onMouseEnter={!isAdmin ? e => {
-                            (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
-                            (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-                          } : undefined}
-                          onMouseLeave={!isAdmin ? e => {
-                            (e.currentTarget as HTMLButtonElement).style.color = textColor || '';
-                            (e.currentTarget as HTMLButtonElement).style.opacity = "0.4";
-                          } : undefined}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    {(!category.subCategories || category.subCategories.length === 0) && (
-                      <p className={`text-[11px] italic pl-1 opacity-50`} style={{ color: textColor }}>
-                        No hay subcategorías en este grupo.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Form agregar subcategoría */}
-                  <form
-                    onSubmit={handleAddSubCategory}
-                    className={`space-y-3 p-4 rounded-[1.0rem] ${isAdmin ? styles.addSubBg as string : ''}`}
-                    style={!isAdmin ? { ...styles.addSubBg as React.CSSProperties, borderRadius: "16px" } : undefined}
-                  >
-                    <span
-                      className={`text-[9px] font-black uppercase tracking-wider ${isAdmin ? styles.addSubTitle as string : ''}`}
-                      style={!isAdmin ? { color: styles.addSubTitle as string } : undefined}
-                    >
-                      + Vincular Subgrupo
-                    </span>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        className={isAdmin ? styles.addSubInput as string : ''}
-                        style={!isAdmin ? styles.addSubInput as React.CSSProperties : undefined}
-                        value={subData.name}
-                        onChange={e => setSubData({ ...subData, name: e.target.value })}
-                        placeholder="Nombre (Ej: Adultos)"
-                        required
-                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
-                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
-                      />
-                      <select
-                        className={isAdmin ? styles.addSubInput as string : ''}
-                        style={!isAdmin ? { ...styles.addSubInput as React.CSSProperties, cursor: "pointer" } : { cursor: "pointer" }}
-                        value={subData.sizeTypeId}
-                        onChange={e => setSubData({ ...subData, sizeTypeId: e.target.value })}
-                        onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
-                        onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
-                      >
-                        <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>Curva estándar...</option>
-                        {sizeTypes.map((st: any) => (
-                          <option key={st.id} value={st.id} style={{ backgroundColor: secondaryColor, color: textColor }}>{st.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={subLoading || !subData.name}
-                      className={`${isAdmin ? styles.addSubBtn as string : ''} flex items-center justify-center gap-1`}
-                      style={!isAdmin ? { ...styles.addSubBtn as React.CSSProperties, opacity: subLoading || !subData.name ? 0.6 : 1, cursor: subLoading || !subData.name ? "not-allowed" : "pointer" } : undefined}
-                      onMouseEnter={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
-                      onMouseLeave={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
-                    >
-                      {subLoading
-                        ? <Loader2 className="animate-spin" size={12} />
-                        : <><Plus size={12} /> Confirmar Subgrupo</>}
-                    </button>
-                  </form>
-                </div>
+                <SubCategoryManager
+                  category={category}
+                  sizeTypes={sizeTypes}
+                  isAdmin={isAdmin}
+                  primaryColor={primaryColor}
+                  secondaryColor={secondaryColor}
+                  textColor={textColor}
+                  overlayBorder={overlayBorder}
+                  innerBg={innerBg}
+                  styles={styles}
+                />
               )}
             </div>
           </div>

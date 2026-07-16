@@ -1,7 +1,7 @@
 "use server";
 
 import cloudinary from "@/lib/cloudinary";
-import { extractPublicId } from "@/lib/cloudinary";
+import { extractPublicId } from "@/lib/utils";
 
 export async function uploadPageImage(
   image: string | null | undefined,

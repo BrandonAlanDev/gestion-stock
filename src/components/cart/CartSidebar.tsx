@@ -29,29 +29,18 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const secondaryColor = pageConfig?.secondaryColor || "#FFFFFF";
   const textColor = getContrastColor(secondaryColor);
 
-  const { totalUSD, totalARS } = useMemo(() => {
-
-    return cartItems.reduce(
-      (acc: { totalUSD: number; totalARS: number }, item: any) => {
-        const price = parseFloat(item.price) * item.qty;
-        if (item.esTabla) {
-          acc.totalUSD += price;
-        } else {
-          acc.totalARS += price;
-        }
-        return acc;
-      },
-      { totalUSD: 0, totalARS: 0 }
-    );
-  }, [cartItems]);
+  const subtotal = useMemo(() =>
+    cartItems.reduce((acc: number, item: any) => acc + (parseFloat(item.price) * item.qty), 0),
+    [cartItems]
+  );
 
   const handleWhatsAppCheckout = () => {
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
     cartItems.forEach((item: any) => {
-      const currencySymbol = item.esTabla ? "USD" : "$";
-      message += `• *${item.name}* (x${item.qty}) - ${currencySymbol}${(Number(item.price) * item.qty).toLocaleString()}\n`;
+      message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
 
+      // Si el producto tiene especificaciones (specs), las agregamos al mensaje
       if (item.esTabla && item.specs) {
         Object.entries(item.specs).forEach(([key, value]) => {
           if (value) message += `   - ${key}: ${value}\n`;
@@ -60,11 +49,12 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       message += "\n";
     });
 
-    message += `*TOTAL TABLAS: USD ${totalUSD.toLocaleString()}*\n`;
-    message += `*TOTAL OTROS: $${totalARS.toLocaleString()}*`;
+    message += `*TOTAL: $${subtotal.toLocaleString()}*`;
 
     const phone = "2235644043";
+    //const phone = pageConfig?.whatsapp || "2235644043";
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
     window.open(whatsappUrl, "_blank");
   };
 
@@ -96,21 +86,13 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               ))}
             </div>
 
-            <div className="border-t pt-4 mt-4 space-y-2" style={{ borderColor: `${textColor}20` }}>
-              {totalUSD > 0 && (
-                <div className="flex justify-between font-bold">
-                  <span>Total Tablas</span> <span>USD {totalUSD.toLocaleString()}</span>
-                </div>
-              )}
-              {totalARS > 0 && (
-                <div className="flex justify-between font-bold">
-                  <span>Total Otros</span> <span>${totalARS.toLocaleString()}</span>
-                </div>
-              )}
-
+            <div className="border-t pt-4 mt-4" style={{ borderColor: `${textColor}20` }}>
+              <div className="flex justify-between font-bold mb-4">
+                <span>Total</span> <span>${subtotal.toLocaleString()}</span>
+              </div>
               <button
                 onClick={handleWhatsAppCheckout}
-                className="w-full text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 mt-4"
+                className="w-full text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
                 style={{ backgroundColor: primaryColor }}
               >
                 Finalizar Pedido <ArrowRight size={16} />

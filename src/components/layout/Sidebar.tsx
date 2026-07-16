@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import {
   Package, Tags, Truck, Ruler, LogOut, User, History,
-  Store, LayoutDashboard, Settings, Home
+  Store, LayoutDashboard, Settings, Image as ImageIcon
 } from "lucide-react";
 
 function getContrastColor(hex: string) {
@@ -51,6 +51,7 @@ export default function Sidebar({
     { href: "/admin/provider", label: "Proveedores", icon: Truck },
     { href: "/admin/sizes", label: "Talles", icon: Ruler },
     { href: "/admin/movements", label: "Historial", icon: History },
+    { href: "/admin/design", label: "Diseño", icon: ImageIcon },
 
     // Enlaces filtrados por la base de datos
     {
@@ -59,7 +60,6 @@ export default function Sidebar({
       icon: Settings,
       enabled: config ? Boolean(config.personalizadoEnabled) : true
     },
-    { href: "/admin/custom-page", label: "Rutas personalizadas", icon: Settings },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
 

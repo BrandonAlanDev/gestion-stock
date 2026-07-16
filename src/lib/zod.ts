@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { CarouselType } from '../../generated/prisma/client';
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -44,6 +43,8 @@ export const categorySchema = z.object({
 // ==========================================
 // MOVIMIENTOS DE STOCK
 // ==========================================
+const MOVEMENT_TYPES = ["IN", "OUT"] as const;
+
 export const movementSchema = z.object({
   variantId: z.string(),
   type: z.enum(["IN", "OUT"]),
@@ -154,54 +155,102 @@ export const colorSchema = z.object({
   hex: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Formato hex inválido").optional().nullable(),
 });
 
-export const carouselTypeSchema = z.nativeEnum(CarouselType);
+// ─── CARRUSELES ─────────────────────────────────────────────────────
+export const carouselSettingsSchema = z.object({
+  // HERO DEFAULT
+  heroStyle: z.enum(["DEFAULT", "SHOWCASE"]).default("DEFAULT"),
+  slideLayout: z.enum(["standard", "split", "minimal"]).default("standard"),
+  transitionDuration: z.number().int().positive().default(6000),
+  autoPlay: z.boolean().default(true),
+  showDots: z.boolean().default(true),
+  showNavButtons: z.boolean().default(true),
+  overlayOpacity: z.number().min(0).max(1).default(0.9),
 
-// Esquema base para un banner (slide)
-export const bannerBaseSchema = z.object({
-  image: z.string().url("La imagen es obligatoria"),
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  text: z.string().optional(),
-  url: z.string().url().optional().or(z.literal("")),
-  order: z.number().int().optional(),
-  active: z.boolean().optional(),
+  // HERO SHOWCASE
+  slidesToScroll: z.number().int().positive().default(1),
+  gap: z.number().int().min(0).default(16),
+  showArrows: z.boolean().default(true),
+  autoplayDelay: z.number().int().positive().default(5000),
+
+  // BANNER
+  height: z.number().int().positive().default(300),
+
+  // CARDS
+  layout: z.enum(["grid", "collage", "minimal"]).default("grid"),
+  columns: z.string().default("md:grid-cols-2"),
+  cardHeight: z.string().default("50vh"),
+  showSubtitle: z.boolean().default(true),
+  enableHoverZoom: z.boolean().default(true),
+}).passthrough();
+
+export const carouselLimitsSchema = z.object({
+  carouselHeroLimit: z.number().int().min(1).max(10).default(1),
+  carouselBannerLimit: z.number().int().min(1).max(10).default(1),
+  carouselCardsLimit: z.number().int().min(1).max(20).default(3),
 });
 
-// Esquema dinámico según el tipo de carrusel seleccionado
-export const bannerSchema = (carouselType: CarouselType) => {
-  return bannerBaseSchema.superRefine((data, ctx) => {
-    if (
-      (carouselType === "HERO_TITULO" || carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
-      !data.title
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "El título es obligatorio para este tipo de carrusel",
-        path: ["title"],
-      });
-    }
-    if (
-      (carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
-      !data.text
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "El texto es obligatorio para este tipo de carrusel",
-        path: ["text"],
-      });
-    }
-    if (carouselType === "HERO_LINK" && !data.url) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "El enlace es obligatorio para este tipo de carrusel",
-        path: ["url"],
-      });
-    }
-  });
-};
-
-export const carouselConfigSchema = z.object({
-  carouselType: carouselTypeSchema,
-  carouselAutoplay: z.boolean(),
-  carouselInterval: z.number().int().min(1000),
+export const carouselSchema = z.object({
+  type: z.enum(["HERO", "BANNER", "CARDS"]),
+  title: z.string().max(100).optional(),
+  active: z.boolean().default(true),
+  order: z.number().int().min(0).default(0),
+  settings: carouselSettingsSchema.optional(),
 });
+
+export const carouselUpdateSchema = carouselSchema.partial().extend({
+  id: z.string().cuid(),
+});
+
+export const slideConfigSchema = z.object({}).passthrough();
+
+export const carouselSlideSchema = z.object({
+  carouselId: z.string().cuid(),
+  order: z.number().int().min(0).default(0),
+  image: z.union([
+    z.string().url(),
+    z.string().startsWith("data:image"),
+  ]),
+  title: z.string().max(100).optional(),
+  subtitle: z.string().max(150).optional(),
+  description: z.string().max(500).optional(),
+  ctaText: z.string().max(50).optional(),
+  url: z.string().optional().or(z.literal("")),
+  config: slideConfigSchema.optional(),
+});
+
+export const carouselSlideUpdateSchema = carouselSlideSchema.partial().extend({
+  id: z.string().cuid(),
+});
+
+export const carouselReorderSchema = z.object({
+  carouselIds: z.array(z.string().cuid()).min(1),
+});
+
+export const slideReorderSchema = z.object({
+  carouselId: z.string().cuid(),
+  slideIds: z.array(z.string().cuid()).min(1),
+});
+
+// Wizard schemas (para validación en el modal unificado)
+export const carouselWizardSlideSchema = z.object({
+  id: z.string().optional(), // temp-* durante wizard
+  image: z.string().min(1, "Imagen requerida"),
+  title: z.string().max(100).optional(),
+  subtitle: z.string().max(150).optional(),
+  description: z.string().max(500).optional(),
+  ctaText: z.string().max(50).optional(),
+  url: z.string().optional().or(z.literal("")),
+  config: slideConfigSchema.optional(),
+  order: z.number().int().min(0).default(0),
+});
+
+export const carouselWizardSchema = z.object({
+  id: z.string().cuid().optional(),
+  type: z.enum(["HERO", "BANNER", "CARDS"]),
+  title: z.string().max(100).optional(),
+  settings: carouselSettingsSchema,
+  slides: z.array(carouselWizardSlideSchema).min(1, "Mínimo 1 slide"),
+});
+
+export type CarouselLimitsInput = z.infer<typeof carouselLimitsSchema>;
+export type CarouselWizardInput = z.infer<typeof carouselWizardSchema>;

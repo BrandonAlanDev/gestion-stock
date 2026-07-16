@@ -1,14 +1,15 @@
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
+"use client";
 
 interface Props {
   label: string;
   value: string;
-  onChange: (
-    value: string
-  ) => void;
+  onChange: (value: string) => void;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
+
 function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
+  if (!hexColor) return "#ffffff";
   const hex = hexColor.replace("#", "");
   const r = parseInt(hex.substring(0, 2), 16) || 0;
   const g = parseInt(hex.substring(2, 4), 16) || 0;
@@ -21,26 +22,24 @@ export default function Textarea({
   label,
   value,
   onChange,
+  primaryColor = "#06b6d4",
+  secondaryColor = "#ffffff",
 }: Props) {
-    const pageConfig = usePageConfig();
+  const textColor = getContrastColor(secondaryColor);
+  const bgColor = primaryColor + "1A";
+  const borderColor = getContrastColor(primaryColor);
+
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3"
-      style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor)}}
-      >
+      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
         {label}
       </label>
 
       <textarea
         value={value}
-        onChange={(e) =>
-          onChange(e.target.value)
-        }
+        onChange={(e) => onChange(e.target.value)}
         rows={5}
-        style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor),
-        backgroundColor: pageConfig?.pageConfig?.primaryColor.concat("1A"),
-        borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor)
-        }}
+        style={{ color: textColor, backgroundColor: bgColor, borderColor }}
         className="w-full p-5 rounded-2xl border text-sm font-bold outline-none transition-all resize-none"
       />
     </div>

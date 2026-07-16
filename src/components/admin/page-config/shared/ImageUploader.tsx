@@ -1,31 +1,16 @@
 "use client";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import {
-  ImageIcon,
-} from "lucide-react";
-
+import { ImageIcon } from "lucide-react";
 import Image from "next/image";
-
 import { useState } from "react";
-
 import { toast } from "sonner";
+import { getContrastColor } from "@/lib/utils";
 
 interface Props {
   label: string;
   value: string;
-  onChange: (
-    value: string
-  ) => void;
-}
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
+  onChange: (value: string) => void;
 }
 
 export default function ImageUploader({

@@ -4,6 +4,7 @@ import * as categoryService from "./services/category-service";
 import * as providerService from "./services/provider-service";
 import * as sizeService from "./services/size-service";
 import * as colorService from "./services/color-service";
+import * as carouselService from "./services/carousel-service";
 import { prisma } from "./prisma";
 
 // ── PAGE CONFIG ──────────────────────────────────
@@ -58,4 +59,18 @@ export const getCachedColors = unstable_cache(
   colorService.getColors,
   ["all-colors"],
   { revalidate: 3600, tags: ["colors"] }
+);
+
+// ─── CARRUSELES ────────────────────────────────────────────────────
+export const getCachedCarousels = unstable_cache(
+  async () =>
+    carouselService.getCarousels(undefined, true),
+  ["carousels"],
+  { revalidate: 3600, tags: ["carousels"] }
+);
+
+export const getCachedCarouselLimits = unstable_cache(
+  async () => carouselService.getCarouselLimits(),
+  ["carousel-limits"],
+  { revalidate: 3600, tags: ["carousels"] }
 );

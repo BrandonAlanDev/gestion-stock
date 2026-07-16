@@ -8,7 +8,6 @@ import QueryProvider from "@/providers/QueryProvider";
 import RouteLoader from "@/components/layout/RouteLoader";
 import LayoutComponent from "@/components/layout/LayoutComponent";
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import { getBrandingConfig } from "@/actions/page-config/branding.actions";
 import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
 
 const geistSans = Geist({

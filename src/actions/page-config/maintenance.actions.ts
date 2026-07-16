@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import cloudinary from "@/lib/cloudinary";
 import { revalidateTag } from "next/cache";
-import { extractPublicId } from "@/lib/cloudinary";
+import { extractPublicId } from "@/lib/utils";
 import { RESET_DATA } from "@/actions/page-config/shared/reset-data"
 
 export async function clearPageConfig() {

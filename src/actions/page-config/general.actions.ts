@@ -41,6 +41,7 @@ export async function getPageConfig() {
         termsAndConditions: true,
         privacyPolicy: true,
         featuredLayout: true,
+        sectionOrder: true,
 
         // Mantenemos tus banners
         banners: {
@@ -49,7 +50,6 @@ export async function getPageConfig() {
           },
         },
 
-        // Agregamos la relación homegrid y sus grids hijos usando select
         homegrid: {
           select: {
             id: true,
@@ -66,6 +66,13 @@ export async function getPageConfig() {
             },
           },
         },
+
+        carousels: {
+          select: {
+            type: true,
+            settings: true,
+          },
+        },
       },
     });
 
@@ -73,9 +80,8 @@ export async function getPageConfig() {
       ok: true,
       pageConfig,
     };
-  } catch (error:any) {
-    console.error("Error real:", error.message);
-    console.error(error);
+  } catch (error: unknown) {
+    console.error("Error real:", error instanceof Error ? error.message : error);
     return {
       ok: false,
       error: "Error configuración",

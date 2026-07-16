@@ -22,6 +22,13 @@ interface GridItem {
   | "PAGE"
   | "EXTERNAL";
   linkValue?: string;
+  subtitleNeon?: boolean;
+  subtitleDim?: boolean;
+  linkStyle?: "IMAGE" | "BUTTON";
+  buttonVariant?: "DEFAULT" | "STRAIGHT" | "TRANSPARENT";
+  buttonText?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
 }
 
 export async function updateSectionVisibility(data: UpdateConfigData) {
@@ -45,7 +52,8 @@ export async function updateSectionVisibility(data: UpdateConfigData) {
 
 export async function updateHomeGrids(
   homegridId: string | undefined | null,
-  grids: GridItem[]
+  grids: GridItem[],
+  title?: string
 ) {
   try {
     const processedGrids = await Promise.all(
@@ -66,7 +74,7 @@ export async function updateHomeGrids(
       if (!targetHomegridId) {
         const newHomegrid = await tx.homegrid.create({
           data: {
-            title: "Home Destacado",      
+            title: title || "Home Destacado",      
             subtitle: "",
             style: 1,                    
             columns: "md:grid-cols-2",
@@ -79,6 +87,11 @@ export async function updateHomeGrids(
         });
 
         targetHomegridId = newHomegrid.id;
+      } else if (title) {
+        await tx.homegrid.update({
+          where: { id: targetHomegridId },
+          data: { title },
+        });
       }
 
       await tx.grid.deleteMany({ where: { homegridId: targetHomegridId } });
@@ -91,6 +104,13 @@ export async function updateHomeGrids(
           order: g.order || 0,
           linkType: g.linkType,
           linkValue: g.linkValue,
+          subtitleNeon: g.subtitleNeon ?? false,
+          subtitleDim: g.subtitleDim ?? false,
+          linkStyle: g.linkStyle ?? "IMAGE",
+          buttonVariant: g.buttonVariant ?? "DEFAULT",
+          buttonText: g.buttonText || null,
+          buttonBgColor: g.buttonBgColor || null,
+          buttonTextColor: g.buttonTextColor || null,
           homegridId: targetHomegridId,
         })),
       });
@@ -98,7 +118,7 @@ export async function updateHomeGrids(
       return targetHomegridId;
     });
 
-    revalidatePath("/admin/pageConfig");
+    revalidatePath("/", "layout");
     return { ok: true, homegridId: finalHomegridId };
   } catch (error) {
     console.error("Error en updateHomeGrids:", error);

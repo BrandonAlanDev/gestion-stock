@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { products } from '@/components/data/data';
 import FeaturedSection from '@/components/home/FeaturedSection';
-import Hero from '@/components/layout/Hero';
 import CartSidebar from '@/components/cart/CartSidebar';
 
 
@@ -67,10 +66,6 @@ function ProductLayout() {
       <main className="flex-grow">
         {/* RUTA HOME */}
         <>
-          {/* El Hero controla la categoría de la FeaturedSection */}
-          <Hero setActiveCategory={setHomeCategory} />
-
-          {/* FeaturedSection recibe el estado y la función para cambiarlo */}
           <FeaturedSection
             activeCategory={homeCategory}
             setActiveCategory={setHomeCategory}
