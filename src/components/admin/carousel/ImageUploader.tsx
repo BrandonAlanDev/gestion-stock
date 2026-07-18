@@ -102,11 +102,11 @@ export default function ImageUploader({
             <div className="w-16 h-16 rounded-lg overflow-hidden border" style={{ borderColor: primaryColor + "40", backgroundColor: primaryColor + "10" }}>
               <img src={preview} alt="Preview" className="w-full h-full object-cover" />
             </div>
-            <button
-              type="button"
-              onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-              style={{ backgroundColor: secondaryColor, color: textColor }}
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                style={{ backgroundColor: secondaryColor, color: textColor }}
               title="Eliminar imagen"
             >
               <X className="w-3 h-3" />

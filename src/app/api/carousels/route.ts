@@ -1,4 +1,4 @@
-import { getCachedCarousels, getCachedCarouselLimits } from "@/lib/cache";
+import { getCachedCarousels } from "@/lib/cache";
 import * as carouselService from "@/lib/services/carousel-service";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (admin) {
       const carousels = await carouselService.getCarousels(type ?? undefined, activeOnly);
       const counts = await carouselService.countActiveCarouselsByType();
-      const limits = await getCachedCarouselLimits();
+      const limits = await carouselService.getCarouselLimits();
       return NextResponse.json({ success: true, data: carousels, counts, limits });
     }
 

@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertTriangle } from "lucide-react";
 import { cn, getContrastColor } from "@/lib/utils";
+
+const TYPE_LABELS: Record<string, string> = {
+  HERO: "Portada principal",
+  BANNER: "Franja publicitaria",
+  CARDS: "Tarjetas destacadas",
+};
 import CarouselWizardStep1 from "./CarouselWizardStep1";
 import CarouselWizardStep2 from "./CarouselWizardStep2";
 import CarouselWizardStep3 from "./CarouselWizardStep3";
@@ -32,7 +38,7 @@ const DEFAULT_WIZARD_DATA: CarouselWizardData = {
     showNavButtons: true,
     overlayOpacity: 0.9,
     height: 300,
-    layout: "grid",
+    layout: "simple",
     columns: "md:grid-cols-2",
     cardHeight: "50vh",
     showSubtitle: true,
@@ -93,7 +99,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
         ...prev.settings,
         heroStyle: data.heroStyle || "DEFAULT",
         ...(data.type === "HERO" && data.heroStyle !== "SHOWCASE" && { slideLayout: "standard" }),
-        ...(data.type === "CARDS" && { layout: "grid" }),
+        ...(data.type === "CARDS" && { layout: "simple" }),
       },
     }));
     setStep(2);
@@ -181,7 +187,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
             <h2 className="text-xl font-bold" style={{ color: textColor }}>
               {initialData ? "Editar" : "Nuevo"} Carrusel
               <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
-                {wizardData.type}
+                {TYPE_LABELS[wizardData.type] || wizardData.type}
               </span>
             </h2>
             <div className="hidden md:flex items-center gap-1">
@@ -207,7 +213,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors cursor-pointer"
             style={{ color: textColor + "99" }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}
@@ -265,10 +271,10 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: getContrastColor(primaryColor) + "1A", borderColor: primaryColor, color: primaryColor }}
-              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
-              onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = getContrastColor(primaryColor) + "1A"; }}
+              className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 cursor-pointer"
+              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+              onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               Cancelar
             </button>

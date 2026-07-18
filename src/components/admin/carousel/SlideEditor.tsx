@@ -73,6 +73,7 @@ export default function SlideEditor({
     config: {},
   });
   const [showText, setShowText] = useState(true);
+  const [hideButton, setHideButton] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -89,6 +90,7 @@ export default function SlideEditor({
       if (initialData) {
         const hideText = !!initialData.config?.hideText;
         setShowText(!hideText);
+        setHideButton(!!initialData.config?.hideButton);
         setFormData({
           image: initialData.image || "",
           title: initialData.title || "",
@@ -101,6 +103,7 @@ export default function SlideEditor({
         });
       } else {
         setShowText(true);
+        setHideButton(false);
         setFormData({
           image: "",
           title: "",
@@ -182,6 +185,8 @@ export default function SlideEditor({
     );
     if (!showText) cleanConfig.hideText = true;
     else delete cleanConfig.hideText;
+    if (hideButton) cleanConfig.hideButton = true;
+    else delete cleanConfig.hideButton;
 
     setIsSubmitting(true);
     try {
@@ -201,30 +206,27 @@ export default function SlideEditor({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div
         className={cn(
-          "w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
+          "w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
           isMobile && "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
         )} style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
       >
         <div className="flex items-center justify-between p-4 sticky top-0 backdrop-blur z-10 rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
-          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: textColor }}>
+          <h2 className="text-xl font-bold" style={{ color: textColor }}>
             {initialData ? "Editar" : "Nueva"} imagen
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
-              {carouselType}
-            </span>
           </h2>
-          <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: textColor + "99" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}>
+          <button onClick={onClose} className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "99" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 pb-20">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
               <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Imagen <span className="text-red-400">*</span></label>
               <ImageUploader
                 value={formData.image}
                 onChange={handleFileSelect}
-                label="Imagen del slide"
+                label="Imagen de portada"
                 maxSizeMB={5}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
@@ -267,7 +269,7 @@ export default function SlideEditor({
             </div>
             <div className="space-y-1">
               <label className="flex items-center justify-between text-sm font-medium" style={{ color: textColor + "CC" }}>
-                CTA (texto del botón) <span className={cn("font-mono", isOverLimit("ctaText") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
+                Texto del botón <span className={cn("font-mono", isOverLimit("ctaText") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
                   {getCharCount("ctaText")}/{LIMITS.ctaText}
                 </span>
               </label>
@@ -313,16 +315,34 @@ export default function SlideEditor({
           />
 
           <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: primaryColor + "30", backgroundColor: primaryColor + "08" }}>
-            <span className="text-sm font-medium" style={{ color: textColor + "CC" }}>Mostrar texto en el slide</span>
+            <span className="text-sm font-medium" style={{ color: textColor + "CC" }}>Mostrar texto sobre la imagen</span>
             <button
               type="button"
               onClick={() => setShowText(!showText)}
-              className="relative w-14 h-7 rounded-full transition-colors"
+              className="relative w-14 h-7 rounded-full transition-colors cursor-pointer"
               style={{ backgroundColor: showText ? primaryColor : textColor + "40" }}
             >
               <div className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform flex items-center justify-center"
                 style={{ left: showText ? "calc(100% - 24px)" : "4px" }}>
                 {showText ? <Eye className="w-3 h-3" style={{ color: primaryColor }} /> : <EyeOff className="w-3 h-3" style={{ color: textColor + "80" }} />}
+              </div>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: primaryColor + "30", backgroundColor: primaryColor + "08" }}>
+            <div>
+              <span className="text-sm font-medium" style={{ color: textColor + "CC" }}>Ocultar botón</span>
+              <p className="text-xs" style={{ color: textColor + "80" }}>Muestra el slide sin botón de acción</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHideButton(!hideButton)}
+              className="relative w-14 h-7 rounded-full transition-colors cursor-pointer"
+              style={{ backgroundColor: hideButton ? primaryColor : textColor + "40" }}
+            >
+              <div className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform flex items-center justify-center"
+                style={{ left: hideButton ? "calc(100% - 24px)" : "4px" }}>
+                {hideButton ? <EyeOff className="w-3 h-3" style={{ color: primaryColor }} /> : <Eye className="w-3 h-3" style={{ color: textColor + "80" }} />}
               </div>
             </button>
           </div>
@@ -338,9 +358,10 @@ export default function SlideEditor({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium transition-colors" style={{ backgroundColor: getContrastColor(primaryColor) + "1A", borderColor: primaryColor, color: primaryColor }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = getContrastColor(primaryColor) + "1A"; }}
+              className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
+              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               Cancelar
             </button>

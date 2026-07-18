@@ -1,11 +1,16 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import HeroLayoutPicker from "./HeroLayoutPicker";
 import BannerHeightPicker from "./BannerHeightPicker";
-import CardsLayoutPicker from "./CardsLayoutPicker";
 import { ChevronLeft } from "lucide-react";
 import { getContrastColor } from "@/lib/utils";
+
+const TYPE_LABELS: Record<string, string> = {
+  HERO: "Portada principal",
+  BANNER: "Franja publicitaria",
+  CARDS: "Tarjetas destacadas",
+};
 
 interface CarouselWizardStep2Props {
   type: "HERO" | "BANNER" | "CARDS";
@@ -15,6 +20,8 @@ interface CarouselWizardStep2Props {
   onBack: () => void;
   primaryColor: string;
   secondaryColor: string;
+  hideNav?: boolean;
+  hideLayoutPicker?: boolean;
 }
 
 export default function CarouselWizardStep2({
@@ -25,12 +32,21 @@ export default function CarouselWizardStep2({
   onBack,
   primaryColor,
   secondaryColor,
+  hideNav = false,
+  hideLayoutPicker = false,
 }: CarouselWizardStep2Props) {
   const [settings, setSettings] = useState<Record<string, unknown>>(
     initialSettings
   );
 
   const textColor = getContrastColor(secondaryColor);
+
+  useEffect(() => {
+    if (hideNav) {
+      onComplete(settings);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   const handleChange = (key: string, value: unknown) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -40,37 +56,41 @@ export default function CarouselWizardStep2({
     onComplete(settings);
   };
 
+  const isShowcase = heroStyle === "SHOWCASE";
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 p-2 rounded-lg transition-colors"
-          style={{ color: textColor + "99" }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = textColor; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}
-        >
-          <ChevronLeft className="w-4 h-4" /> Volver
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors"
-          style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-        >
-          Continuar
-        </button>
-      </div>
+      {!hideNav && (
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
+            style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+          >
+            <ChevronLeft className="w-4 h-4" /> Volver
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+            style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+          >
+            Continuar
+          </button>
+        </div>
+      )}
 
       <div className="pt-4" style={{ borderColor: primaryColor + "40" }}>
         <h3 className="text-sm font-medium mb-4" style={{ color: textColor + "CC" }}>
-          Configuración específica para {type}{heroStyle === "SHOWCASE" ? " Showcase" : ""}
+          Configuración de {TYPE_LABELS[type] || type}{isShowcase ? " - galería" : ""}
         </h3>
 
-        {type === "HERO" && heroStyle === "DEFAULT" && (
+        {type === "HERO" && !isShowcase && (
           <div className="space-y-6">
             <HeroLayoutPicker
               value={settings.slideLayout as "standard" | "split" | "minimal"}
@@ -130,15 +150,15 @@ export default function CarouselWizardStep2({
 
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
-                  Duración transición: {settings.transitionDuration || 6000}ms
+                  Duración: {(settings.transitionDuration || 6000) / 1000} segundos
                 </label>
                 <input
                   type="range"
-                  min="2000"
-                  max="15000"
-                  step="500"
-                  value={settings.transitionDuration || 6000}
-                  onChange={(e) => handleChange("transitionDuration", Number(e.target.value))}
+                  min="2"
+                  max="15"
+                  step="1"
+                  value={(settings.transitionDuration || 6000) / 1000}
+                  onChange={(e) => handleChange("transitionDuration", Number(e.target.value) * 1000)}
                   className="w-full h-2 rounded-lg appearance-none"
                   style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
                 />
@@ -147,7 +167,7 @@ export default function CarouselWizardStep2({
           </div>
         )}
 
-        {type === "HERO" && heroStyle === "SHOWCASE" && (
+        {type === "HERO" && isShowcase && (
           <div className="space-y-6">
             <div className="space-y-3">
               <div>
@@ -167,7 +187,7 @@ export default function CarouselWizardStep2({
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
-                  Gap entre slides: {settings.gap || 16}px
+                  Separación entre imágenes: {settings.gap || 16}px
                 </label>
                 <input
                   type="range"
@@ -182,15 +202,15 @@ export default function CarouselWizardStep2({
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
-                  Autoplay cada: {((settings.autoplayDelay || 5000) / 1000).toFixed(0)}s
+                  Autoplay cada: {((settings.autoplayDelay || 5000) / 1000).toFixed(0)} segundos
                 </label>
                 <input
                   type="range"
-                  min="2000"
-                  max="15000"
-                  step="1000"
-                  value={settings.autoplayDelay || 5000}
-                  onChange={(e) => handleChange("autoplayDelay", Number(e.target.value))}
+                  min="2"
+                  max="15"
+                  step="1"
+                  value={(settings.autoplayDelay || 5000) / 1000}
+                  onChange={(e) => handleChange("autoplayDelay", Number(e.target.value) * 1000)}
                   className="w-full h-2 rounded-lg appearance-none"
                   style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
                 />
@@ -222,7 +242,7 @@ export default function CarouselWizardStep2({
           </div>
         )}
 
-        {type === "BANNER" && (
+        {type === "BANNER" && !isShowcase && (
           <div className="space-y-6">
             <BannerHeightPicker
               value={settings.height || 300}
@@ -268,15 +288,15 @@ export default function CarouselWizardStep2({
 
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
-                  Duración transición: {settings.transitionDuration || 4000}ms
+                  Duración: {(settings.transitionDuration || 4000) / 1000} segundos
                 </label>
                 <input
                   type="range"
-                  min="2000"
-                  max="15000"
-                  step="500"
-                  value={settings.transitionDuration || 4000}
-                  onChange={(e) => handleChange("transitionDuration", Number(e.target.value))}
+                  min="2"
+                  max="15"
+                  step="1"
+                  value={(settings.transitionDuration || 4000) / 1000}
+                  onChange={(e) => handleChange("transitionDuration", Number(e.target.value) * 1000)}
                   className="w-full h-2 rounded-lg appearance-none"
                   style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
                 />
@@ -285,22 +305,305 @@ export default function CarouselWizardStep2({
           </div>
         )}
 
-        {type === "CARDS" && (
+        {type === "BANNER" && isShowcase && (
           <div className="space-y-6">
-            <CardsLayoutPicker
-              layout={settings.layout || "grid"}
-              onLayoutChange={(v) => handleChange("layout", v)}
-              columns={settings.columns || "md:grid-cols-2"}
-              onColumnsChange={(v) => handleChange("columns", v)}
-              cardHeight={settings.cardHeight || "50vh"}
-              onCardHeightChange={(v) => handleChange("cardHeight", v)}
-              showSubtitle={settings.showSubtitle ?? true}
-              onShowSubtitleChange={(v) => handleChange("showSubtitle", v)}
-              enableHoverZoom={settings.enableHoverZoom ?? true}
-              onEnableHoverZoomChange={(v) => handleChange("enableHoverZoom", v)}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-            />
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Altura del showcase: {settings.height || 500}px
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="800"
+                  step="50"
+                  value={settings.height || 500}
+                  onChange={(e) => handleChange("height", Number(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Separación entre imágenes: {settings.gap || 16}px
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="48"
+                  step="4"
+                  value={settings.gap || 16}
+                  onChange={(e) => handleChange("gap", Number(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Autoplay cada: {((settings.autoplayDelay || 5000) / 1000).toFixed(0)} segundos
+                </label>
+                <input
+                  type="range"
+                  min="2"
+                  max="15"
+                  step="1"
+                  value={(settings.autoplayDelay || 5000) / 1000}
+                  onChange={(e) => handleChange("autoplayDelay", Number(e.target.value) * 1000)}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <h4 className="text-sm font-medium pt-2" style={{ color: textColor + "CC" }}>Opciones de visualización</h4>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showDots ?? true}
+                    onChange={(e) => handleChange("showDots", e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: primaryColor }}
+                  />
+                  <span className="text-sm" style={{ color: textColor }}>Mostrar puntos</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showArrows ?? true}
+                    onChange={(e) => handleChange("showArrows", e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: primaryColor }}
+                  />
+                  <span className="text-sm" style={{ color: textColor }}>Mostrar flechas</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {type === "CARDS" && !isShowcase && (
+          <div className="space-y-6">
+            {!hideLayoutPicker && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Estilo de tarjetas</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleChange("layout", "simple")}
+                    className="relative p-3 rounded-xl border-2 transition-all text-left cursor-pointer"
+                    style={{
+                      borderColor: (settings.layout || "simple") === "simple" ? primaryColor : textColor + "30",
+                      backgroundColor: (settings.layout || "simple") === "simple" ? primaryColor + "15" : "transparent",
+                    }}
+                  >
+                    <span className="font-bold block text-sm" style={{ color: textColor }}>Simple</span>
+                    <span className="text-xs block" style={{ color: textColor + "80" }}>Cuadrícula de tarjetas</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChange("layout", "offers")}
+                    className="relative p-3 rounded-xl border-2 transition-all text-left cursor-pointer"
+                    style={{
+                      borderColor: settings.layout === "offers" ? primaryColor : textColor + "30",
+                      backgroundColor: settings.layout === "offers" ? primaryColor + "15" : "transparent",
+                    }}
+                  >
+                    <span className="font-bold block text-sm" style={{ color: textColor }}>Ofertas</span>
+                    <span className="text-xs block" style={{ color: textColor + "80" }}>Carrusel de ofertas con descuento</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {(settings.layout || "simple") === "simple" ? (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>Columnas (md+)</label>
+                    <select
+                      value={settings.columns || "md:grid-cols-2"}
+                      onChange={(e) => handleChange("columns", e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg outline-none transition-all"
+                      style={{ backgroundColor: textColor + "1A", border: "1px solid " + textColor + "30", color: textColor }}
+                    >
+                      <option value="md:grid-cols-1" style={{ backgroundColor: secondaryColor, color: textColor }}>1 columna</option>
+                      <option value="md:grid-cols-2" style={{ backgroundColor: secondaryColor, color: textColor }}>2 columnas</option>
+                      <option value="md:grid-cols-3" style={{ backgroundColor: secondaryColor, color: textColor }}>3 columnas</option>
+                      <option value="md:grid-cols-4" style={{ backgroundColor: secondaryColor, color: textColor }}>4 columnas</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>Alto de tarjetas</label>
+                    <select
+                      value={settings.cardHeight || "50vh"}
+                      onChange={(e) => handleChange("cardHeight", e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg outline-none transition-all"
+                      style={{ backgroundColor: textColor + "1A", border: "1px solid " + textColor + "30", color: textColor }}
+                    >
+                      <option value="40vh" style={{ backgroundColor: secondaryColor, color: textColor }}>40vh (compacto)</option>
+                      <option value="50vh" style={{ backgroundColor: secondaryColor, color: textColor }}>50vh (estándar)</option>
+                      <option value="60vh" style={{ backgroundColor: secondaryColor, color: textColor }}>60vh (grande)</option>
+                      <option value="70vh" style={{ backgroundColor: secondaryColor, color: textColor }}>70vh (extra grande)</option>
+                      <option value="80vh" style={{ backgroundColor: secondaryColor, color: textColor }}>80vh (hero)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.showSubtitle ?? true}
+                      onChange={(e) => handleChange("showSubtitle", e.target.checked)}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: primaryColor }}
+                    />
+                    <span className="text-sm" style={{ color: textColor }}>Mostrar subtítulo</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.enableHoverZoom ?? true}
+                      onChange={(e) => handleChange("enableHoverZoom", e.target.checked)}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: primaryColor }}
+                    />
+                    <span className="text-sm" style={{ color: textColor }}>Zoom al hover</span>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                    Altura: {settings.height || 500}px
+                  </label>
+                  <input
+                    type="range"
+                    min="300"
+                    max="800"
+                    step="50"
+                    value={settings.height || 500}
+                    onChange={(e) => handleChange("height", Number(e.target.value))}
+                    className="w-full h-2 rounded-lg appearance-none"
+                    style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                    Separación entre imágenes: {settings.gap || 16}px
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="48"
+                    step="4"
+                    value={settings.gap || 16}
+                    onChange={(e) => handleChange("gap", Number(e.target.value))}
+                    className="w-full h-2 rounded-lg appearance-none"
+                    style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                    Autoplay cada: {((settings.autoplayDelay || 5000) / 1000).toFixed(0)} segundos
+                  </label>
+                  <input
+                    type="range"
+                    min="2"
+                    max="15"
+                    step="1"
+                    value={(settings.autoplayDelay || 5000) / 1000}
+                    onChange={(e) => handleChange("autoplayDelay", Number(e.target.value) * 1000)}
+                    className="w-full h-2 rounded-lg appearance-none"
+                    style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                  />
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer pt-2">
+                  <input
+                    type="checkbox"
+                    checked={settings.hideButtons === true}
+                    onChange={(e) => handleChange("hideButtons", e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: primaryColor }}
+                  />
+                  <span className="text-sm font-medium" style={{ color: textColor }}>Ocultar todos los botones</span>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+
+        {type === "CARDS" && isShowcase && (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Altura del showcase: {settings.height || 500}px
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="800"
+                  step="50"
+                  value={settings.height || 500}
+                  onChange={(e) => handleChange("height", Number(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Separación entre imágenes: {settings.gap || 16}px
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="48"
+                  step="4"
+                  value={settings.gap || 16}
+                  onChange={(e) => handleChange("gap", Number(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+                  Autoplay cada: {((settings.autoplayDelay || 5000) / 1000).toFixed(0)} segundos
+                </label>
+                <input
+                  type="range"
+                  min="2"
+                  max="15"
+                  step="1"
+                  value={(settings.autoplayDelay || 5000) / 1000}
+                  onChange={(e) => handleChange("autoplayDelay", Number(e.target.value) * 1000)}
+                  className="w-full h-2 rounded-lg appearance-none"
+                  style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+                />
+              </div>
+              <h4 className="text-sm font-medium pt-2" style={{ color: textColor + "CC" }}>Opciones de visualización</h4>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showDots ?? true}
+                    onChange={(e) => handleChange("showDots", e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: primaryColor }}
+                  />
+                  <span className="text-sm" style={{ color: textColor }}>Mostrar puntos</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showArrows ?? true}
+                    onChange={(e) => handleChange("showArrows", e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: primaryColor }}
+                  />
+                  <span className="text-sm" style={{ color: textColor }}>Mostrar flechas</span>
+                </label>
+              </div>
+            </div>
           </div>
         )}
       </div>

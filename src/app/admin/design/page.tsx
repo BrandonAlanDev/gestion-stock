@@ -25,7 +25,7 @@ export default async function DesignAdminPage() {
               Diseño de Página
             </h1>
             <p className="ml-6 mt-2 text-[10px] uppercase tracking-[0.4em] font-black" style={{ color: textColor + "99" }}>
-              Branding · Secciones · Carruseles
+              Branding · Secciones · Contenido Dinámico
             </p>
           </div>
         </div>

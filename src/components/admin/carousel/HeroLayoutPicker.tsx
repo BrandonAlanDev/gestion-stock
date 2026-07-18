@@ -10,9 +10,9 @@ interface HeroLayoutPickerProps {
 }
 
 const LAYOUTS = [
-  { id: "standard", label: "Estándar", desc: "Imagen full + texto centrado + overlays" },
-  { id: "split", label: "Split", desc: "Imagen 60% izq + texto 40% der" },
-  { id: "minimal", label: "Minimal", desc: "Imagen full sin overlay oscuro, texto con blur" },
+  { id: "standard", label: "Estándar", desc: "Imagen completa con texto centrado" },
+  { id: "split", label: "Dividido", desc: "Imagen a la izquierda y texto a la derecha" },
+  { id: "minimal", label: "Minimalista", desc: "Imagen completa sin oscurecer, texto más sutil" },
 ] as const;
 
 export default function HeroLayoutPicker({ value, onChange, primaryColor, secondaryColor }: HeroLayoutPickerProps) {
@@ -22,7 +22,7 @@ export default function HeroLayoutPicker({ value, onChange, primaryColor, second
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Layout del slide</label>
+      <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Diseño visual</label>
       <div className="grid grid-cols-3 gap-2">
         {LAYOUTS.map((layout) => (
           <button

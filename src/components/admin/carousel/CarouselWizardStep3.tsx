@@ -6,6 +6,12 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getContrastColor } from "@/lib/utils";
+
+const TYPE_LABELS: Record<string, string> = {
+  HERO: "Portada principal",
+  BANNER: "Franja publicitaria",
+  CARDS: "Tarjetas destacadas",
+};
 import type { SlideWizardData, CarouselType } from "@/types/carousel";
 
 interface CarouselWizardStep3Props {
@@ -93,12 +99,12 @@ export default function CarouselWizardStep3({
         <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: textColor }}>
           Imágenes ({sortableSlides.length})
           <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
-            {type}
+            {TYPE_LABELS[type] || type}
           </span>
         </h3>
         <button
           onClick={handleAddSlide}
-          className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors" style={{ backgroundColor: primaryColor + "20", borderColor: primaryColor + "40", color: primaryColor }}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors cursor-pointer" style={{ backgroundColor: primaryColor + "20", borderColor: primaryColor + "40", color: primaryColor }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; }}
         >
@@ -135,9 +141,10 @@ export default function CarouselWizardStep3({
         <button
           type="button"
           onClick={onBack}
-          className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2" style={{ backgroundColor: primaryColor + "20", borderColor: primaryColor + "40", color: primaryColor }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; }}
+          className="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 cursor-pointer"
+          style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
         >
           <ChevronLeft className="w-4 h-4" /> Volver
         </button>
@@ -156,15 +163,16 @@ export default function CarouselWizardStep3({
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-lg font-medium transition-colors" style={{ backgroundColor: getContrastColor(primaryColor) + "1A", borderColor: primaryColor, color: primaryColor }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = getContrastColor(primaryColor) + "1A"; }}
+                className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
+                style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
                 Cancelar
               </button>
               <button
                 onClick={() => confirmDeleteSlide(deleteConfirm)}
-                className="px-4 py-2 rounded-lg font-medium hover:bg-red-600" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+                className="px-4 py-2 rounded-lg font-medium hover:bg-red-600 cursor-pointer" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
               >
@@ -178,7 +186,7 @@ export default function CarouselWizardStep3({
   );
 }
 
-function SortableSlideItem({
+export function SortableSlideItem({
   slide,
   onEdit,
   onDelete,
@@ -251,7 +259,7 @@ function SortableSlideItem({
           {onEdit && (
             <button
               onClick={() => onEdit(slide)}
-              className="p-2 rounded-lg transition-colors" style={{ color: textColor + "80" }}
+              className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; e.currentTarget.style.color = primaryColor; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
               title="Editar"
@@ -261,7 +269,7 @@ function SortableSlideItem({
           )}
           <button
             onClick={() => onDelete(slide.id)}
-            className="p-2 rounded-lg transition-colors" style={{ color: textColor + "80" }}
+            className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "#ef4444"; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
             title="Eliminar"

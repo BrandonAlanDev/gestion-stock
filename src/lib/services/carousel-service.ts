@@ -38,7 +38,7 @@ export interface CarouselLimits {
   CARDS: number;
 }
 
-const STATIC_LIMITS: CarouselLimits = { HERO: 1, BANNER: 1, CARDS: 3 };
+const STATIC_LIMITS: CarouselLimits = { HERO: 10, BANNER: 10, CARDS: 10 };
 
 export async function getCarouselLimits(): Promise<CarouselLimits> {
   return { ...STATIC_LIMITS };

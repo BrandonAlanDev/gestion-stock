@@ -1,13 +1,34 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp, Image as ImageIcon, Loader2, AlertTriangle, X, Edit } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Image as ImageIcon, Loader2, AlertTriangle, Settings } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { getContrastColor } from "@/lib/utils";
 import { createCarousel, updateCarousel, deleteCarousel, getCarousels, addCarouselSlide, updateCarouselSlide, deleteCarouselSlide } from "@/actions/carousel/carousel.actions";
+import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
+import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { toast } from "sonner";
-import type { Carousel, CarouselWizardData } from "@/types/carousel";
+import type { Carousel, CarouselWizardData, SlideWizardData } from "@/types/carousel";
+
+const TYPE_LABELS: Record<string, string> = {
+  HERO: "Portada principal",
+  BANNER: "Franja publicitaria",
+  CARDS: "Tarjetas destacadas",
+};
+
+const LAYOUT_LABELS: Record<string, string> = {
+  standard: "Estándar",
+  split: "Dividido",
+  minimal: "Minimalista",
+  simple: "Simple",
+  offers: "Ofertas",
+};
 import CarouselWizard from "./CarouselWizard";
 import SlideEditor from "./SlideEditor";
+import { SortableSlideItem } from "./CarouselWizardStep3";
+import CarouselSettingsModal from "./CarouselSettingsModal";
+import CarouselDesignModal from "./CarouselDesignModal";
 
 interface CarouselManagerProps {
   primaryColor: string;
@@ -26,10 +47,29 @@ const textColor = getContrastColor(secondaryColor);
   const [editingSlide, setEditingSlide] = useState<Record<string, unknown> | null>(null);
   const [editingSlideCarouselId, setEditingSlideCarouselId] = useState<string | null>(null);
   const [editingSlideCarouselType, setEditingSlideCarouselType] = useState<"HERO" | "BANNER" | "CARDS">("HERO");
+  const [pickerProducts, setPickerProducts] = useState<{ id: string; name: string }[]>([]);
+  const [pickerCategories, setPickerCategories] = useState<{ id: string; name: string }[]>([]);
+
+  const [settingsModalCarousel, setSettingsModalCarousel] = useState<Carousel | null>(null);
+  const [designModalCarousel, setDesignModalCarousel] = useState<Carousel | null>(null);
 
   useEffect(() => {
     loadCarousels();
+    loadPickers();
   }, []);
+
+  const loadPickers = async () => {
+    try {
+      const [productsData, categoriesData] = await Promise.all([
+        getProductsPicker(),
+        getCategoriesPicker(),
+      ]);
+      setPickerProducts(productsData.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+      setPickerCategories(categoriesData.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+    } catch {
+      console.error("Error loading picker data");
+    }
+  };
 
   const loadCarousels = async () => {
     try {
@@ -50,8 +90,11 @@ const textColor = getContrastColor(secondaryColor);
   };
 
   const handleEditCarousel = (carousel: Carousel) => {
-    setEditingCarousel(carousel);
-    setShowWizard(true);
+    setSettingsModalCarousel(carousel);
+  };
+
+  const handleEditDesign = (carousel: Carousel) => {
+    setDesignModalCarousel(carousel);
   };
 
   const handleSaveWizard = async (wizardData: CarouselWizardData) => {
@@ -181,6 +224,20 @@ const textColor = getContrastColor(secondaryColor);
     }
   };
 
+  const handleReorderSlides = async (carouselId: string, reordered: SlideWizardData[]) => {
+    setCarousels((prev) =>
+      prev.map((c) => {
+        if (c.id !== carouselId) return c;
+        return { ...c, slides: reordered.map((s) => ({ ...c.slides?.find((cs) => cs.id === s.id), ...s, order: s.order })) };
+      })
+    );
+    for (const slide of reordered) {
+      if (!slide.id.startsWith("temp-")) {
+        await updateCarouselSlide(slide.id, { order: slide.order });
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -195,15 +252,15 @@ const textColor = getContrastColor(secondaryColor);
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: textColor }}>
             <ImageIcon className="w-6 h-6" style={{ color: primaryColor }} />
-            Carruseles
+            Contenido Dinámico
           </h2>
           <p className="text-sm mt-1" style={{ color: textColor + "CC" }}>
-            Gestiona carruseles tipo Hero, Banner rotativo y Grilla de Cards.
+            Administra las secciones visuales de la página principal.
           </p>
         </div>
         <button
           onClick={handleAddCarousel}
-          className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+          className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
         >
@@ -218,7 +275,7 @@ const textColor = getContrastColor(secondaryColor);
           <p className="mb-6" style={{ color: textColor + "99" }}>Crea tu primer carrusel para la home</p>
           <button
             onClick={handleAddCarousel}
-            className="px-6 py-3 rounded-lg font-black uppercase tracking-wider inline-flex items-center gap-2 transition-colors" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+            className="px-6 py-3 rounded-lg font-black uppercase tracking-wider inline-flex items-center gap-2 transition-colors cursor-pointer" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
@@ -233,10 +290,12 @@ const textColor = getContrastColor(secondaryColor);
                   carousel={carousel}
                   index={index}
                   onEditCarousel={handleEditCarousel}
+                  onEditDesign={handleEditDesign}
                   onDelete={handleDeleteCarousel}
                   onAddSlide={handleAddSlide}
                   onEditSlide={handleEditSlide}
                   onDeleteSlide={handleDeleteSlide}
+                  onReorderSlides={handleReorderSlides}
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
                 />
@@ -283,8 +342,26 @@ const textColor = getContrastColor(secondaryColor);
             config: editingSlide.config as Record<string, unknown>,
           } : undefined}
           carouselType={editingSlideCarouselType}
-          products={[]}
-          categories={[]}
+          products={pickerProducts}
+          categories={pickerCategories}
+        />
+      )}
+
+      {settingsModalCarousel && (
+        <CarouselSettingsModal
+          isOpen={!!settingsModalCarousel}
+          onClose={() => setSettingsModalCarousel(null)}
+          carousel={settingsModalCarousel}
+          onSave={(updated) => setCarousels((prev) => prev.map((c) => c.id === updated.id ? updated : c))}
+        />
+      )}
+
+      {designModalCarousel && (
+        <CarouselDesignModal
+          isOpen={!!designModalCarousel}
+          onClose={() => setDesignModalCarousel(null)}
+          carousel={designModalCarousel}
+          onSave={(updated) => setCarousels((prev) => prev.map((c) => c.id === updated.id ? updated : c))}
         />
       )}
 
@@ -303,15 +380,16 @@ const textColor = getContrastColor(secondaryColor);
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-lg font-medium transition-colors" style={{ backgroundColor: getContrastColor(primaryColor) + "1A", borderColor: primaryColor, color: primaryColor }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = getContrastColor(primaryColor) + "1A"; }}
+                className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
+                style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
                 Cancelar
               </button>
               <button
                 onClick={() => confirmDeleteCarousel(deleteConfirm)}
-                className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+                className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
               >
@@ -329,10 +407,12 @@ interface CarouselItemProps {
   carousel: Carousel;
   index: number;
   onEditCarousel: (carousel: Carousel) => void;
+  onEditDesign: (carousel: Carousel) => void;
   onDelete: (id: string) => void;
   onAddSlide: (carousel: Carousel) => void;
   onEditSlide: (carousel: Carousel, slide: Record<string, unknown>) => void;
   onDeleteSlide: (carouselId: string, slideId: string) => void;
+  onReorderSlides: (carouselId: string, slides: SlideWizardData[]) => void;
   primaryColor: string;
   secondaryColor: string;
 }
@@ -341,10 +421,12 @@ function CarouselItem({
   carousel,
   index,
   onEditCarousel,
+  onEditDesign,
   onDelete,
   onAddSlide,
   onEditSlide,
   onDeleteSlide,
+  onReorderSlides,
   primaryColor,
   secondaryColor,
 }: CarouselItemProps) {
@@ -352,6 +434,34 @@ function CarouselItem({
   const [expanded, setExpanded] = useState(false);
 
   const slides = carousel.slides || [];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const mapToWizardData = (s: typeof slides[number]): SlideWizardData => ({
+    id: s.id,
+    image: s.image || "",
+    title: s.title || "",
+    subtitle: s.subtitle || "",
+    description: s.description || "",
+    ctaText: s.ctaText || "",
+    url: s.url || "",
+    order: s.order,
+    config: s.config || {},
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = slides.findIndex((s) => s.id === active.id);
+      const newIndex = slides.findIndex((s) => s.id === over?.id);
+      const newSlides = arrayMove(slides.map(mapToWizardData), oldIndex, newIndex);
+      const reordered = newSlides.map((s, i) => ({ ...s, order: i }));
+      onReorderSlides(carousel.id, reordered);
+    }
+  };
 
   return (
     <div
@@ -366,114 +476,96 @@ function CarouselItem({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold" style={{ color: textColor }}>{carousel.title || `Carrusel ${carousel.type}`}</h4>
+              <h4 className="font-semibold" style={{ color: textColor }}>{carousel.title || TYPE_LABELS[carousel.type] || carousel.type}</h4>
               <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
-                {carousel.type}
+                {TYPE_LABELS[carousel.type] || carousel.type}
               </span>
               {carousel.active && <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: "#22c55e" + "20", color: "#22c55e" }}>Activo</span>}
             </div>
             <p className="text-sm flex items-center gap-2 mt-0.5" style={{ color: textColor + "80" }}>
               {slides.length} imágenes
               {carousel.settings?.height && <span>· {carousel.settings.height}px</span>}
-              {carousel.type === "HERO" && carousel.settings?.slideLayout && <span>· {carousel.settings.slideLayout}</span>}
-              {carousel.type === "CARDS" && carousel.settings?.layout && <span>· {carousel.settings.layout}</span>}
+              {carousel.type === "HERO" && carousel.settings?.slideLayout && <span>· {LAYOUT_LABELS[carousel.settings.slideLayout as string] || carousel.settings.slideLayout}</span>}
+              {carousel.type === "CARDS" && carousel.settings?.layout && <span>· {LAYOUT_LABELS[carousel.settings.layout as string] || carousel.settings.layout}</span>}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); onEditCarousel(carousel); }}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: textColor + "80" }}
-            title="Editar carrusel"
+            className="px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+            style={{ backgroundColor: primaryColor + "20", color: primaryColor, border: "1px solid", borderColor: primaryColor + "30" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "35"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; }}
+            title="Configuración del carrusel"
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(carousel.id); }}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: textColor + "80" }}
-            title="Eliminar"
-          >
-            <Trash2 className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
+            Configuración
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className="p-2 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors cursor-pointer"
             style={{ color: textColor + "80" }}
             title={expanded ? "Colapsar" : "Ver slides"}
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(carousel.id); }}
+            className="p-2 rounded-lg transition-colors cursor-pointer"
+            style={{ color: textColor + "80" }}
+            title="Eliminar"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {expanded && (
         <div className="border-t" style={{ borderColor: primaryColor + "40" }}>
-          <div className="p-4">
+          <div className="p-4 flex gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onEditDesign(carousel); }}
+              className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer"
+              style={{ backgroundColor: primaryColor + "15", color: primaryColor, border: "1px solid", borderColor: primaryColor + "30" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "25"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "15"; }}
+            >
+              Cambiar diseño
+            </button>
             <button
               onClick={(e) => { e.stopPropagation(); onAddSlide(carousel); }}
-              className="w-full px-4 py-3 rounded-xl border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-colors cursor-pointer"
               style={{ borderColor: primaryColor + "40", color: primaryColor }}
             >
-              <Plus className="w-4 h-4" /> Agregar slide
+              <Plus className="w-4 h-4" /> Agregar imagen
             </button>
           </div>
 
-          <div className="px-4 pb-4 space-y-2">
-            {slides.length === 0 && (
+          <div className="px-4 pb-4">
+            {slides.length === 0 ? (
               <p className="text-center py-6 text-sm" style={{ color: textColor + "60" }}>
                 Este carrusel no tiene slides todavía
               </p>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {slides.map((slide) => (
+                      <SortableSlideItem
+                        key={slide.id}
+                        slide={mapToWizardData(slide)}
+                        onEdit={() => onEditSlide(carousel, slide as Record<string, unknown>)}
+                        onDelete={(id) => onDeleteSlide(carousel.id, id)}
+                        primaryColor={primaryColor}
+                        secondaryColor={secondaryColor}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
-            {slides.map((slide, i) => (
-              <div
-                key={slide.id || i}
-                className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ backgroundColor: primaryColor + "08" }}
-              >
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0" style={{ backgroundColor: textColor + "1A" }}>
-                  {slide.image ? (
-                    <img
-                      src={slide.image}
-                      alt={slide.title || ""}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-6 h-6" style={{ color: textColor + "40" }} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: textColor }}>
-                    {slide.title || `Slide ${i + 1}`}
-                  </p>
-                  <p className="text-xs mt-0.5 truncate" style={{ color: textColor + "80" }}>
-                    {slide.subtitle || "Sin subtítulo"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onEditSlide(carousel, slide as Record<string, unknown>); }}
-                    className="p-1.5 rounded-lg"
-                    style={{ color: textColor + "80" }}
-                    title="Editar slide"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteSlide(carousel.id, slide.id); }}
-                    className="p-1.5 rounded-lg"
-                    style={{ color: textColor + "80" }}
-                    title="Eliminar slide"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}

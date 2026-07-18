@@ -176,11 +176,8 @@ export const carouselSettingsSchema = z.object({
   height: z.number().int().positive().default(300),
 
   // CARDS
-  layout: z.enum(["grid", "collage", "minimal"]).default("grid"),
-  columns: z.string().default("md:grid-cols-2"),
-  cardHeight: z.string().default("50vh"),
-  showSubtitle: z.boolean().default(true),
-  enableHoverZoom: z.boolean().default(true),
+  layout: z.enum(["simple", "offers"]).default("simple"),
+  hideButtons: z.boolean().default(false),
 }).passthrough();
 
 export const carouselLimitsSchema = z.object({

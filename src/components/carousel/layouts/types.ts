@@ -6,7 +6,7 @@ export interface CarouselSlide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: { hideText?: boolean };
+  config?: { hideText?: boolean; hideButton?: boolean };
 }
 
 export interface HeroLayoutProps {

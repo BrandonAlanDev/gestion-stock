@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import HeroLayout from "./layouts/HeroLayout";
-import BannerLayout from "./layouts/BannerLayout";
-import CardsLayout from "./layouts/CardsLayout";
-import ShowcaseLayout from "./layouts/ShowcaseLayout";
+import HeroLayout from "./layouts/hero/HeroLayout";
+import BannerLayout from "./layouts/banner/BannerLayout";
+import CardsLayout from "./layouts/cards/CardsLayout";
+import ShowcaseLayout from "./layouts/hero/ShowcaseLayout";
 
 interface CarouselSlide {
   id: string;
@@ -33,7 +33,7 @@ interface Carousel {
   slides: CarouselSlide[];
 }
 
-export default function AllCarousels() {
+export default function AllCarousels({ storeName }: { storeName?: string }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -75,18 +75,25 @@ export default function AllCarousels() {
   const firstIsHero = carousels[0]?.type === "HERO";
 
   return (
-    <div className={`carousel-container space-y-0${firstIsHero ? "" : " mt-16"}`}>
+    <div className={"carousel-container space-y-0" + (firstIsHero ? "" : " mt-16")}>
       {carousels.map((carousel) => {
+        const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
         switch (carousel.type) {
           case "HERO":
-            if (carousel.settings?.heroStyle === "SHOWCASE") {
+            if (isShowcase) {
               return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
             }
             return <HeroLayout key={carousel.id} carousel={carousel} />;
           case "BANNER":
+            if (isShowcase) {
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+            }
             return <BannerLayout key={carousel.id} carousel={carousel} />;
           case "CARDS":
-            return <CardsLayout key={carousel.id} carousel={carousel} />;
+            if (isShowcase) {
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+            }
+            return <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
           default:
             return null;
         }

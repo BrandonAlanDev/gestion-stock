@@ -38,11 +38,12 @@ export interface CarouselSettings {
   gap?: number;
   showArrows?: boolean;
 
-  // BANNER
+  // BANNER / CARDS
   height?: number;
 
   // CARDS
-  layout?: "grid" | "collage" | "minimal";
+  layout?: "simple" | "offers";
+  hideButtons?: boolean;
   columns?: string;
   cardHeight?: string;
   showSubtitle?: boolean;

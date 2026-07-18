@@ -12,6 +12,7 @@ import {
 import * as carouselService from "@/lib/services/carousel-service";
 import { uploadCarouselImage, deleteCarouselImage } from "./helpers";
 import { extractPublicId } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
 
 async function requireAdmin(): Promise<boolean> {
   const session = await auth();
@@ -26,13 +27,13 @@ function migrateSettings(data: unknown): unknown {
   const s = d.settings as Record<string, unknown>;
 
   const oldLayout = s.layout;
-  if (oldLayout === "standard" || oldLayout === "split") {
+  if (oldLayout === "grid" || oldLayout === "collage" || oldLayout === "minimal") {
     return {
       ...d,
       settings: {
         ...s,
         slideLayout: s.slideLayout ?? oldLayout,
-        layout: "grid",
+        layout: "simple",
       },
     };
   }
@@ -141,6 +142,21 @@ export async function deleteCarousel(id: string) {
       );
     }
     await carouselService.deleteCarousel(id);
+
+    const pageConfig = await prisma.pageConfig.findUnique({ where: { id: 1 } });
+    if (pageConfig?.sectionOrder) {
+      try {
+        const sections = JSON.parse(pageConfig.sectionOrder) as string[];
+        const filtered = sections.filter((s) => s !== `carousel_${id}`);
+        if (filtered.length !== sections.length) {
+          await prisma.pageConfig.update({
+            where: { id: 1 },
+            data: { sectionOrder: JSON.stringify(filtered) },
+          });
+        }
+      } catch { }
+    }
+
     revalidateTag("carousels");
     return { success: true };
   } catch (error) {

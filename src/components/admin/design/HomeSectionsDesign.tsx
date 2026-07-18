@@ -2,8 +2,11 @@
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Pencil, Grid2X2, Columns3, LayoutDashboard } from "lucide-react";
+import { Plus, Trash2, Pencil, Grid2X2, Columns3, LayoutDashboard, GripVertical } from "lucide-react";
 import { useState, useTransition, useEffect } from "react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import GridModal from "./GridModal";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
 import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
@@ -21,10 +24,58 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
+function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove }: {
+  grid: any;
+  primaryColor: string;
+  secondaryColor: string;
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: grid.id });
+  const textColor = getContrastColor(secondaryColor);
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    backgroundColor: textColor.concat("05"),
+    borderColor: textColor.concat("22"),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={dragStyle}
+      className="flex items-center gap-4 p-4 border rounded-xl"
+    >
+      <button {...attributes} {...listeners} className="cursor-grab p-1 opacity-50 hover:opacity-100 transition-opacity">
+        <GripVertical size={20} />
+      </button>
+      <img src={grid.image} className="w-16 h-16 object-cover rounded-lg" alt="" />
+      <div className="flex-1">
+        <p className="font-bold">{grid.title}</p>
+        <p className="text-xs opacity-60">{grid.subtitle}</p>
+        <div className="flex gap-2 mt-1 flex-wrap">
+          {grid.subtitleDim && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Gris</span>}
+          {grid.subtitleNeon && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Neón</span>}
+          {grid.linkStyle === "BUTTON" && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Botón: {grid.buttonVariant}</span>}
+        </div>
+      </div>
+      <button onClick={onEdit} className="p-2 opacity-70 hover:opacity-100 transition-opacity">
+        <Pencil size={18} />
+      </button>
+      <button onClick={onRemove} className="p-2 text-red-500 hover:text-red-600 transition-colors">
+        <Trash2 size={18} />
+      </button>
+    </div>
+  );
+}
+
 export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", secondaryColor = "#ffffff" }: any) {
   const [isPending, startTransition] = useTransition();
   const [layout, setLayout] = useState(config?.featuredLayout?.toLowerCase() ?? "grid");
-  const [grids, setGrids] = useState(config?.homegrid?.grids || []);
+  const [grids, setGrids] = useState(
+    (config?.homegrid?.grids || []).map((g: any) => ({ ...g, id: String(g.id) }))
+  );
   const [sectionTitle, setSectionTitle] = useState(config?.homegrid?.title || "Home Destacado");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,12 +86,27 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
 
   const router = useRouter();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = grids.findIndex((g: any) => g.id === active.id);
+    const newIndex = grids.findIndex((g: any) => g.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    setGrids(arrayMove(grids, oldIndex, newIndex));
+  };
+
   useEffect(() => {
     setLayout(config?.featuredLayout?.toLowerCase() ?? "grid");
     setSectionTitle(config?.homegrid?.title || "Home Destacado");
     const rawGrids = config?.homegrid?.grids || [];
     const gridsWithDestination = rawGrids.map((grid: any) => ({
       ...grid,
+      id: String(grid.id),
       destination: {
         type: grid.linkType?.toLowerCase() || "none",
         value: grid.linkValue || "",
@@ -89,12 +155,12 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
 
     startTransition(async () => {
       try {
-        const gridsForServer = grids.map((g: any) => ({
+        const gridsForServer = grids.map((g: any, idx: number) => ({
           id: g.id,
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,
-          order: g.order || 0,
+          order: idx,
           linkType: g.destination?.type?.toUpperCase() || "NONE",
           linkValue: g.destination?.value || "",
           subtitleNeon: g.subtitleNeon ?? false,
@@ -140,7 +206,7 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
           className="text-xl font-black uppercase italic mb-6" 
           style={{ color: primaryColor }}
         >
-          Featured Section
+          Sección Destacada
         </h2>
 
         {/* Título editable */}
@@ -180,7 +246,7 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
                   {type.toUpperCase() === "GRID" && <Grid2X2 size={48} className="text-2xl font-bold align-middle text-center" />}
                   {type.toUpperCase() === "COLLAGE" && <LayoutDashboard size={48} className="text-2xl font-bold align-middle text-center" />}
                   {type.toUpperCase() === "MINIMAL" && <Columns3 size={48} className="text-2xl font-bold align-middle text-center" />}
-                  {type.toUpperCase()}
+                  {type === "grid" ? "CUADRÍCULA" : type === "collage" ? "MOSAICO" : "MINIMALISTA"}
                 </span>
               </button>
             );
@@ -191,35 +257,22 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
       {/* 2. SECTOR DE SECCIONES (Grids) */}
       <div className="border-t pt-8" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
         <h3 className="font-bold mb-4">Secciones actuales ({grids.length})</h3>
-        <div className="space-y-4">
-          {grids.map((grid: any) => (
-            <div 
-              key={grid.id} 
-              className="flex items-center gap-4 p-4 border rounded-xl"
-              style={{ 
-                backgroundColor: getContrastColor(secondaryColor).concat("05"),
-                borderColor: getContrastColor(secondaryColor).concat("22")
-              }}
-            >
-              <img src={grid.image} className="w-16 h-16 object-cover rounded-lg" alt="" />
-              <div className="flex-1">
-                <p className="font-bold">{grid.title}</p>
-                <p className="text-xs opacity-60">{grid.subtitle}</p>
-                <div className="flex gap-2 mt-1 flex-wrap">
-                  {grid.subtitleDim && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Gris</span>}
-                  {grid.subtitleNeon && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Neón</span>}
-                  {grid.linkStyle === "BUTTON" && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Botón: {grid.buttonVariant}</span>}
-                </div>
-              </div>
-              <p className="text-sm font-bold">Orden:{" " + grid.order}</p>
-              <button onClick={() => { setEditingGrid(grid); setIsModalOpen(true); }} className="p-2 opacity-70 hover:opacity-100 transition-opacity">
-                <Pencil size={18} />
-              </button>
-              <button onClick={() => handleRemove(grid.id)} className="p-2 text-red-500 hover:text-red-600 transition-colors">
-                <Trash2 size={18} />
-              </button>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={grids.map((g: any) => g.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {grids.map((grid: any) => (
+                <SortableGridItem
+                  key={grid.id}
+                  grid={grid}
+                  primaryColor={primaryColor}
+                  secondaryColor={secondaryColor}
+                  onEdit={() => { setEditingGrid(grid); setIsModalOpen(true); }}
+                  onRemove={() => handleRemove(grid.id)}
+                />
+              ))}
             </div>
-          ))}
+          </SortableContext>
+        </DndContext>
 
           <button
             onClick={() => { setEditingGrid(null); setIsModalOpen(true); }}
@@ -231,7 +284,6 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
           >
             <Plus size={20} /> Agregar Nueva Sección
           </button>
-        </div>
       </div>
 
       <button 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   LayoutDashboard,
   Image as ImageIcon,
@@ -37,26 +37,49 @@ interface Props {
   secondaryColor: string;
 }
 
-const SECTION_LABELS: Record<string, { label: string; icon: React.ElementType; desc: string }> = {
-  hero: { label: "Hero", icon: LayoutDashboard, desc: "Carrusel principal fullscreen" },
-  banner: { label: "Banner", icon: Megaphone, desc: "Franja publicitaria rotativa" },
-  featured: { label: "Featured", icon: Grid2X2, desc: "Sección destacada con grids" },
-  cards: { label: "Cards", icon: ImageIcon, desc: "Grilla de tarjetas" },
+const CAROUSEL_ICONS: Record<string, React.ElementType> = {
+  HERO: LayoutDashboard,
+  BANNER: Megaphone,
+  CARDS: ImageIcon,
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  HERO: "Portada principal",
+  BANNER: "Franja publicitaria",
+  CARDS: "Tarjetas destacadas",
+};
+
+const FIXED_SECTIONS: Record<string, { label: string; icon: React.ElementType; desc: string }> = {
+  featured: { label: "Sección destacada", icon: Grid2X2, desc: "Sección destacada con grids" },
   location: { label: "Ubicación", icon: MapPin, desc: "Mapa y dirección" },
 };
 
+const CAROUSEL_PREFIX = "carousel_";
+
+function isCarouselId(id: string) {
+  return id.startsWith(CAROUSEL_PREFIX);
+}
+
+function getCarouselId(id: string) {
+  return id.slice(CAROUSEL_PREFIX.length);
+}
+
 function SortableSection({
   id,
+  label,
+  icon: Icon,
+  desc,
   primaryColor,
   secondaryColor,
 }: {
   id: string;
+  label: string;
+  icon: React.ElementType;
+  desc: string;
   primaryColor: string;
   secondaryColor: string;
 }) {
   const textColor = getContrastColor(secondaryColor);
-  const info = SECTION_LABELS[id] || { label: id, icon: ImageIcon, desc: "" };
-  const Icon = info.icon;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
@@ -83,22 +106,100 @@ function SortableSection({
         <Icon className="w-5 h-5" style={{ color: primaryColor }} />
       </div>
       <div className="flex-1">
-        <p className="font-bold" style={{ color: textColor }}>{info.label}</p>
-        <p className="text-xs" style={{ color: textColor + "80" }}>{info.desc}</p>
+        <p className="font-bold" style={{ color: textColor }}>{label}</p>
+        <p className="text-xs" style={{ color: textColor + "80" }}>{desc}</p>
       </div>
     </div>
   );
 }
 
+function buildDefaultSections(carousels: Record<string, unknown>[]): string[] {
+  const order: string[] = [];
+
+  for (const type of ["HERO", "BANNER"] as const) {
+    const items = carousels
+      .filter((c) => (c.type as string) === type && c.active !== false)
+      .sort((a, b) => ((a.order as number) || 0) - ((b.order as number) || 0));
+    for (const item of items) {
+      order.push(CAROUSEL_PREFIX + item.id);
+    }
+  }
+
+  order.push("featured");
+
+  const cards = carousels
+    .filter((c) => (c.type as string) === "CARDS" && c.active !== false)
+    .sort((a, b) => ((a.order as number) || 0) - ((b.order as number) || 0));
+  for (const item of cards) {
+    order.push(CAROUSEL_PREFIX + item.id);
+  }
+
+  order.push("location");
+
+  return order;
+}
+
+function migrateOldSections(sections: string[], carousels: Record<string, unknown>[]): string[] {
+  const newOrder: string[] = [];
+
+  for (const section of sections) {
+    if (section === "hero") {
+      const heros = carousels
+        .filter((c) => (c.type as string) === "HERO" && c.active !== false)
+        .sort((a, b) => ((a.order as number) || 0) - ((b.order as number) || 0));
+      for (const item of heros) {
+        newOrder.push(CAROUSEL_PREFIX + item.id);
+      }
+    } else if (section === "banner") {
+      const banners = carousels
+        .filter((c) => (c.type as string) === "BANNER" && c.active !== false)
+        .sort((a, b) => ((a.order as number) || 0) - ((b.order as number) || 0));
+      for (const item of banners) {
+        newOrder.push(CAROUSEL_PREFIX + item.id);
+      }
+    } else if (section === "cards") {
+      const cards = carousels
+        .filter((c) => (c.type as string) === "CARDS" && c.active !== false)
+        .sort((a, b) => ((a.order as number) || 0) - ((b.order as number) || 0));
+      for (const item of cards) {
+        newOrder.push(CAROUSEL_PREFIX + item.id);
+      }
+    } else {
+      newOrder.push(section);
+    }
+  }
+
+  return newOrder;
+}
+
 export default function PageOrderSection({ config, primaryColor, secondaryColor }: Props) {
   const textColor = getContrastColor(secondaryColor);
+
+  const carousels = (config?.carousels as Record<string, unknown>[]) || [];
+  const carouselMap = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>();
+    for (const c of carousels) {
+      map.set(c.id as string, c);
+    }
+    return map;
+  }, [carousels]);
 
   const rawOrder = config?.sectionOrder;
   let initialSections: string[];
   try {
-    initialSections = typeof rawOrder === "string" ? JSON.parse(rawOrder) : ["hero", "banner", "featured", "cards", "location"];
+    const parsed = typeof rawOrder === "string" ? JSON.parse(rawOrder) : null;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const hasNewFormat = parsed.some((s: string) => isCarouselId(s));
+      if (hasNewFormat) {
+        initialSections = parsed as string[];
+      } else {
+        initialSections = migrateOldSections(parsed as string[], carousels);
+      }
+    } else {
+      initialSections = buildDefaultSections(carousels);
+    }
   } catch {
-    initialSections = ["hero", "banner", "featured", "cards", "location"];
+    initialSections = buildDefaultSections(carousels);
   }
 
   const [sections, setSections] = useState<string[]>(initialSections);
@@ -138,6 +239,24 @@ export default function PageOrderSection({ config, primaryColor, secondaryColor 
     setIsPending(false);
   };
 
+  const getSectionInfo = (id: string) => {
+    if (isCarouselId(id)) {
+      const c = carouselMap.get(getCarouselId(id));
+      if (c) {
+        const type = (c.type as string) || "";
+        const Icon = CAROUSEL_ICONS[type] || ImageIcon;
+        const typeLabel = TYPE_LABELS[type] || type;
+        const title = (c.title as string) || typeLabel;
+        return { label: title, icon: Icon, desc: typeLabel };
+      }
+    }
+
+    const fixed = FIXED_SECTIONS[id];
+    if (fixed) return fixed;
+
+    return { label: id, icon: ImageIcon, desc: "" };
+  };
+
   return (
     <section
       className="rounded-[2rem] border p-8"
@@ -167,25 +286,23 @@ export default function PageOrderSection({ config, primaryColor, secondaryColor 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sections} strategy={verticalListSortingStrategy}>
           <div className="space-y-3 mb-6">
-            {sections.map((id) => (
-              <SortableSection key={id} id={id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
-            ))}
+            {sections.map((id) => {
+              const info = getSectionInfo(id);
+              return (
+                <SortableSection
+                  key={id}
+                  id={id}
+                  label={info.label}
+                  icon={info.icon}
+                  desc={info.desc}
+                  primaryColor={primaryColor}
+                  secondaryColor={secondaryColor}
+                />
+              );
+            })}
           </div>
         </SortableContext>
       </DndContext>
-
-      <button
-        onClick={handleSave}
-        disabled={isPending}
-        className="h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3 hover:cursor-pointer opacity-90 hover:opacity-100 transition"
-        style={{
-          backgroundColor: primaryColor,
-          color: getContrastColor(primaryColor),
-        }}
-      >
-        <Save size={18} />
-        {isPending ? "Guardando..." : "Guardar Orden"}
-      </button>
     </section>
   );
 }

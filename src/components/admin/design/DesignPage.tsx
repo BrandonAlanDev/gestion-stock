@@ -38,15 +38,14 @@ export default function DesignPage({ pageConfig: initialConfig }: DesignPageProp
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Featured Section"
-        subtitle="Grid · Collage · Minimal"
-        icon={Grid2X2}
+        title="Contenido Dinámico"
+        subtitle="Portada principal · Franja publicitaria · Tarjetas destacadas"
+        icon={LayoutDashboard}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       >
         <div className="p-8">
-          <HomeSectionsDesign
-            config={config}
+          <CarouselManager
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
           />
@@ -54,14 +53,15 @@ export default function DesignPage({ pageConfig: initialConfig }: DesignPageProp
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Carruseles"
-        subtitle="Hero · Banner · Cards"
-        icon={LayoutDashboard}
+        title="Sección Destacada"
+        subtitle="Cuadrícula · Mosaico · Minimalista"
+        icon={Grid2X2}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       >
         <div className="p-8">
-          <CarouselManager
+          <HomeSectionsDesign
+            config={config}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
           />

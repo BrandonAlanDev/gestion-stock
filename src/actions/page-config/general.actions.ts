@@ -69,7 +69,9 @@ export async function getPageConfig() {
 
         carousels: {
           select: {
+            id: true,
             type: true,
+            title: true,
             settings: true,
           },
         },

@@ -1,18 +1,19 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useCarousels } from "@/hooks/useCarousels";
-import HeroLayout from "./layouts/HeroLayout";
-import BannerLayout from "./layouts/BannerLayout";
-import CardsLayout from "./layouts/CardsLayout";
-import ShowcaseLayout from "./layouts/ShowcaseLayout";
+import HeroLayout from "./layouts/hero/HeroLayout";
+import BannerLayout from "./layouts/banner/BannerLayout";
+import CardsLayout from "./layouts/cards/CardsLayout";
+import ShowcaseLayout from "./layouts/hero/ShowcaseLayout";
 
 interface CarouselContainerProps {
   filterType?: "HERO" | "BANNER" | "CARDS";
   excludeFirst?: boolean;
+  storeName?: string;
 }
 
-export default function CarouselContainer({ filterType = "BANNER", excludeFirst = false }: CarouselContainerProps) {
+export default function CarouselContainer({ filterType = "BANNER", excludeFirst = false, storeName }: CarouselContainerProps) {
   const { data, isLoading, error } = useCarousels({ type: filterType });
   const [mounted, setMounted] = useState(false);
 
@@ -57,16 +58,23 @@ export default function CarouselContainer({ filterType = "BANNER", excludeFirst 
   return (
     <div className="carousel-container space-y-0">
       {filteredCarousels.map((carousel) => {
+        const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
         switch (carousel.type) {
           case "HERO":
-            if (carousel.settings?.heroStyle === "SHOWCASE") {
+            if (isShowcase) {
               return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
             }
             return <HeroLayout key={carousel.id} carousel={carousel} />;
           case "BANNER":
+            if (isShowcase) {
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+            }
             return <BannerLayout key={carousel.id} carousel={carousel} />;
           case "CARDS":
-            return <CardsLayout key={carousel.id} carousel={carousel} />;
+            if (isShowcase) {
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+            }
+            return <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
           default:
             return null;
         }

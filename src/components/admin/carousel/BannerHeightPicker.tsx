@@ -23,7 +23,7 @@ export default function BannerHeightPicker({ value, onChange, primaryColor = "#0
             key={h}
             type="button"
             onClick={() => onChange(h)}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
             style={{
               backgroundColor: value === h ? primaryColor : textColor + "1A",
               color: value === h ? getContrastColor(primaryColor) : textColor,

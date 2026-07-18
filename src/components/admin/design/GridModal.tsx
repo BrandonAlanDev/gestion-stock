@@ -94,20 +94,21 @@ export default function GridModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div 
-        className="w-full max-w-lg rounded-3xl p-8 shadow-2xl border max-h-[75vh] md:max-h-[65vh] overflow-y-auto custom-scrollbar"
+        className="w-full max-w-lg rounded-3xl shadow-2xl border flex flex-col"
         style={{
           backgroundColor: secondaryColor,
           color: getContrastColor(secondaryColor),
           borderColor: getContrastColor(secondaryColor).concat("22")
         }}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center p-8 pb-0">
           <h3 className="text-lg font-black uppercase">Configurar Sección</h3>
           <button onClick={onClose} className="hover:opacity-70 transition-opacity">
             <X size={24} />
           </button>
         </div>
 
+        <div className="p-8 pt-4 max-h-[60vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
         <div className="space-y-4">
           <input
             placeholder="Título"
@@ -264,17 +265,6 @@ export default function GridModal({
             }
           />
 
-          <input
-            placeholder="Orden de la sección"
-            className="w-full p-4 border rounded-xl bg-transparent"
-            style={{ borderColor: getContrastColor(secondaryColor).concat("44") }}
-            type="number"
-            min={0}
-            max={99}
-            value={formData.order || 0}
-            onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
-          />
-
           <div className="mt-4">
             <label className="block text-sm font-bold mb-2">Imagen de la sección</label>
             <div className="flex items-center gap-4">
@@ -314,10 +304,12 @@ export default function GridModal({
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="p-8 pt-0">
         <button
           onClick={() => onSave(formData)}
-          className="mt-8 w-full py-4 font-black rounded-xl hover:opacity-90 transition-opacity uppercase tracking-wider"
+          className="w-full py-4 font-black rounded-xl hover:opacity-90 transition-opacity uppercase tracking-wider"
           style={{
             backgroundColor: primaryColor,
             color: getContrastColor(primaryColor)
@@ -326,6 +318,7 @@ export default function GridModal({
           Guardar Cambios
         </button>
       </div>
+    </div>
     </div>
   );
 }
