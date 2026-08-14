@@ -43,8 +43,6 @@ export const categorySchema = z.object({
 // ==========================================
 // MOVIMIENTOS DE STOCK
 // ==========================================
-const MOVEMENT_TYPES = ["IN", "OUT"] as const;
-
 export const movementSchema = z.object({
   variantId: z.string(),
   type: z.enum(["IN", "OUT"]),
@@ -212,6 +210,7 @@ export const carouselSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
+  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
   config: slideConfigSchema.optional(),
 });
 
@@ -237,6 +236,7 @@ export const carouselWizardSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
+  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
   config: slideConfigSchema.optional(),
   order: z.number().int().min(0).default(0),
 });

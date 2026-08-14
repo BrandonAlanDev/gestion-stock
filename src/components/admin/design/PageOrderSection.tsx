@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   Image as ImageIcon,
   Grid2X2,
   MapPin,
   GripVertical,
-  Save,
   Megaphone,
 } from "lucide-react";
 import {
@@ -30,11 +29,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { getContrastColor } from "@/lib/utils";
 import { updateSectionOrder } from "@/actions/page-config/order.actions";
 import { toast } from "sonner";
+import type { Carousel } from "@/types/carousel";
 
 interface Props {
   config: Record<string, unknown>;
   primaryColor: string;
   secondaryColor: string;
+  carousels?: Carousel[] | null;
 }
 
 const CAROUSEL_ICONS: Record<string, React.ElementType> = {
@@ -172,17 +173,17 @@ function migrateOldSections(sections: string[], carousels: Record<string, unknow
   return newOrder;
 }
 
-export default function PageOrderSection({ config, primaryColor, secondaryColor }: Props) {
+export default function PageOrderSection({ config, primaryColor, secondaryColor, carousels }: Props) {
   const textColor = getContrastColor(secondaryColor);
 
-  const carousels = (config?.carousels as Record<string, unknown>[]) || [];
+  const carouselsConfig = (config?.carousels as Record<string, unknown>[]) || [];
   const carouselMap = useMemo(() => {
     const map = new Map<string, Record<string, unknown>>();
-    for (const c of carousels) {
+    for (const c of carouselsConfig) {
       map.set(c.id as string, c);
     }
     return map;
-  }, [carousels]);
+  }, [carouselsConfig]);
 
   const rawOrder = config?.sectionOrder;
   let initialSections: string[];
@@ -193,17 +194,53 @@ export default function PageOrderSection({ config, primaryColor, secondaryColor 
       if (hasNewFormat) {
         initialSections = parsed as string[];
       } else {
-        initialSections = migrateOldSections(parsed as string[], carousels);
+        initialSections = migrateOldSections(parsed as string[], carouselsConfig);
       }
     } else {
-      initialSections = buildDefaultSections(carousels);
+      initialSections = buildDefaultSections(carouselsConfig);
     }
   } catch {
-    initialSections = buildDefaultSections(carousels);
+    initialSections = buildDefaultSections(carouselsConfig);
   }
 
   const [sections, setSections] = useState<string[]>(initialSections);
-  const [isPending, setIsPending] = useState(false);
+
+  const sectionsRef = useRef(sections);
+  useEffect(() => { sectionsRef.current = sections; }, [sections]);
+
+  useEffect(() => {
+    if (!carousels) return;
+    const activos = carousels.filter((c) => c.active !== false);
+    const idsValidos = new Set(activos.map((c) => CAROUSEL_PREFIX + c.id));
+    const prev = sectionsRef.current;
+    const podados = prev.filter((s) => !isCarouselId(s) || idsValidos.has(s));
+    const existentes = new Set(podados);
+    const nuevosHeroBanner: string[] = [];
+    const nuevosCards: string[] = [];
+    for (const c of activos) {
+      const id = CAROUSEL_PREFIX + c.id;
+      if (existentes.has(id)) continue;
+      if (c.type === "CARDS") nuevosCards.push(id);
+      else nuevosHeroBanner.push(id);
+    }
+    if (nuevosHeroBanner.length === 0 && nuevosCards.length === 0 && podados.length === prev.length) return;
+    let siguiente = [...podados];
+    const idxFeatured = siguiente.indexOf("featured");
+    if (nuevosHeroBanner.length > 0) {
+      const en = idxFeatured >= 0 ? idxFeatured : siguiente.length;
+      siguiente = [...siguiente.slice(0, en), ...nuevosHeroBanner, ...siguiente.slice(en)];
+    }
+    if (nuevosCards.length > 0) {
+      const idxLocation = siguiente.indexOf("location");
+      const en = idxLocation >= 0 ? idxLocation : siguiente.length;
+      siguiente = [...siguiente.slice(0, en), ...nuevosCards, ...siguiente.slice(en)];
+    }
+    setSections(siguiente);
+    void updateSectionOrder(siguiente).then((res) => {
+      if (res.success) toast.success("Orden actualizado");
+      else toast.error(res.error || "Error al guardar orden");
+    });
+  }, [carousels]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -226,17 +263,6 @@ export default function PageOrderSection({ config, primaryColor, secondaryColor 
       toast.error(res.error || "Error al guardar orden");
       setSections(initialSections);
     }
-  };
-
-  const handleSave = async () => {
-    setIsPending(true);
-    const res = await updateSectionOrder(sections);
-    if (res.success) {
-      toast.success("Orden guardado");
-    } else {
-      toast.error(res.error || "Error al guardar");
-    }
-    setIsPending(false);
   };
 
   const getSectionInfo = (id: string) => {

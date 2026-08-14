@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
 
 interface Slide {
   id: string;
@@ -11,7 +12,7 @@ interface Slide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: Record<string, unknown>;
+  config?: { hideText?: boolean; linkType?: string };
 }
 
 interface CardsLayoutSimpleProps {
@@ -33,14 +34,16 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
       animate="visible"
       variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
     >
-      {slides.map((slide) => (
+      {slides.map((slide) => {
+        const enlace = resolverEnlaceSlide(slide);
+        return (
         <motion.article
           key={slide.id}
           variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } }}
         >
-          {slide.url && slide.url.trim() ? (
+          {enlace ? (
             <Link
-              href={slide.url.trim()}
+              href={enlace}
               passHref
               legacyBehavior
               className="relative block overflow-hidden cursor-pointer group bg-neutral-100 border border-neutral-200/40 w-full"
@@ -98,7 +101,8 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
             </div>
           )}
         </motion.article>
-      ))}
+      );
+      })}
     </motion.div>
   );
 }

@@ -1,18 +1,18 @@
 "use server";
 
 import { auth } from "@/auth";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import {
   carouselReorderSchema,
   carouselWizardSchema,
-  carouselLimitsSchema,
   carouselWizardSlideSchema,
 } from "@/lib/zod";
 import * as carouselService from "@/lib/services/carousel-service";
 import { uploadCarouselImage, deleteCarouselImage } from "./helpers";
 import { extractPublicId } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { resolverEnlaceGuardado } from "@/helpers/resolverEnlaceGuardado";
 
 async function requireAdmin(): Promise<boolean> {
   const session = await auth();
@@ -62,7 +62,15 @@ export async function createCarousel(data: unknown) {
           const uploaded = await uploadCarouselImage(imageUrl, "slide");
           imageUrl = uploaded.url;
         }
-        return { ...slide, image: imageUrl, order: index };
+        const linkType = slide.linkType && slide.linkType !== "NONE" ? slide.linkType : undefined;
+        let config = slide.config;
+        if (linkType) {
+          config = { ...(slide.config ?? {}), linkType };
+        } else if (slide.linkType === "NONE" && slide.config && "linkType" in slide.config) {
+          config = Object.fromEntries(Object.entries(slide.config).filter(([clave]) => clave !== "linkType"));
+        }
+        const urlResuelta = resolverEnlaceGuardado(slide.linkType, slide.url);
+        return { ...slide, image: imageUrl, order: index, config, url: urlResuelta, linkType: undefined };
       })
     );
 
@@ -78,7 +86,7 @@ export async function createCarousel(data: unknown) {
     revalidateTag("carousels");
     return { success: true, data: serializeData(carousel) };
   } catch (error: unknown) {
-    if (error instanceof Error && (error as Record<string, unknown>).code === "P2002") {
+    if (error instanceof Error && "code" in error && error.code === "P2002") {
       return { error: "Ya existe un carrusel con ese orden" };
     }
     console.error("Error creating carousel:", error);
@@ -106,7 +114,15 @@ export async function updateCarousel(data: unknown) {
           const uploaded = await uploadCarouselImage(imageUrl, "slide");
           imageUrl = uploaded.url;
         }
-        return { ...slide, image: imageUrl, order: index };
+        const linkType = slide.linkType && slide.linkType !== "NONE" ? slide.linkType : undefined;
+        let config = slide.config;
+        if (linkType) {
+          config = { ...(slide.config ?? {}), linkType };
+        } else if (slide.linkType === "NONE" && slide.config && "linkType" in slide.config) {
+          config = Object.fromEntries(Object.entries(slide.config).filter(([clave]) => clave !== "linkType"));
+        }
+        const urlResuelta = resolverEnlaceGuardado(slide.linkType, slide.url);
+        return { ...slide, image: imageUrl, order: index, config, url: urlResuelta, linkType: undefined };
       })
     );
 
@@ -158,6 +174,8 @@ export async function deleteCarousel(id: string) {
     }
 
     revalidateTag("carousels");
+    revalidateTag("page-config");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Error deleting carousel:", error);
@@ -203,6 +221,14 @@ export async function addCarouselSlide(carouselId: string, slideData: unknown) {
     }
 
     const order = parsed.data.order ?? 0;
+    const linkType = parsed.data.linkType !== "NONE" ? parsed.data.linkType : undefined;
+    let config = parsed.data.config;
+    if (linkType) {
+      config = { ...(parsed.data.config ?? {}), linkType };
+    } else if (parsed.data.linkType === "NONE" && parsed.data.config && "linkType" in parsed.data.config) {
+      config = Object.fromEntries(Object.entries(parsed.data.config).filter(([clave]) => clave !== "linkType"));
+    }
+    const urlResuelta = resolverEnlaceGuardado(parsed.data.linkType, parsed.data.url);
     const slide = await carouselService.createSlide({
       carouselId,
       image: imageUrl,
@@ -210,8 +236,8 @@ export async function addCarouselSlide(carouselId: string, slideData: unknown) {
       subtitle: parsed.data.subtitle,
       description: parsed.data.description,
       ctaText: parsed.data.ctaText,
-      url: parsed.data.url,
-      config: parsed.data.config,
+      url: urlResuelta,
+      config,
       order,
     });
 
@@ -235,6 +261,14 @@ export async function updateCarouselSlide(slideId: string, slideData: unknown) {
       imageUrl = uploaded.url;
     }
 
+    const linkType = parsed.data.linkType !== "NONE" ? parsed.data.linkType : undefined;
+    let config = parsed.data.config;
+    if (linkType) {
+      config = { ...(parsed.data.config ?? {}), linkType };
+    } else if (parsed.data.linkType === "NONE" && parsed.data.config && "linkType" in parsed.data.config) {
+      config = Object.fromEntries(Object.entries(parsed.data.config).filter(([clave]) => clave !== "linkType"));
+    }
+    const urlResuelta = resolverEnlaceGuardado(parsed.data.linkType, parsed.data.url);
     const slide = await carouselService.updateSlide({
       id: slideId,
       image: imageUrl,
@@ -242,8 +276,8 @@ export async function updateCarouselSlide(slideId: string, slideData: unknown) {
       subtitle: parsed.data.subtitle,
       description: parsed.data.description,
       ctaText: parsed.data.ctaText,
-      url: parsed.data.url,
-      config: parsed.data.config,
+      url: urlResuelta,
+      config,
       order: parsed.data.order,
     });
 

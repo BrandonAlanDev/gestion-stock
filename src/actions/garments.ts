@@ -85,14 +85,14 @@ export async function getGarmentsByNames(
   if (categoria) {
     const decoded = decodeURIComponent(categoria).trim().toLowerCase();
     const cats = await prisma.category.findMany();
-    const match = cats.find(c => c.name.trim().toLowerCase() === decoded);
+    const match = cats.find(c => c.id === decoded || c.name.trim().toLowerCase() === decoded);
     categoryId = match?.id;
   }
   let subCategoryId: string | undefined;
   if (subcategoria && categoryId) {
     const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
     const subs = await prisma.subCategory.findMany({ where: { categoryId } });
-    const match = subs.find(s => s.name.trim().toLowerCase() === decoded);
+    const match = subs.find(s => s.id === decoded || s.name.trim().toLowerCase() === decoded);
     subCategoryId = match?.id;
   }
   return getGarments(page, limit, categoryId, search, subCategoryId);

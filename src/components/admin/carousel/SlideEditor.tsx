@@ -10,6 +10,7 @@ import ImageUploader from "./ImageUploader";
 import LinkTypeSelector from "./LinkTypeSelector";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { compressImage } from "@/lib/image-utils";
+import { useOpcionesEnlace } from "./useOpcionesEnlace";
 
 interface SlideEditorProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface SlideEditorProps {
   carouselType: "HERO" | "BANNER" | "CARDS";
 }
 
-interface SlideData {
+export interface SlideData {
   image?: string;
   title?: string;
   subtitle?: string;
@@ -30,7 +31,7 @@ interface SlideData {
   config?: Record<string, unknown>;
 }
 
-interface SlideFormData {
+export interface SlideFormData {
   image: string;
   title: string;
   subtitle: string;
@@ -53,11 +54,9 @@ export default function SlideEditor({
   onClose,
   onSave,
   initialData,
-  carouselType,
-  products,
-  categories,
 }: SlideEditorProps) {
   const { pageConfig } = usePageConfig();
+  const { productos, categorias } = useOpcionesEnlace();
   const primaryColor = pageConfig?.primaryColor || "#06b6d4";
   const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
   const textColor = getContrastColor(secondaryColor);
@@ -91,14 +90,21 @@ export default function SlideEditor({
         const hideText = !!initialData.config?.hideText;
         setShowText(!hideText);
         setHideButton(!!initialData.config?.hideButton);
+        const linkType = initialData.linkType || ((initialData.config as Record<string, unknown> | undefined)?.linkType as string) || (initialData.url?.startsWith("http") ? "EXTERNAL" : "NONE");
+        let urlInicial = initialData.url || "";
+        if (linkType === "CATEGORY" && urlInicial.startsWith("/productos?categoria=")) {
+          urlInicial = decodeURIComponent(urlInicial.slice("/productos?categoria=".length));
+        } else if (linkType === "PRODUCT" && urlInicial.startsWith("/productos/item/")) {
+          urlInicial = urlInicial.slice("/productos/item/".length);
+        }
         setFormData({
           image: initialData.image || "",
           title: initialData.title || "",
           subtitle: initialData.subtitle || "",
           description: initialData.description || "",
           ctaText: initialData.ctaText || "",
-          url: initialData.url || "",
-          linkType: initialData.linkType || (initialData.url?.startsWith("http") ? "EXTERNAL" : "NONE"),
+          url: urlInicial,
+          linkType,
           config: initialData.config || {},
         });
       } else {
@@ -159,11 +165,12 @@ export default function SlideEditor({
     }
   };
 
-  const getCharCount = (field: string) => {
-    return formData[field]?.length || 0;
+  const getCharCount = (field: keyof SlideFormData) => {
+    const valor = formData[field];
+    return typeof valor === "string" ? valor.length : 0;
   };
 
-  const isOverLimit = (field: string) => {
+  const isOverLimit = (field: keyof SlideFormData) => {
     return getCharCount(field) > LIMITS[field as keyof typeof LIMITS];
   };
 
@@ -307,8 +314,8 @@ export default function SlideEditor({
             linkType={formData.linkType}
             url={formData.url}
             onChange={handleChange}
-            products={products || []}
-            categories={categories || []}
+            products={productos}
+            categories={categorias}
             primaryColor={primaryColor}
             textColor={textColor}
             secondaryColor={secondaryColor}

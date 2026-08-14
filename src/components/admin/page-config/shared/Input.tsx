@@ -1,9 +1,13 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface Props {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
   primaryColor?: string;
   secondaryColor?: string;
 }
@@ -22,6 +26,8 @@ export default function Input({
   label,
   value,
   onChange,
+  placeholder,
+  className,
   primaryColor = "#06b6d4",
   secondaryColor = "#ffffff",
 }: Props) {
@@ -31,15 +37,21 @@ export default function Input({
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
-        {label}
-      </label>
+      {label && (
+        <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
+          {label}
+        </label>
+      )}
 
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         style={{ color: textColor, backgroundColor: bgColor, borderColor }}
-        className="w-full h-14 px-5 rounded-2xl border text-sm font-bold outline-none transition-all"
+        className={cn(
+          "w-full h-14 px-5 rounded-2xl border text-sm font-bold outline-none transition-all",
+          className
+        )}
       />
     </div>
   );
