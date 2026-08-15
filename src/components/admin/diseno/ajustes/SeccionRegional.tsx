@@ -67,7 +67,7 @@ export default function SeccionRegional({
             onChange={(evento) => cambiarMoneda(evento.target.value)}
             className={clasesSelecto}
           >
-            <option value="ARS" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>$ - Peso argentino</option>
+            <option value="ARS" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>$ - Peso</option>
             <option value="USD" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>US$ - Dólar</option>
             <option value="EUR" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>€ - Euro</option>
           </select>
@@ -84,8 +84,6 @@ export default function SeccionRegional({
             className={clasesSelecto}
           >
             <option value="es" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>Español</option>
-            <option value="en" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>English</option>
-            <option value="pt" style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}>Português</option>
           </select>
         </div>
       </div>

@@ -21,14 +21,14 @@ export default function Sidebar({
 
   return (
     <aside
-      className="hidden md:flex fixed left-0 top-0 bottom-0 z-[95] flex-col w-[var(--sidebar-ancho)] transition-all duration-300 backdrop-blur-xl border-r"
+      className="hidden md:flex fixed left-0 top-0 bottom-0 z-[95] flex-col w-[var(--sidebar-ancho)] transition-all duration-300 backdrop-blur-xl border-r select-none"
       style={{
         backgroundColor: secondaryColor,
         borderColor: borde,
       }}
     >
       <div
-        className={`${colapsado ? "p-4 overflow-visible" : "p-6 overflow-y-auto"} flex-1 flex flex-col`}
+        className={`${colapsado ? "overflow-visible corto:overflow-y-auto corto:overflow-x-hidden corto:min-h-0 scrollbar-oculta" : "overflow-y-auto min-h-0"} p-4 flex-1 flex flex-col`}
       >
         <ContenidoSidebar colapsado={colapsado} onToggleColapsado={onToggleColapsado} />
       </div>

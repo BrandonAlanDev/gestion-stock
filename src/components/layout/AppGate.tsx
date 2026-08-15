@@ -42,7 +42,7 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
       />
 
       {/* 3. Contenido de la aplicación */}
-      <main className="flex-grow">
+      <main className="flex flex-col flex-grow">
         {children}
       </main>
 

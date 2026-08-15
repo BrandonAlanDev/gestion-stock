@@ -73,53 +73,70 @@ export default function ContenidoSidebar({
     window.location.href = "/";
   };
 
-  const linkClasesExpandido = (active: boolean) =>
-    `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98] ${active ? "" : "hover:bg-opacity-10"
+  const hoverFondo = isDarkBg ? "hover:bg-white/[0.08]" : "hover:bg-black/[0.06]";
+
+  const linkClases = (active: boolean) =>
+    `group relative flex items-center py-3 rounded-xl font-bold transition-all active:scale-[0.98] select-none ${colapsado
+      ? `gap-0 pl-3 pr-3${active ? "" : ` ${hoverFondo}`}`
+      : `gap-3 pl-4 pr-4 text-xs uppercase tracking-wide${active ? "" : ` ${hoverFondo}`}`
     }`;
 
-  const linkClasesColapsado =
-    "group relative flex items-center justify-center w-full py-3 rounded-xl font-bold transition-all active:scale-[0.98]";
+  const etiquetaClases = (maxW: string) =>
+    `overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : `${maxW} opacity-100`}`;
 
   const linkStyle = (active: boolean) => ({
-    backgroundColor: active ? primaryColor : "transparent",
+    ...(active ? { backgroundColor: primaryColor } : {}),
     color: active ? primaryTextColor : textColor,
   });
+
+  const bloquearArrastre = (e: React.DragEvent) => e.preventDefault();
 
   return (
     <>
       <Link
         href="/"
-        className={`flex items-center gap-3 pb-6 border-b ${colapsado ? "justify-center" : ""}`}
+        draggable={false}
+        onDragStart={bloquearArrastre}
+        className={`flex items-center gap-3 pb-6 border-b transition-all duration-300 select-none ${colapsado ? "pl-1" : ""}`}
         style={{ borderColor: overlayColor }}
       >
         {logo ? (
-          <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+          <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" draggable={false} />
         ) : (
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center border" style={{ borderColor: primaryColor }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0" style={{ borderColor: primaryColor }}>
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
           </div>
         )}
-        {!colapsado && (
-          <span className="text-sm font-black tracking-tight uppercase italic" style={{ color: textColor }}>
-            {storeName}
-          </span>
-        )}
+        <span className={`${etiquetaClases("max-w-32")} text-sm font-black tracking-tight uppercase italic`} style={{ color: textColor }}>
+          {storeName}
+        </span>
       </Link>
 
-      {session?.user && !colapsado && (
-        <div className="flex items-center gap-3 py-2">
-          {session.user.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name ?? "Usuario"}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-              {session.user.name?.[0]?.toUpperCase()}
-            </div>
-          )}
-          <div className="flex flex-col min-w-0 flex-1">
+      {session?.user && (
+        <div className={`group relative flex items-center py-2 rounded-xl transition-all select-none ${colapsado ? "gap-0 px-0" : "gap-3 px-1.5"}`}>
+          <div className="relative shrink-0 w-10 h-10">
+            {session.user.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name ?? "Usuario"}
+                className="w-10 h-10 rounded-full object-cover"
+                draggable={false}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                {session.user.name?.[0]?.toUpperCase()}
+              </div>
+            )}
+            <button
+              onClick={onToggleColapsado}
+              aria-label="Expandir menú"
+              className={`absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-300 ${colapsado ? "opacity-0 group-hover:opacity-100" : "opacity-0 pointer-events-none"}`}
+              style={{ backgroundColor: "rgba(0,0,0,0.55)", color: "#ffffff" }}
+            >
+              <PanelLeftOpen size={16} />
+            </button>
+          </div>
+          <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-full opacity-100"}`}>
             <span className="text-xs font-bold truncate" style={{ color: textColor }}>{session.user.name}</span>
             <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>{session.user.email}</span>
           </div>
@@ -127,47 +144,22 @@ export default function ContenidoSidebar({
             onClick={onToggleColapsado}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = overlayColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-            className="p-2 rounded-xl transition-colors"
-            style={{ color: textColor, backgroundColor: "transparent" }}
             aria-label="Contraer menú"
+            className={`p-2 rounded-xl overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-8 opacity-100"}`}
+            style={{ color: textColor, backgroundColor: "transparent" }}
           >
             <PanelLeftClose size={16} />
           </button>
         </div>
       )}
 
-      {session?.user && colapsado && (
-        <div className="relative group flex justify-center py-2">
-          {session.user.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name ?? "Usuario"}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-              {session.user.name?.[0]?.toUpperCase()}
-            </div>
-          )}
-          <button
-            onClick={onToggleColapsado}
-            className="absolute inset-0 m-auto w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ backgroundColor: "rgba(0,0,0,0.55)", color: "#ffffff" }}
-            aria-label="Expandir menú"
-          >
-            <PanelLeftOpen size={16} />
-          </button>
-        </div>
-      )}
-
       <div className="space-y-1 mt-4">
-        {colapsado ? (
-          <div className="mx-3 h-px" style={{ backgroundColor: overlayColor }} />
-        ) : (
-          <span className="text-[10px] uppercase tracking-widest font-bold px-2 opacity-50" style={{ color: textColor }}>
+        <div className="h-3 flex items-center overflow-hidden">
+          <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: textColor }}>
             Tienda
           </span>
-        )}
+          <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlayColor }} />
+        </div>
         {userLinks.map((link) => {
           const active = pathname === link.href;
           const Icon = link.icon;
@@ -176,14 +168,17 @@ export default function ContenidoSidebar({
               key={link.href}
               href={link.href}
               onClick={onNavegar}
-              className={colapsado ? linkClasesColapsado : linkClasesExpandido(active)}
+              draggable={false}
+              onDragStart={bloquearArrastre}
+              className={linkClases(active)}
               style={linkStyle(active)}
+              title={link.label}
             >
-              <Icon size={16} />
-              {!colapsado && <span>{link.label}</span>}
+              <Icon size={16} className="shrink-0" />
+              <span className={etiquetaClases("max-w-40")}>{link.label}</span>
               {colapsado && (
                 <span
-                  className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                  className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
                   style={{ backgroundColor: primaryColor, color: primaryTextColor }}
                 >
                   {link.label}
@@ -196,13 +191,12 @@ export default function ContenidoSidebar({
 
       {isAdmin && (
         <div className="space-y-1 mt-6">
-          {colapsado ? (
-            <div className="mx-3 h-px" style={{ backgroundColor: overlayColor }} />
-          ) : (
-            <span className="text-[10px] uppercase tracking-widest font-bold px-2 opacity-50" style={{ color: textColor }}>
+          <div className="h-3 flex items-center overflow-hidden">
+            <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: textColor }}>
               Admin
             </span>
-          )}
+            <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlayColor }} />
+          </div>
           {adminLinks
             .filter((link) => link.enabled !== false)
             .map((link) => {
@@ -213,14 +207,17 @@ export default function ContenidoSidebar({
                   key={link.href}
                   href={link.href}
                   onClick={onNavegar}
-                  className={colapsado ? linkClasesColapsado : linkClasesExpandido(active)}
+                  draggable={false}
+                  onDragStart={bloquearArrastre}
+                  className={linkClases(active)}
                   style={linkStyle(active)}
+                  title={link.label}
                 >
-                  <Icon size={16} />
-                  {!colapsado && <span>{link.label}</span>}
+                  <Icon size={16} className="shrink-0" />
+                  <span className={etiquetaClases("max-w-40")}>{link.label}</span>
                   {colapsado && (
                     <span
-                      className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                      className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
                       style={{ backgroundColor: primaryColor, color: primaryTextColor }}
                     >
                       {link.label}
@@ -236,15 +233,14 @@ export default function ContenidoSidebar({
         {session ? (
           <button
             onClick={handleLogout}
-            className={colapsado
-              ? "group relative flex items-center justify-center w-full py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all"
-              : "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-red-500 w-full hover:bg-red-500/10"}
+            title="Cerrar Sesión"
+            className={`group relative flex items-center w-full rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-3 pl-4 pr-4 py-3"}`}
           >
-            <LogOut size={16} />
-            {!colapsado && "Cerrar Sesión"}
+            <LogOut size={16} className="shrink-0" />
+            <span className={etiquetaClases("max-w-32")}>Cerrar Sesión</span>
             {colapsado && (
               <span
-                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
                 style={{ backgroundColor: primaryColor, color: primaryTextColor }}
               >
                 Cerrar Sesión
@@ -255,16 +251,17 @@ export default function ContenidoSidebar({
           <Link
             href="/login"
             onClick={onNavegar}
-            className={colapsado
-              ? "group relative flex items-center justify-center py-3 rounded-xl"
-              : "flex items-center justify-center gap-2 py-3 rounded-xl font-bold uppercase text-xs"}
+            draggable={false}
+            onDragStart={bloquearArrastre}
+            title="Iniciar Sesión"
+            className={`group relative flex items-center w-full rounded-xl font-bold uppercase text-xs transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-2 pl-4 pr-4 py-3"}`}
             style={{ backgroundColor: primaryColor, color: primaryTextColor }}
           >
-            <User size={16} />
-            {!colapsado && "Iniciar Sesión"}
+            <User size={16} className="shrink-0" />
+            <span className={etiquetaClases("max-w-28")}>Iniciar Sesión</span>
             {colapsado && (
               <span
-                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
                 style={{ backgroundColor: primaryColor, color: primaryTextColor }}
               >
                 Iniciar Sesión
