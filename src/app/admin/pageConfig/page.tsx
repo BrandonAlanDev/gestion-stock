@@ -1,49 +1,62 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import { getContrastColor } from "@/lib/utils";
-import { clearPageConfig } from "@/actions/page-config/maintenance.actions";
-import PageConfigForm from "@/components/admin/page-config/PageConfigForm";
+import PanelConfiguracion from "@/components/admin/configuracion/PanelConfiguracion";
+import type { ConfigCompleta } from "@/components/admin/configuracion/tipos-configuracion";
 
 export default async function PageConfigPage() {
-  const { pageConfig } = await getPageConfig();
+  const resultado = await getPageConfig();
+  const pageConfig = resultado.ok ? resultado.pageConfig : null;
 
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
-  const textColor = getContrastColor(secondaryColor);
+  const config: ConfigCompleta | null = pageConfig
+    ? {
+        storeName: pageConfig.storeName ?? "GestionOK",
+        slogan: pageConfig.slogan ?? null,
+        description: pageConfig.description ?? null,
+        logo: pageConfig.logo ?? null,
+        favicon: pageConfig.favicon ?? null,
+        primaryColor: pageConfig.primaryColor ?? "#06b6d4",
+        secondaryColor: pageConfig.secondaryColor ?? "#ffffff",
+        fontPrimary: pageConfig.fontPrimary ?? "Outfit",
+        fontSecondary: pageConfig.fontSecondary ?? "Playfair Display",
+        borderRadius: pageConfig.borderRadius ?? "redondeado",
+        shadowLevel: pageConfig.shadowLevel ?? "sutil",
+        density: pageConfig.density ?? "comoda",
+        banners: pageConfig.banners.map((banner) => ({
+          id: banner.id,
+          image: banner.image ?? null,
+          title: banner.title ?? null,
+          subtitle: banner.subtitle ?? null,
+          text: banner.text ?? null,
+          url: banner.url ?? null,
+        })),
+        phone: pageConfig.phone ?? null,
+        whatsapp: pageConfig.whatsapp ?? null,
+        email: pageConfig.email ?? null,
+        locationEnabled: pageConfig.locationEnabled ?? false,
+        address: pageConfig.address ?? null,
+        city: pageConfig.city ?? null,
+        province: pageConfig.province ?? null,
+        country: pageConfig.country ?? null,
+        instagram: pageConfig.instagram ?? null,
+        facebook: pageConfig.facebook ?? null,
+        tiktok: pageConfig.tiktok ?? null,
+        x: pageConfig.x ?? null,
+        youtube: pageConfig.youtube ?? null,
+        linkedin: pageConfig.linkedin ?? null,
+        ecommerceEnabled: pageConfig.ecommerceEnabled ?? true,
+        cartEnabled: pageConfig.cartEnabled ?? true,
+        checkoutEnabled: pageConfig.checkoutEnabled ?? true,
+        currency: pageConfig.currency ?? "ARS",
+        language: pageConfig.language ?? "es",
+        maintenanceMode: pageConfig.maintenanceMode ?? false,
+        arreglosEnabled: pageConfig.arreglosEnabled ?? true,
+        escuelaEnabled: pageConfig.escuelaEnabled ?? true,
+        personalizadoEnabled: pageConfig.personalizadoEnabled ?? true,
+        metaTitle: pageConfig.metaTitle ?? null,
+        metaDescription: pageConfig.metaDescription ?? null,
+        termsAndConditions: pageConfig.termsAndConditions ?? null,
+        privacyPolicy: pageConfig.privacyPolicy ?? null,
+      }
+    : null;
 
-  return (
-    <div
-      className="p-6 sm:p-8 w-full transition-colors duration-200"
-      style={{
-        backgroundColor: textColor === "#ffffff" ? "#0a0a0a" : "#ffffff",
-        color: textColor,
-      }}
-    >
-      <div className="max-w-7xl mx-auto my-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-4" style={{ color: primaryColor }}>
-              <span className="w-2 h-10 rounded-full" style={{ backgroundColor: primaryColor }} />
-              Configuración de Página
-            </h1>
-            <p className="ml-6 mt-2 text-[10px] uppercase tracking-[0.4em] font-black" style={{ color: textColor + "99" }}>
-              Branding · Ecommerce · SEO · Redes Sociales
-            </p>
-          </div>
-
-          <form
-            action={async () => {
-              "use server";
-              await clearPageConfig();
-            }}
-          >
-            <button className="px-6 py-3 rounded-[1.0rem] bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
-              Resetear Configuración
-            </button>
-          </form>
-        </div>
-
-        <PageConfigForm />
-      </div>
-    </div>
-  );
+  return <PanelConfiguracion config={config} />;
 }

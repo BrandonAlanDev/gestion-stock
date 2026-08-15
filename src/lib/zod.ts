@@ -43,8 +43,6 @@ export const categorySchema = z.object({
 // ==========================================
 // MOVIMIENTOS DE STOCK
 // ==========================================
-const MOVEMENT_TYPES = ["IN", "OUT"] as const;
-
 export const movementSchema = z.object({
   variantId: z.string(),
   type: z.enum(["IN", "OUT"]),
@@ -212,6 +210,7 @@ export const carouselSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
+  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
   config: slideConfigSchema.optional(),
 });
 
@@ -237,6 +236,7 @@ export const carouselWizardSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
+  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
   config: slideConfigSchema.optional(),
   order: z.number().int().min(0).default(0),
 });
@@ -251,3 +251,25 @@ export const carouselWizardSchema = z.object({
 
 export type CarouselLimitsInput = z.infer<typeof carouselLimitsSchema>;
 export type CarouselWizardInput = z.infer<typeof carouselWizardSchema>;
+
+export const aparienciaSchema = z.object({
+  fontPrimary: z.string().min(1).max(100),
+  fontSecondary: z.string().min(1).max(100),
+  borderRadius: z.enum(["recto", "redondeado", "muy-redondeado"]),
+  shadowLevel: z.enum(["sin-sombra", "sutil", "marcada"]),
+  density: z.enum(["compacta", "comoda", "espaciosa"]),
+});
+
+export const flagsPaginaSchema = z.object({
+  arreglosEnabled: z.boolean().optional(),
+  escuelaEnabled: z.boolean().optional(),
+  personalizadoEnabled: z.boolean().optional(),
+  maintenanceMode: z.boolean().optional(),
+});
+
+export const regionalSchema = z.object({
+  currency: z.string().min(1).max(10).optional(),
+  language: z.string().min(1).max(10).optional(),
+  termsAndConditions: z.string().nullable().optional(),
+  privacyPolicy: z.string().nullable().optional(),
+});

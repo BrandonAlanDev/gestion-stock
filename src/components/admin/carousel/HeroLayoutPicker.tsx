@@ -23,7 +23,7 @@ export default function HeroLayoutPicker({ value, onChange, primaryColor, second
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Diseño visual</label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {LAYOUTS.map((layout) => (
           <button
             key={layout.id}

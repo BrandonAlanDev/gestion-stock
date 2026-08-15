@@ -7,18 +7,10 @@ import {
   LayoutDashboard, Menu, X, User, Store, Package, LogOut, ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useCart } from "@/context/CartContext";
-import Searchbarfinder from "@/components/home/Searchbarfinder";
-
-function getContrastColor(hex: string) {
-  if (!hex) return "#000000";
-  hex = hex.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
-}
+import { getContrastColor } from "@/lib/utils";
 
 const enlacesUsuario = [
   { href: "/productos", label: "Catálogo", icon: Store },
@@ -40,8 +32,19 @@ export default function Header({
   const { isCartOpen, openCart, closeCart } = useCart();
   const [scrolled, setScrolled] = useState(false);
 
-  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
-  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
+  const rawPrimary = pageConfig?.pageConfig?.primaryColor;
+  const rawSecondary = pageConfig?.pageConfig?.secondaryColor;
+  const rawLogo = pageConfig?.pageConfig?.logo;
+  const rawStoreName = pageConfig?.pageConfig?.storeName;
+
+  const primaryColor =
+    typeof rawPrimary === "string" && rawPrimary.length > 0 ? rawPrimary : "#000000";
+  const secondaryColor =
+    typeof rawSecondary === "string" && rawSecondary.length > 0 ? rawSecondary : "#FFFFFF";
+  const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
+  const storeName =
+    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Gestion OK";
+  const cartEnabled = pageConfig?.pageConfig?.cartEnabled === true;
   const textColor = getContrastColor(secondaryColor);
   const primaryTextColor = getContrastColor(primaryColor);
   const isDarkBg = textColor === "#ffffff";
@@ -62,7 +65,11 @@ export default function Header({
   }, []);
 
   const handleCartClick = () => {
-    isCartOpen ? closeCart() : openCart();
+    if (isCartOpen) {
+      closeCart();
+    } else {
+      openCart();
+    }
   };
 
   const cerrarSesion = async () => {
@@ -73,7 +80,7 @@ export default function Header({
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out"
+      className={`fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
       style={{
         backgroundColor: isHomeTop ? "transparent" : secondaryColor,
         borderColor: isHomeTop ? "transparent" : overlayColor,
@@ -81,15 +88,15 @@ export default function Header({
     >
       <div className="w-full max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          {pageConfig?.pageConfig?.logo ? (
-            <img src={pageConfig.pageConfig.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+          {logo ? (
+            <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
           ) : (
             <div className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: primaryColor }}>
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
             </div>
           )}
           <span className="text-sm font-black uppercase italic" style={{ color: currentTextColor }}>
-            {pageConfig?.pageConfig?.storeName || "Gestion OK"}
+            {storeName}
           </span>
         </Link>
         
@@ -121,7 +128,7 @@ export default function Header({
             </Link>
           )}
 
-          {pageConfig?.pageConfig?.cartEnabled && (
+          {cartEnabled && (
             <button
               onClick={handleCartClick}
               className="p-2 rounded-xl transition-all hover:bg-black/5"
@@ -134,7 +141,7 @@ export default function Header({
           {mostrarBotonToggle && (
             <button
               onClick={onToggleSidebar}
-              className="p-2 rounded-xl"
+              className={`p-2 rounded-xl ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
               style={{
                 backgroundColor: isSidebarOpen ? overlayColor : "transparent",
                 color: currentTextColor,
@@ -160,8 +167,6 @@ export default function Header({
             <div className="md:hidden relative w-full z-[110] mx-auto">
               <Searchbarfinder isHomeTop={false} />
             </div>
-            
-            {/* Buscador en Mobile */}
 
             {session?.user && (
               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlayColor }}>

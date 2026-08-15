@@ -4,6 +4,22 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
+const RUTAS_ADMIN_VALIDAS = new Set([
+  "/admin",
+  "/admin/categories",
+  "/admin/custom-page",
+  "/admin/dashboard",
+  "/admin/design",
+  "/admin/design/apariencia",
+  "/admin/design/contenido",
+  "/admin/design/estructura",
+  "/admin/movements",
+  "/admin/pageConfig",
+  "/admin/personalizado",
+  "/admin/provider",
+  "/admin/sizes",
+]);
+
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
@@ -18,6 +34,10 @@ export default auth((req) => {
   );
 
   if (isApiAuthRoute) return NextResponse.next();
+
+  if (isAdminRoute && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
+    return NextResponse.redirect(new URL("/404", nextUrl));
+  }
 
   // 1. .redirect
   if (isAuthRoute) {

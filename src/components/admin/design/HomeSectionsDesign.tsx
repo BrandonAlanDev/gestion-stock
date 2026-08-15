@@ -50,9 +50,9 @@ function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove
       <button {...attributes} {...listeners} className="cursor-grab p-1 opacity-50 hover:opacity-100 transition-opacity">
         <GripVertical size={20} />
       </button>
-      <img src={grid.image} className="w-16 h-16 object-cover rounded-lg" alt="" />
-      <div className="flex-1">
-        <p className="font-bold">{grid.title}</p>
+      <img src={grid.image} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg" alt="" />
+      <div className="flex-1 min-w-0">
+        <p className="font-bold truncate">{grid.title}</p>
         <p className="text-xs opacity-60">{grid.subtitle}</p>
         <div className="flex gap-2 mt-1 flex-wrap">
           {grid.subtitleDim && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Gris</span>}
@@ -193,7 +193,7 @@ export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", s
 
   return (
     <section 
-      className="space-y-8 rounded-[2rem] border p-8 shadow-sm"
+      className="space-y-8 rounded-[2rem] border p-4 shadow-sm sm:p-8"
       style={{
         backgroundColor: secondaryColor,
         color: getContrastColor(secondaryColor),

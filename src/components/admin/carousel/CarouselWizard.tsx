@@ -14,6 +14,7 @@ import CarouselWizardStep1 from "./CarouselWizardStep1";
 import CarouselWizardStep2 from "./CarouselWizardStep2";
 import CarouselWizardStep3 from "./CarouselWizardStep3";
 import SlideEditor from "./SlideEditor";
+import type { SlideFormData } from "./SlideEditor";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import type { CarouselWizardData, SlideWizardData, CarouselType, CarouselSettings } from "@/types/carousel";
 
@@ -77,6 +78,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           description: (s.description as string) || "",
           ctaText: (s.ctaText as string) || "",
           url: (s.url as string) || "",
+          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "",
           order: (s.order as number) ?? i,
           isNew: false,
         })),
@@ -183,10 +185,10 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           style={{ backgroundColor: secondaryColor, borderColor: primaryColor, color: textColor }}
       >
         <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: primaryColor + "40" }}>
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold" style={{ color: textColor }}>
-              {initialData ? "Editar" : "Nuevo"} Carrusel
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <h2 className="min-w-0 truncate text-xl font-bold" style={{ color: textColor }}>
+              {initialData ? "Editar" : "Nueva"} sección
+              <span className="hidden px-2 py-0.5 text-xs font-medium rounded-full sm:inline" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
                 {TYPE_LABELS[wizardData.type] || wizardData.type}
               </span>
             </h2>
@@ -213,7 +215,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-lg transition-colors cursor-pointer"
+            className="shrink-0 p-2 rounded-lg transition-colors cursor-pointer"
             style={{ color: textColor + "99" }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}

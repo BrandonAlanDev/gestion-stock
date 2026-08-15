@@ -2,6 +2,7 @@
 
 import CardsLayoutSimple from "./CardsLayoutSimple";
 import OfferCarousel from "./offer-carousel/OfferCarousel";
+import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
 
 interface CarouselSlide {
   id: string;
@@ -44,7 +45,7 @@ function mapSlidesToOfferItems(slides: CarouselSlide[]) {
     description: s.description,
     discount: (s.config?.discount as number) || undefined,
     buttonText: s.ctaText,
-    href: s.url,
+    href: resolverEnlaceSlide(s) ?? undefined,
     hideButton: (s.config?.hideButton as boolean) || undefined,
   }));
 }

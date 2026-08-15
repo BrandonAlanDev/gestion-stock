@@ -102,7 +102,7 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
     <>
       <div className="space-y-2">
         <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Estilo de portada</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {HERO_STYLES.map((style) => (
             <button
               key={style.id}
@@ -124,7 +124,7 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
       {heroStyle === "DEFAULT" && (
         <div className="space-y-2">
           <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Diseño visual</label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {HERO_SLIDE_LAYOUTS.map((layout) => (
               <button
                 key={layout.id}

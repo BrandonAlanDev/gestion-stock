@@ -8,7 +8,6 @@ export const LINK_TYPES = [
   { value: "NONE", label: "Sin enlace" },
   { value: "CATEGORY", label: "Categoría" },
   { value: "PRODUCT", label: "Producto" },
-  { value: "PAGE", label: "Página custom" },
   { value: "EXTERNAL", label: "URL externa" },
 ] as const;
 
@@ -72,25 +71,25 @@ export default function LinkTypeSelector({
         </div>
       )}
 
-      {(linkType === "PAGE" || linkType === "EXTERNAL") && (
+      {linkType === "EXTERNAL" && (
         <div className="space-y-2 relative">
           <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>
-            {linkType === "PAGE" ? "Slug de la página" : "URL completa"}
+            URL completa
           </label>
           <div className="relative">
             <Input
               value={url}
               onChange={(value) => onChange("url", value)}
-              placeholder={linkType === "PAGE" ? "ej: reparaciones, ahorro" : "https://..."}
+              placeholder="https://..."
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
               className={cn(
-                linkType === "EXTERNAL" && url && !url.startsWith("http")
+                url && !url.startsWith("http")
                   ? "border-red-500/50 focus:border-red-500"
                   : ""
               )}
             />
-            {linkType === "EXTERNAL" && url && (
+            {url && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 {url.startsWith("http") ? (
                   <CheckCircle className="w-5 h-5 text-emerald-400" />
@@ -100,7 +99,7 @@ export default function LinkTypeSelector({
               </div>
             )}
           </div>
-          {linkType === "EXTERNAL" && url && !url.startsWith("http") && (
+          {url && !url.startsWith("http") && (
             <p className="text-xs text-red-400 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" /> La URL debe empezar con http:// o https://
             </p>

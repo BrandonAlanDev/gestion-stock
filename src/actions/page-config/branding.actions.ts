@@ -1,10 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import {
-  revalidateTag,
-  unstable_cache,
-} from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 type BannerInput = {
   image?: string | null;
@@ -23,59 +20,59 @@ type BrandingInput = {
   primaryColor?: string | null;
   secondaryColor?: string | null;
 
+  fontPrimary?: string;
+  fontSecondary?: string;
+  borderRadius?: string;
+  shadowLevel?: string;
+  density?: string;
+
   banners?: BannerInput[];
 };
 
-export async function updateBrandingConfig(
-  data: BrandingInput
-) {
+export async function updateBrandingConfig(data: BrandingInput) {
   try {
-    let pageConfig =
-      await prisma.pageConfig.findFirst();
+    let pageConfig = await prisma.pageConfig.findFirst();
 
     const payload = {
-      storeName:
-        data.storeName?.trim() ||
-        pageConfig?.storeName ||
-        "GestionOK",
+      storeName: data.storeName?.trim() || pageConfig?.storeName || "GestionOK",
 
-      slogan: data.slogan ?? null,
+      slogan: data.slogan ?? pageConfig?.slogan ?? null,
 
-      description:
-        data.description ?? null,
+      description: data.description ?? pageConfig?.description ?? null,
 
-      primaryColor:
-        data.primaryColor ??
-        "#06b6d4",
+      primaryColor: data.primaryColor ?? pageConfig?.primaryColor ?? "#06b6d4",
 
       secondaryColor:
-        data.secondaryColor ??
-        "#ffffff",
+        data.secondaryColor ?? pageConfig?.secondaryColor ?? "#ffffff",
 
-      logo:
-        data.logo ??
-        pageConfig?.logo ??
-        null,
+      logo: data.logo ?? pageConfig?.logo ?? null,
 
-      favicon:
-        data.favicon ??
-        pageConfig?.favicon ??
-        null,
+      favicon: data.favicon ?? pageConfig?.favicon ?? null,
+
+      fontPrimary: data.fontPrimary ?? pageConfig?.fontPrimary ?? "Outfit",
+
+      fontSecondary:
+        data.fontSecondary ?? pageConfig?.fontSecondary ?? "Playfair Display",
+
+      borderRadius:
+        data.borderRadius ?? pageConfig?.borderRadius ?? "redondeado",
+
+      shadowLevel: data.shadowLevel ?? pageConfig?.shadowLevel ?? "sutil",
+
+      density: data.density ?? pageConfig?.density ?? "comoda",
     };
 
     if (!pageConfig) {
-      pageConfig =
-        await prisma.pageConfig.create({
-          data: payload,
-        });
+      pageConfig = await prisma.pageConfig.create({
+        data: payload,
+      });
     } else {
-      pageConfig =
-        await prisma.pageConfig.update({
-          where: {
-            id: pageConfig.id,
-          },
-          data: payload,
-        });
+      pageConfig = await prisma.pageConfig.update({
+        where: {
+          id: pageConfig.id,
+        },
+        data: payload,
+      });
     }
 
     // Actualiza los banners
@@ -88,28 +85,15 @@ export async function updateBrandingConfig(
 
       if (data.banners.length > 0) {
         await prisma.banner.createMany({
-          data: data.banners.map(
-            (banner, index) => ({
-              pageConfigId:
-                pageConfig!.id,
-              order: index + 1,
-              image:
-                banner.image ??
-                null,
-              title:
-                banner.title ??
-                null,
-              subtitle:
-                banner.subtitle ??
-                null,
-              text:
-                banner.text ??
-                null,
-              url:
-                banner.url ??
-                null,
-            })
-          ),
+          data: data.banners.map((banner, index) => ({
+            pageConfigId: pageConfig!.id,
+            order: index + 1,
+            image: banner.image ?? null,
+            title: banner.title ?? null,
+            subtitle: banner.subtitle ?? null,
+            text: banner.text ?? null,
+            url: banner.url ?? null,
+          })),
         });
       }
     }
@@ -122,80 +106,68 @@ export async function updateBrandingConfig(
       pageConfig,
     };
   } catch (error) {
-    console.error(
-      "UPDATE BRANDING ERROR:",
-      error
-    );
+    console.error("UPDATE BRANDING ERROR:", error);
 
     return {
       ok: false,
       error:
-        error instanceof Error
-          ? error.message
-          : "Error al actualizar branding",
+        error instanceof Error ? error.message : "Error al actualizar branding",
     };
   }
 }
 
-export const getBrandingConfig =
-  unstable_cache(
-    async () => {
-      try {
-        const branding =
-          await prisma.pageConfig.findFirst({
-            select: {
-              storeName: true,
-              slogan: true,
-              description: true,
-              logo: true,
-              favicon: true,
-              primaryColor: true,
-              secondaryColor: true,
+export const getBrandingConfig = unstable_cache(
+  async () => {
+    try {
+      const branding = await prisma.pageConfig.findFirst({
+        select: {
+          storeName: true,
+          slogan: true,
+          description: true,
+          logo: true,
+          favicon: true,
+          primaryColor: true,
+          secondaryColor: true,
 
-              banners: {
-                orderBy: {
-                  order: "asc",
-                },
-                select: {
-                  id: true,
-                  order: true,
-                  image: true,
-                  title: true,
-                  subtitle: true,
-                  text: true,
-                  url: true,
-                },
-              },
+          banners: {
+            orderBy: {
+              order: "asc",
             },
-          });
+            select: {
+              id: true,
+              order: true,
+              image: true,
+              title: true,
+              subtitle: true,
+              text: true,
+              url: true,
+            },
+          },
+        },
+      });
 
-        return {
-          ok: true,
-          branding,
-        };
-      } catch (error) {
-        console.error(
-          "GET BRANDING ERROR:",
-          error
-        );
+      return {
+        ok: true,
+        branding,
+      };
+    } catch (error) {
+      console.error("GET BRANDING ERROR:", error);
 
-        return {
-          ok: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Error al obtener branding",
-        };
-      }
-    },
-    ["branding-config"],
-    {
-      revalidate: 3600,
-      tags: ["branding-config"],
+      return {
+        ok: false,
+        error:
+          error instanceof Error ? error.message : "Error al obtener branding",
+      };
     }
-  );
+  },
+  ["branding-config"],
+  {
+    revalidate: 3600,
+    tags: ["branding-config"],
+  },
+);
 
-  export async function createBanner() {
+export async function createBanner() {
   try {
     const pageConfig = await prisma.pageConfig.findFirst();
 
@@ -232,7 +204,7 @@ export const getBrandingConfig =
       ok: true,
       banner,
     };
-  } catch (e) {
+  } catch {
     return {
       ok: false,
       error: "Error al crear banner",
@@ -251,7 +223,7 @@ export async function deleteBanner(id: number) {
     return {
       ok: true,
     };
-  } catch (e) {
+  } catch {
     return {
       ok: false,
       error: "Error al eliminar banner",

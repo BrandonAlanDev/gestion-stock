@@ -1,9 +1,14 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface Props {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  rows?: number;
   primaryColor?: string;
   secondaryColor?: string;
 }
@@ -22,6 +27,9 @@ export default function Textarea({
   label,
   value,
   onChange,
+  placeholder,
+  className,
+  rows = 5,
   primaryColor = "#06b6d4",
   secondaryColor = "#ffffff",
 }: Props) {
@@ -31,16 +39,22 @@ export default function Textarea({
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
-        {label}
-      </label>
+      {label && (
+        <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
+          {label}
+        </label>
+      )}
 
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        rows={5}
+        placeholder={placeholder}
+        rows={rows}
         style={{ color: textColor, backgroundColor: bgColor, borderColor }}
-        className="w-full p-5 rounded-2xl border text-sm font-bold outline-none transition-all resize-none"
+        className={cn(
+          "w-full p-5 rounded-2xl border text-sm font-bold outline-none transition-all resize-none",
+          className
+        )}
       />
     </div>
   );

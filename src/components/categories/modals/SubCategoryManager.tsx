@@ -4,28 +4,28 @@ import { useState } from "react";
 import { Layers, Plus, X, Loader2 } from "lucide-react";
 import { createSubCategory, deleteSubCategory } from "@/actions/categories";
 import { toast } from "sonner";
+import { getContrastColor } from "@/lib/utils";
+import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
-export default function SubCategoryManager({
-  category,
-  sizeTypes,
-  isAdmin,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  overlayBorder,
-  innerBg,
-  styles,
-}: {
-  category: any;
-  sizeTypes: any[];
-  isAdmin: boolean;
+interface SubCategoryManagerProps {
+  category: CategoriaConSubs;
+  sizeTypes: TalleTipoConSizes[];
   primaryColor: string;
   secondaryColor: string;
   textColor: string;
   overlayBorder: string;
   innerBg: string;
-  styles: Record<string, any>;
-}) {
+}
+
+export default function SubCategoryManager({
+  category,
+  sizeTypes,
+  primaryColor,
+  secondaryColor,
+  textColor,
+  overlayBorder,
+  innerBg,
+}: SubCategoryManagerProps) {
   const [subLoading, setSubLoading] = useState(false);
   const [subData, setSubData] = useState({ name: "", sizeTypeId: "" });
 
@@ -56,49 +56,46 @@ export default function SubCategoryManager({
   };
 
   return (
-    <div className="space-y-4 pt-6 border-t" style={{ borderColor: typeof styles.dividerColor === 'string' ? styles.dividerColor : overlayBorder }}>
+    <div className="space-y-4 pt-6 border-t" style={{ borderColor: overlayBorder }}>
       <h3
-        className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${isAdmin ? styles.sectionTitleColor as string : ''}`}
-        style={!isAdmin ? { color: styles.sectionTitleColor as string } : undefined}
+        className="text-xs font-black uppercase tracking-widest flex items-center gap-2"
+        style={{ color: textColor }}
       >
-        <Layers size={14} className={isAdmin ? "text-amber-500" : ''} style={!isAdmin ? { color: primaryColor } : undefined} />
+        <Layers size={14} style={{ color: primaryColor }} />
         Subcategorías y Curvas de Talles
       </h3>
 
       <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-        {category.subCategories?.map((sub: any) => (
+        {category.subCategories?.map((sub) => (
           <div
             key={sub.id}
-            className={`flex justify-between items-center px-4 py-2.5 rounded-[1.0rem] ${isAdmin ? styles.subListBg as string : ''}`}
-            style={!isAdmin ? { ...styles.subListBg as React.CSSProperties, borderRadius: "12px" } : undefined}
+            className="flex justify-between items-center px-4 py-2.5"
+            style={{
+              backgroundColor: innerBg,
+              border: `1px solid ${overlayBorder}`,
+              borderRadius: "12px",
+            }}
           >
             <div className="flex flex-col">
-              <span
-                className={`text-xs font-bold uppercase ${isAdmin ? styles.subTextColor as string : ''}`}
-                style={!isAdmin ? { color: styles.subTextColor as string } : undefined}
-              >
+              <span className="text-xs font-bold uppercase" style={{ color: textColor }}>
                 {sub.name}
               </span>
-              <span
-                className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${isAdmin ? styles.subSizeColor as string : ''}`}
-                style={!isAdmin ? { color: styles.subSizeColor as string } : undefined}
-              >
+              <span className="text-[9px] font-bold uppercase tracking-wider opacity-60" style={{ color: textColor }}>
                 Talles: {sub.sizeType?.name || "Estándar / Único"}
               </span>
             </div>
             <button
               type="button"
               onClick={() => handleDeleteSub(sub.id)}
-              className={isAdmin ? styles.subDeleteColor as string : ''}
-              style={!isAdmin ? { color: textColor, opacity: 0.4 } : undefined}
-              onMouseEnter={!isAdmin ? e => {
+              style={{ color: textColor, opacity: 0.4 }}
+              onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
                 (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-              } : undefined}
-              onMouseLeave={!isAdmin ? e => {
-                (e.currentTarget as HTMLButtonElement).style.color = textColor || '';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = textColor;
                 (e.currentTarget as HTMLButtonElement).style.opacity = "0.4";
-              } : undefined}
+              }}
             >
               <X size={14} />
             </button>
@@ -113,37 +110,57 @@ export default function SubCategoryManager({
 
       <form
         onSubmit={handleAddSubCategory}
-        className={`space-y-3 p-4 rounded-[1.0rem] ${isAdmin ? styles.addSubBg as string : ''}`}
-        style={!isAdmin ? { ...styles.addSubBg as React.CSSProperties, borderRadius: "16px" } : undefined}
+        className="space-y-3 p-4"
+        style={{
+          backgroundColor: innerBg,
+          border: `1px solid ${overlayBorder}`,
+          borderRadius: "16px",
+        }}
       >
-        <span
-          className="text-[9px] font-black uppercase tracking-wider"
-          style={!isAdmin ? { color: styles.addSubTitle as string } : { color: styles.addSubTitle as string }}
-        >
+        <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: primaryColor }}>
           + Vincular Subgrupo
         </span>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input
-            className={isAdmin ? styles.addSubInput as string : ''}
-            style={!isAdmin ? styles.addSubInput as React.CSSProperties : undefined}
+            className="w-full"
+            style={{
+              backgroundColor: innerBg,
+              border: `1px solid ${overlayBorder}`,
+              borderRadius: "12px",
+              padding: "14px 16px",
+              color: textColor,
+              fontSize: "14px",
+              fontWeight: 500,
+              outline: "none",
+            }}
             value={subData.name}
             onChange={e => setSubData({ ...subData, name: e.target.value })}
             placeholder="Nombre (Ej: Adultos)"
             required
-            onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
-            onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
+            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
+            onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
           />
           <select
-            className={isAdmin ? styles.addSubInput as string : ''}
-            style={!isAdmin ? { ...styles.addSubInput as React.CSSProperties, cursor: "pointer" } : { cursor: "pointer" }}
+            className="w-full"
+            style={{
+              backgroundColor: secondaryColor,
+              border: `1px solid ${overlayBorder}`,
+              borderRadius: "12px",
+              padding: "14px 16px",
+              color: textColor,
+              fontSize: "14px",
+              fontWeight: 500,
+              outline: "none",
+              cursor: "pointer",
+            }}
             value={subData.sizeTypeId}
             onChange={e => setSubData({ ...subData, sizeTypeId: e.target.value })}
-            onFocus={!isAdmin ? e => (e.currentTarget.style.borderColor = primaryColor) : undefined}
-            onBlur={!isAdmin ? e => (e.currentTarget.style.borderColor = overlayBorder) : undefined}
+            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
+            onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
           >
             <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>Curva estándar...</option>
-            {sizeTypes.map((st: any) => (
+            {sizeTypes.map((st) => (
               <option key={st.id} value={st.id} style={{ backgroundColor: secondaryColor, color: textColor }}>{st.name}</option>
             ))}
           </select>
@@ -152,10 +169,26 @@ export default function SubCategoryManager({
         <button
           type="submit"
           disabled={subLoading || !subData.name}
-          className={`${isAdmin ? styles.addSubBtn as string : ''} flex items-center justify-center gap-1`}
-          style={!isAdmin ? { ...styles.addSubBtn as React.CSSProperties, opacity: subLoading || !subData.name ? 0.6 : 1, cursor: subLoading || !subData.name ? "not-allowed" : "pointer" } : undefined}
-          onMouseEnter={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
-          onMouseLeave={!isAdmin && !subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
+          className="flex items-center justify-center gap-1"
+          style={{
+            backgroundColor: primaryColor,
+            color: getContrastColor(primaryColor),
+            borderRadius: "10px",
+            border: "none",
+            cursor: subLoading || !subData.name ? "not-allowed" : "pointer",
+            fontSize: "10px",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            padding: "8px 0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+            opacity: subLoading || !subData.name ? 0.6 : 1,
+          }}
+          onMouseEnter={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
+          onMouseLeave={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
         >
           {subLoading
             ? <Loader2 className="animate-spin" size={12} />

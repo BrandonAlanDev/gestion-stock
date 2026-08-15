@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 export async function updateSectionOrder(sections: unknown) {
@@ -24,7 +24,8 @@ export async function updateSectionOrder(sections: unknown) {
       data: { sectionOrder: JSON.stringify(sections) },
     });
 
-    revalidatePath("/", "layout");
+    revalidateTag("page-config");
+    revalidatePath("/");
     return { success: true };
   } catch (error: unknown) {
     console.error("Error updating section order:", error);

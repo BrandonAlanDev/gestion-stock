@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Store } from "lucide-react";
 import { CarouselSlide } from "../types";
+import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
 import HeroCtaButton from "./HeroCtaButton";
 
 export default function HeroLayoutStandard({
@@ -62,7 +63,7 @@ export default function HeroLayoutStandard({
         </motion.p>
       )}
 
-      <HeroCtaButton url={slide.url} ctaText={slide.ctaText} primaryColor={primaryColor} hideButton={slide.config?.hideButton} />
+      <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} primaryColor={primaryColor} hideButton={slide.config?.hideButton} />
     </motion.div>
   );
 }

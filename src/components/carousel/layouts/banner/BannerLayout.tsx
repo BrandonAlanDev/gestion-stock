@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
 
 interface CarouselSlide {
   id: string;
@@ -13,7 +14,7 @@ interface CarouselSlide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: { hideText?: boolean };
+  config?: { hideText?: boolean; linkType?: string };
 }
 
 interface BannerLayoutProps {
@@ -128,7 +129,7 @@ export default function BannerLayout({ carousel, primaryColor = "#06b6d4" }: Ban
               )}
               {(slide.url?.trim() || slide.ctaText) && (
                 <motion.a
-                  href={slide.url?.trim() || "#"}
+                  href={resolverEnlaceSlide(slide) || "#"}
                   className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-black font-black uppercase tracking-wider text-sm hover:bg-neutral-100 transition-colors"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

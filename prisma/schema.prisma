@@ -231,12 +231,17 @@ model PageConfig {
   privacyPolicy        String?                   @db.Text
   featuredLayout       PageConfig_featuredLayout @default(GRID)
   homegridId           String?
-  arreglosEnabled        Boolean @default(true)
-  escuelaEnabled         Boolean @default(true)
-  personalizadoEnabled   Boolean @default(true)
-  sectionOrder           String  @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
-  banners                Banner[]
-  carousels              Carousel[]
+  arreglosEnabled      Boolean                   @default(true)
+  escuelaEnabled       Boolean                   @default(true)
+  personalizadoEnabled Boolean                   @default(true)
+  sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
+  fontPrimary          String                    @default("Outfit")
+  fontSecondary        String                    @default("Playfair Display")
+  borderRadius         String                    @default("redondeado")
+  shadowLevel          String                    @default("sutil")
+  density              String                    @default("comoda")
+  banners              Banner[]
+  carousels            Carousel[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
 }
 

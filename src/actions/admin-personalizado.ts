@@ -25,7 +25,7 @@ export async function getBoardAdminOptions() {
     ]);
 
     return { success: true, data: { types, tails, fins, configs, materials, deliveryOptions } };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching admin board options:", error);
     return { success: false, error: "Error al cargar las opciones" };
   }
@@ -48,7 +48,7 @@ export async function createBoardType(data: { name: string; svgPath?: string; ta
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: created };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al crear el modelo de tabla." };
   }
@@ -70,7 +70,7 @@ export async function updateBoardType(id: string, data: { name: string; svgPath?
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al actualizar el modelo de tabla." };
   }
@@ -82,7 +82,7 @@ export async function deleteBoardType(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al eliminar el modelo de tabla." };
   }
@@ -96,7 +96,7 @@ export async function createBoardTail(data: { name: string; svgPath?: string }) 
     const created = await prisma.boardTailOption.create({ data: { name: data.name, svgPath: data.svgPath || null } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear la cola." };
   }
 }
@@ -110,7 +110,7 @@ export async function updateBoardTail(id: string, data: { name: string; svgPath?
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la cola." };
   }
 }
@@ -121,7 +121,7 @@ export async function deleteBoardTail(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la cola. (Quizás está en uso)" };
   }
 }
@@ -134,7 +134,7 @@ export async function createBoardFin(data: { name: string }) {
     const created = await prisma.boardFinOption.create({ data: { name: data.name } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear el tipo de quilla." };
   }
 }
@@ -145,7 +145,7 @@ export async function updateBoardFin(id: string, data: { name: string; active: b
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la quilla." };
   }
 }
@@ -156,7 +156,7 @@ export async function deleteBoardFin(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la quilla." };
   }
 }
@@ -169,7 +169,7 @@ export async function createBoardFinConfig(data: { name: string; count: number }
     const created = await prisma.boardFinConfigOption.create({ data: { name: data.name, count: data.count } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear configuración de quilla." };
   }
 }
@@ -180,7 +180,7 @@ export async function updateBoardFinConfig(id: string, data: { name: string; cou
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar configuración de quilla." };
   }
 }
@@ -191,7 +191,7 @@ export async function deleteBoardFinConfig(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar configuración." };
   }
 }
@@ -204,7 +204,7 @@ export async function createBoardMaterial(data: { name: string; description?: st
     const created = await prisma.boardMaterialOption.create({ data: { name: data.name, description: data.description || null } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear el material." };
   }
 }
@@ -215,7 +215,7 @@ export async function updateBoardMaterial(id: string, data: { name: string; desc
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar el material." };
   }
 }
@@ -226,7 +226,7 @@ export async function deleteBoardMaterial(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar el material." };
   }
 }
@@ -242,7 +242,7 @@ export async function createDeliveryOption(data: { label: string; description?: 
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear la opción de entrega." };
   }
 }
@@ -259,7 +259,7 @@ export async function updateDeliveryOption(
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la opción de entrega." };
   }
 }
@@ -270,7 +270,7 @@ export async function deleteDeliveryOption(id: string) {
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la opción de entrega." };
   }
 }

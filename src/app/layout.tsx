@@ -9,6 +9,7 @@ import RouteLoader from "@/components/layout/RouteLoader";
 import LayoutComponent from "@/components/layout/LayoutComponent";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
+import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -96,6 +97,7 @@ export default async function RootLayout({
       >
         <QueryProvider>
           <PageConfigProvider pageConfig={pageConfig}>
+            <EstilosApariencia />
             <LayoutComponent>
               <AppGate>
                 <RouteLoader />

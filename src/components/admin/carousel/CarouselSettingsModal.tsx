@@ -72,13 +72,13 @@ export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSav
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl" style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}>
         <div className="flex items-center justify-between p-4 border-b sticky top-0 backdrop-blur z-10 rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor + "40" }}>
-          <h2 className="text-xl font-bold" style={{ color: textColor }}>
+          <h2 className="min-w-0 flex-1 truncate text-xl font-bold" style={{ color: textColor }}>
             Editar configuración
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full ml-2" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
+            <span className="ml-2 inline-block max-w-[60%] truncate px-2 py-0.5 align-middle text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
               {carousel.title || carousel.type}
             </span>
           </h2>
-          <button onClick={onClose} className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "99" }}
+          <button onClick={onClose} className="shrink-0 p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "99" }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}>
             <X className="w-5 h-5" />

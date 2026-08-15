@@ -30,9 +30,9 @@ export default function ViewPageModal({ isOpen, onClose, page, primaryColor, sec
           className="p-6 flex justify-between items-center"
           style={{ borderBottom: `1px solid ${primaryColor}20`, backgroundColor: secondaryColor }}
         >
-          <div>
-            <h2 className="text-2xl font-black" style={{ color: primaryColor }}>{page.title}</h2>
-            <p className="text-sm font-medium" style={{ color: textContrast }}>/{page.slug} • {page.sections?.length || 0} Secciones</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-2xl font-black truncate" style={{ color: primaryColor }}>{page.title}</h2>
+            <p className="text-sm font-medium truncate" style={{ color: textContrast }}>/{page.slug} • {page.sections?.length || 0} Secciones</p>
           </div>
           <button
             onClick={onClose}
