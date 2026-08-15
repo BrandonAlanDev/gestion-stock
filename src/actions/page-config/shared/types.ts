@@ -11,6 +11,12 @@ export type PageConfigInput = {
   primaryColor?: string | null;
   secondaryColor?: string | null;
 
+  fontPrimary?: string;
+  fontSecondary?: string;
+  borderRadius?: string;
+  shadowLevel?: string;
+  density?: string;
+
   ecommerceEnabled?: boolean;
   cartEnabled?: boolean;
   checkoutEnabled?: boolean;
@@ -39,6 +45,10 @@ export type PageConfigInput = {
   language?: string;
 
   maintenanceMode?: boolean;
+
+  arreglosEnabled?: boolean;
+  escuelaEnabled?: boolean;
+  personalizadoEnabled?: boolean;
 
   metaTitle?: string | null;
   metaDescription?: string | null;

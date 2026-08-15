@@ -121,7 +121,7 @@ html {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--fuente-principal, 'Outfit'), sans-serif;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
@@ -131,7 +131,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--fuente-secundaria, 'Playfair Display'), serif;
 }
 
 /* =========================

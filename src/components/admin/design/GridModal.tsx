@@ -101,14 +101,14 @@ export default function GridModal({
           borderColor: getContrastColor(secondaryColor).concat("22")
         }}
       >
-        <div className="flex justify-between items-center p-8 pb-0">
+        <div className="flex justify-between items-center p-4 pb-0 sm:p-8">
           <h3 className="text-lg font-black uppercase">Configurar Sección</h3>
           <button onClick={onClose} className="hover:opacity-70 transition-opacity">
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-8 pt-4 max-h-[60vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
+        <div className="p-4 pt-4 sm:p-8 max-h-[60vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
         <div className="space-y-4">
           <input
             placeholder="Título"
@@ -306,7 +306,7 @@ export default function GridModal({
         </div>
       </div>
 
-      <div className="p-8 pt-0">
+      <div className="p-4 pt-0 sm:p-8">
         <button
           onClick={() => onSave(formData)}
           className="w-full py-4 font-black rounded-xl hover:opacity-90 transition-opacity uppercase tracking-wider"

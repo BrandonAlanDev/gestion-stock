@@ -251,3 +251,25 @@ export const carouselWizardSchema = z.object({
 
 export type CarouselLimitsInput = z.infer<typeof carouselLimitsSchema>;
 export type CarouselWizardInput = z.infer<typeof carouselWizardSchema>;
+
+export const aparienciaSchema = z.object({
+  fontPrimary: z.string().min(1).max(100),
+  fontSecondary: z.string().min(1).max(100),
+  borderRadius: z.enum(["recto", "redondeado", "muy-redondeado"]),
+  shadowLevel: z.enum(["sin-sombra", "sutil", "marcada"]),
+  density: z.enum(["compacta", "comoda", "espaciosa"]),
+});
+
+export const flagsPaginaSchema = z.object({
+  arreglosEnabled: z.boolean().optional(),
+  escuelaEnabled: z.boolean().optional(),
+  personalizadoEnabled: z.boolean().optional(),
+  maintenanceMode: z.boolean().optional(),
+});
+
+export const regionalSchema = z.object({
+  currency: z.string().min(1).max(10).optional(),
+  language: z.string().min(1).max(10).optional(),
+  termsAndConditions: z.string().nullable().optional(),
+  privacyPolicy: z.string().nullable().optional(),
+});

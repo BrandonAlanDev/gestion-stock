@@ -95,8 +95,8 @@ export default function CarouselWizardStep3({
 
   return (
     <div className="space-y-4" style={{ color: textColor }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: textColor }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="min-w-0 text-lg font-semibold flex items-center gap-2" style={{ color: textColor }}>
           Imágenes ({sortableSlides.length})
           <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
             {TYPE_LABELS[type] || type}
@@ -231,7 +231,7 @@ export function SortableSlideItem({
       >
         <GripVertical className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: iconColor }} />
 
-        <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden" style={{ backgroundColor: primaryColor + "15" }}>
+        <div className="relative w-16 h-12 sm:w-24 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden" style={{ backgroundColor: primaryColor + "15" }}>
           {slide.image ? (
             <img src={slide.image} alt="" className="w-full h-full object-cover" />
           ) : (

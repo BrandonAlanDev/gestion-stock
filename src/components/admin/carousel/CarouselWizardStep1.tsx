@@ -77,7 +77,7 @@ export default function CarouselWizardStep1({
     <div className="space-y-6">
       <div className="space-y-2">
         <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Tipo de sección</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {TYPES.map((type) => {
             const atLimit = isAtLimit(type.id);
             return (
@@ -116,7 +116,7 @@ export default function CarouselWizardStep1({
           })}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-center text-xs" style={{ color: textColor + "80" }}>
+        <div className="grid grid-cols-1 gap-2 text-center text-xs sm:grid-cols-3" style={{ color: textColor + "80" }}>
           {(["HERO","BANNER","CARDS"] as const).map((t) => {
             const atLimit = currentCounts[t] >= limits[t];
             return (
@@ -130,7 +130,7 @@ export default function CarouselWizardStep1({
 
       <div className="space-y-2">
         <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Estilo de portada</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {HERO_STYLES.map((style) => (
             <button
               key={style.id}

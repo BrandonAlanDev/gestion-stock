@@ -119,11 +119,11 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
           className="p-6 flex justify-between items-center z-10 shadow-sm"
           style={{ backgroundColor: secondaryColor, borderBottom: `1px solid ${primaryColor}20` }}
         >
-          <div>
-            <h2 className="text-2xl font-black" style={{ color: primaryColor }}>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-2xl font-black truncate" style={{ color: primaryColor }}>
               {initialData ? "Editar Página" : "Crear Nueva Página"}
             </h2>
-            <p className="text-sm font-medium" style={{ color: textContrast }}>Configura la información, secciones y sus ítems.</p>
+            <p className="text-sm font-medium truncate" style={{ color: textContrast }}>Configura la información, secciones y sus ítems.</p>
           </div>
           <button
             onClick={onClose}
@@ -144,7 +144,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
             />
 
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h3 className="font-bold text-lg flex items-center gap-2" style={{ color: primaryColor }}>
                   <span
                     className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
@@ -157,7 +157,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
                 <button
                   type="button"
                   onClick={addSection}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                  className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
                   style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
                 >
                   <Plus size={16} /> Agregar Sección

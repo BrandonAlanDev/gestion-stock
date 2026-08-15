@@ -43,15 +43,15 @@ export default function SectionEditorCard({
       style={{ backgroundColor: secondaryColor, borderColor: `${primaryColor}30` }}
     >
       <div
-        className="p-4 flex justify-between items-center"
+        className="p-4 flex justify-between items-center gap-2"
         style={{ backgroundColor: `${primaryColor}05`, borderBottom: `1px solid ${primaryColor}15` }}
       >
-        <div className="flex items-center gap-3">
-          <span className="font-black" style={{ color: primaryColor }}>#{sIdx + 1}</span>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-black shrink-0" style={{ color: primaryColor }}>#{sIdx + 1}</span>
           <select
             value={section.type}
             onChange={(e) => onChangeSection(sIdx, "type", e.target.value)}
-            className="p-2 rounded-lg border font-bold text-sm outline-none cursor-pointer"
+            className="p-2 rounded-lg border font-bold text-sm outline-none cursor-pointer min-w-0"
             style={{ backgroundColor: secondaryColor, color: textContrast, borderColor: `${primaryColor}30` }}
           >
             {sectionTypes.map(t => <option key={t} value={t}>{t}</option>)}
@@ -123,7 +123,7 @@ export default function SectionEditorCard({
                 style={{ backgroundColor: `${primaryColor}03`, borderColor: `${primaryColor}15` }}
               >
                 <div className="flex-1 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input
                       type="text"
                       placeholder="Título del ítem"

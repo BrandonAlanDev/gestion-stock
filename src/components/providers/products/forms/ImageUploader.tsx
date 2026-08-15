@@ -1,4 +1,3 @@
-// src/components/products/forms/ImageUploader.tsx
 "use client";
 
 import Image from "next/image";
@@ -6,6 +5,8 @@ import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
 import { compressImage } from "@/lib/image-utils";
 import { X } from "lucide-react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { getContrastColor } from "@/lib/utils";
 
 export interface PendingImage {
   url?: string;
@@ -27,6 +28,14 @@ export default function ImageUploader({
   onRemoveImage,
   onReorder,
 }: ImageUploaderProps) {
+  const { pageConfig } = usePageConfig();
+  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
+  const textColor = getContrastColor((pageConfig?.secondaryColor as string) || "#00b4d8");
+  const isDarkBg = textColor === "#ffffff";
+  const inputBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const mutedColor = textColor + "99";
+
   // Estado local para el orden visual durante el arrastre
   const [orderedImages, setOrderedImages] = useState<PendingImage[]>(images);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -57,7 +66,7 @@ export default function ImageUploader({
           file: compressed,
           preview: URL.createObjectURL(compressed),
         });
-      } catch (err) {
+      } catch {
         toast.error(`Error al comprimir ${file.name}`);
       }
     }
@@ -116,7 +125,7 @@ export default function ImageUploader({
     originalIndexRef.current = null;
   };
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragEnd = () => {
     // Si se canceló el arrastre (no hubo drop), restaurar el orden original
     if (draggedIndex !== null) {
       setOrderedImages(images); // vuelve al orden de las props
@@ -127,8 +136,8 @@ export default function ImageUploader({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between pb-2" style={{ borderBottom: "1px solid #b2dede" }}>
-        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#4a7c80" }}>
+      <div className="flex justify-between pb-2" style={{ borderBottom: `1px solid ${overlayBorder}` }}>
+        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: mutedColor }}>
           Imágenes (Máx. 4)
         </span>
       </div>
@@ -141,16 +150,19 @@ export default function ImageUploader({
         disabled={uploading}
         className="w-full p-3 outline-none"
         style={{
-          background: "#f0fafa",
-          border: "1px solid #b2dede",
+          background: inputBg,
+          border: `1px solid ${overlayBorder}`,
           borderRadius: "12px",
-          color: "#0d2b2e",
+          color: textColor,
           fontSize: "14px",
         }}
       />
       {uploading && (
-        <p className="text-xs text-[#4a7c80] flex items-center gap-2">
-          <span className="inline-block w-3 h-3 border-2 border-[#4a7c80] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs flex items-center gap-2" style={{ color: mutedColor }}>
+          <span
+            className="inline-block w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: mutedColor, borderTopColor: "transparent" }}
+          />
           Subiendo...
         </p>
       )}
@@ -171,9 +183,9 @@ export default function ImageUploader({
               className={`relative w-24 h-24 overflow-hidden group transition-all duration-200 cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40 scale-95 z-10" : ""
                 }`}
               style={{
-                border: `1px solid ${isDragging ? "#0d5c63" : "#b2dede"}`,
+                border: `1px solid ${isDragging ? accent : overlayBorder}`,
                 borderRadius: "12px",
-                boxShadow: isDragging ? "0 0 0 2px rgba(13, 92, 99, 0.3)" : "none",
+                boxShadow: isDragging ? `0 0 0 2px ${accent}4D` : "none",
                 zIndex: isDragging ? 10 : 1,
               }}
             >
@@ -191,7 +203,7 @@ export default function ImageUploader({
                   handleRemove(idx);
                 }}
                 className="absolute top-1 right-1 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: "#e05050" }}
+                style={{ background: "#ef4444" }}
               >
                 <X size={12} style={{ color: "#fff" }} />
               </button>

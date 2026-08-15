@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
+import ProveedorColoresAdmin from "@/components/providers/ProveedorColoresAdmin";
 
 export default async function AdminLayout({
   children,
@@ -26,9 +27,7 @@ export default async function AdminLayout({
 
   return (
     <PageConfigProvider pageConfig={{ ok: true, pageConfig }}>
-      <div className="flex flex-row min-h-screen w-full">
-        {children}
-      </div>
+      <ProveedorColoresAdmin>{children}</ProveedorColoresAdmin>
     </PageConfigProvider>
   );
 }

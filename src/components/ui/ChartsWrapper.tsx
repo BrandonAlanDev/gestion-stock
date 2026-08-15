@@ -1,33 +1,42 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { AlertTriangle, Package, TrendingUp, ArrowUpDown, ShoppingBag, Layers } from "lucide-react";
-import Link from "next/link";
+import { getContrastColor } from "@/lib/utils";
+import { AlertTriangle, Package, TrendingUp, ArrowUpDown, ShoppingBag } from "lucide-react";
 
 interface Stats {
   salesChart: { name: string; Unidades: number; Ingresos: number }[];
-  lowStockVariants: any[];
+  lowStockVariants: unknown[];
   totals: { totalGarments: number; totalMovementsOut: number; totalMovementsIn: number; lowStockCount: number };
 }
 
 export default function ChartWrapper({ stats }: { stats: Stats }) {
   const { pageConfig } = usePageConfig();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  
-  // Estilos fijos para panel oscuro (se ve mucho más profesional)
-  const cardBg = "rgba(255,255,255,0.03)";
-  const borderColor = "rgba(255,255,255,0.08)";
-  const textColor = "#ffffff";
-  const mutedColor = "rgba(255,255,255,0.5)";
+  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
+  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
+  const textColor = getContrastColor(background);
+  const isDarkBg = textColor === "#ffffff";
 
-  const { salesChart, lowStockVariants, totals } = stats;
+  const cardBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+  const borderColor = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const mutedColor = textColor + "B3";
+
+  const { salesChart, totals } = stats;
 
   const statCards = [
-    { label: "Productos activos", value: totals.totalGarments, icon: Package, color: primaryColor },
-    { label: "Ventas totales", value: totals.totalMovementsOut, icon: TrendingUp, color: "#10b981" },
-    { label: "Ingresos de stock", value: totals.totalMovementsIn, icon: ArrowUpDown, color: "#8b5cf6" },
-    { label: "Stock crítico", value: totals.lowStockCount, icon: AlertTriangle, color: totals.lowStockCount > 0 ? "#ef4444" : "#10b981" },
+    { label: "Productos activos", value: totals.totalGarments, icon: Package, color: accent },
+    { label: "Ventas totales", value: totals.totalMovementsOut, icon: TrendingUp, color: isDarkBg ? "#10b981" : "#059669" },
+    { label: "Ingresos de stock", value: totals.totalMovementsIn, icon: ArrowUpDown, color: isDarkBg ? "#8b5cf6" : "#6d28d9" },
+    {
+      label: "Stock crítico",
+      value: totals.lowStockCount,
+      icon: AlertTriangle,
+      color:
+        totals.lowStockCount > 0
+          ? isDarkBg ? "#ef4444" : "#b91c1c"
+          : isDarkBg ? "#10b981" : "#059669",
+    },
   ];
 
   return (
@@ -54,7 +63,7 @@ export default function ChartWrapper({ stats }: { stats: Stats }) {
       <div className="rounded-2xl border p-6" style={{ background: cardBg, borderColor }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-black uppercase italic" style={{ color: textColor }}>Movimientos de Salida</h2>
-          <ShoppingBag size={20} style={{ color: primaryColor }} />
+          <ShoppingBag size={20} style={{ color: accent }} />
         </div>
 
         {salesChart.length === 0 ? (
@@ -68,8 +77,8 @@ export default function ChartWrapper({ stats }: { stats: Stats }) {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={borderColor} />
                 <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: mutedColor }} />
                 <YAxis yAxisId="left" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: mutedColor }} />
-                <Tooltip contentStyle={{ background: "#181818", border: `1px solid ${borderColor}`, borderRadius: "12px", color: "#fff" }} />
-                <Bar yAxisId="left" dataKey="Unidades" fill={primaryColor} radius={[4, 4, 0, 0]} />
+                <Tooltip contentStyle={{ background: isDarkBg ? "#181818" : "#ffffff", border: `1px solid ${borderColor}`, borderRadius: "12px", color: isDarkBg ? "#fff" : "#000" }} />
+                <Bar yAxisId="left" dataKey="Unidades" fill={accent} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

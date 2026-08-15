@@ -13,6 +13,7 @@ import { uploadCarouselImage, deleteCarouselImage } from "./helpers";
 import { extractPublicId } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { resolverEnlaceGuardado } from "@/helpers/resolverEnlaceGuardado";
+import type { CarouselSettings, SlideConfig } from "@/types/carousel";
 
 async function requireAdmin(): Promise<boolean> {
   const session = await auth();
@@ -311,6 +312,74 @@ export async function deleteCarouselSlide(slideId: string, carouselId: string) {
   } catch (error: unknown) {
     console.error("Error deleting slide:", error);
     return { error: "Error al eliminar slide" };
+  }
+}
+
+export async function getAllCarousels() {
+  try {
+    const carousels = await carouselService.getCarousels(undefined, false);
+    return { success: true, data: serializeData(carousels) };
+  } catch (error) {
+    console.error("Error al obtener todos los carruseles:", error);
+    return { error: "Error al obtener carruseles" };
+  }
+}
+
+export async function updateCarouselActive(id: string, active: boolean) {
+  try {
+    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const carousel = await carouselService.updateCarousel({ id, active });
+    revalidateTag("carousels");
+    revalidateTag("page-config");
+    revalidatePath("/");
+    return { success: true, data: serializeData(carousel) };
+  } catch (error) {
+    console.error("Error al actualizar el estado del carrusel:", error);
+    return { error: "Error al actualizar el carrusel" };
+  }
+}
+
+export async function duplicateCarousel(id: string) {
+  try {
+    if (!(await requireAdmin())) return { error: "No autorizado" };
+
+    const original = await carouselService.getCarouselById(id);
+    if (!original) return { error: "Carrusel no encontrado" };
+
+    const limits = await carouselService.getCarouselLimits();
+    const counts = await carouselService.countActiveCarouselsByType();
+    if ((counts[original.type] || 0) >= limits[original.type]) {
+      return { error: `Límite alcanzado: máx ${limits[original.type]} carrusel(es) ${original.type} activos` };
+    }
+
+    const maxOrderResult = await carouselService.getMaxOrder();
+    const nextOrder = (maxOrderResult ?? -1) + 1;
+
+    const slides = (original.slides ?? []).map((slide, index) => ({
+      image: slide.image ?? "",
+      title: slide.title ?? undefined,
+      subtitle: slide.subtitle ?? undefined,
+      description: slide.description ?? undefined,
+      ctaText: slide.ctaText ?? undefined,
+      url: slide.url ?? undefined,
+      config: (slide.config ?? undefined) as SlideConfig | undefined,
+      order: index,
+    }));
+
+    const carousel = await carouselService.createCarousel({
+      type: original.type,
+      title: `${original.title ?? "Carrusel"} (copia)`,
+      active: original.active,
+      order: nextOrder,
+      settings: (original.settings ?? undefined) as CarouselSettings | undefined,
+      slides,
+    });
+
+    revalidateTag("carousels");
+    return { success: true, data: serializeData(carousel) };
+  } catch (error) {
+    console.error("Error al duplicar carrusel:", error);
+    return { error: "Error al duplicar carrusel" };
   }
 }
 

@@ -5,7 +5,21 @@ import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 
-export default function ProductAction({ product, size, color, esTabla = false }: any) {
+interface ProductoProductAction {
+  id?: string | number;
+  name: string;
+  price: string | number;
+  images?: { srcImage?: string }[] | null;
+}
+
+interface ProductActionProps {
+  product: ProductoProductAction;
+  size?: string | number | null;
+  color?: string | number | null;
+  esTabla?: boolean;
+}
+
+export default function ProductAction({ product, size, color, esTabla = false }: ProductActionProps) {
     const { addToCart } = useCart();
     const { pageConfig } = usePageConfig();
     const [showOrderForm, setShowOrderForm] = useState(false);

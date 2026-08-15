@@ -25,14 +25,14 @@ export default function ModalFooter({
 }) {
   return (
     <div
-      className="p-4 border-t flex justify-end gap-3 shadow-lg z-10"
+      className="p-4 border-t flex flex-col-reverse gap-3 sm:flex-row sm:justify-end shadow-lg z-10"
       style={{ backgroundColor: secondaryColor, borderTop: `1px solid ${primaryColor}20` }}
     >
       <button
         type="button"
         onClick={onClose}
         disabled={isSaving}
-        className="px-6 py-3 rounded-xl font-bold transition-all hover:opacity-80"
+        className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold transition-all hover:opacity-80"
         style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
       >
         Cancelar
@@ -41,7 +41,7 @@ export default function ModalFooter({
         type="submit"
         form="page-builder-form"
         disabled={isSaving}
-        className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform active:scale-95 hover:opacity-90"
+        className="w-full sm:w-auto justify-center px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform active:scale-95 hover:opacity-90"
         style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
       >
         <Save size={18} />

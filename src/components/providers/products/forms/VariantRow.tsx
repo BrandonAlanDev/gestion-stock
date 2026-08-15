@@ -2,6 +2,8 @@
 
 import { X } from "lucide-react";
 import ColorDropdown from "@/components/ui/color-dropdown";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { getContrastColor } from "@/lib/utils";
 
 interface Size {
   id: string;
@@ -21,13 +23,13 @@ interface VariantRowProps {
     colorId: string;
     stock: number;
     sku: string;
-    attributes?: any;
+    attributes?: { customSize?: string };
   };
   index: number;
   availableSizes: Size[];
   colors: Color[];
   onRemove: (index: number) => void;
-  onUpdate: (index: number, field: string, value: any) => void;
+  onUpdate: (index: number, field: string, value: unknown) => void;
   onUpdateCustomSize: (index: number, value: string) => void;
 }
 
@@ -40,33 +42,43 @@ export default function VariantRow({
   onUpdate,
   onUpdateCustomSize,
 }: VariantRowProps) {
+  const { pageConfig } = usePageConfig();
+  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
+  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
+  const textColor = getContrastColor(background);
+  const accentTextColor = getContrastColor(accent);
+  const isDarkBg = textColor === "#ffffff";
+  const inputBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const mutedColor = textColor + "99";
+
   return (
     <div
-      className="grid grid-cols-12 gap-3 items-center p-3"
+      className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-12 sm:items-center"
       style={{
-        background: "#f0fafa",
-        border: "1px solid #b2dede",
+        background: inputBg,
+        border: `1px solid ${overlayBorder}`,
         borderRadius: "16px",
       }}
     >
       {/* Talle */}
-      <div className="col-span-3 flex flex-col gap-1">
+      <div className="col-span-1 flex flex-col gap-1 sm:col-span-3">
         <select
           className="w-full text-xs font-medium outline-none"
-          style={{ background: "transparent", color: "#0d2b2e", border: "none" }}
+          style={{ background: "transparent", color: textColor, border: "none" }}
           value={variant.sizeId}
           onChange={(e) => onUpdate(index, "sizeId", e.target.value)}
           required
         >
-          <option value="" style={{ background: "#f0fafa", color: "#4a7c80" }}>
+          <option value="" style={{ background: inputBg, color: mutedColor }}>
             Talle...
           </option>
           {availableSizes.map((s) => (
-            <option key={s.id} value={s.id} style={{ background: "#fff", color: "#0d2b2e" }}>
+            <option key={s.id} value={s.id} style={{ background: background, color: textColor }}>
               {String(s.value)}
             </option>
           ))}
-          <option value="CUSTOM" style={{ background: "#e0f5f5", color: "#0d5c63", fontWeight: 700 }}>
+          <option value="CUSTOM" style={{ background: accent, color: accentTextColor, fontWeight: 700 }}>
             Personalizado...
           </option>
         </select>
@@ -75,12 +87,12 @@ export default function VariantRow({
             type="text"
             placeholder="Medida (ej: 5'8 x 20 x 2)"
             style={{
-              background: "#e0f5f5",
-              border: "1px solid #b2dede",
+              background: `${accent}1A`,
+              border: `1px solid ${overlayBorder}`,
               borderRadius: "6px",
               padding: "4px 8px",
               fontSize: "10px",
-              color: "#0d2b2e",
+              color: textColor,
               outline: "none",
               marginTop: "4px",
             }}
@@ -92,7 +104,7 @@ export default function VariantRow({
       </div>
 
       {/* Color */}
-      <div className="col-span-3 pl-3" style={{ borderLeft: "1px solid #b2dede" }}>
+      <div className="col-span-1 pl-0 sm:col-span-3 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
         <ColorDropdown
           colors={colors}
           value={variant.colorId}
@@ -101,12 +113,12 @@ export default function VariantRow({
       </div>
 
       {/* Stock */}
-      <div className="col-span-2 pl-3" style={{ borderLeft: "1px solid #b2dede" }}>
+      <div className="col-span-1 pl-0 sm:col-span-2 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
         <input
           type="number"
           placeholder="Stock"
           className="w-full text-xs outline-none"
-          style={{ background: "transparent", color: "#0d2b2e", border: "none" }}
+          style={{ background: "transparent", color: textColor, border: "none" }}
           value={variant.stock}
           onChange={(e) => onUpdate(index, "stock", parseInt(e.target.value) || 0)}
           required
@@ -114,24 +126,24 @@ export default function VariantRow({
       </div>
 
       {/* SKU */}
-      <div className="col-span-3 pl-3" style={{ borderLeft: "1px solid #b2dede" }}>
+      <div className="col-span-1 pl-0 sm:col-span-3 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
         <input
           placeholder="SKU"
           className="w-full text-[10px] outline-none uppercase font-mono"
-          style={{ background: "transparent", color: "#4a7c80", border: "none" }}
+          style={{ background: "transparent", color: mutedColor, border: "none" }}
           value={variant.sku}
           onChange={(e) => onUpdate(index, "sku", e.target.value)}
         />
       </div>
 
       {/* Eliminar */}
-      <div className="col-span-1 flex justify-end">
+      <div className="col-span-1 flex justify-start sm:justify-end sm:col-span-1">
         <button
           type="button"
           onClick={() => onRemove(index)}
-          style={{ color: "#b2dede" }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#e05050")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#b2dede")}
+          style={{ color: overlayBorder }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#ef4444")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = overlayBorder)}
         >
           <X size={14} />
         </button>

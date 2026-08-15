@@ -60,10 +60,10 @@ export default function SearchableSelect({
               key={item.id}
               type="button"
               onClick={() => onChange(item.id)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-100 transition"
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-neutral-100 transition"
             >
 
-              <span>
+              <span className="min-w-0 flex-1 truncate text-left">
                 {item.label}
               </span>
 
