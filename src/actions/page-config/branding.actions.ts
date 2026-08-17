@@ -3,14 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, unstable_cache } from "next/cache";
 
-type BannerInput = {
-  image?: string | null;
-  title?: string | null;
-  subtitle?: string | null;
-  text?: string | null;
-  url?: string | null;
-};
-
 type BrandingInput = {
   storeName?: string;
   slogan?: string | null;
@@ -26,8 +18,6 @@ type BrandingInput = {
   borderRadius?: string;
   shadowLevel?: string;
   density?: string;
-
-  banners?: BannerInput[];
 };
 
 export async function updateBrandingConfig(data: BrandingInput) {
@@ -76,29 +66,6 @@ export async function updateBrandingConfig(data: BrandingInput) {
         },
         data: payload,
       });
-    }
-
-    // Actualiza los banners
-    if (data.banners) {
-      await prisma.banner.deleteMany({
-        where: {
-          pageConfigId: pageConfig.id,
-        },
-      });
-
-      if (data.banners.length > 0) {
-        await prisma.banner.createMany({
-          data: data.banners.map((banner, index) => ({
-            pageConfigId: pageConfig!.id,
-            order: index + 1,
-            image: banner.image ?? null,
-            title: banner.title ?? null,
-            subtitle: banner.subtitle ?? null,
-            text: banner.text ?? null,
-            url: banner.url ?? null,
-          })),
-        });
-      }
     }
 
     revalidateTag("page-config");
@@ -170,67 +137,3 @@ export const getBrandingConfig = unstable_cache(
     tags: ["branding-config"],
   },
 );
-
-export async function createBanner() {
-  try {
-    const pageConfig = await prisma.pageConfig.findFirst();
-
-    if (!pageConfig)
-      return {
-        ok: false,
-        error: "No existe PageConfig",
-      };
-
-    const lastBanner = await prisma.banner.findFirst({
-      where: {
-        pageConfigId: pageConfig.id,
-      },
-      orderBy: {
-        order: "desc",
-      },
-    });
-
-    const banner = await prisma.banner.create({
-      data: {
-        pageConfigId: pageConfig.id,
-        order: (lastBanner?.order ?? 0) + 1,
-        image: "",
-        title: "",
-        subtitle: "",
-        text: "",
-        url: "",
-      },
-    });
-
-    revalidateTag("branding-config");
-
-    return {
-      ok: true,
-      banner,
-    };
-  } catch {
-    return {
-      ok: false,
-      error: "Error al crear banner",
-    };
-  }
-}
-
-export async function deleteBanner(id: number) {
-  try {
-    await prisma.banner.delete({
-      where: { id },
-    });
-
-    revalidateTag("branding-config");
-
-    return {
-      ok: true,
-    };
-  } catch {
-    return {
-      ok: false,
-      error: "Error al eliminar banner",
-    };
-  }
-}

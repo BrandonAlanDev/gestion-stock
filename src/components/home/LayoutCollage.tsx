@@ -1,6 +1,7 @@
 import { CategoryCard } from "./CategoryCard";
+import type { CategoriaTarjeta } from "./CategoryCard";
 
-export default function LayoutCollage({ categories, primaryColor }: any) {
+export default function LayoutCollage({ categories }: { categories: CategoriaTarjeta[] }) {
   // Definimos los layouts de forma explícita. 
   // Nota: Asegúrate de que la suma de col-span en una fila nunca exceda 4.
   const getLayout = (i: number) => {
@@ -22,12 +23,11 @@ export default function LayoutCollage({ categories, primaryColor }: any) {
           para que no colapsen los elementos.
     */
     <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[250px] grid-flow-dense gap-4 p-4">
-      {categories.map((cat: any, i: number) => (
+      {categories.map((cat, i) => (
         <div key={cat.id} className={`${getLayout(i)} w-full h-full`}>
           <CategoryCard 
             cat={cat} 
             index={i} 
-            primaryColor={primaryColor} 
             variant="collage" // ¡IMPORTANTE! Asegúrate de pasar la variante
           />
         </div>

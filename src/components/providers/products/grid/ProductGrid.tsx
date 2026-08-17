@@ -66,7 +66,7 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
             {garment.images.slice(0, 4).map((_, i) => (
               <div
                 key={i}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${i === imgIndex ? "bg-white" : "bg-white/40"}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${i === imgIndex ? "bg-[var(--color-fondo-sitio)]" : "bg-[color-mix(in_srgb,var(--color-fondo-sitio)_40%,transparent)]"}`}
               />
             ))}
           </div>
@@ -87,10 +87,10 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
           <span className="text-lg font-black text-[var(--color-primario)]">{price}</span>
           <div className="flex gap-1">
             {/* Puntos de colores disponibles */}
-            {Array.from(new Set(garment.variants.filter(v => v.color).map(v => v.color!.hex || "#e2e8f0")))
+            {Array.from(new Set(garment.variants.filter(v => v.color).map(v => v.color!.hex || "var(--color-secundario)")))
               .slice(0, 4)
               .map((hex, i) => (
-                <div key={i} className="w-3 h-3 rounded-full border border-slate-200" style={{ backgroundColor: hex }} />
+                <div key={i} className="w-3 h-3 rounded-full border border-[var(--color-secundario)]" style={{ backgroundColor: hex }} />
               ))}
           </div>
         </div>
@@ -165,7 +165,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                 )}
                 <button
                   onClick={onClose}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[var(--color-secundario)] border border-slate-200 flex items-center justify-center text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100 transition-colors md:hidden"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[var(--color-secundario)] border border-[var(--color-secundario)] flex items-center justify-center text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100 transition-colors md:hidden"
                 >
                   <X size={15} />
                 </button>
@@ -267,7 +267,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                         onClick={() => setSelectedColor(selectedColor === c.id ? null : c.id)}
                         title={c.name}
                         className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === c.id ? "border-slate-900 scale-110 shadow-md" : "border-transparent hover:border-slate-300"}`}
-                        style={{ backgroundColor: c.hex ?? "#e2e8f0" }}
+                        style={{ backgroundColor: c.hex ?? "var(--color-secundario)" }}
                       />
                     ))}
                   </div>

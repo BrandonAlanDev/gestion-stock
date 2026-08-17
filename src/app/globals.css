@@ -15,6 +15,16 @@
 ========================= */
 
 :root {
+  /* Fallbacks del tema de marca (JS los sobreescribe con la config de la BD) */
+  --color-primario: #06b6d4;
+  --color-secundario: #ffffff;
+  --color-fondo-sitio: #09090b;
+  --texto-sobre-primario: #000000;
+  --texto-sobre-secundario: #000000;
+  --texto-sobre-fondo: #ffffff;
+  --superficie-fondo: #181a1a;
+  --superficie-imagen: #ffffff;
+
   --background: 0 0% 100%;
   --foreground: 0 0% 8%;
 
@@ -231,6 +241,6 @@ h3 {
   width: 5px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2563eb;
+  background: var(--color-primario);
   border-radius: 10px;
 }

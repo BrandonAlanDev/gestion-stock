@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { useQuery } from "@tanstack/react-query";
 import HeroLayout from "@/components/carousel/layouts/hero/HeroLayout";
 import BannerLayout from "@/components/carousel/layouts/banner/BannerLayout";
@@ -61,21 +61,21 @@ function parseSectionOrder(raw: unknown): string[] {
   return [];
 }
 
-function renderCarousel(carousel: CarouselData, storeName?: string, primaryColor?: string) {
+function renderCarousel(carousel: CarouselData, storeName?: string) {
   const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
   switch (carousel.type) {
     case "HERO":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
-        : <HeroLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <HeroLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof HeroLayout>["carousel"]} />;
     case "BANNER":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
-        : <BannerLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <BannerLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof BannerLayout>["carousel"]} />;
     case "CARDS":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
-        : <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} primaryColor={primaryColor} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <CardsLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof CardsLayout>["carousel"]} storeName={storeName} />;
     default:
       return null;
   }
@@ -85,14 +85,12 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
-  const primaryColor = (typeof config?.primaryColor === "string" && config.primaryColor) ? config.primaryColor : "#06b6d4";
-
   const showLocation = config?.locationEnabled && config?.address;
 
   const sectionOrder = parseSectionOrder(config?.sectionOrder);
   const hasCustomOrder = sectionOrder.length > 0;
 
-  const carousels = (config?.carousels as any[]) || [];
+  const carousels = (config?.carousels as CarouselData[]) || [];
   const heroSettings = carousels.find(c => c.type === "HERO")?.settings as Record<string, unknown> | undefined;
   const cardsSettings = carousels.find(c => c.type === "CARDS")?.settings as Record<string, unknown> | undefined;
   const featuredLayout = config?.featuredLayout as string | undefined;
@@ -147,7 +145,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
       const id = section.slice("carousel_".length);
       const carousel = carouselMap.get(id);
       if (!carousel) return null;
-      return renderCarousel(carousel, config?.storeName as string, primaryColor);
+      return renderCarousel(carousel, config?.storeName as string);
     }
 
     switch (section) {
@@ -157,7 +155,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "HERO" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
+              .map((c) => renderCarousel(c, config?.storeName as string))}
           </section>
         );
       case "banner":
@@ -166,7 +164,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "BANNER" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
+              .map((c) => renderCarousel(c, config?.storeName as string))}
           </section>
         );
       case "featured":
@@ -181,7 +179,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "CARDS" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
+              .map((c) => renderCarousel(c, config?.storeName as string))}
           </section>
         );
       case "location":
@@ -190,7 +188,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             key="location"
             className="flex items-center justify-center p-6 py-16 border-t-2"
             style={{
-              backgroundColor: "var(--color-secundario)",
+              backgroundColor: "var(--color-fondo-sitio)",
               borderColor: "var(--color-primario)",
             }}
           >
@@ -231,7 +229,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             <section
               className="flex items-center justify-center p-6 py-16 border-t-2"
               style={{
-                backgroundColor: "var(--color-secundario)",
+                backgroundColor: "var(--color-fondo-sitio)",
                 borderColor: "var(--color-primario)",
               }}
             >

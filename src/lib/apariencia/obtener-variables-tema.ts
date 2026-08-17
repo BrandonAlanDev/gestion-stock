@@ -1,4 +1,5 @@
 import { esColorHexValido } from "@/lib/contraste/es-color-hex-valido";
+import { aclararColor } from "@/lib/contraste/aclarar-color";
 import { getContrastColor } from "@/lib/utils";
 
 function colorValido(valor: unknown, fallback: string): string {
@@ -19,6 +20,7 @@ export function obtenerVariablesTema(
     "--texto-sobre-primario": getContrastColor(primario),
     "--texto-sobre-secundario": getContrastColor(secundario),
     "--texto-sobre-fondo": getContrastColor(fondo),
+    "--superficie-fondo": aclararColor(fondo, 0.06),
     "--superficie-imagen": "#ffffff",
   };
 }

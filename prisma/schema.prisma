@@ -201,7 +201,7 @@ model PageConfig {
   slogan               String?
   logo                 String?                   @db.Text
   favicon              String?                   @db.Text
-  primaryColor         String?                   @default("#000000")
+  primaryColor         String?                   @default("#06b6d4")
   secondaryColor       String?                   @default("#FFFFFF")
   bgColor              String?                   @default("#09090b")
   ecommerceEnabled     Boolean                   @default(true)

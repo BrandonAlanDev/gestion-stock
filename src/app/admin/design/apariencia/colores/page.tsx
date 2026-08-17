@@ -1,11 +1,11 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import SeccionIdentidad from "@/components/admin/diseno/apariencia/SeccionIdentidad";
+import SeccionColores from "@/components/admin/diseno/apariencia/SeccionColores";
 import { normalizarConfigApariencia } from "@/lib/apariencia/normalizar-config-apariencia";
 
-export default async function AparienciaPage() {
+export default async function ColoresPage() {
   const resultado = await getPageConfig();
   const config = normalizarConfigApariencia(
     resultado.ok ? resultado.pageConfig ?? null : null
   );
-  return <SeccionIdentidad config={config} />;
+  return <SeccionColores config={config} />;
 }

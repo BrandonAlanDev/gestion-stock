@@ -48,23 +48,23 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
 
       {/* 4. Footer fijo al fondo para volver a leer los términos */}
       {!esRutaAdmin && (
-        <footer className="bg-black border-t border-gray-800 text-gray-500 py-6 text-center text-sm z-40">
+        <footer className="bg-[var(--color-fondo-sitio)] border-t border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] py-6 text-center text-sm z-40">
           <div className="flex justify-center items-center gap-6">
             <button
               onClick={() => setIsPrivacyOpen(true)}
-              className="hover:text-white transition"
+              className="text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100 hover:text-[var(--color-primario)] transition"
             >
               Política de Privacidad
             </button>
-            <span className="text-gray-700">|</span>
+            <span className="text-[var(--texto-sobre-fondo)] opacity-40">|</span>
             <button
               onClick={() => setIsTermsOpen(true)}
-              className="hover:text-white transition"
+              className="text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100 hover:text-[var(--color-primario)] transition"
             >
               Términos y Condiciones
             </button>
           </div>
-          <p className="mt-4 text-xs text-gray-600">
+          <p className="mt-4 text-xs text-[var(--texto-sobre-fondo)] opacity-40">
             &copy; {new Date().getFullYear()} - Todos los derechos reservados.
           </p>
         </footer>

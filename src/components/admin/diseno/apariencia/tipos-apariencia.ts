@@ -1,12 +1,3 @@
-export interface BannerApariencia {
-  id: number;
-  image: string | null;
-  title: string | null;
-  subtitle: string | null;
-  text: string | null;
-  url: string | null;
-}
-
 export interface ConfigApariencia {
   storeName: string;
   slogan: string | null;
@@ -21,7 +12,6 @@ export interface ConfigApariencia {
   borderRadius: string;
   shadowLevel: string;
   density: string;
-  banners: BannerApariencia[];
 }
 
 export type ConfigAparienciaEntrada =
@@ -40,5 +30,4 @@ export type ConfigAparienciaEntrada =
       borderRadius: string | null;
       shadowLevel: string | null;
       density: string | null;
-      banners: BannerApariencia[] | null;
     }>;

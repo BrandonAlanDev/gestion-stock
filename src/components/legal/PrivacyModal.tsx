@@ -38,13 +38,13 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-black rounded-2xl shadow-xl p-6 max-w-lg w-full border-2 border-white text-left">
+      <div className="bg-[var(--color-secundario)] rounded-2xl shadow-xl p-6 max-w-lg w-full border-2 border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] text-left">
         
-        <h2 className="text-xl font-semibold mb-4 text-white">
+        <h2 className="text-xl font-semibold mb-4 text-[var(--texto-sobre-secundario)]">
           Política de Privacidad
         </h2>
 
-        <div className="text-gray-400 text-sm space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="text-[var(--texto-sobre-secundario)] opacity-60 text-sm space-y-3 max-h-[60vh] overflow-y-auto pr-2">
 
           <p>
             Esta aplicación recopila y almacena datos proporcionados por los
@@ -79,7 +79,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
         <div className="flex justify-end mt-4">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-xl border border-gray-300 text-white hover:bg-white hover:text-black transition"
+            className="px-4 py-2 rounded-xl border border-[var(--color-primario)] text-[var(--texto-sobre-secundario)] hover:bg-[var(--color-primario)] hover:text-[var(--texto-sobre-primario)] transition"
           >
             Cerrar
           </button>

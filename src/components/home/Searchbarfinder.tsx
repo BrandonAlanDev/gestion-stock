@@ -7,44 +7,29 @@ import { Search, Image as ImageIcon, FileText, LayoutGrid, Layers, X } from 'luc
 import { getGlobalSearchIndex, type SearchItem } from '@/actions/search';
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
-function getContrastColor(hex: string) {
-  if (!hex) return "#000000";
-  hex = hex.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
-}
-
 export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   const { pageConfig: rawConfig } = usePageConfig();
-  const config = rawConfig?.pageConfig || rawConfig;
+  const config = (rawConfig?.pageConfig ?? rawConfig) as Record<string, unknown>;
 
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState<SearchItem[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Parámetros visuales heredados
-  const primaryColor = config?.primaryColor || "#000000";
-  const secondaryColor = config?.secondaryColor || "#ffffff";
-  const textColor = getContrastColor(secondaryColor);
-  const isDarkBg = textColor === "#ffffff";
 
   const isTransparentState = isHomeTop && !isFocused;
-    const currentTextColor = isTransparentState ? "#ffffff" : textColor;
-  const overlayColor = isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-  
+  const currentTextColor = isTransparentState ? "var(--texto-sobre-fondo)" : "var(--texto-sobre-secundario)";
+  const overlayColor = "color-mix(in srgb, var(--texto-sobre-secundario) 8%, transparent)";
+
   // Fondo de la barra de búsqueda
   const inputBgColor = isTransparentState
-    ? (isDarkBg ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.25)") 
-    : overlayColor; 
+    ? "color-mix(in srgb, var(--texto-sobre-fondo) 12%, transparent)"
+    : "var(--color-secundario)";
 
-  const dropdownBg = isDarkBg ? "rgba(0,0,0,0.95)" : "rgba(255,255,255,0.98)";
+  const dropdownBg = "var(--color-secundario)";
 
-  const placeholderClass = isTransparentState 
-    ? "placeholder-white placeholder-opacity-90" 
-    : (isDarkBg ? "placeholder-gray-400" : "placeholder-gray-500");
+  const placeholderClass = isTransparentState
+    ? "placeholder-[var(--texto-sobre-fondo)] placeholder-opacity-90"
+    : "placeholder-[var(--texto-sobre-secundario)] placeholder-opacity-60";
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +82,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   }, [query, index, config]);
 
   const getIconForType = (type: string) => {
-    const iconProps = { className: "w-5 h-5", style: { color: textColor } };
+    const iconProps = { className: "w-5 h-5", style: { color: "var(--texto-sobre-secundario)" } };
     switch (type) {
       case 'category': return <LayoutGrid {...iconProps} />;
       case 'subcategory': return <Layers {...iconProps} />;
@@ -116,9 +101,9 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
            !isTransparentState ? 'border' : 'border-transparent'
         }`}
         style={{
-          backgroundColor: isFocused ? secondaryColor : inputBgColor, 
+          backgroundColor: isFocused ? "var(--color-secundario)" : inputBgColor, 
           borderColor: isFocused ? overlayColor : (isTransparentState ? 'transparent' : overlayColor),
-          boxShadow: isFocused ? `0 0 0 1px ${primaryColor}30` : undefined,
+          boxShadow: isFocused ? "0 0 0 1px color-mix(in srgb, var(--color-primario) 20%, transparent)" : undefined,
         }}
       >
         <div 
@@ -163,7 +148,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
           }}
         >
           {isLoading && index.length === 0 ? (
-            <div className="p-4 text-center text-xs font-medium" style={{ color: textColor, opacity: 0.6 }}>
+            <div className="p-4 text-center text-xs font-medium" style={{ color: "var(--texto-sobre-secundario)", opacity: 0.6 }}>
               Buscando resultados...
             </div>
           ) : filteredResults.length > 0 ? (
@@ -173,7 +158,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
                   <Link 
                     href={item.url}
                     onClick={() => setIsFocused(false)} 
-                    className={`flex items-center px-4 py-2.5 transition-colors gap-3 group ${isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                    className="flex items-center px-4 py-2.5 transition-colors gap-3 group hover:bg-[color-mix(in_srgb,var(--texto-sobre-secundario)_8%,transparent)]"
                   >
                     <div 
                       className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center border"
@@ -200,13 +185,13 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
                     <div className="flex flex-col overflow-hidden">
                       <span 
                         className="text-sm font-bold truncate transition-colors group-hover:opacity-80" 
-                        style={{ color: textColor }}
+                        style={{ color: "var(--texto-sobre-secundario)" }}
                       >
                         {item.title}
                       </span>
                       <span 
                         className="text-[10px] font-medium uppercase tracking-wider opacity-60"
-                        style={{ color: textColor }}
+                        style={{ color: "var(--texto-sobre-secundario)" }}
                       >
                         {item.type === 'page' ? 'Página' : 
                          item.type === 'product' ? 'Producto' : 
@@ -218,8 +203,8 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
               ))}
             </ul>
           ) : (
-            <div className="p-4 text-center text-xs font-medium" style={{ color: textColor, opacity: 0.6 }}>
-              No encontramos nada para "{query}"
+            <div className="p-4 text-center text-xs font-medium" style={{ color: "var(--texto-sobre-secundario)", opacity: 0.6 }}>
+              No encontramos nada para &quot;{query}&quot;
             </div>
           )}
         </div>

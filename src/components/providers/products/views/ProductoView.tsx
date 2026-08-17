@@ -6,17 +6,13 @@ import { Truck, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { ProductProps } from "../types";
 import WhatsAppOrderForm from "../forms/WhatsAppOrder";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import ProductAction from "@/components/ui/ProductAction";
 
 const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 
 export default function ProductoView({ product }: ProductProps) {
   const router = useRouter();
-  const { pageConfig } = usePageConfig();
   
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -90,7 +86,7 @@ export default function ProductoView({ product }: ProductProps) {
         <button
           onClick={() => router.back()}
           className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-75 transition-colors mb-8"
-          style={{ color: primaryColor }}
+          style={{ color: "var(--color-primario)" }}
         >
           <ArrowLeft size={14} className="transform group-hover:-translate-x-1 transition-transform" />
           Volver al catálogo
@@ -111,8 +107,8 @@ export default function ProductoView({ product }: ProductProps) {
                       : "border-transparent opacity-50 hover:opacity-100"
                     }`}
                     style={{ 
-                      borderColor: selectedImage === img.srcImage ? primaryColor : "transparent",
-                      boxShadow: selectedImage === img.srcImage ? `0 0 0 1px ${primaryColor}` : "none"
+                      borderColor: selectedImage === img.srcImage ? "var(--color-primario)" : "transparent",
+                      boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none"
                     }}
                   >
                     <img src={img.srcImage} alt="" className="w-full h-full object-cover" />
@@ -137,7 +133,7 @@ export default function ProductoView({ product }: ProductProps) {
           <div className="flex flex-col space-y-8 lg:sticky lg:top-32">
 
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: primaryColor }}>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-primario)" }}>
                 {product.category?.name}
                 {product.subCategory?.name && ` / ${product.subCategory.name}`}
               </p>
@@ -161,7 +157,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             <div className="border-b border-[var(--color-secundario)] pb-6 text-center lg:text-left">
               {esTabla ? (
-                <p className="text-2xl font-semibold" style={{ color: primaryColor }}>
+                <p className="text-2xl font-semibold" style={{ color: "var(--color-primario)" }}>
                   USD {Number(product.price).toLocaleString("es-AR")} - {Number(product.maxPrice).toLocaleString("es-AR")}
                 </p>
               ) : (
@@ -182,12 +178,12 @@ export default function ProductoView({ product }: ProductProps) {
                       title={color.name}
                       className={`w-8 h-8 rounded-full border transition-all ${selectedColor === color.name
                         ? "ring-2 ring-offset-2 scale-105"
-                        : "border-gray-200"
+                        : "border-[var(--color-secundario)]"
                       }`}
                       style={{ 
                         backgroundColor: color.hex || "#000",
-                        borderColor: selectedColor === color.name ? primaryColor : "#e5e7eb",
-                        boxShadow: selectedColor === color.name ? `0 0 0 2px ${primaryColor}` : "none"
+                        borderColor: selectedColor === color.name ? "var(--color-primario)" : "#e5e7eb",
+                        boxShadow: selectedColor === color.name ? "0 0 0 2px var(--color-primario)" : "none"
                       }}
                     />
                   ))}
@@ -212,7 +208,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             <div className="space-y-3 text-xs text-[var(--texto-sobre-fondo)] opacity-70 border-t border-b border-[var(--color-secundario)] py-4">
               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <Truck className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                <Truck className="w-3.5 h-3.5" style={{ color: "var(--color-primario)" }} />
                 <p>Envíos y logística a coordinar para todo el país.</p>
               </div>
             </div>
@@ -229,7 +225,7 @@ export default function ProductoView({ product }: ProductProps) {
         </div>
 
         <div className="mt-24 border-t border-[var(--color-secundario)] pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: primaryColor }}>
+          <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--color-primario)" }}>
             Product Overview
           </h2>
           <div className="text-[var(--texto-sobre-fondo)] opacity-70 font-light leading-relaxed space-y-4 text-base">

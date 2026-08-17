@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { MapPin, Clock, Phone, Navigation } from "lucide-react";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface LocationCardProps {
   title?: string;
@@ -24,11 +23,6 @@ export default function LocationCard({
   hours = "09:00 - 18:00",
   config,
 }: LocationCardProps) {
-  const { pageConfig } = usePageConfig();
-  const primaryColor = typeof pageConfig?.primaryColor === "string" && pageConfig.primaryColor
-    ? pageConfig.primaryColor
-    : "#06b6d4";
-
   const [isHovered, setIsHovered] = useState(false);
 
   const { address, city, province, phone, whatsapp, mapsUrl } = config;
@@ -55,12 +49,12 @@ export default function LocationCard({
       style={{
         background: "var(--color-secundario)",
         borderRadius: "24px",
-        boxShadow: isHovered ? `0 20px 25px -5px ${primaryColor}30` : undefined
+        boxShadow: isHovered ? "0 20px 25px -5px color-mix(in srgb, var(--color-primario) 20%, transparent)" : undefined
       }}
     >
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--color-secundario)]">
-        <div className="p-3 rounded-xl" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+        <div className="p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 8%, transparent)", color: "var(--color-primario)" }}>
           <MapPin size={24} />
         </div>
         <div>
@@ -68,7 +62,7 @@ export default function LocationCard({
             {title}
           </h3>
           {city && (
-            <p className="text-sm font-semibold" style={{ color: primaryColor }}>
+            <p className="text-sm font-semibold" style={{ color: "var(--color-primario)" }}>
               {city}{province ? `, ${province}` : ""}
             </p>
           )}
@@ -78,14 +72,14 @@ export default function LocationCard({
       {/* Detalles del Lugar */}
       <div className="space-y-4 my-5 text-sm">
         <div className="flex items-start gap-3">
-          <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+          <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
           <span className="font-medium text-[var(--texto-sobre-secundario)]">
             {address}
           </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+          <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
           <div>
             <p className="font-bold text-[var(--texto-sobre-secundario)]">{days}</p>
             <p className="text-xs text-[var(--texto-sobre-secundario)] opacity-60">{hours}</p>
@@ -94,11 +88,11 @@ export default function LocationCard({
 
         {contactPhone && (
           <div className="flex items-start gap-3">
-            <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+            <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
             <a
               href={`tel:${contactPhone.replace(/\s+/g, '')}`}
               className="font-medium hover:underline text-[var(--texto-sobre-secundario)] transition-colors"
-              onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
+              onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primario)"}
               onMouseLeave={(e) => e.currentTarget.style.color = "var(--texto-sobre-secundario)"}
             >
               {contactPhone}
@@ -113,7 +107,7 @@ export default function LocationCard({
         onClick={handleDirectionsClick}
         className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group cursor-pointer"
         style={{
-          backgroundColor: primaryColor,
+          backgroundColor: "var(--color-primario)",
           color: "var(--texto-sobre-primario)",
           borderRadius: "14px",
           fontSize: "13px",

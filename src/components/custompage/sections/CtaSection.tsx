@@ -15,7 +15,7 @@ export default function CtaSection({ section }: { section: CustomSection }) {
         <div className="lg:col-span-7 p-8 md:p-14 flex flex-col justify-between gap-8">
           <div>
             <span className="text-[10px] font-black tracking-[0.4em] block mb-3" style={{ color: "var(--color-primario)" }}>
-              // {section.subtitle}
+              {"// "}{section.subtitle}
             </span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic leading-[0.9] uppercase" style={{ color: "var(--texto-sobre-fondo)" }}>
               {section.title}
@@ -36,11 +36,10 @@ export default function CtaSection({ section }: { section: CustomSection }) {
             </a>
           </div>
         </div>
-        <div className="lg:col-span-5 p-8 md:p-14 flex items-center justify-center" style={{ background: "var(--color-secundario)" }}>
+        <div className="lg:col-span-5 p-8 md:p-14 flex items-center justify-center">
           <section
             className="flex items-center justify-center border-t-2"
             style={{
-              backgroundColor: "var(--color-secundario)",
               borderColor: "color-mix(in srgb, var(--color-primario) 20%, transparent)"
             }}
           >
@@ -59,10 +58,10 @@ export default function CtaSection({ section }: { section: CustomSection }) {
   return (
     <section
       className="w-full px-4 md:px-12 lg:px-16 py-12 flex flex-col md:flex-row md:items-center justify-between gap-6 border-t-2"
-      style={{ background: "var(--color-secundario)", borderColor: "var(--color-primario)" }}
+      style={{ background: "var(--color-fondo-sitio)", borderColor: "var(--color-primario)" }}
     >
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic leading-none mb-1" style={{ color: "var(--texto-sobre-secundario)" }}>{section.title}</h2>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic leading-none mb-1" style={{ color: "var(--texto-sobre-fondo)" }}>{section.title}</h2>
         <p className="text-[10px] font-black tracking-widest uppercase" style={{ color: "var(--color-primario)" }}>{section.subtitle}</p>
       </div>
 

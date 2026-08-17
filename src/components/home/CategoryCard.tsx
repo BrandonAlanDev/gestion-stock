@@ -4,29 +4,32 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { getContrastColor } from "@/lib/utils";
+import { useColoresTema } from "@/hooks/use-colores-tema";
+
+export interface CategoriaTarjeta {
+  id: string;
+  label: string;
+  sublabel: string;
+  href: string;
+  image: string;
+  subtitleNeon?: boolean;
+  subtitleDim?: boolean;
+  linkStyle?: string;
+  buttonVariant?: string;
+  buttonText?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
+}
 
 interface CategoryCardProps {
-  cat: {
-    id: string;
-    label: string;
-    sublabel: string;
-    href: string;
-    image: string;
-    subtitleNeon?: boolean;
-    subtitleDim?: boolean;
-    linkStyle?: string;
-    buttonVariant?: string;
-    buttonText?: string;
-    buttonBgColor?: string;
-    buttonTextColor?: string;
-  };
+  cat: CategoriaTarjeta;
   index: number;
-  primaryColor: string;
   variant?: 'grid' | 'collage' | 'minimal';
 }
 
-export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: CategoryCardProps) => {
+export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps) => {
   const [hovered, setHovered] = useState(false);
+  const { primario } = useColoresTema();
 
   const variantStyles = variant === 'grid'
     ? "h-[60vh] md:h-[80vh] min-h-[400px]"
@@ -39,11 +42,11 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
   const linkStyle = cat.linkStyle || "IMAGE";
   const buttonVariant = cat.buttonVariant || "DEFAULT";
   const buttonText = cat.buttonText || "Ver más";
-  const buttonBgColor = cat.buttonBgColor || primaryColor;
+  const buttonBgColor = cat.buttonBgColor || primario;
   const buttonTextColor = cat.buttonTextColor || getContrastColor(buttonBgColor);
 
   const neonStyle = subtitleNeon
-    ? { textShadow: `0 0 10px ${primaryColor}, 0 0 20px ${primaryColor}80` }
+    ? { textShadow: `0 0 10px ${primario}, 0 0 20px ${primario}80` }
     : {};
 
   const subtitleEl = cat.sublabel ? (
@@ -52,7 +55,7 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
         ? "text-sm text-[var(--texto-sobre-secundario)] opacity-70 mb-2"
         : "text-[10px] font-black tracking-[0.35em] uppercase mb-2"
       }
-      style={subtitleDim ? {} : { color: primaryColor, ...neonStyle }}
+      style={subtitleDim ? {} : { color: "var(--color-primario)", ...neonStyle }}
     >
       {cat.sublabel}
     </p>
@@ -76,7 +79,7 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
 
   const content = (
     <motion.div
-      className={`relative block overflow-hidden group bg-[var(--color-secundario)] border border-neutral-200/40 w-full ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
+      className={`relative block overflow-hidden group bg-[var(--color-secundario)] border border-[color-mix(in_srgb,var(--color-secundario)_60%,var(--color-fondo-sitio))] w-full ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       initial={{ opacity: 0 }}

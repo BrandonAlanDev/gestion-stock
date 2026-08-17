@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { T } from "./escuela.data";
 import EscuelaHero from "./sections/EscuelaHero";
 import EscuelaLevels from "./sections/EscuelaLevels";
 import EscuelaIncludes from "./sections/EscuelaIncludes";
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function NewSurfBoardPage() {
   return (
-    <main className="min-h-screen font-sans" style={{ background: T.bg1, color: T.text }}>
+    <main className="min-h-screen font-sans" style={{ background: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}>
       <EscuelaHero />
       <EscuelaLevels />
       <EscuelaIncludes />

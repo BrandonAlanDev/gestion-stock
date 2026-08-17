@@ -89,8 +89,8 @@ function BoardPreview({ state, options }: { state: State; options: BoardOptions 
   return (
     <svg width="60" height="160" viewBox="0 0 60 160" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
       <path d={boardPath} fill="var(--color-primario)" opacity={0.9} />
-      <path d={tailPath} fill="none" stroke="white" strokeWidth={1.5} opacity={0.6} />
-      {fins.map(([cx, cy], i) => <ellipse key={i} cx={cx} cy={cy} rx={3} ry={6} fill="white" opacity={0.75} />)}
+      <path d={tailPath} fill="none" stroke="var(--texto-sobre-primario)" strokeWidth={1.5} opacity={0.6} />
+      {fins.map(([cx, cy], i) => <ellipse key={i} cx={cx} cy={cy} rx={3} ry={6} fill="var(--texto-sobre-primario)" opacity={0.75} />)}
     </svg>
   );
 }
@@ -149,7 +149,7 @@ export default function PersonalizadoPage() {
   function buildMsg() {
     const vol = s.volumen ? `\n• Volumen: ${s.volumen} L` : "";
     const notas = s.notas.trim() ? `\n• Notas: ${s.notas}` : "";
-    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}\n• Entrega estimada: ${s.deliveryOption}\n Notas:${s.notas}\n\nQuedo a la espera de más info. Gracias!`;
+    return `Hola! Quiero encargar una tabla personalizada 🏄\n\n*NewSurfBoard — Pedido*\n• Tipo: ${s.tipo}\n• Largo: ${s.largo} pies\n• Ancho: ${s.ancho}"\n• Espesor: ${s.espesor}"${vol}\n• Material: ${s.material}\n• Cola: ${s.cola}\n• Sistema: ${s.killaTipo}\n• Killas: ${s.killaCount}\n• Entrega estimada: ${s.deliveryOption}${notas}\n\nQuedo a la espera de más info. Gracias!`;
   }
 
   async function handleSend() {
@@ -282,7 +282,7 @@ export default function PersonalizadoPage() {
 
             {/* Preview */}
             <div style={{ ...card, border: "1px solid color-mix(in srgb, var(--color-primario) 20%, transparent)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "var(--color-primario)", marginBottom: 16 }}>// Resumen de tu tabla</p>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "var(--color-primario)", marginBottom: 16 }}>{"// Resumen de tu tabla"}</p>
               <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <BoardPreview state={s} options={options} />
                 <div style={{ flex: 1, minWidth: 0 }}>

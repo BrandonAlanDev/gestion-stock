@@ -6,7 +6,6 @@ import { ChevronDown, Filter, SlidersHorizontal, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/ui/pagination";
 import ProductCard from "../cards/ProductCard";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface Props {
   garments: any[];
@@ -29,9 +28,6 @@ const ProductsPage = ({
 }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { pageConfig } = usePageConfig();
-  
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
   
   const categoriaParam = searchParams.get("categoria");
   const subcategoriaParam = searchParams.get("subcategoria");
@@ -121,7 +117,7 @@ const ProductsPage = ({
     <div className="pt-24 min-h-screen bg-[var(--color-fondo-sitio)] relative">
       {isPending && (
         <div className="fixed inset-0 z-50 bg-[var(--color-fondo-sitio)]/70 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin" style={{ color: primaryColor }} />
+          <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--color-primario)" }} />
         </div>
       )}
 
@@ -133,7 +129,7 @@ const ProductsPage = ({
           </div>
           <select
             className="appearance-none bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-xl px-4 py-2.5 text-sm text-[var(--texto-sobre-secundario)] focus:ring-2 outline-none cursor-pointer font-bold"
-            style={{ '--tw-ring-color': primaryColor, color: primaryColor } as React.CSSProperties}
+            style={{ '--tw-ring-color': "var(--color-primario)", color: "var(--color-primario)" } as React.CSSProperties}
             onChange={(e) => {
               const [key, order] = e.target.value.split("-");
               setSortConfig({ key, order });
@@ -159,8 +155,8 @@ const ProductsPage = ({
                   : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                   }`}
                 style={{ 
-                  backgroundColor: selectedCat === "Todos" ? `${primaryColor}1A` : undefined,
-                  color: selectedCat === "Todos" ? primaryColor : undefined
+                  backgroundColor: selectedCat === "Todos" ? "color-mix(in srgb, var(--color-primario) 10%, transparent)" : undefined,
+                  color: selectedCat === "Todos" ? "var(--color-primario)" : undefined
                 }}
               >
                 Todos los productos
@@ -179,14 +175,14 @@ const ProductsPage = ({
                         : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                         }`}
                       style={{ 
-                        backgroundColor: isCurrentCatSelected ? `${primaryColor}1A` : undefined,
-                        color: isCurrentCatSelected ? primaryColor : undefined
+                        backgroundColor: isCurrentCatSelected ? "color-mix(in srgb, var(--color-primario) 10%, transparent)" : undefined,
+                        color: isCurrentCatSelected ? "var(--color-primario)" : undefined
                       }}
                     >
                       <span>{cat.name}</span>
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                        style={{ color: isOpen ? primaryColor : undefined }}
+                        style={{ color: isOpen ? "var(--color-primario)" : undefined }}
                       />
                     </button>
                     <AnimatePresence>
@@ -203,7 +199,7 @@ const ProductsPage = ({
                               ? "font-bold"
                               : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                               }`}
-                            style={{ color: isCurrentCatSelected && selectedSub === "Todos" ? primaryColor : undefined }}
+                            style={{ color: isCurrentCatSelected && selectedSub === "Todos" ? "var(--color-primario)" : undefined }}
                           >
                             • Todo {cat.name}
                           </button>
@@ -217,7 +213,7 @@ const ProductsPage = ({
                                   ? "font-bold"
                                   : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                                   }`}
-                                style={{ color: isSubActive ? primaryColor : undefined }}
+                                style={{ color: isSubActive ? "var(--color-primario)" : undefined }}
                               >
                                 {sub.name}
                               </button>
@@ -246,7 +242,7 @@ const ProductsPage = ({
                 <button
                   onClick={handleClearAllCategories}
                   className="mt-4 font-bold hover:underline transition-colors"
-                  style={{ color: primaryColor }}
+                  style={{ color: "var(--color-primario)" }}
                 >
                   Limpiar filtros
                 </button>

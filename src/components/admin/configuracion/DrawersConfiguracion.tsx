@@ -43,14 +43,6 @@ export default function DrawersConfiguracion({
     borderRadius: config.borderRadius,
     shadowLevel: config.shadowLevel,
     density: config.density,
-    banners: config.banners.map((banner) => ({
-      id: banner.id,
-      image: banner.image ?? null,
-      title: banner.title ?? null,
-      subtitle: banner.subtitle ?? null,
-      text: banner.text ?? null,
-      url: banner.url ?? null,
-    })),
   });
 
   const aConfigAjustes = (): ConfigAjustes => ({

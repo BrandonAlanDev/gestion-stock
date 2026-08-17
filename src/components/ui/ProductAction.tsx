@@ -24,7 +24,6 @@ export default function ProductAction({ product, size, color, esTabla = false }:
     const { pageConfig } = usePageConfig();
     const [showOrderForm, setShowOrderForm] = useState(false);
 
-    const primaryColor = pageConfig?.primaryColor || "#06b6d4";
     const WS_NUMBER = pageConfig?.whatsapp || "2235644043";
 
     const handleAction = () => {
@@ -63,7 +62,7 @@ export default function ProductAction({ product, size, color, esTabla = false }:
             <button 
                 onClick={handleAction} 
                 className="w-full py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition-all hover:opacity-90 flex items-center justify-center gap-2" 
-                style={{ backgroundColor: primaryColor, color: "var(--texto-sobre-primario)" }}
+                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
                 {pageConfig?.cartEnabled ? (
                     <><ShoppingBag size={16} /> {esTabla ? "CONFIGURAR Y AGREGAR" : "AGREGAR AL CARRITO"}</>

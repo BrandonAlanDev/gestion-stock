@@ -29,13 +29,13 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-black rounded-2xl shadow-xl p-6 max-w-lg w-full border-2 border-white text-left">
+      <div className="bg-[var(--color-secundario)] rounded-2xl shadow-xl p-6 max-w-lg w-full border-2 border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] text-left">
         
-        <h2 className="text-xl font-semibold mb-4 text-white">
+        <h2 className="text-xl font-semibold mb-4 text-[var(--texto-sobre-secundario)]">
           Términos y Condiciones
         </h2>
 
-        <div className="text-gray-400 text-sm space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+        <div className="text-[var(--texto-sobre-secundario)] opacity-60 text-sm space-y-3 max-h-[55vh] overflow-y-auto pr-2">
 
           <p>
             El presente sistema es una herramienta de gestión proporcionada “tal cual”,
@@ -115,7 +115,7 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
             onChange={(e) => setAccepted(e.target.checked)}
             className="mt-1"
           />
-          <label htmlFor="acceptTerms" className="text-xs text-gray-400">
+          <label htmlFor="acceptTerms" className="text-xs text-[var(--texto-sobre-secundario)] opacity-60">
             He leído y acepto los Términos y Condiciones. Entiendo que el uso del
             sistema es bajo mi responsabilidad.
           </label>
@@ -128,8 +128,8 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
             disabled={!accepted}
             className={`px-4 py-2 rounded-xl border transition ${
               accepted
-                ? "border-gray-300 text-white hover:bg-white hover:text-black"
-                : "border-gray-700 text-gray-500 cursor-not-allowed"
+                ? "border-[var(--color-primario)] text-[var(--texto-sobre-secundario)] hover:bg-[var(--color-primario)] hover:text-[var(--texto-sobre-primario)]"
+                : "border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] text-[var(--texto-sobre-secundario)] opacity-40 cursor-not-allowed"
             }`}
           >
             Aceptar

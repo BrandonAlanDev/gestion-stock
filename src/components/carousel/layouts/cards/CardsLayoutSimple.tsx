@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -18,10 +18,9 @@ interface Slide {
 interface CardsLayoutSimpleProps {
   slides: Slide[];
   settings: { columns?: string; cardHeight?: string; showSubtitle?: boolean; enableHoverZoom?: boolean };
-  primaryColor: string;
 }
 
-export default function CardsLayoutSimple({ slides, settings, primaryColor }: CardsLayoutSimpleProps) {
+export default function CardsLayoutSimple({ slides, settings }: CardsLayoutSimpleProps) {
   const columns = settings.columns || "md:grid-cols-2";
   const cardHeight = settings.cardHeight || "50vh";
   const showSubtitle = settings.showSubtitle ?? true;
@@ -59,7 +58,7 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
               {!slide.config?.hideText && (
                 <div className="absolute inset-0 p-8 md:p-14 flex flex-col justify-end z-10">
                   {showSubtitle && slide.subtitle && (
-                    <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-2" style={{ color: primaryColor }}>
+                    <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-2" style={{ color: "var(--color-primario)" }}>
                       {"// " + slide.subtitle}
                     </motion.p>
                   )}
@@ -85,7 +84,7 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
               {!slide.config?.hideText && (
                 <div className="absolute inset-0 p-8 md:p-14 flex flex-col justify-end z-10">
                   {showSubtitle && slide.subtitle && (
-                    <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-2" style={{ color: primaryColor }}>
+                    <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-2" style={{ color: "var(--color-primario)" }}>
                       {"// " + slide.subtitle}
                     </motion.p>
                   )}

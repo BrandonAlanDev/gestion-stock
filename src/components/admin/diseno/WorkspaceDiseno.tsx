@@ -17,9 +17,19 @@ import PanelVistaPrevia from "./PanelVistaPrevia";
 import ProveedorVistaPrevia from "./proveedor-vista-previa";
 import useVistaPrevia from "./use-vista-previa";
 
-const PESTANAS: { href: string; etiqueta: string; icono: LucideIcon }[] = [
+const PESTANAS: {
+  href: string;
+  etiqueta: string;
+  icono: LucideIcon;
+  activoPrefijo?: string;
+}[] = [
   { href: "/admin/design", etiqueta: "Resumen", icono: LayoutDashboard },
-  { href: "/admin/design/apariencia", etiqueta: "Apariencia", icono: Palette },
+  {
+    href: "/admin/design/apariencia",
+    etiqueta: "Apariencia",
+    icono: Palette,
+    activoPrefijo: "/admin/design/apariencia",
+  },
   { href: "/admin/design/contenido", etiqueta: "Contenido", icono: LayoutList },
   { href: "/admin/design/estructura", etiqueta: "Estructura", icono: ListOrdered },
 ];

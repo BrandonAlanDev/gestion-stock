@@ -14,7 +14,6 @@ export interface OfferCarouselProps {
   title?: string;
   subtitle?: string;
   items: OfferItem[];
-  primaryColor?: string;
   autoplay?: boolean;
   autoplayDelay?: number;
 }

@@ -57,8 +57,8 @@ export default function CatalogoClient() {
   return (
     <div className="relative">
       {isFetching && (
-        <div className="fixed inset-0 z-50 bg-white/70 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+        <div className="fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--color-fondo-sitio)_70%,transparent)] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[var(--color-primario)] animate-spin" />
         </div>
       )}
       <ProductsPage

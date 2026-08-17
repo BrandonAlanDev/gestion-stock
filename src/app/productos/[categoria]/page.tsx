@@ -52,12 +52,12 @@ export default async function CategoriaPage({
   return (
     <div className="min-h-screen bg-[var(--color-fondo-sitio)] pt-24">
       {/* Header */}
-      <div className="bg-[var(--color-secundario)] border-b border-[var(--color-secundario)] relative overflow-hidden">
+      <div className="bg-[var(--color-fondo-sitio)] border-b border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--color-primario)]/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-[var(--texto-sobre-secundario)] opacity-70 hover:text-[var(--color-primario)] hover:opacity-100 text-xs font-bold uppercase tracking-widest mb-6 transition-colors group"
+            className="inline-flex items-center gap-2 text-[var(--texto-sobre-fondo)] opacity-70 hover:text-[var(--color-primario)] hover:opacity-100 text-xs font-bold uppercase tracking-widest mb-6 transition-colors group"
           >
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
             Volver al inicio
@@ -66,7 +66,7 @@ export default async function CategoriaPage({
             <span className="text-xs font-black tracking-widest uppercase text-[var(--color-primario)] mb-1 block">
               Catálogo Oficial
             </span>
-            <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-[var(--texto-sobre-secundario)] leading-none">
+            <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-[var(--texto-sobre-fondo)] leading-none">
               {category.name}
             </h1>
           </div>

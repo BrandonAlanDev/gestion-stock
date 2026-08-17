@@ -2,17 +2,6 @@ export const WHATSAPP_NUMBER = "";
 export const WHATSAPP_MESSAGE = "Hola! Me interesa info sobre las clases de surf";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
-export const T = {
-  bg1: "#f8ffff",
-  bg2: "#efffff",
-  tealDk: "#00b7c9",
-  tealMd: "#33d6e8",
-  tealLt: "#7cefff",
-  text: "#062b30",
-  textMd: "#4c6b70",
-  textDm: "rgba(6,43,48,0.35)",
-} as const;
-
 export const features = [
   "Tabla y traje incluidos — no necesitás traer nada.",
   "Instructor certificado en agua durante toda la clase.",

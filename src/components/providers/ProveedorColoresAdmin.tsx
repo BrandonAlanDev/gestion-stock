@@ -22,9 +22,12 @@ export default function ProveedorColoresAdmin({
     HEX_VALIDO.test(pageConfig.secondaryColor)
       ? pageConfig.secondaryColor
       : "#FFFFFF";
+  const fondo =
+    typeof pageConfig.bgColor === "string" && HEX_VALIDO.test(pageConfig.bgColor)
+      ? pageConfig.bgColor
+      : "#09090b";
 
-  const texto = getContrastColor(secundario);
-  const fondo = secundario;
+  const texto = getContrastColor(fondo);
   const primarioTexto = getContrastColor(primario);
   const textoSuave = texto + "B3";
   const borde = texto + "2E";

@@ -54,7 +54,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
 
         {!isAdminRoute && (
-          <footer className="border-t-2 border-gray-50">
+          <footer>
             {/* ... */}
           </footer>
         )}

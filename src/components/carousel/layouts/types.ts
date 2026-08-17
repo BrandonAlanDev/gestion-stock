@@ -22,5 +22,4 @@ export interface HeroLayoutProps {
     };
     slides: CarouselSlide[];
   };
-  primaryColor?: string;
 }
