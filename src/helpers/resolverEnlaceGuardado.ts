@@ -1,15 +1,20 @@
+import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+
 export function resolverEnlaceGuardado(
   linkType: string | undefined,
   url: string | undefined | null
 ): string {
-  const destino = (url ?? "").trim();
   switch (linkType) {
-    case "CATEGORY":
+    case "CATEGORY": {
+      const destino = normalizarValorEnlace(url ?? "");
       return destino ? `/productos?categoria=${encodeURIComponent(destino)}` : "";
-    case "PRODUCT":
+    }
+    case "PRODUCT": {
+      const destino = normalizarValorEnlace(url ?? "");
       return destino ? `/productos/item/${destino}` : "";
+    }
     case "EXTERNAL":
-      return destino;
+      return (url ?? "").trim();
     default:
       return "";
   }

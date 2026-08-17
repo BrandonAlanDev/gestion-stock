@@ -83,7 +83,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           isNew: false,
         })),
       });
-      setStep(1);
+      setStep(3);
     } else {
       setStep(1);
       setWizardData(DEFAULT_WIZARD_DATA);

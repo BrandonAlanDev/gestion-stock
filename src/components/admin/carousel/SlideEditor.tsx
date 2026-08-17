@@ -11,6 +11,7 @@ import LinkTypeSelector from "./LinkTypeSelector";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { compressImage } from "@/lib/image-utils";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
+import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
 
 interface SlideEditorProps {
   isOpen: boolean;
@@ -92,10 +93,8 @@ export default function SlideEditor({
         setHideButton(!!initialData.config?.hideButton);
         const linkType = initialData.linkType || ((initialData.config as Record<string, unknown> | undefined)?.linkType as string) || (initialData.url?.startsWith("http") ? "EXTERNAL" : "NONE");
         let urlInicial = initialData.url || "";
-        if (linkType === "CATEGORY" && urlInicial.startsWith("/productos?categoria=")) {
-          urlInicial = decodeURIComponent(urlInicial.slice("/productos?categoria=".length));
-        } else if (linkType === "PRODUCT" && urlInicial.startsWith("/productos/item/")) {
-          urlInicial = urlInicial.slice("/productos/item/".length);
+        if (linkType === "CATEGORY" || linkType === "PRODUCT") {
+          urlInicial = normalizarValorEnlace(urlInicial);
         }
         setFormData({
           image: initialData.image || "",

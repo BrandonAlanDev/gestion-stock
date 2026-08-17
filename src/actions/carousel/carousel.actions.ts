@@ -29,11 +29,13 @@ function migrateSettings(data: unknown): unknown {
 
   const oldLayout = s.layout;
   if (oldLayout === "grid" || oldLayout === "collage" || oldLayout === "minimal") {
+    const layoutsValidos = ["standard", "split", "minimal"];
+    const slideLayoutActual = typeof s.slideLayout === "string" ? s.slideLayout : "";
     return {
       ...d,
       settings: {
         ...s,
-        slideLayout: s.slideLayout ?? oldLayout,
+        slideLayout: layoutsValidos.includes(slideLayoutActual) ? slideLayoutActual : "standard",
         layout: "simple",
       },
     };
@@ -131,7 +133,7 @@ export async function updateCarousel(data: unknown) {
       id,
       type: wizardData.type,
       title: wizardData.title,
-      active: true,
+      active: existing.active,
       settings: wizardData.settings,
       slides: slidesWithImages,
     });

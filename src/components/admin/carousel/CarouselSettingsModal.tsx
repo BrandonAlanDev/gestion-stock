@@ -50,6 +50,9 @@ export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSav
           url: s.url || "",
           order: s.order,
           config: s.config || {},
+          linkType:
+            (s.config?.linkType as string) ||
+            (s.url?.startsWith("http") ? "EXTERNAL" : "NONE"),
         })),
       });
       if (res.success && res.data) {

@@ -44,8 +44,6 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
           {enlace ? (
             <Link
               href={enlace}
-              passHref
-              legacyBehavior
               className="relative block overflow-hidden cursor-pointer group bg-neutral-100 border border-neutral-200/40 w-full"
               style={{ height: cardHeight }}
             >
