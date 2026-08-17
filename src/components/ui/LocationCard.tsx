@@ -25,11 +25,12 @@ export default function LocationCard({
   config,
 }: LocationCardProps) {
   const { pageConfig } = usePageConfig();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  
-  // Estado añadido para corregir el ReferenceError
+  const primaryColor = typeof pageConfig?.primaryColor === "string" && pageConfig.primaryColor
+    ? pageConfig.primaryColor
+    : "#06b6d4";
+
   const [isHovered, setIsHovered] = useState(false);
-  
+
   const { address, city, province, phone, whatsapp, mapsUrl } = config;
 
   if (!address) return null;
@@ -47,23 +48,23 @@ export default function LocationCard({
   const contactPhone = whatsapp || phone;
 
   return (
-    <div 
-      className="w-full max-w-md p-6 shadow-xl border border-neutral-200 transition-all duration-300"
+    <div
+      className="w-full max-w-md p-6 shadow-xl border border-[var(--color-secundario)] transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ 
-        background: "#ffffff",
+      style={{
+        background: "var(--color-secundario)",
         borderRadius: "24px",
         boxShadow: isHovered ? `0 20px 25px -5px ${primaryColor}30` : undefined
       }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-neutral-100">
+      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--color-secundario)]">
         <div className="p-3 rounded-xl" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
           <MapPin size={24} />
         </div>
         <div>
-          <h3 className="text-lg font-black uppercase italic text-neutral-800">
+          <h3 className="text-lg font-black uppercase italic text-[var(--texto-sobre-secundario)]">
             {title}
           </h3>
           {city && (
@@ -78,7 +79,7 @@ export default function LocationCard({
       <div className="space-y-4 my-5 text-sm">
         <div className="flex items-start gap-3">
           <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
-          <span className="font-medium text-neutral-700">
+          <span className="font-medium text-[var(--texto-sobre-secundario)]">
             {address}
           </span>
         </div>
@@ -86,19 +87,19 @@ export default function LocationCard({
         <div className="flex items-start gap-3">
           <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
           <div>
-            <p className="font-bold text-neutral-700">{days}</p>
-            <p className="text-xs text-neutral-500">{hours}</p>
+            <p className="font-bold text-[var(--texto-sobre-secundario)]">{days}</p>
+            <p className="text-xs text-[var(--texto-sobre-secundario)] opacity-60">{hours}</p>
           </div>
         </div>
 
         {contactPhone && (
           <div className="flex items-start gap-3">
             <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
-            <a 
-              href={`tel:${contactPhone.replace(/\s+/g, '')}`} 
-              className="font-medium hover:underline text-neutral-700 transition-colors"
+            <a
+              href={`tel:${contactPhone.replace(/\s+/g, '')}`}
+              className="font-medium hover:underline text-[var(--texto-sobre-secundario)] transition-colors"
               onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = "#404040"}
+              onMouseLeave={(e) => e.currentTarget.style.color = "var(--texto-sobre-secundario)"}
             >
               {contactPhone}
             </a>
@@ -113,7 +114,7 @@ export default function LocationCard({
         className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group cursor-pointer"
         style={{
           backgroundColor: primaryColor,
-          color: "#ffffff",
+          color: "var(--texto-sobre-primario)",
           borderRadius: "14px",
           fontSize: "13px",
         }}

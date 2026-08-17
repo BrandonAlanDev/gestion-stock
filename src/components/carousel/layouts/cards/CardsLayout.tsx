@@ -60,10 +60,10 @@ export default function CardsLayout({ carousel, primaryColor = "#06b6d4", storeN
     <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b-2 pb-6" style={{ borderColor: primaryColor }}>
         <div>
-          <span className="text-[10px] font-black tracking-[0.4em] text-neutral-400 uppercase block mb-1">
+          <span className="text-[10px] font-black tracking-[0.4em] text-[var(--texto-sobre-secundario)] opacity-60 uppercase block mb-1">
             {storeName || "NEW SURF BOARD"}
           </span>
-          <h2 className="text-4xl md:text-6xl font-black text-black tracking-tighter uppercase italic leading-none">
+          <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-secundario)] tracking-tighter uppercase italic leading-none">
             {title}
           </h2>
         </div>
@@ -73,7 +73,7 @@ export default function CardsLayout({ carousel, primaryColor = "#06b6d4", storeN
 
   if (layout === "offers") {
     return (
-      <section className="w-full bg-white py-16 border-t-2" style={{ borderColor: primaryColor }}>
+      <section className="w-full bg-[var(--color-secundario)] py-16 border-t-2" style={{ borderColor: primaryColor }}>
         {headerSection}
         <OfferCarousel
           title={title}
@@ -88,7 +88,7 @@ export default function CardsLayout({ carousel, primaryColor = "#06b6d4", storeN
   }
 
   return (
-    <section id="featured" className="w-full bg-white py-16 border-t-2" style={{ borderColor: primaryColor }}>
+    <section id="featured" className="w-full bg-[var(--color-secundario)] py-16 border-t-2" style={{ borderColor: primaryColor }}>
       {headerSection}
       <div className="w-full px-4 md:px-12 lg:px-16">
         <CardsLayoutSimple slides={slides} settings={settings} primaryColor={primaryColor} />

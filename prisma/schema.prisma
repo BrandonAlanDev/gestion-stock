@@ -203,6 +203,7 @@ model PageConfig {
   favicon              String?                   @db.Text
   primaryColor         String?                   @default("#000000")
   secondaryColor       String?                   @default("#FFFFFF")
+  bgColor              String?                   @default("#09090b")
   ecommerceEnabled     Boolean                   @default(true)
   cartEnabled          Boolean                   @default(true)
   checkoutEnabled      Boolean                   @default(true)

@@ -30,7 +30,7 @@ export function Footer({
   const primaryColor = pageConfig?.primaryColor || "#06b6d4";
 
   return (
-    <footer className="bg-white border-t border-slate-200 text-slate-900">
+    <footer className="bg-[var(--color-secundario)] border-t border-[var(--color-fondo-sitio)]/10 text-[var(--texto-sobre-secundario)]">
       {/* Franja superior */}
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -43,7 +43,7 @@ export function Footer({
                 </>
               )}
             </span>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+            <p className="text-sm text-[var(--texto-sobre-secundario)] opacity-60 leading-relaxed max-w-xs">
               {pageConfig?.description ||
                 "Tu tienda online de respaldo para tu comercio físico. Gestiona tu stock, exhibe tus productos y llega a más clientes con nuestra plataforma de ecommerce integrada."}
             </p>
@@ -64,7 +64,7 @@ export function Footer({
                   rel="noopener noreferrer"
                   className={`${
                     !href ? "hidden" : ""
-                  } w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 transition-all duration-300 hover:border-[var(--hover-color)] hover:text-[var(--hover-color)] hover:bg-[var(--bg-hover)]`}
+                  } w-9 h-9 rounded-xl border border-[var(--color-fondo-sitio)]/10 bg-[var(--color-fondo-sitio)]/5 flex items-center justify-center text-[var(--texto-sobre-secundario)] opacity-70 transition-all duration-300 hover:opacity-100 hover:border-[var(--hover-color)] hover:text-[var(--hover-color)] hover:bg-[var(--bg-hover)]`}
                   style={{
                     // Usamos variables CSS para los estados hover
                     '--hover-color': primaryColor,
@@ -87,7 +87,7 @@ export function Footer({
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
+                      className="text-sm text-[var(--texto-sobre-secundario)] opacity-60 hover:opacity-100 transition-colors duration-200 flex items-center gap-1.5 group"
                     >
                       <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: primaryColor }} />
                       {l.label}
@@ -105,7 +105,7 @@ export function Footer({
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-sm text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center gap-1.5 group"
+                      className="text-sm text-[var(--texto-sobre-secundario)] opacity-60 hover:opacity-100 transition-colors duration-200 flex items-center gap-1.5 group"
                     >
                       <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" style={{ color: primaryColor }} />
                       {l.label}
@@ -118,17 +118,17 @@ export function Footer({
         </div>
       </div>
 
-      <div className="border-t border-slate-100" />
+      <div className="border-t border-[var(--color-fondo-sitio)]/10" />
 
       {/* Franja inferior */}
       <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[var(--texto-sobre-secundario)] opacity-50">
           © {new Date().getFullYear()} {pageConfig?.storeName || "GestionOK"} —{" "}
           {pageConfig?.location ? `${pageConfig.location}, Argentina` : "Argentina"}.
         </p>
         <div className="flex gap-5">
-          <button onClick={(e) => { e.preventDefault(); openTerms(); }} className="text-xs text-slate-400 hover:text-slate-700 transition-colors">Términos</button>
-          <button onClick={(e) => { e.preventDefault(); openPrivacy(); }} className="text-xs text-slate-400 hover:text-slate-700 transition-colors">Privacidad</button>
+          <button onClick={(e) => { e.preventDefault(); openTerms(); }} className="text-xs text-[var(--texto-sobre-secundario)] opacity-50 hover:opacity-100 transition-colors">Términos</button>
+          <button onClick={(e) => { e.preventDefault(); openPrivacy(); }} className="text-xs text-[var(--texto-sobre-secundario)] opacity-50 hover:opacity-100 transition-colors">Privacidad</button>
         </div>
       </div>
     </footer>

@@ -15,6 +15,7 @@ export interface ConfigApariencia {
   favicon: string | null;
   primaryColor: string;
   secondaryColor: string;
+  bgColor: string;
   fontPrimary: string;
   fontSecondary: string;
   borderRadius: string;
@@ -33,6 +34,7 @@ export type ConfigAparienciaEntrada =
       favicon: string | null;
       primaryColor: string | null;
       secondaryColor: string | null;
+      bgColor: string | null;
       fontPrimary: string | null;
       fontSecondary: string | null;
       borderRadius: string | null;

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { getContrastColor } from "@/lib/utils";
 
 interface CategoryCardProps {
   cat: {
@@ -39,7 +40,7 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
   const buttonVariant = cat.buttonVariant || "DEFAULT";
   const buttonText = cat.buttonText || "Ver más";
   const buttonBgColor = cat.buttonBgColor || primaryColor;
-  const buttonTextColor = cat.buttonTextColor || "#ffffff";
+  const buttonTextColor = cat.buttonTextColor || getContrastColor(buttonBgColor);
 
   const neonStyle = subtitleNeon
     ? { textShadow: `0 0 10px ${primaryColor}, 0 0 20px ${primaryColor}80` }
@@ -48,7 +49,7 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
   const subtitleEl = cat.sublabel ? (
     <p
       className={subtitleDim
-        ? "text-sm text-gray-400/70 mb-2"
+        ? "text-sm text-[var(--texto-sobre-secundario)] opacity-70 mb-2"
         : "text-[10px] font-black tracking-[0.35em] uppercase mb-2"
       }
       style={subtitleDim ? {} : { color: primaryColor, ...neonStyle }}
@@ -75,7 +76,7 @@ export const CategoryCard = ({ cat, index, primaryColor, variant = 'grid' }: Cat
 
   const content = (
     <motion.div
-      className={`relative block overflow-hidden group bg-neutral-100 border border-neutral-200/40 w-full ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
+      className={`relative block overflow-hidden group bg-[var(--color-secundario)] border border-neutral-200/40 w-full ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       initial={{ opacity: 0 }}

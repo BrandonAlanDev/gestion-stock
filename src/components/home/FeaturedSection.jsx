@@ -29,9 +29,9 @@ export default function FeaturedSection() {
   };
 
   return (
-    <section className="w-full bg-white py-16 border-t-2" style={{ borderColor: primaryColor }}>
+    <section className="w-full bg-[var(--color-secundario)] py-16 border-t-2" style={{ borderColor: primaryColor }}>
       <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
-        <h2 className="text-4xl md:text-6xl font-black text-black uppercase italic">
+        <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-secundario)] uppercase italic">
           {homeData?.title || "CATALOGO Y SERVICIOS"}
         </h2>
       </div>

@@ -10,6 +10,7 @@ export type PageConfigInput = {
 
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  bgColor?: string | null;
 
   fontPrimary?: string;
   fontSecondary?: string;

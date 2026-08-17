@@ -19,6 +19,7 @@ type BrandingInput = {
   favicon?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  bgColor?: string | null;
 
   fontPrimary?: string;
   fontSecondary?: string;
@@ -44,6 +45,8 @@ export async function updateBrandingConfig(data: BrandingInput) {
 
       secondaryColor:
         data.secondaryColor ?? pageConfig?.secondaryColor ?? "#ffffff",
+
+      bgColor: data.bgColor ?? pageConfig?.bgColor ?? "#09090b",
 
       logo: data.logo ?? pageConfig?.logo ?? null,
 
@@ -128,6 +131,7 @@ export const getBrandingConfig = unstable_cache(
           favicon: true,
           primaryColor: true,
           secondaryColor: true,
+          bgColor: true,
 
           banners: {
             orderBy: {

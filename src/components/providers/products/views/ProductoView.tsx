@@ -83,13 +83,13 @@ export default function ProductoView({ product }: ProductProps) {
   const hasDescription = product.description && product.description.trim() !== "";
 
   return (
-    <div className="bg-white min-h-screen pt-32 pb-24 text-gray-900 selection:bg-gray-200">
+    <div className="bg-[var(--color-fondo-sitio)] min-h-screen pt-32 pb-24 text-[var(--texto-sobre-fondo)] selection:bg-[var(--color-secundario)]">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
 
         {/* BOTÓN VOLVER ATRÁS */}
         <button
           onClick={() => router.back()}
-          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-gray-400 hover:opacity-75 transition-colors mb-8"
+          className="group flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-75 transition-colors mb-8"
           style={{ color: primaryColor }}
         >
           <ArrowLeft size={14} className="transform group-hover:-translate-x-1 transition-transform" />
@@ -106,7 +106,7 @@ export default function ProductoView({ product }: ProductProps) {
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
-                    className={`w-16 h-20 overflow-hidden bg-gray-50/50 rounded-md transition-all border ${selectedImage === img.srcImage
+                    className={`w-16 h-20 overflow-hidden bg-[var(--superficie-imagen)] rounded-md transition-all border ${selectedImage === img.srcImage
                       ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
                     }`}
@@ -121,7 +121,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            <div className="w-full bg-slate-50/50 rounded-xl p-8 flex items-center justify-center min-h-[450px] md:min-h-[650px]">
+            <div className="w-full bg-[var(--superficie-imagen)] rounded-xl p-8 flex items-center justify-center min-h-[450px] md:min-h-[650px]">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -148,24 +148,24 @@ export default function ProductoView({ product }: ProductProps) {
                     <img
                       src={logoImage}
                       alt={`Logo de ${product.name}`}
-                      className="w-full h-full object-contain mix-blend-multiply"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 </div>
               )}
 
-              <h1 className="text-3xl md:text-4xl font-light tracking-tight text-gray-900 capitalize text-center lg:text-left">
+              <h1 className="text-3xl md:text-4xl font-light tracking-tight text-[var(--texto-sobre-fondo)] capitalize text-center lg:text-left">
                 {product.name.toLowerCase()}
               </h1>
             </div>
 
-            <div className="border-b border-gray-100 pb-6 text-center lg:text-left">
+            <div className="border-b border-[var(--color-secundario)] pb-6 text-center lg:text-left">
               {esTabla ? (
                 <p className="text-2xl font-semibold" style={{ color: primaryColor }}>
                   USD {Number(product.price).toLocaleString("es-AR")} - {Number(product.maxPrice).toLocaleString("es-AR")}
                 </p>
               ) : (
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-[var(--texto-sobre-fondo)]">
                   $ {Number(product.price).toLocaleString("es-AR")}
                 </p>
               )}
@@ -173,7 +173,7 @@ export default function ProductoView({ product }: ProductProps) {
 
             {hasColors && (
               <div className="space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Color</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--texto-sobre-fondo)] opacity-60">Color</h3>
                 <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
                   {colors.map((color: any) => (
                     <button
@@ -197,12 +197,12 @@ export default function ProductoView({ product }: ProductProps) {
 
             {hasSizes && (
               <div className="space-y-3 text-center lg:text-left">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--texto-sobre-fondo)] opacity-60">
                   Medidas disponibles
                 </h3>
                 <div className="space-y-1">
                   {sizes.map((size: any) => (
-                    <p key={size.id} className="text-sm text-gray-600 font-light">
+                    <p key={size.id} className="text-sm text-[var(--texto-sobre-fondo)] opacity-70 font-light">
                       {size.name}
                     </p>
                   ))}
@@ -210,7 +210,7 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            <div className="space-y-3 text-xs text-gray-500 border-t border-b border-gray-100 py-4">
+            <div className="space-y-3 text-xs text-[var(--texto-sobre-fondo)] opacity-70 border-t border-b border-[var(--color-secundario)] py-4">
               <div className="flex items-center gap-2 justify-center lg:justify-start">
                 <Truck className="w-3.5 h-3.5" style={{ color: primaryColor }} />
                 <p>Envíos y logística a coordinar para todo el país.</p>
@@ -228,11 +228,11 @@ export default function ProductoView({ product }: ProductProps) {
           </div>
         </div>
 
-        <div className="mt-24 border-t border-gray-100 pt-16 max-w-3xl">
+        <div className="mt-24 border-t border-[var(--color-secundario)] pt-16 max-w-3xl">
           <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: primaryColor }}>
             Product Overview
           </h2>
-          <div className="text-gray-600 font-light leading-relaxed space-y-4 text-base">
+          <div className="text-[var(--texto-sobre-fondo)] opacity-70 font-light leading-relaxed space-y-4 text-base">
             <p className="whitespace-pre-line">
               {hasDescription ? product.description : "No description available for this model."}
             </p>

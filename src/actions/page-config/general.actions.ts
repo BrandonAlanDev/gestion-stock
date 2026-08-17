@@ -14,6 +14,7 @@ export async function getPageConfig() {
         favicon: true,
         primaryColor: true,
         secondaryColor: true,
+        bgColor: true,
         fontPrimary: true,
         fontSecondary: true,
         borderRadius: true,

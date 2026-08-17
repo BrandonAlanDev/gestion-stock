@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCarousels } from "@/hooks/useCarousels";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import HeroLayout from "./layouts/hero/HeroLayout";
 import BannerLayout from "./layouts/banner/BannerLayout";
 import CardsLayout from "./layouts/cards/CardsLayout";
@@ -15,7 +16,10 @@ interface CarouselContainerProps {
 
 export default function CarouselContainer({ filterType = "BANNER", excludeFirst = false, storeName }: CarouselContainerProps) {
   const { data, isLoading, error } = useCarousels({ type: filterType });
+  const { pageConfig } = usePageConfig();
   const [mounted, setMounted] = useState(false);
+
+  const primaryColor = (typeof pageConfig?.primaryColor === "string" && pageConfig.primaryColor) ? pageConfig.primaryColor : "#06b6d4";
 
   useEffect(() => {
     setMounted(true);
@@ -62,19 +66,19 @@ export default function CarouselContainer({ filterType = "BANNER", excludeFirst 
         switch (carousel.type) {
           case "HERO":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
             }
-            return <HeroLayout key={carousel.id} carousel={carousel} />;
+            return <HeroLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
           case "BANNER":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
             }
-            return <BannerLayout key={carousel.id} carousel={carousel} />;
+            return <BannerLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
           case "CARDS":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
             }
-            return <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
+            return <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} primaryColor={primaryColor} />;
           default:
             return null;
         }

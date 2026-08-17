@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 
 const FUENTES_BASE = new Set(["Outfit", "Playfair Display"]);
 
@@ -21,6 +22,11 @@ export default function EstilosApariencia() {
       : "Playfair Display";
 
   useEffect(() => {
+    const variablesTema = obtenerVariablesTema(pageConfig);
+    for (const [clave, valor] of Object.entries(variablesTema)) {
+      document.documentElement.style.setProperty(clave, valor);
+    }
+
     document.documentElement.style.setProperty(
       "--fuente-principal",
       `'${fontPrimary}', sans-serif`,
@@ -52,7 +58,7 @@ export default function EstilosApariencia() {
       document.head.appendChild(link);
       linksCargados.current.set(fuente, link);
     }
-  }, [fontPrimary, fontSecondary]);
+  }, [fontPrimary, fontSecondary, pageConfig]);
 
   return null;
 }

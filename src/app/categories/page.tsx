@@ -14,21 +14,21 @@ export default async function CategoriesAdminPage() {
   ]);
 
   return (
-    <div className="p-8 min-h-screen pt-24" style={{ background: "#f0fafa", color: "#0d2b2e" }}>
+    <div className="p-8 min-h-screen pt-24" style={{ background: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}>
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1
             className="text-3xl font-black uppercase italic flex items-center gap-3"
-            style={{ color: "#083d42" }}
+            style={{ color: "var(--texto-sobre-fondo)" }}
           >
-            <Tag style={{ color: "#0d5c63" }} />
+            <Tag style={{ color: "var(--color-primario)" }} />
             Estructura de Catálogo
           </h1>
           <p
             className="text-[10px] font-black uppercase mt-1"
-            style={{ color: "#4a7c80", letterSpacing: "0.4em" }}
+            style={{ color: "var(--texto-sobre-fondo)", opacity: 0.7, letterSpacing: "0.4em" }}
           >
             Gestión de categorías y subgrupos de NewSurfBoard
           </p>
@@ -43,8 +43,8 @@ export default async function CategoriesAdminPage() {
             key={cat.id}
             className="flex flex-col relative"
             style={{
-              background: "#ffffff",
-              border: "1px solid #b2dede",
+              background: "var(--color-secundario)",
+              border: "1px solid var(--color-secundario)",
               borderRadius: "2.5rem",
               padding: "1.5rem",
             }}
@@ -54,9 +54,9 @@ export default async function CategoriesAdminPage() {
               <div
                 className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase"
                 style={{
-                  color: "#0d5c63",
-                  background: "rgba(13,92,99,0.08)",
-                  border: "1px solid rgba(13,92,99,0.2)",
+                  color: "var(--color-primario)",
+                  background: "color-mix(in srgb, var(--color-primario) 8%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--color-primario) 20%, transparent)",
                   borderRadius: "10px",
                 }}
               >
@@ -69,7 +69,7 @@ export default async function CategoriesAdminPage() {
             {/* Nombre categoría */}
             <h3
               className="text-2xl font-black uppercase italic mb-6"
-              style={{ color: "#083d42" }}
+              style={{ color: "var(--texto-sobre-secundario)" }}
             >
               {cat.name}
             </h3>
@@ -78,7 +78,7 @@ export default async function CategoriesAdminPage() {
             <div className="flex-1 space-y-3">
               <h4
                 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
-                style={{ color: "#4a7c80" }}
+                style={{ color: "var(--texto-sobre-secundario)", opacity: 0.7 }}
               >
                 <Layers size={12} /> Subcategorías Actuales
               </h4>
@@ -89,21 +89,21 @@ export default async function CategoriesAdminPage() {
                     key={sub.id}
                     className="flex justify-between items-center p-3"
                     style={{
-                      background: "#f0fafa",
-                      border: "1px solid #b2dede",
+                      background: "color-mix(in srgb, var(--color-primario) 8%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--color-primario) 20%, transparent)",
                       borderRadius: "16px",
                     }}
                   >
                     <div>
                       <p
                         className="text-xs font-bold uppercase"
-                        style={{ color: "#083d42" }}
+                        style={{ color: "var(--texto-sobre-secundario)" }}
                       >
                         {sub.name}
                       </p>
                       <p
                         className="text-[8px] font-black uppercase"
-                        style={{ color: "#4ab8b8" }}
+                        style={{ color: "var(--color-primario)" }}
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
@@ -113,7 +113,7 @@ export default async function CategoriesAdminPage() {
                 ))}
 
                 {(!cat.subCategories || cat.subCategories.length === 0) && (
-                  <p className="text-[10px] italic" style={{ color: "#b2dede" }}>
+                  <p className="text-[10px] italic" style={{ color: "var(--texto-sobre-secundario)", opacity: 0.5 }}>
                     No hay subcategorías.
                   </p>
                 )}
@@ -121,7 +121,7 @@ export default async function CategoriesAdminPage() {
             </div>
 
             {/* Formulario agregar subcategoría */}
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #e0f5f5" }}>
+            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid var(--color-secundario)" }}>
               <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} />
             </div>
           </div>

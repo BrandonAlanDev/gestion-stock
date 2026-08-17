@@ -61,21 +61,21 @@ function parseSectionOrder(raw: unknown): string[] {
   return [];
 }
 
-function renderCarousel(carousel: CarouselData, storeName?: string) {
+function renderCarousel(carousel: CarouselData, storeName?: string, primaryColor?: string) {
   const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
   switch (carousel.type) {
     case "HERO":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
-        : <HeroLayout key={carousel.id} carousel={carousel} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
+        : <HeroLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
     case "BANNER":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
-        : <BannerLayout key={carousel.id} carousel={carousel} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
+        : <BannerLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />;
     case "CARDS":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
-        : <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} primaryColor={primaryColor} />
+        : <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} primaryColor={primaryColor} />;
     default:
       return null;
   }
@@ -85,8 +85,8 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
-  const primaryColor = (config?.primaryColor as string) || "#06b6d4";
-  const secondaryColor = (config?.secondaryColor as string) || "#f8fafc";
+  const primaryColor = (typeof config?.primaryColor === "string" && config.primaryColor) ? config.primaryColor : "#06b6d4";
+
   const showLocation = config?.locationEnabled && config?.address;
 
   const sectionOrder = parseSectionOrder(config?.sectionOrder);
@@ -147,7 +147,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
       const id = section.slice("carousel_".length);
       const carousel = carouselMap.get(id);
       if (!carousel) return null;
-      return renderCarousel(carousel, config?.storeName as string);
+      return renderCarousel(carousel, config?.storeName as string, primaryColor);
     }
 
     switch (section) {
@@ -157,7 +157,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "HERO" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
           </section>
         );
       case "banner":
@@ -166,7 +166,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "BANNER" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
           </section>
         );
       case "featured":
@@ -181,7 +181,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             {fetchedCarousels
               ?.filter((c) => c.type === "CARDS" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, primaryColor))}
           </section>
         );
       case "location":
@@ -190,8 +190,8 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             key="location"
             className="flex items-center justify-center p-6 py-16 border-t-2"
             style={{
-              backgroundColor: secondaryColor,
-              borderColor: `${primaryColor}20`,
+              backgroundColor: "var(--color-secundario)",
+              borderColor: "var(--color-primario)",
             }}
           >
             <LocationCard
@@ -216,7 +216,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden max-w-full" style={{ backgroundColor: `${primaryColor}05` }}>
+    <div className="min-h-screen overflow-x-hidden max-w-full" style={{ backgroundColor: "var(--color-fondo-sitio)" }}>
       {hasCustomOrder ? (
         sectionOrder.map((section, index) => renderWithMt(section, index))
       ) : (
@@ -231,8 +231,8 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             <section
               className="flex items-center justify-center p-6 py-16 border-t-2"
               style={{
-                backgroundColor: secondaryColor,
-                borderColor: `${primaryColor}20`,
+                backgroundColor: "var(--color-secundario)",
+                borderColor: "var(--color-primario)",
               }}
             >
               <LocationCard

@@ -37,6 +37,7 @@ export default function DrawersConfiguracion({
     favicon: config.favicon ?? null,
     primaryColor: config.primaryColor ?? "#06b6d4",
     secondaryColor: config.secondaryColor ?? "#ffffff",
+    bgColor: config.bgColor ?? "#09090b",
     fontPrimary: config.fontPrimary,
     fontSecondary: config.fontSecondary,
     borderRadius: config.borderRadius,

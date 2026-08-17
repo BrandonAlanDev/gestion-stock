@@ -15,6 +15,7 @@ export default async function PageConfigPage() {
         favicon: pageConfig.favicon ?? null,
         primaryColor: pageConfig.primaryColor ?? "#06b6d4",
         secondaryColor: pageConfig.secondaryColor ?? "#ffffff",
+        bgColor: pageConfig.bgColor ?? "#09090b",
         fontPrimary: pageConfig.fontPrimary ?? "Outfit",
         fontSecondary: pageConfig.fontSecondary ?? "Playfair Display",
         borderRadius: pageConfig.borderRadius ?? "redondeado",

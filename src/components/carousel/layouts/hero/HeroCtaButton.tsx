@@ -24,7 +24,7 @@ export default function HeroCtaButton({
         className="group relative overflow-hidden px-8 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm flex items-center gap-3 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         style={{
           background: primaryColor,
-          color: "#000",
+          color: "var(--texto-sobre-primario)",
           boxShadow: `0 0 40px ${primaryColor}35`,
         }}
       >

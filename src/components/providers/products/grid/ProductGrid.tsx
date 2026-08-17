@@ -33,11 +33,11 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className="group bg-white border border-slate-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-slate-200/60 hover:border-slate-200 transition-all duration-300"
+      className="group bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-2xl overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-[var(--color-primario)]/20 hover:border-[var(--color-primario)]/40 transition-all duration-300"
     >
       {/* Imagen */}
       <div
-        className="aspect-square bg-slate-100 overflow-hidden relative"
+        className="aspect-square bg-[var(--superficie-imagen)] overflow-hidden relative"
         onMouseEnter={() => garment.images.length > 1 && setImgIndex(1)}
         onMouseLeave={() => setImgIndex(0)}
       >
@@ -49,13 +49,13 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package size={32} className="text-slate-300" />
+            <Package size={32} className="text-[var(--texto-sobre-secundario)] opacity-40" />
           </div>
         )}
 
         {/* Badge sin stock */}
         {totalStock === 0 && (
-          <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg backdrop-blur-sm">
+          <div className="absolute top-3 left-3 bg-[var(--color-fondo-sitio)]/80 text-[var(--texto-sobre-fondo)] text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg backdrop-blur-sm">
             Sin stock
           </div>
         )}
@@ -76,15 +76,15 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
       {/* Info */}
       <div className="p-4">
         {garment.subCategory && (
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 mb-1">
             {garment.subCategory.name}
           </p>
         )}
-        <h3 className="font-black text-slate-900 text-base leading-tight tracking-tight line-clamp-2 mb-2">
+        <h3 className="font-black text-[var(--texto-sobre-secundario)] text-base leading-tight tracking-tight line-clamp-2 mb-2">
           {garment.name}
         </h3>
         <div className="flex items-center justify-between">
-          <span className="text-lg font-black text-cyan-600">{price}</span>
+          <span className="text-lg font-black text-[var(--color-primario)]">{price}</span>
           <div className="flex gap-1">
             {/* Puntos de colores disponibles */}
             {Array.from(new Set(garment.variants.filter(v => v.color).map(v => v.color!.hex || "#e2e8f0")))
@@ -144,14 +144,14 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
       >
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto pointer-events-auto">
+        <div className="bg-[var(--color-secundario)] rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto pointer-events-auto">
 
           <div className="grid md:grid-cols-2 gap-0">
 
             {/* Imágenes */}
-            <div className="bg-slate-50 rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl md:rounded-tr-none p-4 flex flex-col gap-3">
+            <div className="bg-[var(--color-fondo-sitio)]/5 rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl md:rounded-tr-none p-4 flex flex-col gap-3">
               {/* Imagen principal */}
-              <div className="aspect-square rounded-2xl overflow-hidden bg-slate-200 relative">
+              <div className="aspect-square rounded-2xl overflow-hidden bg-[var(--superficie-imagen)] relative">
                 {garment.images[selectedImg] ? (
                   <img
                     src={garment.images[selectedImg].srcImage}
@@ -160,12 +160,12 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Package size={48} className="text-slate-300" strokeWidth={1} />
+                    <Package size={48} className="text-[var(--texto-sobre-secundario)] opacity-40" strokeWidth={1} />
                   </div>
                 )}
                 <button
                   onClick={onClose}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors md:hidden"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[var(--color-secundario)] border border-slate-200 flex items-center justify-center text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100 transition-colors md:hidden"
                 >
                   <X size={15} />
                 </button>
@@ -178,7 +178,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                     <button
                       key={img.id}
                       onClick={() => setSelectedImg(i)}
-                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-cyan-500" : "border-transparent opacity-60 hover:opacity-100"}`}
+                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-[var(--color-primario)]" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
                       <img src={img.srcImage} alt={img.alt || ""} className="w-full h-full object-cover" />
                     </button>
@@ -192,41 +192,41 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
               <div className="flex items-start justify-between">
                 <div>
                   {garment.subCategory && (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 mb-1">
                       {garment.subCategory.name}
                     </p>
                   )}
-                  <h2 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900 leading-tight">
+                  <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[var(--texto-sobre-secundario)] leading-tight">
                     {garment.name}
                   </h2>
                 </div>
                 <button
                   onClick={onClose}
-                  className="hidden md:flex w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 items-center justify-center text-slate-500 hover:text-slate-900 transition-colors flex-shrink-0"
+                  className="hidden md:flex w-8 h-8 rounded-full bg-[var(--color-secundario)] hover:opacity-90 items-center justify-center text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100 transition-colors flex-shrink-0"
                 >
                   <X size={15} />
                 </button>
               </div>
 
-              <span className="text-3xl font-black text-cyan-600">{price}</span>
+              <span className="text-3xl font-black text-[var(--color-primario)]">{price}</span>
 
               {/* Stock */}
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${totalStock > 0 ? "bg-emerald-400" : "bg-red-400"}`} />
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-[var(--texto-sobre-secundario)] opacity-70">
                   {totalStock > 0 ? `${totalStock} unidades disponibles` : "Sin stock"}
                 </span>
               </div>
 
               {/* Descripción */}
               {garment.description && (
-                <p className="text-sm text-slate-500 leading-relaxed">{garment.description}</p>
+                <p className="text-sm text-[var(--texto-sobre-secundario)] opacity-70 leading-relaxed">{garment.description}</p>
               )}
 
               {/* Talles */}
               {sizes.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 flex items-center gap-1.5">
                     <Layers size={11} /> Talle
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -239,10 +239,10 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                           disabled={!hasStock}
                           className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
                             selectedSize === s.value
-                              ? "bg-slate-900 text-white border-slate-900"
+                              ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] border-[var(--color-primario)]"
                               : hasStock
-                              ? "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
-                              : "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed line-through"
+                              ? "bg-[var(--color-fondo-sitio)]/5 text-[var(--texto-sobre-secundario)] border-[var(--color-secundario)] hover:opacity-90"
+                              : "bg-[var(--color-fondo-sitio)]/5 text-[var(--texto-sobre-secundario)]/40 border-[var(--color-secundario)] cursor-not-allowed line-through"
                           }`}
                         >
                           {s.value}
@@ -256,9 +256,9 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
               {/* Colores */}
               {colors.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 flex items-center gap-1.5">
                     <Palette size={11} />
-                    Color {selectedColor && <span className="normal-case font-semibold text-slate-600 tracking-normal">— {colors.find(c => c.id === selectedColor)?.name}</span>}
+                    Color {selectedColor && <span className="normal-case font-semibold text-[var(--texto-sobre-secundario)] opacity-70 tracking-normal">— {colors.find(c => c.id === selectedColor)?.name}</span>}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {colors.map(c => (
@@ -276,19 +276,19 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
 
               {/* Stock variante seleccionada */}
               {selectedVariant && (
-                <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500">
+                <div className="flex items-center gap-2 p-3 bg-[var(--color-fondo-sitio)]/5 rounded-xl border border-[var(--color-secundario)] text-xs text-[var(--texto-sobre-secundario)]">
                   <Tag size={12} />
                   {selectedVariant.stock > 0
                     ? `${selectedVariant.stock} unidades en esta variante`
                     : "Sin stock en esta combinación"}
                   {selectedVariant.sku && (
-                    <span className="ml-auto font-mono text-slate-400">SKU: {selectedVariant.sku}</span>
+                    <span className="ml-auto font-mono opacity-60">SKU: {selectedVariant.sku}</span>
                   )}
                 </div>
               )}
 
               {/* CTA */}
-              <button className="w-full py-4 bg-slate-900 hover:bg-cyan-600 text-white font-black uppercase tracking-wider text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group">
+              <button className="w-full py-4 bg-[var(--color-primario)] hover:opacity-90 text-[var(--texto-sobre-primario)] font-black uppercase tracking-wider text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group">
                 <ShoppingBag size={16} />
                 Consultar disponibilidad
               </button>

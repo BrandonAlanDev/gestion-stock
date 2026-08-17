@@ -15,6 +15,7 @@ export interface ConfigCompleta {
   favicon: string | null;
   primaryColor: string;
   secondaryColor: string;
+  bgColor: string;
   fontPrimary: string;
   fontSecondary: string;
   borderRadius: string;

@@ -44,7 +44,7 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
           {enlace ? (
             <Link
               href={enlace}
-              className="relative block overflow-hidden cursor-pointer group bg-neutral-100 border border-neutral-200/40 w-full"
+              className="relative block overflow-hidden cursor-pointer group bg-[var(--color-secundario)] border border-[var(--color-secundario)] w-full"
               style={{ height: cardHeight }}
             >
               <motion.div
@@ -72,7 +72,7 @@ export default function CardsLayoutSimple({ slides, settings, primaryColor }: Ca
               )}
             </Link>
           ) : (
-            <div className="relative block overflow-hidden cursor-pointer group bg-neutral-100 border border-neutral-200/40 w-full" style={{ height: cardHeight }}>
+            <div className="relative block overflow-hidden cursor-pointer group bg-[var(--color-secundario)] border border-[var(--color-secundario)] w-full" style={{ height: cardHeight }}>
               <motion.div
                 className="absolute inset-0 bg-cover bg-center grayscale-[15%] group-hover:grayscale-0 transition-all duration-1000"
                 style={{ backgroundImage: "url(" + slide.image + ")" }}

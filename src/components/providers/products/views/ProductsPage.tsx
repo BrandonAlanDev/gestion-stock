@@ -118,9 +118,9 @@ const ProductsPage = ({
   };
 
   return (
-    <div className="pt-24 min-h-screen bg-slate-50 relative">
+    <div className="pt-24 min-h-screen bg-[var(--color-fondo-sitio)] relative">
       {isPending && (
-        <div className="fixed inset-0 z-50 bg-white/70 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-[var(--color-fondo-sitio)]/70 flex items-center justify-center">
           <Loader2 className="w-10 h-10 animate-spin" style={{ color: primaryColor }} />
         </div>
       )}
@@ -128,11 +128,11 @@ const ProductsPage = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900">Catálogo Completo</h1>
-            <p className="text-slate-500 mt-2">Explora lo último en deporte.</p>
+            <h1 className="text-4xl font-bold text-[var(--texto-sobre-fondo)]">Catálogo Completo</h1>
+            <p className="text-[var(--texto-sobre-fondo)] opacity-60 mt-2">Explora lo último en deporte.</p>
           </div>
           <select
-            className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 outline-none cursor-pointer font-bold"
+            className="appearance-none bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-xl px-4 py-2.5 text-sm text-[var(--texto-sobre-secundario)] focus:ring-2 outline-none cursor-pointer font-bold"
             style={{ '--tw-ring-color': primaryColor, color: primaryColor } as React.CSSProperties}
             onChange={(e) => {
               const [key, order] = e.target.value.split("-");
@@ -148,7 +148,7 @@ const ProductsPage = ({
 
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="w-full lg:w-64">
-            <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2 text-slate-900">
+            <h3 className="text-sm font-bold uppercase mb-4 flex items-center gap-2 text-[var(--texto-sobre-fondo)]">
               <Filter className="w-4 h-4" /> Categorías
             </h3>
             <div className="space-y-2">
@@ -156,7 +156,7 @@ const ProductsPage = ({
                 onClick={handleClearAllCategories}
                 className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedCat === "Todos"
                   ? "bg-opacity-10 font-bold"
-                  : "text-slate-600 hover:bg-slate-100"
+                  : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                   }`}
                 style={{ 
                   backgroundColor: selectedCat === "Todos" ? `${primaryColor}1A` : undefined,
@@ -176,7 +176,7 @@ const ProductsPage = ({
                       onClick={() => handleCategoryClick(cat)}
                       className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCurrentCatSelected
                         ? "bg-opacity-10 font-semibold"
-                        : "text-slate-600 hover:bg-slate-100"
+                        : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                         }`}
                       style={{ 
                         backgroundColor: isCurrentCatSelected ? `${primaryColor}1A` : undefined,
@@ -195,13 +195,13 @@ const ProductsPage = ({
                           initial={{ height: 0 }}
                           animate={{ height: "auto" }}
                           exit={{ height: 0 }}
-                          className="overflow-hidden pl-4 border-l border-slate-200 ml-3 space-y-1"
+                          className="overflow-hidden pl-4 border-l border-[var(--color-secundario)] ml-3 space-y-1"
                         >
                           <button
                             onClick={() => handleTodoSubClick(cat.name)}
                             className={`block text-left px-3 py-1.5 text-xs transition-colors ${isCurrentCatSelected && selectedSub === "Todos"
                               ? "font-bold"
-                              : "text-slate-500 hover:text-slate-800"
+                              : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                               }`}
                             style={{ color: isCurrentCatSelected && selectedSub === "Todos" ? primaryColor : undefined }}
                           >
@@ -215,7 +215,7 @@ const ProductsPage = ({
                                 onClick={() => handleSubCategoryClick(cat.name, sub.name)}
                                 className={`block text-left px-3 py-1.5 text-xs transition-colors ${isSubActive
                                   ? "font-bold"
-                                  : "text-slate-500 hover:text-slate-800"
+                                  : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                                   }`}
                                 style={{ color: isSubActive ? primaryColor : undefined }}
                               >
@@ -240,9 +240,9 @@ const ProductsPage = ({
                 ))}
               </div>
             ) : (
-              <div className="h-96 flex flex-col items-center justify-center bg-white rounded-3xl border-dashed border-slate-200 border-2">
-                <SlidersHorizontal className="w-12 h-12 text-slate-300 mb-4" />
-                <p className="text-slate-500 font-medium">No se encontraron productos</p>
+              <div className="h-96 flex flex-col items-center justify-center bg-[var(--color-secundario)] rounded-3xl border-dashed border-[var(--color-secundario)] border-2">
+                <SlidersHorizontal className="w-12 h-12 text-[var(--texto-sobre-secundario)] opacity-50 mb-4" />
+                <p className="text-[var(--texto-sobre-secundario)] opacity-70 font-medium">No se encontraron productos</p>
                 <button
                   onClick={handleClearAllCategories}
                   className="mt-4 font-bold hover:underline transition-colors"

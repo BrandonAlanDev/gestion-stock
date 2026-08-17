@@ -62,7 +62,7 @@ const ProductCard = ({ product }: Props) => {
           {isNew && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ backgroundColor: primaryColor, color: "#ffffff", borderRadius: "4px" }}
+              style={{ backgroundColor: primaryColor, color: "var(--texto-sobre-primario)", borderRadius: "4px" }}
             >
               Nuevo
             </span>
@@ -79,14 +79,14 @@ const ProductCard = ({ product }: Props) => {
 
         <div
           className="overflow-hidden mb-5 relative"
-          style={{ background: "#f8fafc", borderRadius: "12px", aspectRatio: "3 / 4" }}
+          style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
             src={images[currentImage] || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
-            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
+            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] mix-blend-multiply ${fade ? "opacity-100" : "opacity-0"
               }`}
             style={{ padding: "12px" }}
           />

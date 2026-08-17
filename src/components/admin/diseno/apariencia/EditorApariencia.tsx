@@ -21,6 +21,7 @@ function normalizarConfig(
     favicon: config?.favicon ?? null,
     primaryColor: config?.primaryColor || "#06b6d4",
     secondaryColor: config?.secondaryColor || "#ffffff",
+    bgColor: config?.bgColor || "#09090b",
     fontPrimary: config?.fontPrimary || "Outfit",
     fontSecondary: config?.fontSecondary || "Playfair Display",
     borderRadius: config?.borderRadius || "redondeado",

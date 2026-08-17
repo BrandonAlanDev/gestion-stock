@@ -110,7 +110,7 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
                     {slide.ctaText && (
                       <span
                         className="inline-block mt-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider"
-                        style={{ backgroundColor: primaryColor, color: "#000" }}
+                        style={{ backgroundColor: primaryColor, color: "var(--texto-sobre-primario)" }}
                       >
                         {slide.ctaText}
                       </span>
