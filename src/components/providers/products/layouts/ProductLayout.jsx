@@ -54,7 +54,7 @@ function ProductLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-fondo-sitio)] font-sans flex flex-col m-0 p-0">
+    <div className="min-h-screen bg-[var(--color-fondo-sitio)] flex flex-col m-0 p-0">
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

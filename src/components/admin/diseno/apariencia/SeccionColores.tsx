@@ -1,6 +1,7 @@
 "use client";
 
 import { Palette, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export default function SeccionColores({
 }: {
   config: ConfigApariencia;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [primario, setPrimario] = useState(config.primaryColor);
   const [secundario, setSecundario] = useState(config.secondaryColor);
@@ -52,6 +54,7 @@ export default function SeccionColores({
       }
       setBase({ primario, secundario, fondo });
       toast.success("Cambios guardados");
+      router.refresh();
     });
   };
 

@@ -1,11 +1,13 @@
 "use client";
 
 import { Type } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
 import { FUENTES_DISPONIBLES } from "@/components/apariencia/fuentes";
+import { aplicarTipografiaDocumento } from "@/lib/apariencia/aplicar-tipografia-documento";
 
 import { ConfigApariencia } from "./tipos-apariencia";
 
@@ -22,6 +24,8 @@ export default function SeccionTipografia({
 }: {
   config: ConfigApariencia;
 }) {
+  const router = useRouter();
+
   const [fuentes, setFuentes] = useState<EstadoFuentes>({
     principal: config.fontPrimary,
     secundaria: config.fontSecondary,
@@ -40,6 +44,8 @@ export default function SeccionTipografia({
       }
 
       toast.success("Cambios guardados");
+      router.refresh();
+      aplicarTipografiaDocumento(nuevasFuentes.principal, nuevasFuentes.secundaria);
     });
   };
 

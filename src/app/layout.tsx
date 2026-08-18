@@ -10,6 +10,7 @@ import LayoutComponent from "@/components/layout/LayoutComponent";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
 import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
+import FuentesGoogle from "@/components/apariencia/FuentesGoogle";
 import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 
 const geistSans = Geist({
@@ -105,6 +106,11 @@ export default async function RootLayout({
       >
         <QueryProvider>
           <PageConfigProvider pageConfig={pageConfig}>
+            <FuentesGoogle
+              pageConfig={
+                (pageConfig?.pageConfig ?? {}) as Record<string, unknown>
+              }
+            />
             <EstilosApariencia />
             <LayoutComponent>
               <AppGate>

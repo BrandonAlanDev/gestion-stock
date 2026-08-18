@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--fuente-principal, 'Outfit'), ui-sans-serif, system-ui, sans-serif;
+}
+
 @custom-variant corto (@media (max-height: 720px));
 
 @utility scrollbar-oculta {
@@ -24,6 +28,9 @@
   --texto-sobre-fondo: #ffffff;
   --superficie-fondo: #181a1a;
   --superficie-imagen: #ffffff;
+
+  --fuente-principal: 'Outfit', sans-serif;
+  --fuente-secundaria: 'Playfair Display', serif;
 
   --background: 0 0% 100%;
   --foreground: 0 0% 8%;
