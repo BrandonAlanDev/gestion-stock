@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback, useTransition } from "react";
+import React, { useState, useMemo, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Filter, SlidersHorizontal, Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Pagination from "@/components/ui/pagination";
 import ProductCard from "../cards/ProductCard";
 
@@ -26,7 +26,6 @@ const ProductsPage = ({
   onPageChange,
   onFilterChange,
 }: Props) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   
   const categoriaParam = searchParams.get("categoria");
@@ -36,7 +35,7 @@ const ProductsPage = ({
   const [selectedSub, setSelectedSub] = useState("Todos");
   const [sortConfig, setSortConfig] = useState({ key: "date", order: "desc" });
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
 
   useEffect(() => {
     if (!categoriaParam) {

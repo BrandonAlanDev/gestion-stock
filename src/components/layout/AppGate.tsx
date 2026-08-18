@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import CookieModal from "../legal/CookieModal";
-import PrivacyModal from "../legal/PrivacyModal";
-import TermsModal from "../legal/TermsModal";
+import CookieModal from "@/components/legal/CookieModal";
+import PrivacyModal from "@/components/legal/PrivacyModal";
+import TermsModal from "@/components/legal/TermsModal";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);

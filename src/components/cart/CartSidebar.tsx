@@ -48,11 +48,19 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50"
+            onClick={onClose}
+          >
+          <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col p-6"
+            className="absolute right-0 top-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col p-6"
             style={{ backgroundColor: "var(--color-secundario)", color: "var(--texto-sobre-secundario)" }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -83,6 +91,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 Finalizar Pedido <ArrowRight size={16} />
               </button>
             </div>
+          </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
