@@ -19,27 +19,32 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
   if (!mounted) return null;
 
   const esRutaAdmin = pathname.startsWith("/admin");
+  const esRutaMantenimiento = pathname === "/mantenimiento";
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
-      {!isPrivacyOpen && !isTermsOpen && (
-        <CookieModal
-          onOpenPrivacy={() => setIsPrivacyOpen(true)}
-          onOpenTerms={() => setIsTermsOpen(true)}
-        />
+      {!esRutaMantenimiento && (
+        <>
+          {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
+          {!isPrivacyOpen && !isTermsOpen && (
+            <CookieModal
+              onOpenPrivacy={() => setIsPrivacyOpen(true)}
+              onOpenTerms={() => setIsTermsOpen(true)}
+            />
+          )}
+
+          {/* 2. Modales Secundarios (controlados manualmente) */}
+          <PrivacyModal
+            isOpen={isPrivacyOpen}
+            onClose={() => setIsPrivacyOpen(false)}
+          />
+
+          <TermsModal
+            isOpen={isTermsOpen}
+            onClose={() => setIsTermsOpen(false)}
+          />
+        </>
       )}
-
-      {/* 2. Modales Secundarios (controlados manualmente) */}
-      <PrivacyModal
-        isOpen={isPrivacyOpen}
-        onClose={() => setIsPrivacyOpen(false)}
-      />
-
-      <TermsModal
-        isOpen={isTermsOpen}
-        onClose={() => setIsTermsOpen(false)}
-      />
 
       {/* 3. Contenido de la aplicación */}
       <main className="flex flex-col flex-grow">
@@ -47,7 +52,7 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* 4. Footer fijo al fondo para volver a leer los términos */}
-      {!esRutaAdmin && (
+      {!esRutaAdmin && !esRutaMantenimiento && (
         <footer className="bg-[var(--color-fondo-sitio)] border-t border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] py-6 text-center text-sm z-40">
           <div className="flex justify-center items-center gap-6">
             <button

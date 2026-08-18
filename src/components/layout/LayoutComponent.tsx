@@ -18,6 +18,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // El sidebar solo se muestra en rutas de administración
   const isAdminRoute = pathname.startsWith("/admin");
+  const esRutaMantenimiento = pathname === "/mantenimiento";
 
   useEffect(() => {
     const guardado = window.localStorage.getItem("sidebar-colapsado");
@@ -43,11 +44,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Contenido principal + header */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header
-          isSidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          isAdminRoute={isAdminRoute}
-        />
+        {!esRutaMantenimiento && (
+          <Header
+            isSidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            isAdminRoute={isAdminRoute}
+          />
+        )}
 
         <main className={`flex-grow ${isAdminRoute ? "pt-16 md:pt-0 md:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
           {children}
@@ -61,10 +64,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Carrito y Toaster existentes */}
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={closeCart}
-      />
+      {!esRutaMantenimiento && (
+        <CartSidebar
+          isOpen={isCartOpen}
+          onClose={closeCart}
+        />
+      )}
       <Toaster richColors position="top-right" closeButton />
     </div>
   );
