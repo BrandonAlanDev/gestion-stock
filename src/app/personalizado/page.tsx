@@ -113,7 +113,7 @@ export default function PersonalizadoPage() {
   
   useEffect(() => {
       if (pageConfig?.personalizadoEnabled === false) {
-        router.replace("/");
+        router.replace("/404");
       }
     }, [pageConfig, router]);
     const [isSubmitting, setIsSubmitting] = useState(false);

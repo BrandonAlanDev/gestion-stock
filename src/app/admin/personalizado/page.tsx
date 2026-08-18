@@ -18,9 +18,9 @@ export default async function AdminPersonalizadoPage() {
   // Obtenemos la configuración directamente en el servidor
   const config = await prisma.pageConfig.findFirst();
 
-  // Validación de seguridad: si es false, redirigimos inmediatamente
-  if (config?.personalizadoEnabled === false) {
-    redirect("/");
+  // Validación de seguridad: si está desactivado o sin config, redirigimos inmediatamente
+  if (!config?.personalizadoEnabled) {
+    redirect("/404");
   }
 
   const { data, success } = await getBoardAdminOptions();

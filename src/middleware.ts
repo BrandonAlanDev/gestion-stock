@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import { consultarMantenimientoActivo } from "@/lib/mantenimiento/consultar-mantenimiento";
+import { consultarModulosActivos } from "@/lib/modulos/consultar-modulos";
 import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
@@ -24,6 +25,13 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/sizes",
 ]);
 
+const RUTAS_MODULOS: Record<string, "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled"> = {
+  "/escuela": "escuelaEnabled",
+  "/arreglos": "arreglosEnabled",
+  "/personalizado": "personalizadoEnabled",
+  "/admin/personalizado": "personalizadoEnabled",
+};
+
 export default auth(async (req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
@@ -44,6 +52,15 @@ export default auth(async (req) => {
   );
 
   if (isApiAuthRoute) return NextResponse.next();
+
+  const rutaNormalizada = nextUrl.pathname.replace(/\/+$/, "") || "/";
+  const claveModulo = RUTAS_MODULOS[rutaNormalizada];
+  if (claveModulo) {
+    const modulos = await consultarModulosActivos(nextUrl.origin);
+    if (!modulos[claveModulo]) {
+      return NextResponse.redirect(new URL("/404", nextUrl));
+    }
+  }
 
   if (isAdminRoute && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
     return NextResponse.redirect(new URL("/404", nextUrl));

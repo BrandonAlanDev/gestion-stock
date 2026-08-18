@@ -67,10 +67,10 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
       { id: 'catalogo', type: 'page', title: 'Catálogo de Productos', url: '/productos' },
     ];
 
-    if (config?.escuelaEnabled) {
+    if (config?.escuelaEnabled === true) {
       staticLinks.push({ id: 'escuela', type: 'page', title: 'Escuela de Surf', url: '/escuela' });
     }
-    if (config?.personalizadoEnabled) {
+    if (config?.personalizadoEnabled === true) {
       staticLinks.push({ id: 'personalizado', type: 'page', title: 'Trabajos Personalizados', url: '/personalizado' });
     }
 

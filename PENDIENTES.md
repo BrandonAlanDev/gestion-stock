@@ -131,3 +131,58 @@ Click en X → cerrar carrito
    - Ambos `motion.div` dentro del mismo `AnimatePresence`, para que el cierre anime overlay + panel juntos.
 2. **Resultado esperado** — click en overlay cierra; click dentro mantiene abierto; X cierra. En móvil (`w-full`) no hay área exterior visible: comportamiento existente que se conserva.
 3. **Verificación** — `npm run lint`, `npx tsc --noEmit` y prueba manual: abrir carrito, click fuera (cierra), click en X (cierra), y operar dentro del carrito (cantidad, eliminar, especificaciones) sin que se cierre.
+
+---
+
+## Módulos desacoplables del ecommerce: Escuela, Arreglos y Personalizado
+
+### Objetivo
+Las tres funcionalidades (`escuelaEnabled`, `arreglosEnabled`, `personalizadoEnabled` en `PageConfig`) deben comportarse como **módulos opcionales del ecommerce**. Cuando una flag es `false`, el módulo debe comportarse como si no existiera: sin links, botones, cards, secciones, componentes, rutas públicas/internas, ni acceso por URL directa. Cuando es `true`, funciona exactamente como hoy. No se agrega ningún sector nuevo en admin: los módulos responden únicamente a la base de datos (0/1).
+
+### Estado actual (relevado)
+- **Flags en BD:** `prisma/schema.prisma:235-237` con `@default(true)`; la migración `20260715030342.../migration.sql:211-213` con `DEFAULT true`. Hoy el default es `true` (indeseado).
+- **Rutas:** `/escuela` (server, sin guarda), `/arreglos` (client, sin guarda), `/personalizado` (client, guarda client que redirige a `/`), `/admin/personalizado` (server, guarda que redirige a `/`).
+- **Referencias UI:** `Searchbarfinder.tsx:70-75` (links `/escuela` y `/personalizado` según flag); `ContenidoSidebar.tsx:53-57` (link admin "Personalizado", fallback `true` sin config); `BloquePaginas.tsx:66-92` (listado admin de páginas); `admin/pageConfig/page.tsx:52-54` (fallbacks `?? true`).
+- **Acciones del módulo personalizado sin guardas:** `board-options.ts` (`getBoardOptions`), `custom-boards.ts` (`createCustomBoard`, `getCustomBoards`), `admin-personalizado.ts` (CRUDs).
+- **Patrón existente a replicar:** el middleware ya consulta `/api/mantenimiento` vía fetch (`consultarMantenimientoActivo`), patrón válido para Edge runtime.
+
+### Decisiones tomadas
+- **Destino del bloqueo:** página 404. Las guardas server usan `notFound()` (renderiza `src/app/not-found.tsx`); el middleware redirige a `/404`. Las guardas client existentes pasan de redirigir a `/` a `/404`.
+- **Migración:** solo cambia el `DEFAULT` a `false`. La fila actual (id=1) conserva sus valores; las bases nuevas nacen con los tres módulos desactivados.
+- **Fail-closed:** si no hay config o falla la consulta, el módulo se considera desactivado.
+
+### Plan de solución
+1. **Base de datos:**
+   - `prisma/schema.prisma:235-237` — `@default(true)` → `@default(false)` en `arreglosEnabled`, `escuelaEnabled`, `personalizadoEnabled`.
+   - Generar migración `npx prisma migrate dev --name modulos_desactivados_por_defecto` (MySQL: `ALTER TABLE PageConfig ALTER COLUMN ... SET DEFAULT false`).
+2. **Infraestructura de guardas:**
+   - Nuevo `src/lib/modulos/modulo-habilitado.ts` — `moduloHabilitado(clave: "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled"): Promise<boolean>` → `config?.[clave] === true`.
+   - Nuevo `src/lib/modulos/verificar-modulo.ts` — `verificarModuloHabilitado(clave)`: si el módulo está desactivado lanza `notFound()`.
+   - Nuevo `src/app/api/paginas-config/route.ts` — `GET` `force-dynamic` → `{ escuelaEnabled, arreglosEnabled, personalizadoEnabled }`; error → `false` en todo.
+   - Nuevo `src/lib/modulos/consultar-modulos.ts` — `consultarModulosActivos(origin)`: fetch a `/api/paginas-config` (`cache: "no-store"`), replicando `consultarMantenimientoActivo`.
+   - `src/middleware.ts` — mapa `RUTAS_MODULOS = { "/escuela": "escuelaEnabled", "/arreglos": "arreglosEnabled", "/personalizado": "personalizadoEnabled", "/admin/personalizado": "personalizadoEnabled" }` (exacto o trailing slash). Si la flag da `false` → `NextResponse.redirect(new URL("/404", nextUrl))`. Aplica a admin y público por igual.
+3. **Guardas por página:**
+   - `src/app/escuela/page.tsx` — `await verificarModuloHabilitado("escuelaEnabled")`.
+   - Nuevo `src/app/arreglos/layout.tsx` — guarda `arreglosEnabled`.
+   - Nuevo `src/app/personalizado/layout.tsx` — guarda `personalizadoEnabled`.
+   - `src/app/personalizado/page.tsx:115-118` — guarda client: `router.replace("/")` → `router.replace("/404")`.
+   - `src/app/admin/personalizado/page.tsx:22-24` — `redirect("/")` → `redirect("/404")`.
+4. **Ocultar referencias en UI:**
+   - `src/components/home/Searchbarfinder.tsx:70-75` — comparación estricta `=== true` en escuela y personalizado.
+   - `src/components/layout/ContenidoSidebar.tsx:56` — fallback `: true` → `: false`.
+   - `src/app/admin/pageConfig/page.tsx:52-54` — `?? true` → `?? false`.
+   - `src/components/admin/diseno/BloquePaginas.tsx` — renderizar las filas Escuela/Arreglos/Personalizado solo si su flag está activa.
+   - Se conservan los toggles admin existentes (`SeccionPaginasSitio`, `PanelConfiguracion`), que siguen siendo el punto de control de la BD.
+5. **Guardas en acciones/servicios:**
+   - `src/actions/board-options.ts` — `getBoardOptions` retorna datos vacíos si está desactivado.
+   - `src/actions/custom-boards.ts` — `createCustomBoard` retorna `{ error: "..." }` y `getCustomBoards` retorna `[]`.
+   - `src/actions/admin-personalizado.ts` — guarda vía `moduloHabilitado("personalizadoEnabled")` en `getBoardAdminOptions` y los CRUDs (return error temprano).
+6. **Ejecución y verificación:**
+   - Subagentes en paralelo con interfaces predefinidas: A (fases 1–2, infraestructura), B (fase 3, páginas/layouts), C (fases 4–5, UI + acciones).
+   - Agente verificador final (reglas AGENTS.md: una función exportada por archivo, ≤400 líneas, imports `@/`, español, sin `any`).
+   - Comandos: `npx tsc --noEmit`, `npm run lint`, `npx prisma migrate dev`.
+
+### Fuera de alcance (se conservan intactos)
+- Toggles admin existentes (`SeccionPaginasSitio`, `PanelConfiguracion`).
+- Ecommerce tradicional (`/productos`, carrito, catálogo, home, admin de productos, etc.).
+- El dato mock `heroSlides` de `data.js` (código muerto, no referenciado).

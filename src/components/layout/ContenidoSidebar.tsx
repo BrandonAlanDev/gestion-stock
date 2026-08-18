@@ -53,7 +53,7 @@ export default function ContenidoSidebar({
       href: "/admin/personalizado",
       label: "Personalizado",
       icon: Settings,
-      enabled: config ? Boolean(config.personalizadoEnabled) : true
+      enabled: config ? Boolean(config.personalizadoEnabled) : false
     },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
