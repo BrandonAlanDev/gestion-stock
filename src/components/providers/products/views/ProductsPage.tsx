@@ -97,10 +97,6 @@ const ProductsPage = ({
     });
   }, [garments, sortConfig]);
 
-  const handleCategoryClick = (cat: any) => {
-    onFilterChange?.(cat.name);
-  };
-
   const handleTodoSubClick = (catName: string) => {
     onFilterChange?.(catName);
   };
@@ -169,7 +165,7 @@ const ProductsPage = ({
                 return (
                   <div key={cat.id}>
                     <button
-                      onClick={() => handleCategoryClick(cat)}
+                      onClick={() => setOpenCategoryId(isOpen ? null : cat.id)}
                       className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCurrentCatSelected
                         ? "bg-opacity-10 font-semibold"
                         : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
