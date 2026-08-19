@@ -282,7 +282,7 @@ export default function useGestorContenido(sectionOrder: string | null) {
         url: s.url || "",
         order: s.order,
         isNew: false,
-        linkType: (s.config?.linkType as string) || "",
+        linkType: (s.config?.linkType as string) || "NONE",
       })),
     };
   }, [carouselEditando]);

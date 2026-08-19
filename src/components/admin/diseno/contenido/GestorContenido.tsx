@@ -7,6 +7,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
+  Eye,
+  EyeOff,
   Grid2X2,
   Image as ImageIcon,
   LayoutDashboard,
@@ -20,6 +22,7 @@ import CarouselDesignModal from "@/components/admin/carousel/CarouselDesignModal
 import CarouselSettingsModal from "@/components/admin/carousel/CarouselSettingsModal";
 import CarouselWizard from "@/components/admin/carousel/CarouselWizard";
 import ConfirmacionEliminarSeccion from "@/components/admin/carousel/ConfirmacionEliminarSeccion";
+import Badge from "@/components/ui/badge";
 import EstadoVacio from "@/components/ui/estado-vacio";
 import type { Carousel } from "@/types/carousel";
 
@@ -82,6 +85,21 @@ export default function GestorContenido({
     toggleVisibilidadCarrusel,
     wizardAbierto,
   } = useGestorContenido(config.sectionOrder);
+
+  const ocultasFijas = ["featured", "location"].filter(
+    (id) => !filas.includes(id)
+  );
+  const carruselesOcultos = [...carouselPorId.values()].filter(
+    (c) => !c.active
+  );
+  const idsOcultos = new Set(
+    carruselesOcultos.map((c) => PREFIJO_CARRUSEL + c.id)
+  );
+  const filasVisibles = filas.filter((id) => !idsOcultos.has(id));
+  const hayOcultas = ocultasFijas.length > 0 || carruselesOcultos.length > 0;
+
+  const estiloBotonAccion =
+    "rounded-md p-1.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
 
   const resolverFila = (id: string): ReactNode => {
     if (id === "featured") {
@@ -173,6 +191,41 @@ export default function GestorContenido({
     return null;
   };
 
+  const filaOculta = ({
+    icono: Icono,
+    titulo,
+    detalle,
+    alMostrar,
+  }: {
+    icono: LucideIcon;
+    titulo: string;
+    detalle: string;
+    alMostrar: () => void;
+  }): ReactNode => (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
+        <Icono size={16} className="text-[var(--admin-texto)]" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-[var(--admin-texto)]">
+          {titulo}
+        </p>
+        <p className="truncate text-xs text-[var(--admin-texto-suave)]">
+          {detalle}
+        </p>
+      </div>
+      <Badge variante="oculto">Oculto</Badge>
+      <button
+        type="button"
+        onClick={alMostrar}
+        title="Mostrar"
+        className={estiloBotonAccion}
+      >
+        <Eye size={15} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -210,27 +263,72 @@ export default function GestorContenido({
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-6 w-6 animate-spin text-[var(--admin-texto-suave)]" />
             </div>
-          ) : filas.length === 0 ? (
+          ) : filasVisibles.length === 0 && !hayOcultas ? (
             <EstadoVacio
               icono={LayoutDashboard}
               titulo="Todavía no hay secciones"
               descripcion="Agregá tu primera sección con el botón Agregar sección"
             />
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={filas}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {filas.map((id) => resolverFila(id))}
+            <>
+              {filasVisibles.length > 0 && (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={filasVisibles}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {filasVisibles.map((id) => resolverFila(id))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+
+              {hayOcultas && (
+                <div className="mt-4 rounded-xl border border-dashed border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <EyeOff size={15} className="text-[var(--admin-texto-suave)]" />
+                    <h4 className="text-sm font-semibold text-[var(--admin-texto)]">
+                      Secciones ocultas
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {ocultasFijas.map((id) =>
+                      id === "featured"
+                        ? filaOculta({
+                            icono: Grid2X2,
+                            titulo: "Sección destacada",
+                            detalle: config.homegrid?.grids.length
+                              ? `${config.homegrid.grids.length} tarjetas`
+                              : "Sin configurar",
+                            alMostrar: () => void toggleSeccionFija(id),
+                          })
+                        : filaOculta({
+                            icono: MapPin,
+                            titulo: "Ubicación",
+                            detalle: config.address ?? "Sin dirección",
+                            alMostrar: () => void toggleSeccionFija(id),
+                          })
+                    )}
+                    {carruselesOcultos.map((carousel) => {
+                      const label = ETIQUETAS_TIPO[carousel.type];
+                      const cantidad = carousel.slides?.length ?? 0;
+                      return filaOculta({
+                        icono: ICONOS_TIPO[carousel.type],
+                        titulo: carousel.title || label,
+                        detalle: `${label} · ${cantidad} slides`,
+                        alMostrar: () =>
+                          void toggleVisibilidadCarrusel(carousel),
+                      });
+                    })}
+                  </div>
                 </div>
-              </SortableContext>
-            </DndContext>
+              )}
+            </>
           )}
         </>
       ) : (

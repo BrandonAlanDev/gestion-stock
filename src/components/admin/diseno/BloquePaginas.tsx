@@ -7,6 +7,7 @@ interface ConfigPaginas {
   escuelaEnabled: boolean;
   arreglosEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
 }
 
 interface PaginaResumen {
@@ -81,6 +82,13 @@ export default function BloquePaginas({ config, paginas }: PropsPaginas) {
         <FilaPagina
           etiqueta="Personalizado"
           href="/personalizado"
+          badge={<Badge variante="activo">Activa</Badge>}
+        />
+      )}
+      {config.planAhorroEnabled && (
+        <FilaPagina
+          etiqueta="Plan de ahorro"
+          href="/plan-de-ahorro"
           badge={<Badge variante="activo">Activa</Badge>}
         />
       )}

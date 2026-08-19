@@ -130,7 +130,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
         {query && (
           <button 
             onClick={() => { setQuery(''); setIsFocused(true); }}
-            className="grid place-items-center h-full w-10 sm:w-12 flex-shrink-0 hover:scale-110 transition-transform"
+            className="grid place-items-center h-full w-10 sm:w-12 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
             style={{ color: currentTextColor }}
           >
             <X size={16} />

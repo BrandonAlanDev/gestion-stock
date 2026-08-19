@@ -122,19 +122,26 @@ const ProductsPage = ({
             <h1 className="text-4xl font-bold text-[var(--texto-sobre-fondo)]">Catálogo Completo</h1>
             <p className="text-[var(--texto-sobre-fondo)] opacity-60 mt-2">Explora lo último en deporte.</p>
           </div>
-          <select
-            className="appearance-none bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-xl px-4 py-2.5 text-sm text-[var(--texto-sobre-secundario)] focus:ring-2 outline-none cursor-pointer font-bold"
-            style={{ '--tw-ring-color': "var(--color-primario)", color: "var(--color-primario)" } as React.CSSProperties}
-            onChange={(e) => {
-              const [key, order] = e.target.value.split("-");
-              setSortConfig({ key, order });
-            }}
-          >
-            <option value="date-desc">Novedades</option>
-            <option value="price-asc">Precio: Menor a Mayor</option>
-            <option value="price-desc">Precio: Mayor a Menor</option>
-            <option value="title-asc">Nombre: A-Z</option>
-          </select>
+          <div className="relative">
+            <select
+              className="appearance-none bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-xl px-4 py-2.5 pr-8 text-sm text-[var(--texto-sobre-secundario)] focus:ring-2 outline-none cursor-pointer font-bold"
+              style={{ '--tw-ring-color': "var(--color-primario)", color: "var(--color-primario)" } as React.CSSProperties}
+              onChange={(e) => {
+                const [key, order] = e.target.value.split("-");
+                setSortConfig({ key, order });
+              }}
+            >
+              <option value="date-desc">Novedades</option>
+              <option value="price-asc">Precio: Menor a Mayor</option>
+              <option value="price-desc">Precio: Mayor a Menor</option>
+              <option value="title-asc">Nombre: A-Z</option>
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--color-primario)" }}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -145,7 +152,7 @@ const ProductsPage = ({
             <div className="space-y-2">
               <button
                 onClick={handleClearAllCategories}
-                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedCat === "Todos"
+                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${selectedCat === "Todos"
                   ? "bg-opacity-10 font-bold"
                   : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                   }`}
@@ -165,7 +172,7 @@ const ProductsPage = ({
                   <div key={cat.id}>
                     <button
                       onClick={() => setOpenCategoryId(isOpen ? null : cat.id)}
-                      className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isCurrentCatSelected
+                      className={`flex w-full justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${isCurrentCatSelected
                         ? "bg-opacity-10 font-semibold"
                         : "text-[var(--texto-sobre-fondo)] opacity-70 hover:bg-[var(--color-secundario)] hover:opacity-100"
                         }`}
@@ -190,7 +197,7 @@ const ProductsPage = ({
                         >
                           <button
                             onClick={() => handleTodoSubClick(cat.name)}
-                            className={`block text-left px-3 py-1.5 text-xs transition-colors ${isCurrentCatSelected && selectedSub === "Todos"
+                            className={`block text-left px-3 py-1.5 text-xs transition-colors cursor-pointer ${isCurrentCatSelected && selectedSub === "Todos"
                               ? "font-bold"
                               : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                               }`}
@@ -204,7 +211,7 @@ const ProductsPage = ({
                               <button
                                 key={sub.id}
                                 onClick={() => handleSubCategoryClick(cat.name, sub.name)}
-                                className={`block text-left px-3 py-1.5 text-xs transition-colors ${isSubActive
+                                className={`block text-left px-3 py-1.5 text-xs transition-colors cursor-pointer ${isSubActive
                                   ? "font-bold"
                                   : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
                                   }`}
@@ -236,7 +243,7 @@ const ProductsPage = ({
                 <p className="text-[var(--texto-sobre-secundario)] opacity-70 font-medium">No se encontraron productos</p>
                 <button
                   onClick={handleClearAllCategories}
-                  className="mt-4 font-bold hover:underline transition-colors"
+                  className="mt-4 font-bold hover:underline transition-colors cursor-pointer"
                   style={{ color: "var(--color-primario)" }}
                 >
                   Limpiar filtros

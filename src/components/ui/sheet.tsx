@@ -91,7 +91,7 @@ export default function Sheet({
               <button
                 onClick={alCerrar}
                 aria-label="Cerrar"
-                className="rounded-md p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
+                className="cursor-pointer rounded-md p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
               >
                 <X size={20} />
               </button>

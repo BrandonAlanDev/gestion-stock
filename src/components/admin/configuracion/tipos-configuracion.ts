@@ -45,6 +45,7 @@ export interface ConfigCompleta {
   arreglosEnabled: boolean;
   escuelaEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   termsAndConditions: string | null;

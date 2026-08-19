@@ -45,6 +45,7 @@ export async function getPageConfig() {
         arreglosEnabled: true,
         escuelaEnabled: true,
         personalizadoEnabled: true,
+        planAhorroEnabled: true,
         metaTitle: true,
         metaDescription: true,
         termsAndConditions: true,

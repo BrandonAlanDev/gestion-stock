@@ -66,7 +66,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <ShoppingBag style={{ color: "var(--color-primario)" }} /> Carrito
               </h2>
-              <button onClick={onClose}><X /></button>
+              <button onClick={onClose} className="cursor-pointer transition-opacity hover:opacity-70"><X /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3">

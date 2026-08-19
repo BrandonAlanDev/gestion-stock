@@ -186,3 +186,86 @@ Las tres funcionalidades (`escuelaEnabled`, `arreglosEnabled`, `personalizadoEna
 - Toggles admin existentes (`SeccionPaginasSitio`, `PanelConfiguracion`).
 - Ecommerce tradicional (`/productos`, carrito, catálogo, home, admin de productos, etc.).
 - El dato mock `heroSlides` de `data.js` (código muerto, no referenciado).
+
+---
+
+## Correcciones y mejoras de UX — carruseles, contenido oculto, navbar, plan de ahorro, feedback visual y apariencia
+
+### Alcance (7 puntos)
+1. Carruseles: permitir slides sin link sin romper la edición posterior.
+2. Contenido (`/admin/design/contenido`): listar y recuperar elementos ocultos (no eliminarlos).
+3. Navbar: "Catálogo" siempre visible, sin abrir el menú.
+4. "Plan de ahorro": gating correcto reutilizando el sistema de flags existente.
+5. Feedback visual en todos los elementos interactivos (cursor-pointer, hover, active, disabled).
+6. Vista Productos: indicador visual de desplegable en el selector de ordenamiento.
+7. Apariencia: Tipografía y Estilo pasan de autosave a guardado manual (como Colores/Identidad).
+
+### Estado actual (relevado)
+1. **Carruseles:** el link es opcional en BD (`CarouselSlide.url String?`) y el render público ya maneja slides sin link (`HeroCtaButton`: `if (!url) return null`). El error surge al EDITAR: `use-gestor-contenido.ts:285` y `CarouselWizard.tsx:81` reconstruyen `linkType: ""` para slides sin link, y `carouselWizardSlideSchema` (`src/lib/zod.ts:239`) rechaza `""` porque `.default("NONE")` solo aplica a `undefined`. Mensaje: `Invalid option: expected one of "NONE"|...`. Mismo bug latente en `addCarouselSlide`/`updateCarouselSlide` (mismo schema).
+2. **Contenido:** "Ocultar" carrusel = UPDATE `Carousel.active=false` (no borra), pero `normalizarSecciones.ts:99` (`if (c.active === false) continue;`) excluye de la lista admin a los carruseles ocultos cuyo id no esté en `sectionOrder`. "Ocultar" destacada/ubicación = quitar el id de `PageConfig.sectionOrder` y la fila desaparece de la lista; solo recuperable por el menú "Agregar sección" (poco visible). El borrado físico (`deleteCarousel`) es funcionalidad separada con confirmación y debe conservarse.
+3. **Navbar:** `Header.tsx:14-17` tiene `enlacesUsuario` (Catálogo + Plan Ahorro) renderizados SOLO dentro del desplegable de la hamburguesa (`isSidebarOpen`, líneas 148-198). No hay menú horizontal; el catálogo no es accesible sin abrir el menú en desktop ni mobile.
+4. **Plan de ahorro:** `/plan-de-ahorro/page.tsx` es cliente puro sin validación de flag; no está en `RUTAS_MODULOS` del middleware; el enlace del Header está hardcodeado sin filtrar. El sistema de flags existente (`escuelaEnabled`, `arreglosEnabled`, `personalizadoEnabled` en `PageConfig`, helpers `moduloHabilitado`/`verificarModuloHabilitado`/`consultarModulosActivos`, admin en Configuración → "Páginas del sitio" → `SeccionPaginasSitio` → `updatePageFlags`) no tiene flag para plan de ahorro.
+5. **Feedback visual:** no existe regla global de cursor (ni en `globals.css` ni en el preflight de Tailwind v4); los `<button>` crudos sin `cursor-pointer` muestran cursor flecha. `button.tsx` sí incluye cursor-pointer+hover+active, pero decenas de botones no lo usan. Bug adicional: `src/components/ui/pagination.tsx:16,24` usa `className="..."` literal (botones sin estilo).
+6. **Productos:** el `<select>` de ordenamiento (`ProductsPage.tsx:125-137`) usa `appearance-none` sin chevron → parece un botón común. Mismo defecto en `CategoryFilter.tsx:35-43` y `MovementModal.tsx:157-158`. El acordeón de categorías sí tiene chevron pero sus botones carecen de `cursor-pointer`.
+7. **Apariencia:** `SeccionTipografia.tsx` y `SeccionEstilo.tsx` guardan en cada `onChange`/`alCambiar` (`guardar(nuevas)` líneas 52-62 y 87-121) sin botón Guardar; `SeccionColores.tsx` y `SeccionIdentidad.tsx` ya usan el patrón manual (estado local + snapshot `base` + botón Guardar + toast + `router.refresh()`). La server action `updateBrandingConfig` ya soporta todos los campos; no hay cambios de BD.
+
+### Decisiones tomadas
+- **Carruseles:** el link queda OPCIONAL (estado válido, igual que hoy en BD y render). Se normaliza `""`/`undefined` → `"NONE"` en una ÚNICA regla (schema zod) para crear y editar, más normalización client-side para que el estado del wizard siempre sea válido.
+- **Plan de ahorro:** nuevo flag `planAhorroEnabled` en el MISMO sistema de flags (sin lógica paralela). **Default `false`** (confirmado por el usuario); se activa desde Configuración → Páginas del sitio.
+- **Elementos ocultos en Contenido:** grupo separado "Secciones ocultas" al final de la lista (confirmado por el usuario), fuera del SortableContext, con badge "Oculto" y botón "Mostrar".
+- **Bloqueo de plan de ahorro:** 404 (mismo patrón que escuela/arreglos: `notFound()` en layout server + middleware → `/404`).
+
+### Plan de solución
+
+**1. Carruseles — slides sin link**
+- `src/lib/zod.ts` — en `carouselWizardSlideSchema.linkType` (línea 239) y `carouselSlideSchema.linkType` (línea 213): `z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum([...]).optional().default("NONE"))` para que el default aplique siempre. Cubre create/update/addSlide/updateSlide con una sola regla.
+- `src/components/admin/diseno/contenido/use-gestor-contenido.ts:285` — `linkType: (s.config?.linkType as string) || "NONE"`.
+- `src/components/admin/carousel/CarouselWizard.tsx:81` — idem (`|| "NONE"`).
+
+**2. Contenido — recuperar ocultos**
+- `src/components/admin/diseno/contenido/normalizarSecciones.ts:98-104` — quitar `if (c.active === false) continue;` para incluir todos los carruseles (activos e inactivos) en el orden. El sitio público ya filtra por `active` (`HomeClient.tsx:116,155-182`), sin impacto visual.
+- `src/components/admin/diseno/contenido/GestorContenido.tsx` — renderizar siempre `featured` y `location`: si no están en `filas`, mostrarlas en un grupo separado "Secciones ocultas" al final (fuera del `SortableContext`), con badge "Oculto" y botón "Mostrar" (`toggleSeccionFija` existente). Ajustar la condición del `EstadoVacio` para considerar el grupo.
+- Sin cambios de BD: "Ocultar" sigue siendo UPDATE de `active` (carruseles) o edición de `sectionOrder` (destacada/ubicación). El borrado físico permanece separado con su confirmación.
+
+**3. Navbar — catálogo siempre visible**
+- `src/components/layout/Header.tsx` — agregar link "Catálogo" (ícono `Store` + label, label `hidden sm:inline` como los demás botones) en la barra superior (línea ~100), visible en desktop y mobile sin abrir el menú; quitar "Catálogo" de `enlacesUsuario` (queda solo "Plan Ahorro", gated por flag). Resto de la estructura intacta.
+
+**4. Plan de ahorro — gating con flags existentes**
+- `prisma/schema.prisma` — agregar `planAhorroEnabled Boolean @default(false)` a `PageConfig` + migración (`npx prisma migrate dev --name plan_ahorro_flag`).
+- `src/lib/modulos/modulo-habilitado.ts` — agregar `"planAhorroEnabled"` a `ClaveModulo`.
+- `src/lib/modulos/consultar-modulos.ts` y `src/app/api/paginas-config/route.ts` — incluir el flag (tipos + select + respuesta).
+- `src/middleware.ts` — `RUTAS_MODULOS` + `"/plan-de-ahorro": "planAhorroEnabled"` (y el tipo del Record).
+- Nuevo `src/app/plan-de-ahorro/layout.tsx` — `await verificarModuloHabilitado("planAhorroEnabled")` (patrón `arreglos/layout.tsx`).
+- Admin: `src/components/admin/diseno/ajustes/SeccionPaginasSitio.tsx` (switch "Plan de ahorro"), `tipos-ajustes.ts`, `DrawersConfiguracion.tsx` (`aConfigAjustes`), `tipos-configuracion.ts`, `src/app/admin/pageConfig/page.tsx` (mapping `?? false`).
+- `src/lib/zod.ts` `flagsPaginaSchema` — agregar `planAhorroEnabled: z.boolean().optional()`.
+- `src/actions/page-config/general.actions.ts` — agregar `planAhorroEnabled: true` al select (llega al `PageConfigProvider` → Header).
+- `Header.tsx` — filtrar "Plan Ahorro" por `pageConfig?.pageConfig?.planAhorroEnabled === true`.
+- `src/components/admin/diseno/BloquePaginas.tsx` — fila "Plan de ahorro" cuando el flag esté activo (consistencia con el resumen de Diseño).
+
+**5. Feedback visual**
+- `src/app/globals.css` (BASE STYLES) — regla global mínima: `button:not(:disabled), [role="button"]:not(:disabled), select:not(:disabled) { cursor: pointer; }` y `button:disabled, select:disabled { cursor: not-allowed; }` (cubre todos los `<button>` crudos de una vez).
+- `cursor-pointer` + hover/active puntuales en: hamburguesa y carrito (`Header.tsx`), cerrar carrito (`CartSidebar.tsx`), acordeón de categorías y "Limpiar filtros" (`ProductsPage.tsx`), acordeones FAQ (`FaqSection.tsx`, `plan-de-ahorro/page.tsx`), `switch.tsx`, `selector-segmentado.tsx`, `confirm-dialog.tsx`, `sheet.tsx`, `FilaSeccion.tsx` (`estiloBotonAccion`), `ItemConfiguracion.tsx`, presets de `color-picker.tsx`, limpiar búsqueda (`Searchbarfinder.tsx`).
+- `src/components/ui/pagination.tsx` — corregir `className="..."` literal: clases reales con cursor-pointer, hover y disabled.
+
+**6. Productos — indicador de desplegable**
+- `src/components/providers/products/views/ProductsPage.tsx:125-137` — envolver el `<select>` en `div.relative` y agregar `<ChevronDown>` absoluto a la derecha con `pointer-events-none` (patrón `color-dropdown.tsx`). Es un select nativo (sin estado open/close controlable): indicador estático.
+- Consistencia (mismo defecto, mismo patrón): `src/components/categories/filters/CategoryFilter.tsx:35-43` y `src/components/movements/MovementModal.tsx:157-158`.
+
+**7. Apariencia — guardado manual**
+- `src/components/admin/diseno/apariencia/SeccionTipografia.tsx` — quitar `guardar(nuevas)` de `cambiarPrincipal`/`cambiarSecundaria`; agregar `isPending` (useTransition), snapshot `base`, `tieneCambios`, `<form onSubmit>` + botón "Guardar tipografía" (patrón `SeccionColores.tsx:136-145`); en submit: `updateBrandingConfig` + toast + `setBase` + `router.refresh()` + `aplicarTipografiaDocumento` (como hoy, línea 48). El preview local se mantiene.
+- `src/components/admin/diseno/apariencia/SeccionEstilo.tsx` — quitar `guardar(nuevo)` de los 3 `alCambiar`; agregar `isPending`, dirty-check, `<form>` + botón "Guardar estilo" + `router.refresh()` (hoy no lo llama).
+- Sin cambios en `updateBrandingConfig` ni en BD.
+
+### Ejecución
+- Subagentes en paralelo (archivos sin solapamiento): A (punto 1), B (punto 2), C (puntos 3-4: Header + schema/migración + cadena de flags + layout guard + admin), D (puntos 5-6: globals.css + feedback + chevron), E (punto 7). La migración de Prisma la ejecuta el orquestador al finalizar C.
+- Agente verificador final (reglas AGENTS.md: una función exportada por archivo, ≤400 líneas, imports `@/`, español, sin `any`, boy scout).
+- Comandos: `npx tsc --noEmit`, `npm run lint`.
+
+### Verificación manual
+1. Crear carrusel con slide sin link → editar carrusel → guarda sin error (mensaje claro si faltara imagen).
+2. Ocultar carrusel / destacada / ubicación → aparecen en "Secciones ocultas" → "Mostrar" los recupera; la home pública no muestra ocultos; "Eliminar" sigue siendo el único borrado físico.
+3. "Catálogo" visible en el navbar sin desplegar (desktop y mobile); "Plan Ahorro" sigue en el desplegable solo si está habilitado.
+4. Plan de ahorro deshabilitado → 404 por URL directa y sin link en navbar; habilitarlo desde Configuración → Páginas del sitio lo restaura automáticamente.
+5. Cursor pointer + hover/active en botones, acordeones y cards clickeables; select de Productos con chevron.
+6. Tipografía y Estilo no persisten hasta "Guardar"; navegar sin guardar revierte a lo guardado en BD.
+7. Revisar que ninguna corrección rompa home pública, carrito, búsqueda, admin ni el drag & drop de secciones.

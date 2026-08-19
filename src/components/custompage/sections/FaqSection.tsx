@@ -28,7 +28,7 @@ export default function FaqSection({ section }: { section: CustomSection }) {
             >
               <button
                 onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
-                className="w-full p-5 flex items-center justify-between text-left font-black text-xs tracking-wide transition-colors"
+                className="w-full p-5 flex items-center justify-between text-left font-black text-xs tracking-wide transition-colors cursor-pointer"
                 style={{ color: "var(--texto-sobre-secundario)" }}
               >
                 <span className="flex items-center gap-3">

@@ -2,6 +2,7 @@ export type ModulosActivos = {
   escuelaEnabled: boolean;
   arreglosEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
 };
 
 export async function consultarModulosActivos(origin: string): Promise<ModulosActivos> {
@@ -9,6 +10,7 @@ export async function consultarModulosActivos(origin: string): Promise<ModulosAc
     escuelaEnabled: false,
     arreglosEnabled: false,
     personalizadoEnabled: false,
+    planAhorroEnabled: false,
   };
   try {
     const respuesta = await fetch(`${origin}/api/paginas-config`, { cache: "no-store" });
@@ -20,6 +22,7 @@ export async function consultarModulosActivos(origin: string): Promise<ModulosAc
       escuelaEnabled: data.escuelaEnabled === true,
       arreglosEnabled: data.arreglosEnabled === true,
       personalizadoEnabled: data.personalizadoEnabled === true,
+      planAhorroEnabled: data.planAhorroEnabled === true,
     };
   } catch {
     return desactivados;

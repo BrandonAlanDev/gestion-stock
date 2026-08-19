@@ -66,7 +66,7 @@ export default function ItemConfiguracion({
     <button
       type="button"
       onClick={alClick}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--admin-fondo-hover)]"
+      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer hover:bg-[var(--admin-fondo-hover)]"
     >
       {contenido}
     </button>

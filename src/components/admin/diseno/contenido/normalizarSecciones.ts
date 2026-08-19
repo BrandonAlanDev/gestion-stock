@@ -88,17 +88,27 @@ export function normalizarSecciones(
     secciones = migrarSeccionesAntiguas(secciones, carousels);
   }
 
+  const inactivos = new Set(
+    carousels
+      .filter((c) => c.active === false)
+      .map((c) => PREFIJO_CARRUSEL + c.id)
+  );
+
   const podadas = secciones.filter(
-    (s) => !esIdCarrusel(s) || idsExistentes.has(s)
+    (s) => !esIdCarrusel(s) || (idsExistentes.has(s) && !inactivos.has(s))
   );
 
   const existentes = new Set(podadas);
   const nuevosHeroBanner: string[] = [];
   const nuevosCards: string[] = [];
+  const nuevosInactivos: string[] = [];
   for (const c of ordenarPorOrder(carousels)) {
-    if (c.active === false) continue;
     const id = PREFIJO_CARRUSEL + c.id;
     if (existentes.has(id)) continue;
+    if (c.active === false) {
+      nuevosInactivos.push(id);
+      continue;
+    }
     if (c.type === "CARDS") nuevosCards.push(id);
     else nuevosHeroBanner.push(id);
   }
@@ -125,5 +135,5 @@ export function normalizarSecciones(
     ];
   }
 
-  return siguiente;
+  return [...siguiente, ...nuevosInactivos];
 }

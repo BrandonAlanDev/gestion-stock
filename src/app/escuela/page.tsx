@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewSurfBoardPage() {
   await verificarModuloHabilitado("escuelaEnabled");
   return (
-    <main className="min-h-screen font-sans" style={{ background: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}>
+    <main className="min-h-screen" style={{ background: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}>
       <EscuelaHero />
       <EscuelaLevels />
       <EscuelaIncludes />

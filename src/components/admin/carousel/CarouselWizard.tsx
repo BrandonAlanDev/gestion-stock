@@ -78,7 +78,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           description: (s.description as string) || "",
           ctaText: (s.ctaText as string) || "",
           url: (s.url as string) || "",
-          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "",
+          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "NONE",
           order: (s.order as number) ?? i,
           isNew: false,
         })),

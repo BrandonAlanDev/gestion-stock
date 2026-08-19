@@ -57,6 +57,7 @@ export default function DrawersConfiguracion({
     arreglosEnabled: config.arreglosEnabled,
     escuelaEnabled: config.escuelaEnabled,
     personalizadoEnabled: config.personalizadoEnabled,
+    planAhorroEnabled: config.planAhorroEnabled,
     termsAndConditions: config.termsAndConditions ?? null,
     privacyPolicy: config.privacyPolicy ?? null,
   });

@@ -235,6 +235,7 @@ model PageConfig {
   arreglosEnabled      Boolean                   @default(false)
   escuelaEnabled       Boolean                   @default(false)
   personalizadoEnabled Boolean                   @default(false)
+  planAhorroEnabled    Boolean                   @default(false)
   sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
   fontPrimary          String                    @default("Outfit")
   fontSecondary        String                    @default("Playfair Display")

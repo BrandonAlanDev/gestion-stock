@@ -210,7 +210,7 @@ export const carouselSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
-  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
+  linkType: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE")),
   config: slideConfigSchema.optional(),
 });
 
@@ -236,7 +236,7 @@ export const carouselWizardSlideSchema = z.object({
   description: z.string().max(500).optional(),
   ctaText: z.string().max(50).optional(),
   url: z.string().optional().or(z.literal("")),
-  linkType: z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE"),
+  linkType: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE")),
   config: slideConfigSchema.optional(),
   order: z.number().int().min(0).default(0),
 });
@@ -264,6 +264,7 @@ export const flagsPaginaSchema = z.object({
   arreglosEnabled: z.boolean().optional(),
   escuelaEnabled: z.boolean().optional(),
   personalizadoEnabled: z.boolean().optional(),
+  planAhorroEnabled: z.boolean().optional(),
   maintenanceMode: z.boolean().optional(),
 });
 

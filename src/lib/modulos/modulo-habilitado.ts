@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 
-export type ClaveModulo = "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled";
+export type ClaveModulo = "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled" | "planAhorroEnabled";
 
 export async function moduloHabilitado(clave: ClaveModulo): Promise<boolean> {
   try {

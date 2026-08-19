@@ -173,7 +173,7 @@ export default function PlanAhorroPage() {
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full p-5 flex items-center justify-between text-left font-black text-xs tracking-wide transition-colors text-[var(--texto-sobre-secundario)]"
+                  className="w-full p-5 flex items-center justify-between text-left font-black text-xs tracking-wide transition-colors cursor-pointer text-[var(--texto-sobre-secundario)]"
                 >
                   <span className="flex items-center gap-3">
                     <HelpCircle className="w-4 h-4 shrink-0 text-[var(--color-primario)]" />

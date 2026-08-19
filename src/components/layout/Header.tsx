@@ -12,7 +12,6 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useCart } from "@/context/CartContext";
 
 const enlacesUsuario = [
-  { href: "/productos", label: "Catálogo", icon: Store },
   { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package },
 ];
 
@@ -120,10 +119,19 @@ export default function Header({
             </Link>
           )}
 
+          <Link
+            href="/productos"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
+            style={{ backgroundColor: overlaySuave, color: currentTextColor }}
+          >
+            <Store size={16} />
+            <span className="hidden sm:inline">Catálogo</span>
+          </Link>
+
           {cartEnabled && (
             <button
               onClick={handleCartClick}
-              className="p-2 rounded-xl transition-all hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
+              className="p-2 rounded-xl cursor-pointer transition-all hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
               style={{ color: currentTextColor }}
             >
               <ShoppingBag size={20} />
@@ -133,7 +141,7 @@ export default function Header({
           {mostrarBotonToggle && (
             <button
               onClick={onToggleSidebar}
-              className={`p-2 rounded-xl ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
+              className={`p-2 rounded-xl cursor-pointer ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
               style={{
                 backgroundColor: isSidebarOpen ? overlaySuave : "transparent",
                 color: currentTextColor,
@@ -176,23 +184,25 @@ export default function Header({
                 </button>
               </div>
             )}
-            <div className="flex items-center justify-center gap-4">
-              {enlacesUsuario.map((link) => {
-                const Icono = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={onToggleSidebar}
-                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
-                    style={{ backgroundColor: overlayEnlace, color: "var(--texto-sobre-fondo)" }}
-                  >
-                    <Icono size={16} style={{ color: "var(--color-primario)" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {pageConfig?.pageConfig?.planAhorroEnabled === true && (
+              <div className="flex items-center justify-center gap-4">
+                {enlacesUsuario.map((link) => {
+                  const Icono = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={onToggleSidebar}
+                      className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
+                      style={{ backgroundColor: overlayEnlace, color: "var(--texto-sobre-fondo)" }}
+                    >
+                      <Icono size={16} style={{ color: "var(--color-primario)" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

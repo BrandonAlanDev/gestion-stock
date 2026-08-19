@@ -48,14 +48,14 @@ export default function ConfirmDialog({ title, message, onConfirm, onCancel }: C
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-sm font-bold uppercase"
+            className="px-4 py-2 rounded-lg text-sm font-bold uppercase cursor-pointer"
             style={{ background: inputBg, border: `1px solid ${overlayBorder}`, color: mutedColor }}
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg text-sm font-bold uppercase text-white"
+            className="px-4 py-2 rounded-lg text-sm font-bold uppercase text-white cursor-pointer"
             style={{ background: "#ef4444" }}
           >
             Eliminar

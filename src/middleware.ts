@@ -25,11 +25,12 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/sizes",
 ]);
 
-const RUTAS_MODULOS: Record<string, "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled"> = {
+const RUTAS_MODULOS: Record<string, "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled" | "planAhorroEnabled"> = {
   "/escuela": "escuelaEnabled",
   "/arreglos": "arreglosEnabled",
   "/personalizado": "personalizadoEnabled",
   "/admin/personalizado": "personalizadoEnabled",
+  "/plan-de-ahorro": "planAhorroEnabled",
 };
 
 export default auth(async (req) => {

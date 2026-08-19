@@ -52,6 +52,7 @@ export default async function PageConfigPage() {
         arreglosEnabled: pageConfig.arreglosEnabled ?? false,
         escuelaEnabled: pageConfig.escuelaEnabled ?? false,
         personalizadoEnabled: pageConfig.personalizadoEnabled ?? false,
+        planAhorroEnabled: pageConfig.planAhorroEnabled ?? false,
         metaTitle: pageConfig.metaTitle ?? null,
         metaDescription: pageConfig.metaDescription ?? null,
         termsAndConditions: pageConfig.termsAndConditions ?? null,

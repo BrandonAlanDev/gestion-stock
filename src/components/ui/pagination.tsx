@@ -13,7 +13,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         disabled={currentPage <= 1}
         onClick={() => onPageChange?.(currentPage - 1)}
-        className="..."
+        className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         ← Anterior
       </button>
@@ -21,7 +21,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange?.(currentPage + 1)}
-        className="..."
+        className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         Siguiente →
       </button>
