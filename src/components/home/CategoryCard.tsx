@@ -32,10 +32,10 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
   const { primario } = useColoresTema();
 
   const variantStyles = variant === 'grid'
-    ? "h-[60vh] md:h-[80vh] min-h-[400px]"
+    ? "aspect-[3/4] md:aspect-[16/10] max-h-[520px] w-full"
     : variant === 'minimal'
-      ? "h-[40vh] min-h-[300px]"
-      : "h-full min-h-[250px]";
+      ? "aspect-[4/3] max-h-[380px]"
+      : "h-full min-h-[200px]";
 
   const subtitleNeon = cat.subtitleNeon || false;
   const subtitleDim = cat.subtitleDim || false;
@@ -104,10 +104,8 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
 
         {linkStyle === "BUTTON" && (
           <div className="mt-4">
-            <Link href={cat.href || "#"} passHref legacyBehavior>
-              <a className={buttonClasses} style={buttonStyle}>
-                {buttonText}
-              </a>
+            <Link href={cat.href || "#"} className={buttonClasses} style={buttonStyle}>
+              {buttonText}
             </Link>
           </div>
         )}
@@ -120,7 +118,7 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
   }
 
   return (
-    <Link href={cat.href || "#"} passHref legacyBehavior>
+    <Link href={cat.href || "#"}>
       {content}
     </Link>
   );

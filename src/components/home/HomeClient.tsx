@@ -169,9 +169,9 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
         );
       case "featured":
         return (
-          <main key="featured">
+          <section key="featured">
             <ProductLayout />
-          </main>
+          </section>
         );
       case "cards":
         return (
@@ -221,9 +221,9 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
         <>
           <AllCarousels storeName={config?.storeName as string} />
 
-          <main className={getSectionMt("featured", getSubtype("featured")) > 0 ? `mt-${getSectionMt("featured", getSubtype("featured"))}` : ''}>
+          <section className={getSectionMt("featured", getSubtype("featured")) > 0 ? `mt-${getSectionMt("featured", getSubtype("featured"))}` : ''}>
             <ProductLayout />
-          </main>
+          </section>
 
           {showLocation && (
             <section

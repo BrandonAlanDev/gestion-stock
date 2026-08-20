@@ -22,9 +22,9 @@ export default function LayoutCollage({ categories }: { categories: CategoriaTar
        2. auto-rows: Cambiamos de altura fija a una altura base mínima 
           para que no colapsen los elementos.
     */
-    <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[250px] grid-flow-dense gap-4 p-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[240px] grid-flow-dense gap-4 p-4">
       {categories.map((cat, i) => (
-        <div key={cat.id} className={`${getLayout(i)} w-full h-full`}>
+        <div key={cat.id} className={`${getLayout(i)} w-full h-full overflow-hidden`}>
           <CategoryCard 
             cat={cat} 
             index={i} 

@@ -211,7 +211,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     setFormData((prev) => {
       const img = prev.images[index];
       // Revocar objectURL si era nueva
-      if (img.preview && !img.url) {
+      if (img.preview && !img.url && img.preview.startsWith("blob:")) {
         URL.revokeObjectURL(img.preview);
       }
       return {
@@ -227,6 +227,14 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
       const [moved] = copy.splice(sourceIndex, 1);
       copy.splice(targetIndex, 0, moved);
       return { ...prev, images: copy };
+    });
+  }, []);
+
+  const editarImagen = useCallback((index: number, nuevoPreview: string) => {
+    setFormData((prev) => {
+      const images = [...prev.images];
+      images[index] = { ...images[index], preview: nuevoPreview, file: undefined };
+      return { ...prev, images };
     });
   }, []);
 
@@ -265,7 +273,11 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
         if (img.file) {
           const base64 = await fileToBase64(img.file);
           finalImages.push(base64);
-          if (img.preview) URL.revokeObjectURL(img.preview);
+          if (img.preview && !img.preview.startsWith("data:")) {
+            URL.revokeObjectURL(img.preview);
+          }
+        } else if (img.preview && img.preview.startsWith("data:")) {
+          finalImages.push(img.preview);
         } else if (img.url) {
           finalImages.push(img.url);
         }
@@ -320,6 +332,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     addImages,
     removeImage,
     reorderImages,
+    editarImagen,
     handleSubmit,
     resetForm,
   };

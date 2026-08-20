@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import CookieModal from "@/components/legal/CookieModal";
 import PrivacyModal from "@/components/legal/PrivacyModal";
 import TermsModal from "@/components/legal/TermsModal";
+import PiePagina from "@/components/footer/PiePagina";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
@@ -53,26 +54,10 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
 
       {/* 4. Footer fijo al fondo para volver a leer los términos */}
       {!esRutaAdmin && !esRutaMantenimiento && (
-        <footer className="bg-[var(--color-fondo-sitio)] border-t border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] py-6 text-center text-sm z-40">
-          <div className="flex justify-center items-center gap-6">
-            <button
-              onClick={() => setIsPrivacyOpen(true)}
-              className="text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100 hover:text-[var(--color-primario)] transition"
-            >
-              Política de Privacidad
-            </button>
-            <span className="text-[var(--texto-sobre-fondo)] opacity-40">|</span>
-            <button
-              onClick={() => setIsTermsOpen(true)}
-              className="text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100 hover:text-[var(--color-primario)] transition"
-            >
-              Términos y Condiciones
-            </button>
-          </div>
-          <p className="mt-4 text-xs text-[var(--texto-sobre-fondo)] opacity-40">
-            &copy; {new Date().getFullYear()} - Todos los derechos reservados.
-          </p>
-        </footer>
+        <PiePagina
+          alAbrirPrivacidad={() => setIsPrivacyOpen(true)}
+          alAbrirTerminos={() => setIsTermsOpen(true)}
+        />
       )}
     </div>
   );

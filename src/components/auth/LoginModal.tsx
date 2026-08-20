@@ -3,6 +3,7 @@ import { loginAction } from "@/actions/auth-actions";
 import GoogleButton from "@/components/auth/google-button";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -28,13 +29,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     };
     if (isOpen) {
       document.addEventListener("keydown", handleEsc);
-      document.body.style.overflow = "hidden";
     }
     return () => {
       document.removeEventListener("keydown", handleEsc);
-      document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
+
+  useBloqueoScroll(isOpen);
 
   if (!isOpen) return null;
 

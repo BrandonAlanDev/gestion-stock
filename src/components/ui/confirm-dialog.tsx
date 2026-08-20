@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getContrastColor } from "@/lib/utils";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface ConfirmDialogProps {
   title: string;
@@ -12,6 +13,8 @@ interface ConfirmDialogProps {
 }
 
 export default function ConfirmDialog({ title, message, onConfirm, onCancel }: ConfirmDialogProps) {
+  useBloqueoScroll(true);
+
   const { pageConfig } = usePageConfig();
   const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
   const textColor = getContrastColor(background);

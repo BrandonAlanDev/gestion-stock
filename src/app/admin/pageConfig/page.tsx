@@ -57,6 +57,14 @@ export default async function PageConfigPage() {
         metaDescription: pageConfig.metaDescription ?? null,
         termsAndConditions: pageConfig.termsAndConditions ?? null,
         privacyPolicy: pageConfig.privacyPolicy ?? null,
+        footerAboutText: pageConfig.footerAboutText ?? null,
+        footerCopyrightText: pageConfig.footerCopyrightText ?? null,
+        footerShowSobre: pageConfig.footerShowSobre ?? true,
+        footerShowNavegacion: pageConfig.footerShowNavegacion ?? true,
+        footerShowContacto: pageConfig.footerShowContacto ?? true,
+        footerShowUbicacion: pageConfig.footerShowUbicacion ?? true,
+        footerShowRedes: pageConfig.footerShowRedes ?? true,
+        footerShowLegales: pageConfig.footerShowLegales ?? true,
       }
     : null;
 

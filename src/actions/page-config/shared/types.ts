@@ -51,6 +51,15 @@ export type PageConfigInput = {
   escuelaEnabled?: boolean;
   personalizadoEnabled?: boolean;
 
+  footerAboutText?: string | null;
+  footerCopyrightText?: string | null;
+  footerShowSobre?: boolean;
+  footerShowNavegacion?: boolean;
+  footerShowContacto?: boolean;
+  footerShowUbicacion?: boolean;
+  footerShowRedes?: boolean;
+  footerShowLegales?: boolean;
+
   metaTitle?: string | null;
   metaDescription?: string | null;
 

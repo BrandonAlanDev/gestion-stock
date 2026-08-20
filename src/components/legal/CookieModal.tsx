@@ -1,6 +1,7 @@
 // src/components/legal/CookieModal.tsx
 "use client";
 import { useState, useEffect } from "react";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface CookieModalProps {
   onAccept?: () => void;
@@ -10,6 +11,8 @@ interface CookieModalProps {
 
 export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: CookieModalProps) {
   const [visible, setVisible] = useState(false);
+
+  useBloqueoScroll(visible);
 
   useEffect(() => {
     const acknowledged = localStorage.getItem("allConsentsAcknowledged");

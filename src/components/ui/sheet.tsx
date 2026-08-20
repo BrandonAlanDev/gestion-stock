@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface SheetProps {
   abierto: boolean;
@@ -37,15 +38,7 @@ export default function Sheet({
     return () => window.removeEventListener("keydown", manejarTecla);
   }, [abierto, alCerrar]);
 
-  useEffect(() => {
-    if (!abierto) return;
-
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = overflowAnterior;
-    };
-  }, [abierto]);
+  useBloqueoScroll(abierto);
 
   const posicionInicial = lado === "derecha" ? "100%" : "-100%";
   const clasesLado =

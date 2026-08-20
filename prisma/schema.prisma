@@ -237,6 +237,14 @@ model PageConfig {
   escuelaEnabled       Boolean                   @default(false)
   personalizadoEnabled Boolean                   @default(false)
   planAhorroEnabled    Boolean                   @default(false)
+  footerAboutText      String?                   @db.Text
+  footerCopyrightText  String?
+  footerShowSobre      Boolean                   @default(true)
+  footerShowNavegacion Boolean                   @default(true)
+  footerShowContacto   Boolean                   @default(true)
+  footerShowUbicacion  Boolean                   @default(true)
+  footerShowRedes      Boolean                   @default(true)
+  footerShowLegales    Boolean                   @default(true)
   sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
   fontPrimary          String                    @default("Outfit")
   fontSecondary        String                    @default("Playfair Display")

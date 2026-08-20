@@ -1,28 +1,53 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, ArrowRight } from "lucide-react";
-import { useCart } from "@/context/CartContext";
-import { useState, useMemo } from "react";
+import { useCart, type CartItem } from "@/context/CartContext";
+import { useState, useMemo, useEffect } from "react";
 import CartItemRow from "@/context/CartItemRow";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
+
+interface ItemCarrito extends CartItem {
+  esTabla?: boolean;
+}
+
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, updateCartItemSpecs } = useCart();
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const { cartItems, updateCartItemSpecs } = useCart() as {
+    cartItems: ItemCarrito[];
+    updateCartItemSpecs: (uid: string, newSpecs: Record<string, unknown>) => void;
+  };
+  const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
+
+  useBloqueoScroll(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (editingItem) setEditingItem(null);
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingItem, isOpen, onClose]);
 
   const subtotal = useMemo(() =>
-    cartItems.reduce((acc: number, item: any) => acc + (parseFloat(item.price) * item.qty), 0),
+    cartItems.reduce((acc: number, item) => acc + (Number(item.price) * item.qty), 0),
     [cartItems]
   );
 
   const handleWhatsAppCheckout = () => {
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
-    cartItems.forEach((item: any) => {
+    cartItems.forEach((item) => {
       message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
 
       // Si el producto tiene especificaciones (specs), las agregamos al mensaje
@@ -70,7 +95,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3">
-              {cartItems.map((item: any) => (
+              {cartItems.map((item) => (
                 <CartItemRow
                   key={`${item.id}-${JSON.stringify(item.specs)}`}
                   item={item}

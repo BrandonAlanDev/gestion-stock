@@ -281,3 +281,14 @@ export const regionalSchema = z.object({
   termsAndConditions: z.string().nullable().optional(),
   privacyPolicy: z.string().nullable().optional(),
 });
+
+export const footerSchema = z.object({
+  footerAboutText: z.string().max(300).nullable().optional(),
+  footerCopyrightText: z.string().max(150).nullable().optional(),
+  footerShowSobre: z.boolean().optional(),
+  footerShowNavegacion: z.boolean().optional(),
+  footerShowContacto: z.boolean().optional(),
+  footerShowUbicacion: z.boolean().optional(),
+  footerShowRedes: z.boolean().optional(),
+  footerShowLegales: z.boolean().optional(),
+});

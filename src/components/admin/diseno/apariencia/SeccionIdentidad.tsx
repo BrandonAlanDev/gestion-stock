@@ -118,12 +118,14 @@ export default function SeccionIdentidad({
             label="Logo"
             value={form.logo}
             onChange={(valor) => actualizar("logo", valor)}
+            relacionAspecto={1}
           />
 
           <ImageUploader
             label="Favicon"
             value={form.favicon}
             onChange={(valor) => actualizar("favicon", valor)}
+            relacionAspecto={1}
           />
         </div>
 

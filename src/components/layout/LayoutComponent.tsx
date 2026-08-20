@@ -55,12 +55,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <main className={`flex-grow ${isAdminRoute ? "pt-16 md:pt-0 md:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
           {children}
         </main>
-
-        {!isAdminRoute && (
-          <footer>
-            {/* ... */}
-          </footer>
-        )}
       </div>
 
       {/* Carrito y Toaster existentes */}

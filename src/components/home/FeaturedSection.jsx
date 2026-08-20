@@ -29,7 +29,7 @@ export default function FeaturedSection() {
   };
 
   return (
-    <section className="w-full bg-[var(--color-fondo-sitio)] py-16 border-t-2" style={{ borderColor: "var(--color-primario)" }}>
+    <section className="w-full bg-[var(--color-fondo-sitio)] py-16 border-t-2 overflow-hidden" style={{ borderColor: "var(--color-primario)" }}>
       <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
         <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-fondo)] uppercase italic">
           {homeData?.title || "CATALOGO Y SERVICIOS"}

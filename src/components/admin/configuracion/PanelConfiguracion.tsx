@@ -16,6 +16,7 @@ import {
   MapPin,
   MessageCircle,
   MoreHorizontal,
+  PanelBottom,
   Percent,
   Phone,
   Plug,
@@ -182,6 +183,40 @@ export default function PanelConfiguracion({
                   : "Ocultas"
               }
               alClick={() => setDrawerAbierto("paginas-sitio")}
+            />
+            <ItemConfiguracion
+              icono={PanelBottom}
+              titulo="Footer"
+              descripcion="Textos y visibilidad del pie de página"
+              varianteBadge={
+                config.footerAboutText?.trim() ||
+                config.footerCopyrightText?.trim() ||
+                [
+                  config.footerShowSobre,
+                  config.footerShowNavegacion,
+                  config.footerShowContacto,
+                  config.footerShowUbicacion,
+                  config.footerShowRedes,
+                  config.footerShowLegales,
+                ].some((visible) => visible === false)
+                  ? "activo"
+                  : "sin-configurar"
+              }
+              textoBadge={
+                config.footerAboutText?.trim() ||
+                config.footerCopyrightText?.trim() ||
+                [
+                  config.footerShowSobre,
+                  config.footerShowNavegacion,
+                  config.footerShowContacto,
+                  config.footerShowUbicacion,
+                  config.footerShowRedes,
+                  config.footerShowLegales,
+                ].some((visible) => visible === false)
+                  ? "Configurado"
+                  : "Por defecto"
+              }
+              alClick={() => setDrawerAbierto("footer")}
             />
             <ItemConfiguracion icono={Clock} titulo="Horarios" proximamente />
           </GrupoConfiguracion>

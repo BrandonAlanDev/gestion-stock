@@ -435,3 +435,177 @@ Sin imágenes huérfanas en Cloudinary, con errores amigables para el usuario, l
 5. Duplicar carrusel → la copia tiene imágenes propias; borrar la copia NO afecta al original.
 6. Editar home grids (reemplazar/quitar) → imágenes viejas destruidas. Cambiar logo/favicon → el anterior se destruye.
 7. Errores: sin mensajes técnicos en toasts (probar SKU duplicado, producto inexistente, corte de red en subida).
+
+---
+
+## Destacada (home), modal de imágenes reutilizable con crop, scroll-lock del carrito y footer configurable
+
+### Alcance (5 bloques)
+1. **Sección Destacada**: corregir renderizado roto en desktop/tablet sin romper mobile.
+2. **Modal de Destacada**: refactor completo tomando como referencia el flujo de imágenes de Carruseles; eliminar el buscador de productos; cerrar todo el flujo (modal + drawer) tras subir con éxito.
+3. **Previsualización + crop de imágenes en TODOS los modales que manejan imágenes**, mediante UN único componente reutilizable.
+4. **Scroll-lock**: bloquear el scroll del body cuando el carrito/modal está abierto (solución general reutilizable, no un hack del carrito).
+5. **Footer configurable** desde el panel de administración + crédito "Creado por LOGABYTE".
+
+### Estado actual (relevado)
+
+**1. Destacada — render público:**
+- Flujo: `HomeClient.tsx` (caso `"featured"`, líneas 170-175 y 224-226) → `ProductLayout.jsx` → `FeaturedSection.jsx` → `LayoutGrid`/`LayoutCollage`/`LayoutMinimal` → `CategoryCard`.
+- `CategoryCard.tsx:34-38`: alturas fijas descomunales en grid — `h-[60vh] md:h-[80vh] min-h-[400px]` (tarjetas al 80% del viewport en desktop).
+- `LayoutCollage.tsx:25`: `grid-cols-1 md:grid-cols-4 auto-rows-[250px] grid-flow-dense` — filas fijas que recortan mal las imágenes (`bg-cover` absoluto) y reordenan visualmente.
+- `ProductLayout.jsx:57`: wrapper `min-h-screen` que infla la sección; `:66` renderiza un `<main>` anidado (HTML inválido: `HomeClient.tsx:172` ya envuelve en `<main>`); `:69-74` pasa props muertos a `FeaturedSection` (no los declara); `:78-80` footer vacío; `:8-54` estado local de carrito (`tech_cart`) e instancia duplicada de `CartSidebar` en paralelo al `CartContext` global.
+- `FeaturedSection.jsx:32`: sección `py-16` sin `overflow-hidden`; solo `w-full` (desbordes caen sobre el `overflow-x-hidden` del body).
+- `LayoutGrid.tsx:6`: `gap-0`; tarjetas pegadas.
+
+**2. Destacada — modal de administración:**
+- Flujo: `/admin/design/contenido` → `GestorContenido.tsx` → `setDrawerDestacada(true)` → `DrawerSeccionDestacada.tsx` (Sheet) → `HomeSectionsDesign.tsx` → `GridModal.tsx` (modal por tarjeta).
+- `GridModal.tsx` (324 líneas): sin validaciones (ni imagen, ni título, ni URL), sube la imagen como `dataURL` crudo sin comprimir (`FileReader.readAsDataURL`, líneas 81-90), preview fijo de 64px, sin estados de carga propios, colores pintados con `secondaryColor` + `getContrastColor` local duplicada (líneas 19-27).
+- Desplegable ilegible: `destination-picker/DestinationType.tsx:44-48` — `<select>` con `bg-white border-neutral-300` que ignora el tema oscuro del modal.
+- Buscador de productos que sobra: `destination-picker/SearchableSelect.tsx` (98 líneas), usado por `DestinationValue.tsx` para tipo producto; carga TODOS los `garment` (`getProductsPicker`, sin filtrar activos) al abrir el drawer. Colores neutros sin tema (`text-neutral-400/500`, `hover:bg-neutral-100`).
+- `destination-picker/` (6 archivos) solo lo consume `GridModal.tsx:256`.
+- Guardado por lote: `HomeSectionsDesign.tsx:153-192` — "Guardar Todo" → `updateSectionVisibility` + `updateHomeGrids` (borra y recrea todas las grids, sube `data:image` a `page-config/home-grids/{id}`). Tras éxito: toast + `router.refresh()` pero **el drawer NO se cierra**. Uso masivo de `any` (viola `no-explicit-any`).
+- Server: `src/actions/page-config/home.actions.ts` (139 líneas) con `updateSectionVisibility` y `updateHomeGrids` (rollback de subidas ya implementado).
+
+**3. Imágenes — puntos de subida existentes (4 activos):**
+| Flujo | Archivo | Comportamiento |
+|---|---|---|
+| Carrusel | `admin/carousel/SlideEditor.tsx` (391) + `admin/carousel/ImageUploader.tsx` (124) | Compresión 1200×1200 q0.8, límite 5MB, preview 64px, subida diferida al guardar el wizard. **Referencia del refactor.** |
+| Destacada | `admin/design/GridModal.tsx` (324) | dataURL crudo, sin compresión, sin validación. |
+| Productos | `providers/products/forms/ImageUploader.tsx` (216) | Multi (máx 4), comprime, previews, drag&drop. Sin límite de tamaño. |
+| Branding | `admin/page-config/shared/ImageUploader.tsx` (131) | Sube al instante vía `POST /api/upload-image` (carpeta `page-config/identidad`). Sin validación. |
+
+- **No existe crop, ni zoom, ni lightbox en ningún lado.** No hay librerías instaladas (`react-easy-crop`, `cropperjs`, etc.).
+- Cloudinary: subidas firmadas server-side vía `cloudinary-service.ts` (`subirImagen` con `format: "webp"` + `fetch_format: auto/quality: auto`), carpetas por dominio (`garments/{catId}/{id}`, `carousels/{id}`, `page-config/home-grids/{id}`, `page-config/identidad`). El base64 viaja dentro de las server actions y se sube al guardar (excepto branding).
+- `compressImage` (`src/lib/image-utils.ts:54`) convierte SIEMPRE a JPEG → pierde transparencia (problemático para el logo).
+- Páginas personalizadas: campo `image` existe en BD pero sin UI (fuera de alcance).
+
+**4. Scroll-lock:**
+- Solo 2 implementaciones: `ui/sheet.tsx:40-48` (guarda/restaura `overflow`, correcto) y `LoginModal.tsx` (`hidden`/`unset`, sin restaurar previo).
+- **`CartSidebar.tsx` NO bloquea el scroll del body** ni cierra con Escape. `WhatsAppOrderForm` (apilado sobre el carrito), `confirm-dialog`, modales legales (`CookieModal`/`PrivacyModal`/`TermsModal`), `SidebarMovil`, `MovementModal`: sin lock.
+- No existe hook compartido. `radix-ui` instalado pero solo se usa `@radix-ui/react-slot` (sin Dialog/Sheet de Radix en uso).
+
+**5. Footer:**
+- No existe componente Footer: el footer real está hardcodeado en `AppGate.tsx:54-76` (2 links legales + copyright). `<footer>` vacíos en `LayoutComponent.tsx:59-63` y `ProductLayout.jsx:78-80`. `EscuelaFooter.tsx` aparte (dominio escuela, se conserva).
+- Los modales legales (`PrivacyModal`, `TermsModal`) son hardcodeados: NO leen `pageConfig.termsAndConditions`/`privacyPolicy` (los textos editados en admin nunca llegan al front).
+- Datos YA existentes en `PageConfig` (schema.prisma:196-249): `storeName`, `description`, `slogan`, `logo`, `favicon`, colores, `phone`, `whatsapp`, `email`, `address`/`city`/`province`/`country`/`postalCode`/`mapsUrl`/`locationEnabled`, 6 redes (`instagram`…`linkedin`), `termsAndConditions`, `privacyPolicy`, `sectionOrder`. Disponibles en cliente vía `usePageConfig()`.
+- NO existen: textos propios del footer, copyright configurable, toggles de visibilidad de columnas, modelo `Footer`. No hay sección "Footer" en `/admin/pageConfig` (`PanelConfiguracion.tsx` + `DrawersConfiguracion.tsx`).
+
+### Decisiones tomadas (confirmadas con el usuario)
+1. **Destacada persiste por lote** (espejo del wizard de carruseles): el nuevo modal de tarjeta guarda en estado local del drawer y cierra; "Guardar Todo" sube imágenes y persiste todo; **al finalizar con éxito: toast + cerrar drawer + `router.refresh()`**. Si falla, el drawer queda abierto con el error visible.
+2. **Crop: instalar `react-easy-crop`** (zoom, arrastre y aspect listos; se integra con canvas para generar la imagen recortada antes de subir).
+3. **Footer: secciones estándar + toggles** (sin editor de links arbitrarios). Columnas: Sobre la tienda, Navegación (auto), Contacto, Ubicación, Redes, Legales.
+4. **Almacenamiento sin cambios de infraestructura**: el recorte ocurre en el cliente ANTES de subir; el dataURL resultante viaja por el flujo existente (server action → `subirImagen` a la carpeta Cloudinary del dominio). Sin imágenes duplicadas, sin tocar carpetas ni transformaciones.
+5. **El buscador de productos se elimina del flujo de Destacada**; como `destination-picker/` queda sin consumidores, se borran sus 6 archivos.
+6. **ProductLayout.jsx**: se elimina el estado local de carrito y la instancia duplicada de `CartSidebar` (existe el global montado en `LayoutComponent`).
+7. **`destination-picker` y los selectores**: el nuevo selector de destino de Destacada usa `<select>` nativo estilizado con el tema (fondo heredado del panel, opciones legibles), sin buscador.
+
+### Plan de solución
+
+**Fase 1 — Fundaciones compartidas**
+1. Instalar `react-easy-crop` (`npm i react-easy-crop`).
+2. Nuevo hook `src/hooks/use-bloqueo-scroll.ts` — una función exportada `useBloqueoScroll(activo: boolean)`:
+   - Conteo de referencias global (modales apilados: `WhatsAppOrderForm` sobre el carrito no desbloquea al cerrar uno solo).
+   - Guarda el `overflow` previo de `document.body`; aplica `hidden` al abrir y restaura al cerrar el último.
+   - Compensa el ancho del scrollbar (medir `window.innerWidth - documentElement.clientWidth`) aplicando `padding-right` al body para evitar saltos de posición; iOS/mobile contemplado (no hay scrollbar visible → no compensa).
+   - Refactorizar `src/components/ui/sheet.tsx:40-48` y `src/components/auth/LoginModal.tsx` para consumir el hook (regla boy scout: una sola lógica de lock).
+3. Nuevo dominio `src/components/imagen/` (español, una función exportada por archivo, ≤400 líneas, imports `@/`):
+   - `SubidaImagen.tsx` — componente reutilizable: seleccionar archivo → validar (PNG/JPG/JPEG/WebP, tamaño máx configurable, error visible inline) → comprimir (`compressImage`) → abrir `EditorRecorte` → devolver dataURL + preview con botones "Editar recorte" y "Quitar". Props: `valor`, `alCambiar`, `relacionAspecto` (default 16/9), `formaRecorte` (`"rectangular"` | `"redondeada"`), `tamanoMaximoMb` (default 5), `obligatoria`, `etiqueta`, `textoAyuda`, `anchoMaximoCompresion` (default 1200), `errorExterno`.
+   - `EditorRecorte.tsx` — modal interno (portal, colores de tema vía `usePageConfig` + `getContrastColor` de `@/lib/utils`): react-easy-crop con zoom (slider + wheel), arrastre, aspect configurable, Confirmar / Cancelar, soporte táctil; botón "Volver a editar" desde el preview.
+   - `utilidades-recorte.ts` — `generarImagenRecortada(imagen, areaPixeles)`: canvas → dataURL; **preserva PNG cuando la imagen original tiene transparencia** (importante para el logo); JPEG con calidad 0.9 en el resto.
+   - `tipos.ts` — tipos del dominio.
+   - El componente NO sube a Cloudinary: entrega base64, compatible con el contrato actual de todas las server actions.
+
+**Fase 2 — Migrar los 4 flujos de imagen al componente común**
+1. **Carruseles**: `SlideEditor.tsx` + `admin/carousel/ImageUploader.tsx` pasan a usar `SubidaImagen` (mantener límite 5MB, textos y patrón). `SlideEditor` (391 líneas) debe quedar ≤400 tras el cambio (boy scout si excede).
+2. **Productos**: `providers/products/forms/ImageUploader.tsx` — cada imagen nueva pasa por selección + crop; cada preview conserva botón "Editar recorte" y "Quitar"; mantener multi (máx 4), compresión y drag&drop.
+3. **Branding**: `admin/page-config/shared/ImageUploader.tsx` — preview + crop antes de enviar el blob recortado al `/api/upload-image` existente (contrato del FormData no cambia). Favicon `relacionAspecto={1}`, logo con forma libre/1:1 según sección (`SeccionIdentidad.tsx`). Tras migrar, eliminar el uploader viejo si queda sin uso.
+4. **Destacada**: dentro del refactor de la Fase 3.
+5. Al tocar estos archivos: eliminar `any`, respetar límites de líneas y reglas AGENTS.md.
+
+**Fase 3 — Sección Destacada**
+
+*3.1 Render público (desktop/tablet/mobile):*
+- `CategoryCard.tsx:34-38` — reemplazar alturas fijas por proporciones con máximo: p. ej. grid `aspect-[3/4] md:aspect-[16/10] max-h-[520px] w-full`, minimal `aspect-[4/3] max-h-[380px]`, collage `h-full min-h-[200px]`. Mobile queda visualmente equivalente al actual.
+- `LayoutCollage.tsx:25` — `auto-rows-[250px]` → alturas responsive (`auto-rows-[200px] md:auto-rows-[240px]`) y revisar `grid-flow-dense` para evitar reordenamientos extraños; asegurar `overflow-hidden` en las celdas.
+- `ProductLayout.jsx` — quitar `min-h-screen` (57), el `<main>` anidado (66), el footer vacío (78-80), los props muertos a `FeaturedSection` (69-74) y el carrito local duplicado + su `CartSidebar` (8-64); queda como contenedor simple de `FeaturedSection`.
+- `HomeClient.tsx:172` — cambiar `<main key="featured">` por `<section key="featured">` (evitar `<main>` anidado); `:225` igual.
+- `FeaturedSection.jsx:32` — agregar `overflow-hidden` y verificar paddings; `LayoutGrid.tsx:6` — gap consistente.
+- Verificar overflow horizontal en desktop/tablet.
+
+*3.2 Modal de Destacada (espejo de Carruseles):*
+- **Reescribir `GridModal.tsx`** con el patrón de `SlideEditor`: portal + overlay (`bg-black/80 backdrop-blur`) y panel con colores de tema (variables de `usePageConfig`, sin copias locales de `getContrastColor`), bottom-sheet en mobile, header/footer sticky, estados `isSubmitting` + `error` visible, formulario real.
+  - Imagen: `SubidaImagen` con crop (`relacionAspecto` según layout elegido en el drawer, default 16/10).
+  - **Nuevo selector de destino** (dentro de `GridModal` o componente del dominio destacada): "Sin destino / Categoría / Página / URL externa" con `<select>` nativo estilizado con el tema (fondo heredado, `option` con color de fondo del panel) — corrige el desplegable ilegible. Sin buscador de productos.
+  - Validaciones: imagen obligatoria, URL externa empieza con `http`, límites de caracteres; errores visibles; sin cierre ante fallo; cancelación limpia.
+  - Links: resolver igual que hoy (`linkType`/`linkValue` → `mapGridToCard` en render; `updateHomeGrids` ya mapea al guardar).
+- Eliminar `src/components/admin/destination-picker/` (6 archivos, sin consumidores tras el refactor).
+- `HomeSectionsDesign.tsx` — tipar (eliminar `any`); mantener dnd-kit, título y selector de layout; en `handleSave` tras éxito de `Promise.all`: `toast.success` + **cerrar drawer** (`setDrawerDestacada(false)` en `GestorContenido` o vía prop `alGuardar` del drawer) + `router.refresh()`. En error: el drawer queda abierto y el error se muestra (toast de error, sin datos inconsistentes). Re-sincronizar `grids` local tras guardar (los ids temporales se reemplazan).
+- Server actions (`home.actions.ts`) sin cambios de fondo (ya tienen rollback de subidas); verificar que `updateHomeGrids` devuelva errores accionables al drawer.
+
+**Fase 4 — Scroll-lock general**
+- `CartSidebar.tsx` — aplicar `useBloqueoScroll(isOpen)`; agregar cierre con Escape; el scroll interno del carrito ya existe (línea 72). Mantener animaciones framer-motion.
+- `WhatsAppOrderForm` (`providers/products/forms/WhatsAppOrder.tsx`) — `useBloqueoScroll` con conteo apilado sobre el carrito.
+- `ui/confirm-dialog.tsx`, `legal/CookieModal.tsx`, `legal/PrivacyModal.tsx`, `legal/TermsModal.tsx`, `layout/SidebarMovil.tsx` — aplicar el hook (solución general, sin hacks por modal).
+- `ui/sheet.tsx` y `LoginModal.tsx` — migrar al hook (Fase 1).
+
+**Fase 5 — Footer configurable**
+1. **Prisma** (`schema.prisma`, modelo `PageConfig`): agregar
+   - `footerAboutText String?` (texto "Sobre la tienda"; fallback `description`)
+   - `footerCopyrightText String?` (fallback `© {año} {storeName}`)
+   - `footerShowSobre Boolean @default(true)`, `footerShowNavegacion Boolean @default(true)`, `footerShowContacto Boolean @default(true)`, `footerShowUbicacion Boolean @default(true)`, `footerShowRedes Boolean @default(true)`, `footerShowLegales Boolean @default(true)`.
+   - Aplicar con `npx prisma db push` (columnas nullable/default → no destructivo; el build ya lo ejecuta).
+2. **Acciones/tipos/zod:**
+   - `src/lib/zod.ts` — nuevo `footerSchema` (textos con máx. de caracteres, toggles booleanos).
+   - Nuevo `src/actions/page-config/footer.actions.ts` — `updateFooterConfig` (valida con `footerSchema`, actualiza, `revalidatePath("/", "layout")` + `revalidateTag("page-config")`).
+   - `src/actions/page-config/shared/types.ts` — agregar campos al `PageConfigInput`; `shared/defaults.ts` — defaults; `general.actions.ts` `getPageConfig` — incluir los campos nuevos en el `select`.
+3. **Componente público** — nuevo dominio `src/components/footer/`:
+   - `PiePagina.tsx` (default export; subcomponentes en archivos propios si supera 400 líneas): consume `usePageConfig()`.
+     - Columnas según toggles: **Sobre la tienda** (logo + `storeName` + `footerAboutText`), **Navegación** (links generados de `sectionOrder`/secciones activas: Catálogo, Escuela, Arreglos, Plan de ahorro — respetando flags), **Contacto** (`phone`, `whatsapp`, `email` con links `tel:`/`wa.me`/`mailto:`), **Ubicación** (`address`, `city`, `mapsUrl` si `locationEnabled`), **Redes** (6 redes con íconos lucide: Instagram, Facebook, Youtube, Linkedin, X, Tiktok — usar `Music2` o ícono propio para Tiktok que no está en lucide), **Legales** (botones que abren `PrivacyModal`/`TermsModal`).
+     - Línea inferior: copyright configurable + **"Creado por LOGABYTE"** centrado horizontalmente, integrado al diseño (separador sutil `border-t` + `opacity`), siempre visible.
+     - Responsive: grid 2/3/4 columnas en desktop, apilado en mobile; colores con variables CSS del tema (`--color-fondo-sitio`, `--color-primario`, `--texto-sobre-fondo`).
+   - `PrivacyModal.tsx`/`TermsModal.tsx` — pasar a leer `pageConfig.termsAndConditions`/`privacyPolicy` (con fallback a los textos actuales si están vacíos).
+4. **Montaje único:** reemplazar el footer hardcodeado de `AppGate.tsx:54-76` por `<PiePagina />` (mantener los estados de los modales legales en AppGate y pasarlos por props); eliminar los `<footer>` vacíos de `LayoutComponent.tsx:59-63` y `ProductLayout.jsx:78-80`. `EscuelaFooter` se conserva.
+5. **Admin:** nueva sección "Footer" en el panel de configuración:
+   - `src/components/admin/configuracion/PanelConfiguracion.tsx` — nuevo ítem (grupo "General") con clave `footer`.
+   - `src/components/admin/configuracion/DrawersConfiguracion.tsx` — mapear la clave al drawer con `FooterSection`.
+   - Nuevo `src/components/admin/page-config/FooterSection.tsx` — texto "Sobre la tienda" (Textarea), copyright (Input) y 6 switches de visibilidad; guardado manual con `isPending` + toast + `router.refresh()` (patrón `SeccionColores`/`SeccionLegal`).
+   - `tipos-configuracion.ts`/`tipos-panel.ts` — tipos del nuevo ítem.
+
+**Fase 6 — Verificación**
+
+### Ejecución
+- **Fase 1** (dependencia `react-easy-crop` + hook + `src/components/imagen/`) la hace el orquestador primero: define los contratos exactos del componente (`SubidaImagen` props, `EditorRecorte` props, firma de `generarImagenRecortada`, `useBloqueoScroll(activo)`) para que el resto trabaje en paralelo.
+- Subagentes en paralelo (archivos sin solapamiento):
+  - A — Fase 2.1 y 2.2 (carruseles + productos).
+  - B — Fase 2.3 y 2.4 (branding + migración/eliminación del uploader viejo).
+  - C — Fase 3 (Destacada pública + modal + drawer + eliminación de destination-picker).
+  - D — Fase 4 (scroll-lock en carrito, WhatsAppOrderForm, confirm-dialog, legales, SidebarMovil).
+  - E — Fase 5 (prisma + actions + zod + PiePagina + AppGate/LayoutComponent + admin FooterSection). La migración `db push` la ejecuta el orquestador al recibir E.
+- **Agente verificador global** al final (reglas AGENTS.md: español, una función exportada por archivo, ≤400 líneas con boy scout, imports `@/`, sin `any` nuevo, carpetas de dominio) + reparación.
+- Comandos: `npx tsc --noEmit`, `npm run lint`, `npm run build`.
+- No se tocan `CLAUDE.md` ni el resto de secciones de este archivo.
+
+### Verificación manual
+1. **Destacada**: desktop, tablet y mobile con layouts GRID/COLLAGE/MINIMAL — tarjetas proporcionadas, sin desbordes, sin `<main>` anidado (inspeccionar DOM), hover/zoom intacto, links funcionando.
+2. **Modal Destacada**: agregar/editar tarjeta → seleccionar imagen → preview → crop (zoom/arrastre) → elegir destino (categoría/URL) → "Guardar Todo" → toast de éxito → drawer se cierra solo → home refleja los cambios. Fallo forzado (URL inválida sin imagen) → error visible y modal abierto.
+3. **Carruseles**: wizard completo sin regresión; slide con crop y link; edición posterior sin errores.
+4. **Productos**: subir hasta 4 imágenes con crop individual, reorden, reemplazo; validación de tamaño/formato visible.
+5. **Branding**: logo/favicon con crop y transparencia PNG preservada; subida vía API existente sin cambios de carpeta.
+6. **Carrito**: abrir → el body no scrollea; contenido largo scrollea dentro del carrito; abrir el form de specs (apilado) y cerrarlo → el scroll sigue bloqueado; cerrar carrito → scroll restaurado sin salto de posición; Escape cierra.
+7. **Footer**: desktop y mobile con columnas/toggles; editar textos y toggles en `/admin/pageConfig` → Footer; links legales abren modales con los textos de BD; "Creado por LOGABYTE" centrado y siempre visible.
+8. **Regresión general**: home pública, búsqueda, catálogo, admin de diseño y configuración sin cambios de comportamiento.
+
+### Fuera de alcance (por ahora)
+- UI de imagen en páginas personalizadas (campo `image` de `CustomSectionItem` sin UI — no es un modal existente).
+- Horarios de atención y links arbitrarios de footer (los datos de horarios no existen en BD y el usuario eligió secciones estándar + toggles).
+- `EscuelaFooter` (dominio escuela, se conserva).
+- Multi-tenant / cambios de carpetas Cloudinary (ya cubiertos por el pendiente anterior).
+- Lightbox/zoom de imágenes en el front público.
+
+### Riesgos conocidos
+- `compressImage` convierte a JPEG: la utilidad de recorte nueva debe preservar PNG con transparencia (logo); para el resto, JPEG es aceptable (comportamiento actual).
+- `SlideEditor.tsx` (391 líneas) y `GridModal.tsx` (324, se reescribe) están al borde del límite de 400: verificar tras el refactor y dividir si hace falta.
+- Límite de body de server actions (~1MB): el base64 comprimido ya opera dentro del margen actual.
+- Eliminar el estado local de carrito de `ProductLayout.jsx` cambia la fuente de verdad a `CartContext` (ya montado globalmente en `LayoutComponent`): verificar persistencia `tech_cart` (la maneja `CartContext`, clave idéntica).
+- El `<select>` nativo estilizado con tema: las `option` heredan el `background-color` del select en algunos navegadores; verificar en Chrome/Firefox/Safari.
+- `db push` agrega columnas nullable/default: sin pérdida de datos; ejecutar con la BD alcanzable.

@@ -3,13 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertCircle, Eye, EyeOff } from "lucide-react";
-import { cn, getContrastColor, fileToBase64 } from "@/lib/utils";
+import { cn, getContrastColor } from "@/lib/utils";
+import SubidaImagen from "@/components/imagen/SubidaImagen";
 import Input from "@/components/admin/page-config/shared/Input";
 import Textarea from "@/components/admin/page-config/shared/Textarea";
-import ImageUploader from "./ImageUploader";
 import LinkTypeSelector from "./LinkTypeSelector";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { compressImage } from "@/lib/image-utils";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
 import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
 
@@ -139,31 +138,6 @@ export default function SlideEditor({
     }
   }, [validateUrl]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement> | string) => {
-    if (typeof e === "string") {
-      setFormData((prev) => ({ ...prev, image: e }));
-      return;
-    }
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("La imagen supera los 5MB");
-        return;
-      }
-      (async () => {
-        try {
-          const compressedFile = await compressImage(file, 1200, 1200, 0.8);
-          const base64 = await fileToBase64(compressedFile);
-          setFormData((prev) => ({ ...prev, image: base64 }));
-          setError(null);
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : "Error al procesar la imagen";
-          setError(message);
-        }
-      })();
-    }
-  };
-
   const getCharCount = (field: keyof SlideFormData) => {
     const valor = formData[field];
     return typeof valor === "string" ? valor.length : 0;
@@ -229,13 +203,14 @@ export default function SlideEditor({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
               <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Imagen <span className="text-red-400">*</span></label>
-              <ImageUploader
-                value={formData.image}
-                onChange={handleFileSelect}
-                label="Imagen de portada"
-                maxSizeMB={5}
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
+              <SubidaImagen
+                valor={formData.image}
+                alCambiar={(valor) => handleChange("image", valor)}
+                relacionAspecto={16 / 9}
+                tamanoMaximoMb={5}
+                obligatoria
+                etiqueta="Imagen de portada"
+                textoAyuda="PNG, JPG, WebP"
               />
             </div>
             <div className="space-y-1">

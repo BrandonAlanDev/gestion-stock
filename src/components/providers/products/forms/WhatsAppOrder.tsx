@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 const QUILLA_OPTIONS = ["Single", "Twin", "Tri (Thruster)", "Quad", "2+1", "5 quillas"];
 const COLA_OPTIONS = ["Squash", "Round", "Pin", "Swallow", "Bat tail", "Moon tail"];
@@ -29,6 +30,8 @@ interface FormState {
 
 export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) {
   const { pageConfig } = usePageConfig();
+
+  useBloqueoScroll(true);
   
   // Inicializamos el estado. Si item.specs existe, lo carga, si no, inicia vacío.
   const [form, setForm] = useState<FormState>(item.specs || {

@@ -50,4 +50,12 @@ export interface ConfigCompleta {
   metaDescription: string | null;
   termsAndConditions: string | null;
   privacyPolicy: string | null;
+  footerAboutText: string | null;
+  footerCopyrightText: string | null;
+  footerShowSobre: boolean;
+  footerShowNavegacion: boolean;
+  footerShowContacto: boolean;
+  footerShowUbicacion: boolean;
+  footerShowRedes: boolean;
+  footerShowLegales: boolean;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import ContenidoSidebar from "@/components/layout/ContenidoSidebar";
+import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 export default function SidebarMovil({
   isOpen,
@@ -9,6 +10,8 @@ export default function SidebarMovil({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  useBloqueoScroll(isOpen);
+
   return (
     <>
       <aside

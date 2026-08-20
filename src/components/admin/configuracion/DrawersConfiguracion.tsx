@@ -10,6 +10,7 @@ import type { ConfigAjustes } from "@/components/admin/diseno/ajustes/tipos-ajus
 import SeccionIdentidad from "@/components/admin/diseno/apariencia/SeccionIdentidad";
 import type { ConfigApariencia } from "@/components/admin/diseno/apariencia/tipos-apariencia";
 import ContactSection from "@/components/admin/page-config/ContactSection";
+import FooterSection from "@/components/admin/page-config/FooterSection";
 import LocationSection from "@/components/admin/page-config/LocationSection";
 import SocialsSection from "@/components/admin/page-config/SocialsSection";
 import DrawerSeccion from "./DrawerSeccion";
@@ -199,6 +200,26 @@ export default function DrawersConfiguracion({
         descripcion="Acciones peligrosas"
       >
         <PanelAvanzado config={config} />
+      </DrawerSeccion>
+
+      <DrawerSeccion
+        abierto={drawerAbierto === "footer"}
+        alCerrar={alCerrar}
+        titulo="Footer"
+        descripcion="Textos y visibilidad del pie de página"
+      >
+        <FooterSection
+          config={{
+            footerAboutText: config.footerAboutText,
+            footerCopyrightText: config.footerCopyrightText,
+            footerShowSobre: config.footerShowSobre,
+            footerShowNavegacion: config.footerShowNavegacion,
+            footerShowContacto: config.footerShowContacto,
+            footerShowUbicacion: config.footerShowUbicacion,
+            footerShowRedes: config.footerShowRedes,
+            footerShowLegales: config.footerShowLegales,
+          }}
+        />
       </DrawerSeccion>
     </>
   );
