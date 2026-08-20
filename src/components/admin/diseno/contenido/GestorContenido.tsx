@@ -192,17 +192,19 @@ export default function GestorContenido({
   };
 
   const filaOculta = ({
+    id,
     icono: Icono,
     titulo,
     detalle,
     alMostrar,
   }: {
+    id: string;
     icono: LucideIcon;
     titulo: string;
     detalle: string;
     alMostrar: () => void;
   }): ReactNode => (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3">
+    <div key={id} className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
         <Icono size={16} className="text-[var(--admin-texto)]" />
       </div>
@@ -300,24 +302,27 @@ export default function GestorContenido({
                     {ocultasFijas.map((id) =>
                       id === "featured"
                         ? filaOculta({
-                            icono: Grid2X2,
-                            titulo: "Sección destacada",
-                            detalle: config.homegrid?.grids.length
-                              ? `${config.homegrid.grids.length} tarjetas`
-                              : "Sin configurar",
-                            alMostrar: () => void toggleSeccionFija(id),
-                          })
+                          id: "featured",
+                          icono: Grid2X2,
+                          titulo: "Sección destacada",
+                          detalle: config.homegrid?.grids.length
+                            ? `${config.homegrid.grids.length} tarjetas`
+                            : "Sin configurar",
+                          alMostrar: () => void toggleSeccionFija(id),
+                        })
                         : filaOculta({
-                            icono: MapPin,
-                            titulo: "Ubicación",
-                            detalle: config.address ?? "Sin dirección",
-                            alMostrar: () => void toggleSeccionFija(id),
-                          })
+                          id: "location",
+                          icono: MapPin,
+                          titulo: "Ubicación",
+                          detalle: config.address ?? "Sin dirección",
+                          alMostrar: () => void toggleSeccionFija(id),
+                        })
                     )}
                     {carruselesOcultos.map((carousel) => {
                       const label = ETIQUETAS_TIPO[carousel.type];
                       const cantidad = carousel.slides?.length ?? 0;
                       return filaOculta({
+                        id: `hidden-carousel-${carousel.id}`,
                         icono: ICONOS_TIPO[carousel.type],
                         titulo: carousel.title || label,
                         detalle: `${label} · ${cantidad} slides`,
