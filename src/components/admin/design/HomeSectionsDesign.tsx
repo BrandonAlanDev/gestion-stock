@@ -282,19 +282,20 @@ export default function HomeSectionsDesign({
             return (
               <button
                 key={type}
+                type="button"
                 onClick={() => setLayout(type)}
-                className="p-4 rounded-2xl gap-4 border-2 transition-all transition-200 hover:scale-[1.02] flex flex-col items-center justify-center"
+                aria-pressed={isSelected}
+                className="cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 hover:opacity-90 flex flex-col items-center justify-center gap-3"
                 style={{
                   borderColor: isSelected ? primaryColor : getContrastColor(secondaryColor).concat("22"),
                   backgroundColor: isSelected ? primaryColor.concat("15") : "transparent",
                   color: isSelected ? primaryColor : getContrastColor(secondaryColor),
-                  scale: isSelected ? 1.06 : 1,
                 }}
               >
-                <span className="text-2xl font-bold flex flex-row justify-center text-center align-middle items-center gap-2">
-                  {type.toUpperCase() === "GRID" && <Grid2X2 size={48} className="text-2xl font-bold align-middle text-center" />}
-                  {type.toUpperCase() === "COLLAGE" && <LayoutDashboard size={48} className="text-2xl font-bold align-middle text-center" />}
-                  {type.toUpperCase() === "MINIMAL" && <Columns3 size={48} className="text-2xl font-bold align-middle text-center" />}
+                {type === "grid" && <Grid2X2 size={40} className="shrink-0" />}
+                {type === "collage" && <LayoutDashboard size={40} className="shrink-0" />}
+                {type === "minimal" && <Columns3 size={40} className="shrink-0" />}
+                <span className="text-sm sm:text-base font-bold text-center leading-tight px-1">
                   {type === "grid" ? "CUADRÍCULA" : type === "collage" ? "MOSAICO" : "MINIMALISTA"}
                 </span>
               </button>

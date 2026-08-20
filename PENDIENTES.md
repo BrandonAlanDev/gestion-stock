@@ -679,3 +679,93 @@ En `/admin/design/contenido`, al editar la Sección Destacada:
 3. **Carruseles:** wizard → `SlideEditor` encima del wizard; design modal → `SlideEditor` encima.
 4. **Sheets solos** (Ubicación, Vista previa, configuraciones) siguen encima del contenido y su backdrop cierra al hacer click afuera.
 5. **Regresión:** header/sidebar/dropdowns visibles bajo los overlays; `CookieModal`/`RouteLoader` siguen por encima de todo.
+
+---
+
+## Opciones de diseño de Sección Destacada desbordadas — Cuadrícula / Mosaico / Minimalista sobresalen de sus cards
+
+### Síntoma
+En `/admin/design/contenido`, al abrir el modal de edición de **Sección Destacada** (`DrawerSeccionDestacada`), el selector de diseño muestra las opciones **Cuadrícula, Mosaico y Minimalista** con los elementos internos sobresaliendo de los límites de sus botones/cards: los iconos quedan parcialmente fuera del área del botón y los textos se superponen o salen de los límites de cada opción (invaden cards vecinas).
+
+### Comportamiento esperado
+Cada opción debe quedar completamente contenida dentro de su card:
+
+```text
+┌───────────────┐
+│      ▦        │
+│  CUADRÍCULA   │
+└───────────────┘
+```
+
+Requisitos:
+- Los iconos no sobresalen del botón.
+- El texto no sobresale ni invade otra opción.
+- Sin superposiciones entre cards ni contenido cortado.
+- Alineación vertical/horizontal correcta; icono centrado; texto alineado.
+- Las tres cards con **mismo alto** y **ancho coherente**.
+- Estado seleccionado claramente visible; `cursor-pointer` y estados `hover` si corresponden.
+- Solución desde el layout (NO ocultando con `overflow: hidden`).
+- Responsive: en desktop, tablet y mobile; si no hay espacio para las tres opciones, el layout se adapta (varias filas o tamaños reducidos) sin superposiciones ni desbordes.
+
+### Causas (relevado completo)
+Único lugar del picker: `src/components/admin/design/HomeSectionsDesign.tsx:279-303`, montado por `DrawerSeccionDestacada` (`src/components/admin/diseno/contenido/DrawerSeccionDestacada.tsx` → Sheet de 600px).
+
+1. **Layout interno en fila (principal):** el contenido del botón es un `<span>` con `flex flex-row justify-center items-center gap-2 text-2xl font-bold` que coloca el icono (`size={48}`) y la etiqueta en la misma línea. Con `md:grid-cols-3` en un Sheet de 600px (content ≈ 536px, celda ≈ 168px), "MINIMALISTA" en 24px bold + icono de 48px + gap ≈ 216px → icono y texto sobresalen de la card. El `span` no tiene `flex-wrap` ni `shrink`.
+2. **`scale` en el card seleccionado:** el botón aplica `style={{ scale: isSelected ? 1.06 : 1 }}` (CSS `scale`), que se combina multiplicativamente con la clase Tailwind `hover:scale-[1.02]` (transform) → el card seleccionado crece ~6% y se superpone a sus vecinos.
+3. **Clases inválidas/incorrectas:** `transition-200` no existe en Tailwind (es `duration-200`); los iconos arrastran `className="text-2xl font-bold align-middle text-center"` (sin efecto en un SVG dentro de flex); `gap-4` en el botón es inútil con un solo hijo.
+4. **Sin `cursor-pointer`:** Tailwind v4 resetea `cursor: default` en `<button>`; la opción pide cursor pointer explícito.
+5. **Estado seleccionado dependiente del `scale`:** al quitar el `scale` hay que garantizar que el seleccionado siga distinguiéndose (hoy ya tiene borde `primaryColor`, fondo `primaryColor + "15"` y texto `primaryColor`; alcanza, opcionalmente reforzar con `aria-pressed`).
+
+### Plan de solución
+Solo se modifica `src/components/admin/design/HomeSectionsDesign.tsx` (bloque del selector, líneas 279-303). Sin cambios de server actions, de BD ni de otros componentes:
+
+1. **Botón (card):**
+   - Conservar `p-4 rounded-2xl border-2` y `flex flex-col items-center justify-center`; cambiar `gap-4` → `gap-3`.
+   - Eliminar el `style={{ scale }}` y `hover:scale-[1.02]` (evita todo solapamiento); reemplazar el hover por `hover:opacity-90` (sin crecimiento geométrico).
+   - Cambiar `transition-all transition-200` → `transition-all duration-200`.
+   - Agregar `cursor-pointer` y `aria-pressed={isSelected}`.
+   - El estado seleccionado se mantiene por borde + fondo + color (ya existentes), ahora sin depender del scale.
+2. **Icono:** hijo directo del botón (flex-col), `size={40}` con `shrink-0`; eliminar las clases sueltas (`text-2xl font-bold align-middle text-center`). Queda centrado por `items-center` del contenedor.
+3. **Etiqueta:** hijo directo del botón, `<span>` con `text-sm sm:text-base font-bold text-center leading-tight px-1`. Sin `whitespace-nowrap` (a `text-base`, "MINIMALISTA" ≈ 110px < 168px de celda). Si algún día el texto creciera, el `text-center` permite envolver sin desbordar.
+4. **Igualdad de alturas:** garantizada por el estiramiento natural del grid (las tres cards son hijos directos con la misma estructura flex-col: icono + etiqueta). No se fijan alturas.
+5. **Responsive:** el grid actual (`grid-cols-1 md:grid-cols-3 gap-4`) ya apila las opciones en una columna en pantallas pequeñas. Con los tamaños reducidos (icono 40px, texto `sm/base`) las tres columnas de tablet/desktop contienen todo el contenido sin desbordes. No se usa `overflow: hidden` en ningún punto.
+
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {["grid", "collage", "minimal"].map((type) => {
+    const isSelected = layout === type;
+    return (
+      <button
+        key={type}
+        type="button"
+        onClick={() => setLayout(type)}
+        aria-pressed={isSelected}
+        className="cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 hover:opacity-90 flex flex-col items-center justify-center gap-3"
+        style={{
+          borderColor: isSelected ? primaryColor : getContrastColor(secondaryColor).concat("22"),
+          backgroundColor: isSelected ? primaryColor.concat("15") : "transparent",
+          color: isSelected ? primaryColor : getContrastColor(secondaryColor),
+        }}
+      >
+        {type === "grid" && <Grid2X2 size={40} className="shrink-0" />}
+        {type === "collage" && <LayoutDashboard size={40} className="shrink-0" />}
+        {type === "minimal" && <Columns3 size={40} className="shrink-0" />}
+        <span className="text-sm sm:text-base font-bold text-center leading-tight px-1">
+          {type === "grid" ? "CUADRÍCULA" : type === "collage" ? "MOSAICO" : "MINIMALISTA"}
+        </span>
+      </button>
+    );
+  })}
+</div>
+```
+
+### Ejecución
+- Cambio único y localizado (un solo archivo, un solo bloque): lo ejecuta el orquestador directamente, sin subagentes.
+- Verificar reglas AGENTS.md: una función exportada por archivo (el archivo sigue con una sola), ≤400 líneas (hoy 362, el cambio no agrega líneas significativas), imports `@/` y español.
+- Comandos: `npm run lint` (no hay script `typecheck`).
+
+### Verificación manual
+1. `/admin/design/contenido` → Sección Destacada → Editar → selector de diseño: las tres opciones (Cuadrícula, Mosaico, Minimalista) quedan completamente contenidas en sus cards, sin superposición entre sí, con icono centrado arriba y etiqueta centrada debajo.
+2. Click en cada opción: el estado seleccionado se distingue claramente (borde/fondo/color), cursor pointer y hover visible; las cards no crecen ni invaden vecinas.
+3. Responsive: probar anchos de mobile (1 columna apilada), tablet y desktop (3 columnas): sin desbordes horizontales ni verticales en ninguna resolución.
+4. Regresión: "Guardar Todo" persiste el layout elegido (`updateSectionVisibility` con `featuredLayout`), el drawer cierra y el home refleja el cambio.
