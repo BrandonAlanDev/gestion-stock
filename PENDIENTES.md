@@ -609,3 +609,73 @@ Sin imágenes huérfanas en Cloudinary, con errores amigables para el usuario, l
 - Eliminar el estado local de carrito de `ProductLayout.jsx` cambia la fuente de verdad a `CartContext` (ya montado globalmente en `LayoutComponent`): verificar persistencia `tech_cart` (la maneja `CartContext`, clave idéntica).
 - El `<select>` nativo estilizado con tema: las `option` heredan el `background-color` del select en algunos navegadores; verificar en Chrome/Firefox/Safari.
 - `db push` agrega columnas nullable/default: sin pérdida de datos; ejecutar con la BD alcanzable.
+
+---
+
+## Modales anidados: jerarquía de capas (z-index) reutilizable — modal de edición de Sección Destacada invisible
+
+### Síntoma
+En `/admin/design/contenido`, al editar la Sección Destacada:
+1. Se abre el Sheet "Sección destacada" (`DrawerSeccionDestacada`).
+2. Al presionar el lápiz de una tarjeta, se abre `GridModal` (modal de edición de tarjeta).
+3. El segundo modal se renderiza **debajo** del Sheet: queda oculto detrás del modal principal, los campos quedan inutilizables.
+
+### Comportamiento esperado
+- Cada modal nuevo aparece **por encima del anterior** (modal principal → secundario → terciario).
+- El overlay/backdrop de cada modal respeta el orden de capas.
+- Todos los elementos del segundo modal son interactivos; el modal padre queda detrás y no interfiere.
+
+### Causas (relevado completo)
+1. **Escala de z-index inconsistente e invertida (principal):**
+
+   | Superficie | z-index | Se abre desde | Estado |
+   |---|---|---|---|
+   | Sheet (`src/components/ui/sheet.tsx:60,68`) | backdrop 120 / panel 121 | página (sin portal, render inline) | base del flujo |
+   | `GridModal` (`src/components/admin/design/GridModal.tsx:152`) | 60 | dentro del Sheet (portal a body) | **debajo del Sheet (60 < 121)** ❌ |
+   | `SlideEditor` (`src/components/admin/carousel/SlideEditor.tsx:186`) | 60 | dentro del Wizard/DesignModal (portal) | ok por casualidad (60 > 50) |
+   | `CarouselWizard` (`CarouselWizard.tsx:180`), `CarouselDesignModal.tsx:182`, `CarouselSettingsModal.tsx:75`, `ConfirmacionEliminarSeccion.tsx:22` | 50 | página (portales) | nivel base |
+   | `EditorRecorte` (`src/components/imagen/EditorRecorte.tsx:73`) | 300 | dentro de `SubidaImagen` (portal) | ok por casualidad |
+
+   Los portales están bien usados (`createPortal(document.body)`): el problema NO es de stacking context sino de jerarquía de valores (el drawer quedó en 120/121 mientras sus modales hijos quedaron en 50–60).
+2. **Sin trampas de stacking context en ancestros:** verificado que los ancestros del Sheet (`WorkspaceDiseno`, `admin/layout.tsx`, layout raíz) no tienen `transform`, `filter`, `backdrop-filter`, `opacity` ni `will-change` que encierren su z-index. El Sheet se renderiza inline (sin portal), lo que lo expone a futuros ancestros con esas propiedades.
+3. **Scroll-lock ya soporta anidamiento:** `useBloqueoScroll` (`src/hooks/use-bloqueo-scroll.ts`) usa conteo de referencias; no requiere cambios.
+4. **Escape:** `GridModal` no tiene handler de Escape; el del Sheet escucha `window` sin verificar si hay un modal encima → Escape cerraría el Sheet por debajo del modal abierto (comportamiento preexistente; ver "Fuera de alcance").
+
+### Decisiones tomadas
+- **Sistema de capas por profundidad vía React Context** (no z-index arbitrarios ni props en cascada): cada modal lee su nivel del contexto, calcula su z-index y envuelve su contenido en nivel + 1. Los portales preservan el contexto de React, por lo que el anidamiento se propaga solo y el sistema es reutilizable para cualquier modal anidado del sistema.
+- **Escala:** `CAPA_BASE_MODAL = 200`, `INCREMENTO_NIVEL = 100` → nivel 0 = 200, nivel 1 = 300, nivel 2 = 400, nivel 3 = 500. Queda por encima de la UI fija (sidebar 95, header 100, dropdowns 110) y por debajo de las capas de sistema (9999 de `RouteLoader`/`CookieModal`, intactas).
+- **Sheet pasa a usar portal** (`createPortal` a `document.body`): unifica todos los modales en el stacking context raíz y lo blinda contra futuros ancestros con transform/filter.
+- Panel del Sheet usa `zIndice + 1` sobre su backdrop (mantiene la relación backdrop < panel).
+
+### Plan de solución
+1. **Nuevo dominio `src/contextos/capas/`** (la carpeta `src/contextos/` no existe; se crea):
+   - `constantes-capas.ts` — constantes `CAPA_BASE_MODAL = 200` e `INCREMENTO_NIVEL = 100` (solo constantes, permitido).
+   - `contexto-capas.ts` — `ContextoCapas = createContext(0)` (default nivel 0 → no requiere provider raíz en el layout).
+   - `use-capa.ts` — hook `useCapa()` (una función exportada) que devuelve `{ nivel, zIndice }` con `zIndice = CAPA_BASE_MODAL + nivel * INCREMENTO_NIVEL`.
+2. **Regla del sistema:** cada modal lee `useCapa()`, usa `zIndice` en su overlay (y `zIndice + 1` en su panel si lo tiene) y envuelve su contenido con `<ContextoCapas.Provider value={nivel + 1}>` para que los modales anidados hereden nivel + 1 automáticamente (sin props, sin registro, sin contadores).
+3. **Migraciones (8 componentes):**
+   - `src/components/ui/sheet.tsx` — `useCapa()` (backdrop `zIndice`, panel `zIndice + 1`), envolver `children` con el provider nivel +1 y portar el Sheet a `document.body` (mantener `AnimatePresence` y el `useBloqueoScroll` actual).
+   - `src/components/admin/design/GridModal.tsx` — `z-[60]` → `zIndice`; envolver el contenido del portal con el provider (para que `SubidaImagen` → `EditorRecorte` hereden).
+   - `src/components/admin/carousel/SlideEditor.tsx` — ídem (`z-[60]` → `zIndice` + provider).
+   - `src/components/admin/carousel/CarouselDesignModal.tsx`, `CarouselSettingsModal.tsx`, `CarouselWizard.tsx`, `ConfirmacionEliminarSeccion.tsx` — `z-50` → `zIndice` + provider (Wizard y DesignModal alojan `SlideEditor`).
+   - `src/components/imagen/EditorRecorte.tsx` — `z-[300]` → `zIndice` (queda en 300 standalone, 400 dentro de GridModal en el Sheet).
+4. **Sin cambios necesarios:** `HomeSectionsDesign.tsx`, `DrawerSeccionDestacada.tsx`, `DrawerUbicacion.tsx`, `PanelVistaPrevia.tsx` (el contexto se propaga solo a través de los Sheets ya migrados).
+5. **Resultado en el flujo reportado:** Sheet = 200/201 → GridModal = 300 → EditorRecorte = 400; cualquier modal futuro anidado suma +100 sin tocar nada más.
+
+### Fuera de alcance (se conservan intactos)
+- Capas de sistema (`RouteLoader`, `CookieModal` en 9999) y UI fija (sidebar 95, header 100, dropdowns 110).
+- Modales no anidados con escalas propias (`Manage*` 200, `ProductModal` 100, `ProviderModal`/`MovementModal` 150, `ConfirmDialog` 200): no comparten flujos con los migrados y quedan por debajo o al mismo nivel del base (200), sin cambios de comportamiento.
+- La guarda de Escape del Sheet (cierra aunque haya un modal encima): comportamiento preexistente; opcional como mejora futura (p. ej., verificar el nivel activo antes de cerrar).
+
+### Ejecución
+- El orquestador crea primero los 3 archivos de `src/contextos/capas/` (define la interfaz del sistema; no se delega).
+- Subagentes en paralelo (archivos sin solapamiento): A (`sheet.tsx` + portal), B (5 archivos de carousel: Wizard, DesignModal, SettingsModal, ConfirmacionEliminarSeccion, SlideEditor), C (`GridModal` + `EditorRecorte`).
+- Agente verificador global (3+ subagentes): reglas AGENTS.md — español, una función exportada por archivo, ≤400 líneas (SlideEditor 365 y GridModal 309 quedan dentro; boy scout si exceden), imports `@/`, sin `any`, coherencia de la escala — y reparación.
+- Comandos: `npm run lint` (no hay script `typecheck`; el build requiere BD).
+
+### Verificación manual
+1. **Flujo principal:** `/admin/design/contenido` → lápiz de "Sección destacada" → Sheet → lápiz de una tarjeta → `GridModal` visible por encima, backdrop sobre el del Sheet, campos interactivos, guardar/cerrar sin cerrar el Sheet.
+2. **Crop:** abrir "Editar recorte" desde el GridModal dentro del Sheet → `EditorRecorte` (nivel 2 = 400) encima del GridModal.
+3. **Carruseles:** wizard → `SlideEditor` encima del wizard; design modal → `SlideEditor` encima.
+4. **Sheets solos** (Ubicación, Vista previa, configuraciones) siguen encima del contenido y su backdrop cierra al hacer click afuera.
+5. **Regresión:** header/sidebar/dropdowns visibles bajo los overlays; `CookieModal`/`RouteLoader` siguen por encima de todo.

@@ -9,6 +9,8 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import SelectorDestino from "./modal/SelectorDestino";
 import ControlesEnlace from "./modal/ControlesEnlace";
 import { FORMULARIO_VACIO, LIMITES_TARJETA, type DatosTarjeta, type SelectorCategoria } from "./modal/tipos";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 export type { DatosTarjeta, SelectorCategoria } from "./modal/tipos";
 
@@ -64,6 +66,7 @@ export default function GridModal({
   primaryColor: primaryProp,
   secondaryColor: secondaryProp,
 }: Props) {
+  const { nivel, zIndice } = useCapa();
   const { pageConfig } = usePageConfig();
   const configNido = (pageConfig?.pageConfig ?? pageConfig) as Record<string, unknown> | undefined;
   const primaryColor = primaryProp || (configNido?.primaryColor as string) || "#06b6d4";
@@ -149,7 +152,7 @@ export default function GridModal({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
       <div
         className={cn(
           "w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
@@ -305,5 +308,8 @@ export default function GridModal({
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return createPortal(
+    <ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>,
+    document.body
+  );
 }

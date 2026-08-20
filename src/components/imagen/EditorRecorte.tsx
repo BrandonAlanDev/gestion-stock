@@ -8,6 +8,8 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getContrastColor } from "@/lib/utils";
 import { generarImagenRecortada } from "./utilidades-recorte";
 import type { FormaRecorte } from "./tipos";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 interface EditorRecorteProps {
   abierto: boolean;
@@ -26,6 +28,7 @@ export default function EditorRecorte({
   alConfirmar,
   alCancelar,
 }: EditorRecorteProps) {
+  const { nivel, zIndice } = useCapa();
   const { pageConfig } = usePageConfig();
   const primario = (pageConfig?.primaryColor as string) || "#06b6d4";
   const secundario = (pageConfig?.secondaryColor as string) || "#ffffff";
@@ -70,7 +73,7 @@ export default function EditorRecorte({
   if (!abierto) return null;
 
   const modal = (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" style={{ zIndex: zIndice }}>
       <div
         className="w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden"
         style={{
@@ -164,5 +167,8 @@ export default function EditorRecorte({
     </div>
   );
 
-  return createPortal(modal, document.body);
+  return createPortal(
+    <ContextoCapas.Provider value={nivel + 1}>{modal}</ContextoCapas.Provider>,
+    document.body
+  );
 }

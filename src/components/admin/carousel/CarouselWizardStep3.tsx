@@ -6,6 +6,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { getContrastColor } from "@/lib/utils";
 import SlideOrdenable from "./SlideOrdenable";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 const TYPE_LABELS: Record<string, string> = {
   HERO: "Portada principal",
@@ -36,6 +38,7 @@ export default function CarouselWizardStep3({
   secondaryColor,
 }: CarouselWizardStep3Props) {
   const textColor = getContrastColor(secondaryColor);
+  const { nivel, zIndice } = useCapa();
   const [sortableSlides, setSortableSlides] = useState<SlideWizardData[]>([...slides].sort((a, b) => a.order - b.order));
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -152,7 +155,8 @@ export default function CarouselWizardStep3({
       </div>
 
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <ContextoCapas.Provider value={nivel + 1}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
           <div className="w-full max-w-sm rounded-2xl border shadow-2xl p-6" style={{ backgroundColor: secondaryColor, borderColor: primaryColor, color: textColor }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor + "20" }}>
@@ -184,6 +188,7 @@ export default function CarouselWizardStep3({
             </div>
           </div>
         </div>
+        </ContextoCapas.Provider>
       )}
     </div>
   );

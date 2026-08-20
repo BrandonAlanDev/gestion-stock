@@ -11,6 +11,8 @@ import LinkTypeSelector from "./LinkTypeSelector";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
 import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 interface SlideEditorProps {
   isOpen: boolean;
@@ -57,6 +59,7 @@ export default function SlideEditor({
 }: SlideEditorProps) {
   const { pageConfig } = usePageConfig();
   const { productos, categorias } = useOpcionesEnlace();
+  const { nivel, zIndice } = useCapa();
   const primaryColor = pageConfig?.primaryColor || "#06b6d4";
   const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
   const textColor = getContrastColor(secondaryColor);
@@ -183,7 +186,7 @@ export default function SlideEditor({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
       <div
         className={cn(
           "w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
@@ -362,5 +365,5 @@ export default function SlideEditor({
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return createPortal(<ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>, document.body);
 }
