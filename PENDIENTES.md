@@ -269,3 +269,169 @@ Las tres funcionalidades (`escuelaEnabled`, `arreglosEnabled`, `personalizadoEna
 5. Cursor pointer + hover/active en botones, acordeones y cards clickeables; select de Productos con chevron.
 6. Tipografía y Estilo no persisten hasta "Guardar"; navegar sin guardar revierte a lo guardado en BD.
 7. Revisar que ninguna corrección rompa home pública, carrito, búsqueda, admin ni el drag & drop de secciones.
+
+---
+
+## Refactor completo de Cloudinary: estructura escalable, categorías, productos, carruseles y eliminación segura
+
+### Objetivo
+Reemplazar las carpetas hardcodeadas (`gestion-stock/garments`, `gestion-stock/carousels/slides`, `gestion-stock/home-grids`, `page-config`) por una arquitectura organizada, centralizada en un servicio y preparada para multi-tenant:
+
+```text
+{RAIZ}/
+├── garments/
+│   └── {categoryId}/
+│       └── {garmentId}/
+│           ├── imagen-1.webp
+│           └── ...
+├── carousels/
+│   └── {carouselId}/
+│       ├── imagen-1.webp
+│       └── ...
+└── page-config/
+    ├── home-grids/{homegridId}/
+    └── identidad/          (logo, favicon)
+```
+
+Sin imágenes huérfanas en Cloudinary, con errores amigables para el usuario, logging técnico para desarrollo y sin romper el frontend.
+
+### Estado actual (auditoría completa)
+
+**Configuración del SDK — ROTA:**
+- `src/lib/cloudinary.ts:4-8` lee `CLOUDINARY_CLOUD_NAME`, pero `.env` tiene `CLOUD_NAME` → `cloud_name: undefined` en todas las configuraciones. `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` tampoco existe.
+- Configuraciones duplicadas que pisan la instancia global: `src/actions/garments.ts:11-15` y `src/actions/upload-product-image.ts:32-36` (esta última usa `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`).
+- `CLOUDINARY_UPLOAD_PROJECT_NAME` **no existe** hoy en el código ni en `.env` (0 coincidencias). `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` existe en `.env` pero ningún código lo usa.
+
+**Subidas y carpetas hardcodeadas:**
+| Carpeta | Archivo | Operación |
+|---|---|---|
+| `gestion-stock/garments` | `src/actions/garments.ts:125` | upload de `data:image` en `updateGarment` |
+| `gestion-stock/garments` | `src/actions/upload-product-image.ts:40` | upload base64 (vía real de subida de productos) |
+| `gestion-stock/carousels/{hero,banner,cards,slides}` | `src/actions/carousel/helpers.ts:5-10` | solo `slides` se usa; HERO/BANNER/CARDS muertos |
+| `gestion-stock/home-grids` | `src/actions/page-config/home.actions.ts:63` | upload de grids |
+| `page-config` | `src/app/api/upload-image/route.ts:25` | `upload_stream`, **sin auth**, con `any` |
+
+**Flujo de productos (frontend):**
+- `useProductForm.ts:212-217` convierte File → base64 y llama `uploadProductImage` ANTES de `createGarment`/`updateGarment`; las actions reciben `images: string[]` de URLs ya subidas.
+- `createGarment` (`garments.ts:17-52`) solo persiste URLs (si le llegara `data:image` lo guardaría crudo en BD).
+- `updateGarment` (`garments.ts:107-162`) SÍ soporta `data:image` (sube a carpeta fija) y destruye removidas con `extractPublicId` ANTES de actualizar BD (orden destructivo: si Prisma falla después, quedan filas apuntando a archivos borrados).
+- `deleteGarment` (`garments.ts:164-178`): **no destruye imágenes de Cloudinary** y **no chequea auth** (inconsistente con create/update que sí lanzan `No autorizado`).
+
+**Carruseles:**
+- `createCarousel`/`updateCarousel`/`addCarouselSlide`/`updateCarouselSlide` suben `data:image` vía `uploadCarouselImage` (carpeta `slides` fija).
+- `updateCarousel` (`carousel-service.ts:103-139`) borra TODOS los slides y los recrea: **las imágenes reemplazadas/eliminadas quedan huérfanas** (igual que `updateCarouselSlide`, que sube la nueva sin destruir la vieja).
+- `deleteCarousel` y `deleteCarouselSlide` SÍ destruyen (via `extractPublicId`), pero fallan en cascada si una imagen falla y destruyen ANTES de BD.
+- `duplicateCarousel` (`carousel.actions.ts:344-386`) reutiliza las mismas URLs: borrar la copia destruiría imágenes del original.
+- `addCarouselSlide`, `updateCarouselSlide`, `deleteCarouselSlide`, `reorderCarousels`: sin consumidores en la UI actual (todo pasa por el wizard con create/updateCarousel), pero deben quedar correctas.
+
+**Otros huérfanos y defectos:**
+- `updateHomeGrids` (`home.actions.ts:53-127`): sube grids nuevos pero **nunca destruye** los reemplazados ni los eliminados (borra filas con `deleteMany`).
+- Branding (`branding.actions.ts`): reemplazar logo/favicon no destruye el anterior; solo `clearPageConfig` limpia.
+- `maintenance.actions.ts:26` referencia `existing.banner`, campo que **no existe** en `PageConfig` (solo existe `banners Banner[]`).
+- Código muerto: `src/lib/upload-image.ts`, `src/actions/page-config/shared/upload-page-image.ts`, tipos `FOLDERS.HERO/BANNER/CARDS` de carousel.
+- `extractPublicId` (`utils.ts:28-41`) es frágil: falla con URLs sin segmento de versión, firmadas (`s--...--`), con transformaciones, con puntos en el public_id o delivery types no-`upload`. Call sites: `garments.ts:137`, `carousel.actions.ts:157,301`, `maintenance.actions.ts:34`, `upload-page-image.ts:19` (muerto).
+- Errores técnicos expuestos al usuario: `garments.ts:72` (`error.message`), `branding.actions.ts:84,130`, `movements.ts:54`, `auth-actions.ts:96`.
+
+**Prisma (relevante):**
+- `GarmentImage`: `id, srcImage @db.Text, alt?, order, garmentId` — **sin `publicId`**. Cascade `GarmentImage→Garment` OK.
+- `CarouselSlide`: `image String? @db.Text` — **sin `publicId`**. Cascade `CarouselSlide→Carousel` OK.
+- `Category`: solo `id` (cuid) + `name @unique`. **Sin slug**. `Garment.categoryId` es obligatoria. No hay constraint que garantice que `subCategoryId` pertenezca a la misma categoría.
+- Sin modelo Tenant: single-tenant (`PageConfig` singleton id=1). `relationMode = "prisma"` (cascades emuladas desde Prisma Client).
+- Build usa `prisma db push --accept-data-loss` (no migraciones manuales): agregar columna nullable es no destructivo.
+
+**Caché/revalidación actual (a conservar):** `revalidateTag("products")` + `product-${id}` (garments), `revalidateTag("carousels")` + `"page-config"` + `revalidatePath("/")` (carruseles), `revalidatePath("/", "layout")` (home), `"branding-config"` (branding/maintenance).
+
+### Decisiones tomadas (confirmadas con el usuario)
+1. **Raíz multi-tenant:** `obtenerRaizCloudinary()` lee `CLOUDINARY_UPLOAD_PROJECT_NAME` (futuro: `tenantId`). Único punto de cambio.
+2. **Segmento de categoría = `categoryId` estable** (cuid). No slug ni nombre: renombrar una categoría no rompe referencias ni exige mover imágenes. La subcategoría sigue siendo responsabilidad de la BD (sin profundidad extra).
+3. **Prisma:** agregar `publicId String? @db.Text` a `GarmentImage` y `CarouselSlide`. Fallback lazy: si `publicId` es null se deriva de la URL con el nuevo `obtenerPublicIdDesdeUrl` (soporta filas viejas sin backfill). Habilita cleanup global de huérfanos en el futuro (comparar `publicId` de Cloudinary vs BD).
+4. **Contrato de garments:** `createGarment`/`updateGarment` reciben base64 (imágenes nuevas) y URLs (existentes). La subida ocurre en la server action DESPUÉS de crear el producto (necesita `garmentId`). Se elimina `uploadProductImage` (único consumidor: `useProductForm.ts`). El wizard de carruseles ya envía base64|URL: sin cambios de frontend.
+5. **Estrategias de sincronización BD ↔ Cloudinary (Cloudinary NO es transaccional con Prisma):**
+   - **Create:** crear registro (sin imágenes) → subir a carpeta correcta → guardar `{srcImage, publicId, order}`. Fallo de subida → compensación: destruir subidas parciales + borrar el registro → error amigable.
+   - **Update:** subir nuevas a la carpeta de la NUEVA categoría → si cambió categoría, mover con `rename` las conservadas (trackeando pares old→new para rename inverso) → actualizar BD (URLs+publicIds) → **después del éxito** destruir las removidas (tolerante). Fallo de BD → compensar (rename inverso + destruir nuevas).
+   - **Delete:** BD primero (si falla por P2003/FK, las imágenes quedan intactas y se informa el error) → cleanup tolerante después (faltante = éxito; error = log + aviso). Nunca destruir imágenes todavía usadas.
+   - **Replace slide/imagen:** subir nueva → guardar → destruir vieja post-BD.
+   - **Cambios de texto/orden/link:** no tocar la imagen.
+   - **Duplicate carousel:** re-subir cada imagen a la carpeta de la copia (no compartir URLs; hoy borrar la copia rompería el original).
+6. **Errores:** usuario recibe mensajes accionables y ubicativos (p. ej. "El SKU ingresado ya pertenece a otra variante.", "No se pudieron cargar las imágenes del producto. Intentá nuevamente.", "La información se actualizó, pero una imagen no pudo eliminarse correctamente."). Técnicos: `console.error("[CLOUDINARY][ETIQUETA]", error)`.
+7. **Auth:** se conservan todos los chequeos existentes; se AGREGA el faltante en `deleteGarment` y en `/api/upload-image`.
+8. **Alcance total:** productos, carruseles, home-grids, branding (logo/favicon), api route, maintenance y limpieza de código muerto.
+
+### Estructura del servicio central
+**Nuevo `src/lib/services/cloudinary-service.ts`** (patrón de los services existentes, varias funciones del mismo dominio; ~200 líneas):
+- `obtenerRaizCloudinary(): string` — `process.env.CLOUDINARY_UPLOAD_PROJECT_NAME` (único punto de cambio a tenantId).
+- `obtenerCarpetaPrenda(categoryId, garmentId)`, `obtenerCarpetaCarrusel(carouselId)`, `obtenerCarpetaGrids(homegridId)`, `obtenerCarpetaIdentidad()` — generan `{raiz}/...` sin hardcodeo.
+- `subirImagen(base64, carpeta, prefijoNombre?)` y `subirImagenes(...)` — upload con `format: "webp"` + `transformation: [{ fetch_format: "auto", quality: "auto" }]`, devuelven `{ url, publicId }`.
+- `eliminarImagen(publicId)` / `eliminarImagenes(publicIds)` — tolerantes: recurso inexistente = éxito; cada falla se loguea y no corta a las demás.
+- `moverImagen(publicIdViejo, publicIdNuevo)` — `cloudinary.uploader.rename`, devuelve la nueva URL.
+- `obtenerPublicIdDesdeUrl(url)` — `extractPublicId` robusto: valida host `*.cloudinary.com`, salta segmento de versión opcional (`v\d+`), conserva carpetas, quita extensión solo si es conocida, devuelve `null` para URLs externas.
+- Logging centralizado: `[CLOUDINARY][PRENDA_SUBIDA]`, `[CLOUDINARY][PRENDA_ELIMINACION]`, `[CLOUDINARY][CARRUSEL_SUBIDA]`, `[CLOUDINARY][CARRUSEL_ELIMINACION]`, `[CLOUDINARY][MOVIMIENTO]`, `[CLOUDINARY][GRIDS_SUBIDA]`, `[CLOUDINARY][IDENTIDAD_SUBIDA]`, etc.
+
+### Plan de solución
+
+**Paso 0 — Infraestructura (secuencial, dependencia del resto):**
+1. `.env` — renombrar `CLOUD_NAME` → `CLOUDINARY_CLOUD_NAME`; agregar `CLOUDINARY_UPLOAD_PROJECT_NAME=gestion-stock`.
+2. `prisma/schema.prisma` — agregar `publicId String? @db.Text` a `GarmentImage` (luego de `srcImage`) y a `CarouselSlide` (luego de `image`). Aplicar con `npx prisma db push` (requiere BD alcanzable; el build ya lo hace).
+3. `src/lib/cloudinary.ts` — dejar SOLO la config (`CLOUDINARY_CLOUD_NAME`). Eliminar las re-configuraciones de `src/actions/garments.ts:11-15` y `src/actions/upload-product-image.ts:32-36`.
+4. Crear `src/lib/services/cloudinary-service.ts` (API de arriba).
+5. Migrar `obtenerPublicIdDesdeUrl` y eliminar `extractPublicId` de `src/lib/utils.ts` tras migrar todos sus call sites (queda solo `fileToBase64`, `cn`, `serializeData`, `getContrastColor`).
+6. Eliminar código muerto: `src/lib/upload-image.ts`, `src/actions/page-config/shared/upload-page-image.ts`, `src/actions/carousel/helpers.ts`, `src/actions/upload-product-image.ts`.
+
+**Paso 1 — Productos:**
+- `src/lib/services/garment-service.ts` — cambiar firma de imágenes a `{ url, publicId, order }[]` en `createGarment` y `updateGarmentWithDetails`; persistir `publicId` (el `deleteMany`+`createMany` de imágenes sigue igual, con `publicId` incluido).
+- `src/actions/garments.ts` (~300 líneas, vigilar límite 400):
+  - `createGarment`: validar con `garmentSchema` (base64|URL permitidos) → `garmentService.createGarment` sin imágenes → subir cada base64 a `obtenerCarpetaPrenda(categoryId, garmentId)` → `garmentImage.createMany` con url+publicId+order → `revalidateTag("products")`. Fallo: destruir subidas parciales + borrar producto → `{ error: "No se pudieron cargar las imágenes del producto. Intentá nuevamente." }`.
+  - `updateGarment`: leer prenda actual (categoryId) + imágenes existentes → subir nuevas a la carpeta de la NUEVA categoría → si cambió la categoría, `moverImagen` por cada conservada (track pares para rename inverso) → `updateGarmentWithDetails` con lista final → post-éxito destruir removidas (tolerante; si alguna falla devolver `success: true` + aviso "La información se actualizó, pero una imagen no pudo eliminarse correctamente.") → fallo de BD: rename inverso + destruir nuevas + error amigable → `revalidateTag("products")` + `product-${id}`.
+  - `deleteGarment`: AGREGAR auth ADMIN → leer imágenes → `garmentService.deleteGarment` (BD primero; P2003 → "No se puede eliminar: existen registros vinculados.") → destruir imágenes tolerante → revalidaciones existentes.
+  - `getGarments`/`getGarmentById`/`getGarmentsByNames`: quitar `error.message` del usuario.
+- `src/hooks/useProductForm.ts` — `handleSubmit`: para `img.file` → `fileToBase64` y push del base64 directo en `images` (sin `uploadProductImage`); para `img.url` → push URL. Mantener `PendingImage` y toasts existentes.
+- `src/lib/zod.ts` — `garmentSchema.images`: `z.array(z.string().refine(v => v.startsWith("data:image") || v.startsWith("http"), ...))` (opcional, validación temprana).
+
+**Paso 2 — Carruseles:**
+- Dividir `src/actions/carousel/carousel.actions.ts` (387 líneas; con la lógica nueva excedería 400 — regla boy scout):
+  - `carousel.actions.ts`: `createCarousel`, `updateCarousel`, `deleteCarousel`, `reorderCarousels`, `getCarousels`, `getAllCarousels`, `updateCarouselActive`, `duplicateCarousel` + `requireAdmin` local.
+  - Nuevo `carousel-slide.actions.ts`: `addCarouselSlide`, `updateCarouselSlide`, `deleteCarouselSlide`.
+- `createCarousel`: crear carrusel sin slides → subir cada base64 a `obtenerCarpetaCarrusel(carouselId)` → `createMany` slides con url+publicId → compensación (destruir subidas + borrar carrusel) si falla → `revalidateTag("carousels")`.
+- `updateCarousel`: diff por slide contra DB: (a) slide existente con imagen URL sin cambios → conservar (textos/orden se actualizan en BD); (b) imagen base64 (nueva o reemplazo) → subir a `obtenerCarpetaCarrusel(id)`; (c) slides removidos → destruir post-BD. Después de `carouselService.updateCarousel` exitoso: destruir viejas de reemplazos y removidas (tolerante). Fallo de BD → destruir las recién subidas.
+- `updateCarouselSlide`: obtener slide + carouselId → si imagen es base64: subir, actualizar slide, destruir vieja post-éxito; si es URL sin cambios: solo `updateSlide`.
+- `deleteCarouselSlide`: BD primero (delete + reorden) → destruir imagen post-éxito (tolerante).
+- `deleteCarousel`: BD primero (cascade) → destruir todas las imágenes post-éxito (tolerante, `Promise.all` con captura por slide) → cleanup `sectionOrder` existente → revalidaciones existentes.
+- `duplicateCarousel`: crear copia → por cada slide con URL Cloudinary, subir desde la URL a `obtenerCarpetaCarrusel(nuevoId)` y actualizar slides con nuevas url+publicId → fallo: borrar copia + destruir subidas. (Las imágenes dejan de compartirse con el original.)
+- Conservar límites, `migrateSettings`, `resolverEnlaceGuardado`, P2002 → "Ya existe un carrusel con ese orden" y `revalidateTag("page-config")` + `revalidatePath("/")` donde ya estaban.
+
+**Paso 3 — Page-config:**
+- `src/actions/page-config/home.actions.ts` — `updateHomeGrids`: crear/obtener `homegridId` ANTES de subir → subir nuevos a `obtenerCarpetaGrids(homegridId)` → leer grids existentes → transacción actual (deleteMany+createMany) → post-éxito destruir imágenes de grids removidos (tolerante). Conservar `revalidatePath("/", "layout")`.
+- `src/actions/page-config/branding.actions.ts` — `updateBrandingConfig`: si `logo`/`favicon` cambian y el valor anterior es una URL Cloudinary del tenant, destruirlo post-éxito (tolerante). Reemplazar `error instanceof Error ? error.message` por mensajes fijos.
+- `src/actions/page-config/maintenance.actions.ts` — `clearPageConfig`: usar servicio (destruir `logo`, `favicon` y las imágenes de `existing.banners` — corregir el campo `banner` inexistente), tolerante; revalidaciones existentes.
+- `src/app/api/upload-image/route.ts` — agregar `auth()` + chequeo ADMIN; subir vía `subirImagen` a `obtenerCarpetaIdentidad()`; devolver `{ url, publicId }`; eliminar `any`; errores genéricos al cliente.
+
+**Paso 4 — Verificación:**
+- Grep global: `cloudinary.uploader.upload|destroy|rename` fuera del servicio, `"gestion-stock` hardcodeado, `extractPublicId` huérfano, `CLOUDINARY_UPLOAD_PROJECT_NAME` leído directamente en actions (solo en el servicio).
+- `npx tsc --noEmit`, `npm run lint`, `npm run build` (con BD alcanzable para aplicar `db push` de `publicId`).
+- Agente verificador final (AGENTS.md §Uso de subagentes): revisar reglas — español, una función exportada por archivo, ≤400 líneas (boy scout en `carousel.actions.ts` y `garments.ts`), imports `@/`, sin `any` nuevo, auth intacta, revalidaciones conservadas, mensajes amigables — y reparar.
+
+### Fuera de alcance (por ahora)
+- Migración masiva de las imágenes YA subidas con carpetas viejas: siguen eliminándose/moviéndose vía `publicId` guardado o fallback de URL; las nuevas van a la estructura nueva. Un futuro script puede renombrarlas (la info necesaria ya queda en BD: `publicId` + `categoryId` + `garmentId`).
+- Sistema automático de limpieza global de huérfanos: la arquitectura lo habilita (comparar publicIds de Cloudinary contra BD), pero no se implementa ahora.
+- El modelo `Banner` (solo se lee hoy, sin actions de create/update/delete): solo se limpian sus imágenes en `clearPageConfig`.
+- Los campos `svgPath` de `BoardTypeOption`/`BoardTailOption` (strings SVG, no son recursos de Cloudinary).
+
+### Riesgos conocidos
+- `duplicateCarousel` pasa de instantáneo a requerir N subidas (máx. 10 slides por tipo): aceptable.
+- Límite de body de Server Actions (~1 MB): las imágenes ya se comprimen en el frontend (`compressImage` 1200x1200 0.8), por lo que el base64 queda muy por debajo; `uploadProductImage` ya operaba igual.
+- Si la BD no está alcanzable al ejecutar `db push`, el build fallará en Prisma generate/db push: ejecutar con BD online.
+
+### Ejecución
+- **Paso 0** (infraestructura) lo hace el orquestador en secuencia (define contratos del servicio: nombres de funciones, carpetas, logging).
+- Subagentes en paralelo con interfaces predefinidas: A (Paso 1 — productos: garment-service, garments.ts, useProductForm, zod), B (Paso 2 — carruseles: split de actions + carousel-slide.actions), C (Paso 3 — page-config: home/branding/maintenance/api route). Sin solapamiento de archivos.
+- Agente verificador final (reglas AGENTS.md) + comandos de verificación del Paso 4.
+- Los archivos `PENDIENTES.md` y `CLAUDE.md` no se tocan (CLAUDE.md describe una arquitectura vieja de upload preset; se actualizará aparte si hace falta).
+
+### Verificación manual
+1. Crear producto con 2-3 imágenes → revisar en Cloudinary `{raiz}/garments/{categoryId}/{garmentId}/` con las imágenes; editar agregando/reemplazando/quitando imágenes → las quitadas desaparecen de Cloudinary y las existentes no se re-suben.
+2. Cambiar la categoría del producto → las imágenes aparecen bajo la NUEVA categoría (rename), sin duplicados en la vieja.
+3. Eliminar producto → sus imágenes desaparecen de Cloudinary.
+4. Crear/editar carrusel con reemplazo y eliminación de slides → las imágenes viejas se destruyen; editar solo textos no re-sube ni borra imágenes.
+5. Duplicar carrusel → la copia tiene imágenes propias; borrar la copia NO afecta al original.
+6. Editar home grids (reemplazar/quitar) → imágenes viejas destruidas. Cambiar logo/favicon → el anterior se destruye.
+7. Errores: sin mensajes técnicos en toasts (probar SKU duplicado, producto inexistente, corte de red en subida).

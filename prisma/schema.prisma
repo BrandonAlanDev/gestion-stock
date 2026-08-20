@@ -96,6 +96,7 @@ model Garment {
 model GarmentImage {
   id        String  @id @default(cuid())
   srcImage  String  @db.Text
+  publicId  String? @db.Text
   alt       String?
   order     Int     @default(0)
   garmentId String
@@ -509,6 +510,7 @@ model CarouselSlide {
 
   order       Int
   image       String? @db.Text
+  publicId    String? @db.Text
   title       String?
   subtitle    String?
   description String? @db.Text

@@ -13,7 +13,7 @@ export async function getGarmentsPaginated(
     active: true,
     ...(categoryId && { categoryId }),
     ...(subCategoryId && { subCategoryId }),
-    ...(search && { name: { contains: search, mode: 'insensitive' } }),
+    ...(search && { name: { contains: search } }),
   };
 
   const [garments, total] = await Promise.all([
@@ -51,11 +51,11 @@ export async function getGarmentById(id: string) {
   });
 }
 
-export async function createGarment(data: any) {
+export async function createGarment(data: Prisma.GarmentUncheckedCreateInput) {
   return prisma.garment.create({ data });
 }
 
-export async function updateGarment(id: string, data: any) {
+export async function updateGarment(id: string, data: Prisma.GarmentUpdateInput) {
   return prisma.garment.update({ where: { id }, data });
 }
 
@@ -80,9 +80,9 @@ export async function updateGarmentWithDetails(
       stock: number;
       sizeId?: string | null;
       colorId?: string | null;
-      attributes?: any;
+      attributes?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     }>;
-    images: string[]; // URLs finales de Cloudinary
+    images: Array<{ url: string; publicId?: string | null; order: number }>;
   }
 ) {
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
@@ -93,7 +93,7 @@ export async function updateGarmentWithDetails(
     data: {
       name,
       price,
-      maxPrice: (typeof maxPrice === 'number' ? maxPrice : null) as any,// Aseguramos que sea number o null
+      maxPrice: typeof maxPrice === "number" ? maxPrice : null,
       cost,
       description,
       categoryId,
@@ -123,7 +123,7 @@ export async function updateGarmentWithDetails(
           stock: Number(v.stock),
           sizeId: v.sizeId || null,
           colorId: v.colorId || null,
-          attributes: v.attributes || null,
+          attributes: v.attributes ?? undefined,
         },
       });
     } else {
@@ -134,7 +134,7 @@ export async function updateGarmentWithDetails(
           stock: Number(v.stock),
           sizeId: v.sizeId || null,
           colorId: v.colorId || null,
-          attributes: v.attributes || null,
+          attributes: v.attributes ?? undefined,
         },
       });
     }
@@ -144,10 +144,11 @@ export async function updateGarmentWithDetails(
   await prisma.garmentImage.deleteMany({ where: { garmentId: id } });
   if (images.length > 0) {
     await prisma.garmentImage.createMany({
-      data: images.map((url, index) => ({
+      data: images.map(({ url, publicId, order }) => ({
         garmentId: id,
         srcImage: url,
-        order: index,
+        publicId: publicId ?? null,
+        order,
       })),
     });
   }

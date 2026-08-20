@@ -70,7 +70,14 @@ export const garmentSchema = z.object({
   subCategoryId: z.string().optional().nullable(),
 
   supplierId: z.string().optional().nullable(),
-  images: z.array(z.string()).optional(),
+  images: z
+    .array(
+      z.string().refine(
+        (v) => v.startsWith("data:image") || v.startsWith("http"),
+        { message: "Cada imagen debe ser un archivo nuevo o una URL válida" }
+      )
+    )
+    .optional(),
   variants: z.array(
     z.object({
       id: z.string().optional(), // Por si editas

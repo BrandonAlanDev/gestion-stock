@@ -2,7 +2,6 @@
 import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
-import { uploadProductImage } from "@/actions/upload-product-image";
 import type { PendingImage } from "@/components/providers/products/forms/ImageUploader";
 
 interface Variant {
@@ -11,13 +10,64 @@ interface Variant {
   colorId: string;
   stock: number;
   sku: string;
-  attributes?: any;
+  attributes?: { customSize?: string };
+}
+
+interface VarianteGarment {
+  id?: string;
+  sizeId?: string | null;
+  colorId?: string | null;
+  stock?: number;
+  sku?: string;
+  attributes?: { customSize?: string } | null;
+}
+
+interface ImagenGarment {
+  srcImage: string;
+  publicId?: string | null;
+}
+
+interface GarmentFormulario {
+  id: string;
+  name?: string;
+  price?: number | string;
+  cost?: number | string;
+  maxPrice?: number | string | null;
+  description?: string | null;
+  categoryId?: string;
+  subCategoryId?: string | null;
+  supplierId?: string | null;
+  variants?: VarianteGarment[];
+  images?: ImagenGarment[];
+}
+
+interface TallaFormulario {
+  id: string;
+  value: string;
+}
+
+interface TipoTallaFormulario {
+  id: string;
+  sizes?: TallaFormulario[];
+}
+
+interface SubcategoriaFormulario {
+  id: string;
+  name: string;
+  sizeTypeId?: string | null;
+  sizeType?: TipoTallaFormulario | null;
+}
+
+interface CategoriaFormulario {
+  id: string;
+  name: string;
+  subCategories?: SubcategoriaFormulario[];
 }
 
 interface UseProductFormProps {
-  garment?: any;
-  categories: any[];
-  sizes: any[];
+  garment?: GarmentFormulario;
+  categories: CategoriaFormulario[];
+  sizes: TipoTallaFormulario[];
 }
 
 export function useProductForm({ garment, categories, sizes }: UseProductFormProps) {
@@ -48,15 +98,15 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
       categoryId: garment.categoryId || "",
       subCategoryId: garment.subCategoryId || "",
       supplierId: garment.supplierId || "",
-      variants: garment.variants?.map((v: any) => ({
+      variants: garment.variants?.map((v) => ({
         id: v.id,
         sizeId: v.sizeId || "CUSTOM",
         colorId: v.colorId || "",
-        stock: v.stock,
+        stock: v.stock ?? 0,
         sku: v.sku || "",
         attributes: v.attributes || { customSize: "" },
       })) || [],
-      images: garment.images?.map((img: any) => ({
+      images: garment.images?.map((img) => ({
         url: img.srcImage,
         publicId: img.publicId || "",
       })) || [],
@@ -79,16 +129,17 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
   const availableSizes = useMemo(() => {
     if (!formData.subCategoryId || !selectedCategoryData) return [];
     const selectedSub = selectedCategoryData.subCategories?.find(
-      (sc: any) => sc.id === formData.subCategoryId
+      (sc) => sc.id === formData.subCategoryId
     );
     if (!selectedSub) return [];
-    if (selectedSub.sizeType?.sizes?.length > 0) return selectedSub.sizeType.sizes;
-    const globalSizeType = sizes.find((st: any) => st.id === selectedSub.sizeTypeId);
-    return globalSizeType?.sizes || [];
+    const tallesDelTipo = selectedSub.sizeType?.sizes;
+    if (tallesDelTipo && tallesDelTipo.length > 0) return tallesDelTipo;
+    const globalSizeType = sizes.find((st) => st.id === selectedSub.sizeTypeId);
+    return globalSizeType?.sizes ?? [];
   }, [formData.subCategoryId, selectedCategoryData, sizes]);
 
   // Handlers genéricos
-  const setField = useCallback((field: string, value: any) => {
+  const setField = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -129,7 +180,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     }));
   }, []);
 
-  const updateVariant = useCallback((index: number, field: string, value: any) => {
+  const updateVariant = useCallback((index: number, field: string, value: unknown) => {
     setFormData((prev) => {
       const updated = [...prev.variants];
       updated[index] = { ...updated[index], [field]: value };
@@ -207,21 +258,20 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
 
   // Submit 
   const handleSubmit = useCallback(async () => {
-    const finalImages: { url: string; publicId?: string }[] = [];
+    const finalImages: string[] = [];
 
     for (const img of formData.images) {
       try {
         if (img.file) {
           const base64 = await fileToBase64(img.file);
-          const uploaded = await uploadProductImage(base64);
-          finalImages.push({ url: uploaded.url, publicId: uploaded.publicId });
+          finalImages.push(base64);
           if (img.preview) URL.revokeObjectURL(img.preview);
         } else if (img.url) {
-          finalImages.push({ url: img.url, publicId: img.publicId });
+          finalImages.push(img.url);
         }
       } catch (error) {
-        console.error("Error al subir imagen individual:", error);
-        toast.error("Error al subir una imagen. Se omitirá.");
+        console.error("Error al procesar imagen individual:", error);
+        toast.error("Error al procesar una imagen. Se omitirá.");
       }
     }
 
@@ -229,14 +279,12 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
       throw new Error("No se pudo subir ninguna imagen. Revisá los archivos e intentá de nuevo.");
     }
 
-    const imageUrls = finalImages.map(img => img.url);
-    
     // Construcción del objeto final con maxPrice corregido
     const payload = {
       name: formData.name,
       price: Number(formData.price),
       cost: Number(formData.cost),
-      maxPrice: formData.maxPrice ? Number(formData.maxPrice) : null, // 👈 Solución aquí
+      maxPrice: formData.maxPrice ? Number(formData.maxPrice) : null,
       description: formData.description,
       categoryId: formData.categoryId,
       subCategoryId: formData.subCategoryId || null,
@@ -246,7 +294,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
         sizeId: v.sizeId === "CUSTOM" ? null : v.sizeId,
         attributes: v.sizeId === "CUSTOM" ? v.attributes : null,
       })),
-      images: imageUrls,
+      images: finalImages,
     };
 
     if (isEdit) {

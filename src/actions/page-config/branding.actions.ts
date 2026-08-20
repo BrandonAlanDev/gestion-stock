@@ -2,6 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, unstable_cache } from "next/cache";
+import {
+  eliminarImagenes,
+  obtenerPublicIdDesdeUrl,
+} from "@/lib/services/cloudinary-service";
 
 type BrandingInput = {
   storeName?: string;
@@ -22,7 +26,10 @@ type BrandingInput = {
 
 export async function updateBrandingConfig(data: BrandingInput) {
   try {
-    let pageConfig = await prisma.pageConfig.findFirst();
+    const pageConfig = await prisma.pageConfig.findFirst();
+
+    const logoAnterior = pageConfig?.logo ?? null;
+    const faviconAnterior = pageConfig?.favicon ?? null;
 
     const payload = {
       storeName: data.storeName?.trim() || pageConfig?.storeName || "GestionOK",
@@ -55,33 +62,44 @@ export async function updateBrandingConfig(data: BrandingInput) {
       density: data.density ?? pageConfig?.density ?? "comoda",
     };
 
-    if (!pageConfig) {
-      pageConfig = await prisma.pageConfig.create({
-        data: payload,
-      });
-    } else {
-      pageConfig = await prisma.pageConfig.update({
-        where: {
-          id: pageConfig.id,
-        },
-        data: payload,
-      });
+    const pageConfigActualizado = pageConfig
+      ? await prisma.pageConfig.update({
+          where: {
+            id: pageConfig.id,
+          },
+          data: payload,
+        })
+      : await prisma.pageConfig.create({
+          data: payload,
+        });
+
+    const publicIdsAEliminar: Array<string | null | undefined> = [];
+
+    if (payload.logo !== logoAnterior) {
+      const publicIdLogo = obtenerPublicIdDesdeUrl(logoAnterior ?? "");
+      if (publicIdLogo) publicIdsAEliminar.push(publicIdLogo);
     }
+
+    if (payload.favicon !== faviconAnterior) {
+      const publicIdFavicon = obtenerPublicIdDesdeUrl(faviconAnterior ?? "");
+      if (publicIdFavicon) publicIdsAEliminar.push(publicIdFavicon);
+    }
+
+    await eliminarImagenes(publicIdsAEliminar);
 
     revalidateTag("page-config");
     revalidateTag("branding-config");
 
     return {
       ok: true,
-      pageConfig,
+      pageConfig: pageConfigActualizado,
     };
   } catch (error) {
-    console.error("UPDATE BRANDING ERROR:", error);
+    console.error("[CLOUDINARY][PAGE-CONFIG][BRANDING]", error);
 
     return {
       ok: false,
-      error:
-        error instanceof Error ? error.message : "Error al actualizar branding",
+      error: "Error al actualizar branding",
     };
   }
 }
@@ -122,12 +140,11 @@ export const getBrandingConfig = unstable_cache(
         branding,
       };
     } catch (error) {
-      console.error("GET BRANDING ERROR:", error);
+      console.error("[CLOUDINARY][PAGE-CONFIG][BRANDING][GET]", error);
 
       return {
         ok: false,
-        error:
-          error instanceof Error ? error.message : "Error al obtener branding",
+        error: "Error al obtener branding",
       };
     }
   },

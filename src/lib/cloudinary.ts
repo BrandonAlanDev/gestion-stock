@@ -8,5 +8,3 @@ cloudinary.config({
 });
 
 export default cloudinary;
-
-// extractPublicId está en @/lib/utils — importar de allí
