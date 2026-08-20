@@ -98,6 +98,7 @@ export default function ImageUploader({
   };
 
   const reabrirEditor = (indice: number) => {
+    if (!alEditarImagen) return;
     const img = orderedImages[indice];
     if (img.preview?.startsWith("data:")) {
       setImagenParaRecortar(img.preview);
@@ -110,7 +111,7 @@ export default function ImageUploader({
     setEditorAbierto(false);
     setImagenParaRecortar(null);
     if (indiceEdicion !== null) {
-      alEditarImagen?.(indiceEdicion, resultado);
+      if (alEditarImagen) alEditarImagen(indiceEdicion, resultado);
       setIndiceEdicion(null);
     } else {
       onAddImages([{ preview: resultado }]);
@@ -244,7 +245,7 @@ export default function ImageUploader({
                 className="object-cover"
                 onError={() => toast.error(`No se pudo cargar la imagen ${idx + 1}`)}
               />
-              {esNueva && (
+              {esNueva && alEditarImagen && (
                 <button
                   type="button"
                   onClick={(e) => {

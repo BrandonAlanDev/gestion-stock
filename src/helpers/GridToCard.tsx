@@ -39,7 +39,9 @@ export default function mapGridToCard(grid: DatosGrid): TarjetaDestacada {
       href = `/productos/item/${grid.linkValue}`;
       break;
     case "PAGE":
-      href = grid.linkValue || "#";
+      href = grid.linkValue && /^\/(?!\/)/.test(grid.linkValue.trim())
+        ? grid.linkValue.trim()
+        : "#";
       break;
     case "EXTERNAL":
       href = grid.linkValue || "#";

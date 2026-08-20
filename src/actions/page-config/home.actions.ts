@@ -62,6 +62,13 @@ export async function updateHomeGrids(
 ) {
   const publicIdsSubidos: string[] = [];
   try {
+    const destinosPaginaValidos = grids.every((grid) =>
+      grid.linkType !== "PAGE" || /^\/(?!\/)/.test(grid.linkValue?.trim() || "")
+    );
+    if (!destinosPaginaValidos) {
+      return { ok: false, error: "Las páginas de destino deben comenzar con una sola barra (/)" };
+    }
+
     let targetHomegridId = homegridId;
 
     if (!targetHomegridId) {

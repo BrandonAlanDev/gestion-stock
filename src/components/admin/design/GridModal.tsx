@@ -112,6 +112,13 @@ export default function GridModal({
       setError("Seleccioná una categoría de destino");
       return;
     }
+    if (formData.linkType === "PAGE") {
+      const destino = formData.linkValue.trim();
+      if (!/^\/(?!\/)/.test(destino)) {
+        setError("La página debe comenzar con una sola barra (/)");
+        return;
+      }
+    }
     if (formData.linkType === "EXTERNAL") {
       const url = formData.linkValue.trim();
       if (!/^https?:\/\//.test(url)) {

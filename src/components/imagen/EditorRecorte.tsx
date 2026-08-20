@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Cropper, { type Area } from "react-easy-crop";
 import { Check, X } from "lucide-react";
@@ -36,6 +36,13 @@ export default function EditorRecorte({
   const [areaPixeles, setAreaPixeles] = useState<Area | null>(null);
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRecorte({ x: 0, y: 0 });
+    setZoom(1);
+    setAreaPixeles(null);
+    setError(null);
+  }, [imagen]);
 
   const alCambioArea = useCallback((_area: Area, areaPixeles: Area) => {
     setAreaPixeles(areaPixeles);

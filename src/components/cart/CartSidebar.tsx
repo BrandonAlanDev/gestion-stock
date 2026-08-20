@@ -30,7 +30,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingItem) setEditingItem(null);
+        if (editingItem) {
+          setEditingItem(null);
+          return;
+        }
         onClose();
       }
     };

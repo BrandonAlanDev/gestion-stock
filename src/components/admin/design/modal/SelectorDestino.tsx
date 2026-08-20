@@ -27,7 +27,10 @@ export default function SelectorDestino({
       </label>
       <select
         value={linkType}
-        onChange={(e) => alCambiar("linkType", e.target.value as DatosTarjeta["linkType"])}
+        onChange={(e) => {
+          alCambiar("linkType", e.target.value as DatosTarjeta["linkType"]);
+          alCambiar("linkValue", "");
+        }}
         className="w-full p-4 border rounded-xl bg-transparent cursor-pointer"
         style={{ backgroundColor: secondaryColor, color: textColor, borderColor: textColor + "44" }}
       >

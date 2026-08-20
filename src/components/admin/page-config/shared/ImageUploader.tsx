@@ -30,18 +30,19 @@ export default function ImageUploader({
   const operacionRef = useRef(0);
   const pageConfig = usePageConfig();
   const pagina = pageConfig?.pageConfig as Record<string, string> | undefined;
-  const primario = pagina?.primaryColor || "";
-  const secundario = pagina?.secondaryColor || "";
+  const primario = pagina?.primaryColor || "#06b6d4";
+  const secundario = pagina?.secondaryColor || "#ffffff";
 
   const base64AFile = (dataUrl: string): File => {
     const [meta, contenido] = dataUrl.split(",");
     const tipoMime = meta.match(/data:(.*?);base64/)?.[1] || "image/png";
+    const extension = tipoMime.split("/")[1]?.split("+")[0].replace("jpeg", "jpg") || "png";
     const binario = atob(contenido);
     const bytes = new Uint8Array(binario.length);
     for (let i = 0; i < binario.length; i++) {
       bytes[i] = binario.charCodeAt(i);
     }
-    return new File([bytes], "imagen.png", { type: tipoMime });
+    return new File([bytes], `imagen.${extension}`, { type: tipoMime });
   };
 
   const subirYActualizar = async (dataUrl: string, operacion: number) => {
