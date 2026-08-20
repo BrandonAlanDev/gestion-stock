@@ -3,12 +3,17 @@ export interface SelectorCategoria {
   label: string;
 }
 
+export interface SelectorProducto {
+  id: string;
+  label: string;
+}
+
 export interface DatosTarjeta {
   id?: string;
   title: string;
   subtitle: string;
   image: string;
-  linkType: "NONE" | "CATEGORY" | "PAGE" | "EXTERNAL";
+  linkType: "NONE" | "CATEGORY" | "PRODUCT" | "EXTERNAL";
   linkValue: string;
   subtitleNeon: boolean;
   subtitleDim: boolean;
@@ -22,6 +27,7 @@ export interface DatosTarjeta {
 export const LIMITES_TARJETA = {
   title: 60,
   subtitle: 120,
+  boton: 50,
 };
 
 export const FORMULARIO_VACIO: DatosTarjeta = {
@@ -40,9 +46,9 @@ export const FORMULARIO_VACIO: DatosTarjeta = {
 };
 
 export const OPCIONES_DESTINO = [
-  { value: "NONE", label: "Sin destino" },
+  { value: "NONE", label: "Sin enlace" },
   { value: "CATEGORY", label: "Categoría" },
-  { value: "PAGE", label: "Página" },
+  { value: "PRODUCT", label: "Producto" },
   { value: "EXTERNAL", label: "URL externa" },
 ];
 

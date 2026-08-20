@@ -47,6 +47,15 @@ export default function EditorRecorte({
     setError(null);
   }, [imagen]);
 
+  useEffect(() => {
+    if (!abierto) return;
+    const manejarTecla = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") alCancelar();
+    };
+    document.addEventListener("keydown", manejarTecla);
+    return () => document.removeEventListener("keydown", manejarTecla);
+  }, [abierto, alCancelar]);
+
   const alCambioArea = useCallback((_area: Area, areaPixeles: Area) => {
     setAreaPixeles(areaPixeles);
   }, []);

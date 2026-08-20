@@ -6,11 +6,9 @@ import {
   LayoutList,
   ListOrdered,
   Palette,
-  Save,
   type LucideIcon,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 
 import Tabs from "@/components/ui/tabs";
 import PanelVistaPrevia from "./PanelVistaPrevia";
@@ -23,20 +21,19 @@ const PESTANAS: {
   icono: LucideIcon;
   activoPrefijo?: string;
 }[] = [
-  { href: "/admin/design", etiqueta: "Resumen", icono: LayoutDashboard },
-  {
-    href: "/admin/design/apariencia",
-    etiqueta: "Apariencia",
-    icono: Palette,
-    activoPrefijo: "/admin/design/apariencia",
-  },
-  { href: "/admin/design/contenido", etiqueta: "Contenido", icono: LayoutList },
-  { href: "/admin/design/estructura", etiqueta: "Estructura", icono: ListOrdered },
-];
+    { href: "/admin/design", etiqueta: "Resumen", icono: LayoutDashboard },
+    {
+      href: "/admin/design/apariencia",
+      etiqueta: "Apariencia",
+      icono: Palette,
+      activoPrefijo: "/admin/design/apariencia",
+    },
+    { href: "/admin/design/contenido", etiqueta: "Contenido", icono: LayoutList },
+    { href: "/admin/design/estructura", etiqueta: "Estructura", icono: ListOrdered },
+  ];
 
 function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { abrirVistaPrevia } = useVistaPrevia();
 
   return (
@@ -50,17 +47,7 @@ function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
                 Personalizá la identidad, el contenido y la estructura de tu tienda desde un solo lugar.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  router.refresh();
-                  toast.success("Cambios guardados");
-                }}
-                className="inline-flex items-center gap-2 rounded-lg border border-[var(--admin-borde)] px-4 py-2 text-sm font-medium text-[var(--admin-texto)] transition hover:bg-[var(--admin-fondo-hover)]"
-              >
-                <Save size={16} />
-                Guardar cambios
-              </button>
+            <div className="flex flex-wrap items-center gap-1">
               <button
                 onClick={() => abrirVistaPrevia()}
                 className="inline-flex items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm font-semibold text-[var(--admin-primario-texto)] transition hover:opacity-90"

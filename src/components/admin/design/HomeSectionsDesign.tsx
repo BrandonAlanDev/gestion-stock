@@ -7,8 +7,9 @@ import { useState, useTransition, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import GridModal, { type DatosTarjeta, type SelectorCategoria } from "./GridModal";
+import GridModal, { type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./GridModal";
 import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
+import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
 import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
 import { getContrastColor } from "@/lib/utils";
 
@@ -56,7 +57,7 @@ const RELACION_ASPECTO: Record<string, number> = {
 };
 
 function normalizarGrid(grid: GridConfig): GridLocal {
-  const tiposEnlace = ["NONE", "CATEGORY", "PAGE", "EXTERNAL"] as const;
+  const tiposEnlace = ["NONE", "CATEGORY", "PRODUCT", "EXTERNAL"] as const;
   const estilosEnlace = ["IMAGE", "BUTTON"] as const;
   const variantesBoton = ["DEFAULT", "STRAIGHT", "TRANSPARENT"] as const;
 
@@ -146,6 +147,7 @@ export default function HomeSectionsDesign({
   const [editingGrid, setEditingGrid] = useState<GridLocal | null>(null);
 
   const [categories, setCategories] = useState<SelectorCategoria[]>([]);
+  const [productos, setProductos] = useState<SelectorProducto[]>([]);
 
   const router = useRouter();
 
@@ -169,17 +171,26 @@ export default function HomeSectionsDesign({
     const rawGrids = config?.homegrid?.grids || [];
     setGrids(rawGrids.map(normalizarGrid));
 
-    async function cargarCategorias() {
-      const categoriasData = await getCategoriesPicker();
+    async function cargarOpciones() {
+      const [categoriasData, productosData] = await Promise.all([
+        getCategoriesPicker(),
+        getProductsPicker(),
+      ]);
       setCategories(
         categoriasData.map((c) => ({
           id: c.id,
           label: c.name,
         }))
       );
+      setProductos(
+        productosData.map((p) => ({
+          id: p.id,
+          label: p.name,
+        }))
+      );
     }
 
-    cargarCategorias();
+    cargarOpciones();
   }, [config]);
 
   const handleAddOrEdit = (data: DatosTarjeta) => {
@@ -354,6 +365,7 @@ export default function HomeSectionsDesign({
         onSave={handleAddOrEdit}
         initialData={editingGrid}
         categorias={categories}
+        productos={productos}
         relacionAspecto={RELACION_ASPECTO[layout] ?? 16 / 10}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}

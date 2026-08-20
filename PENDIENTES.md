@@ -1,6 +1,633 @@
 # PENDIENTES
 
-## Error en tarjetas de la home — `<Link>` con múltiples hijos y URL recursiva
+## Refactor UI/UX — Modal de creación y edición de secciones (`GridModal`)
+
+### Objetivo
+Transformar el modal que crea/edita **secciones** (tarjetas) de la home del panel administrativo en un **editor visual moderno** (estética SaaS), coherente con el modal de imágenes/slides ya rediseñado: preview en tiempo real, contenido visible, opciones secundarias en acordeones, selección visual de estilos, controles intuitivos, feedback de estados y responsive. El refactor es **100% visual/UX**: toda la lógica funcional existente se conserva intacta (validaciones, valores, persistencia, contratos).
+
+### Alcance exacto
+- Modal objetivo: `src/components/admin/design/GridModal.tsx` (315 líneas hoy). Único consumidor: `src/components/admin/design/HomeSectionsDesign.tsx:351-360` (se abre con "Agregar Nueva Sección" y al editar una tarjeta). **NO se toca el padre** (sus props quedan idénticas).
+- Un solo componente para **crear y editar** (títulos actuales: "Nueva sección" / "Editar sección" — se conservan exactos). No se crea un segundo modal.
+- La lógica que decide crear vs. editar (`initialData`) y la carga de valores iniciales NO se modifican.
+- Hijos actuales: `src/components/admin/design/modal/ControlesEnlace.tsx` (se ELIMINA al final, queda sin uso), `SelectorDestino.tsx` (se restylea), `tipos.ts` (solo cambio aditivo).
+
+### Estado actual (relevado completo — leer antes de tocar)
+
+#### `GridModal.tsx` — contrato y lógica (NO tocar esta lógica)
+| Elemento | Ubicación actual | Detalle |
+|---|---|---|
+| Props | `GridModal.tsx:17-26` | `isOpen`, `onClose`, `onSave: (data: DatosTarjeta) => void`, `initialData: DatosTarjeta \| null`, `categorias: SelectorCategoria[]`, `relacionAspecto?` (default `16/10`), `primaryColor?`, `secondaryColor?` |
+| Re-export de tipos | `:15` | `export type { DatosTarjeta, SelectorCategoria } from "./modal/tipos";` — **conservar** (el padre importa desde acá) |
+| Colores | `:69-78` | `useCapa()`; `usePageConfig()`; `configNido = (pageConfig?.pageConfig ?? pageConfig) as Record<string, unknown> \| undefined`; `primaryColor = primaryProp \|\| (configNido?.primaryColor as string) \|\| "#06b6d4"`; `secondaryColor = secondaryProp \|\| (configNido?.secondaryColor as string) \|\| "#ffffff"`; `textColor = getContrastColor(secondaryColor)`. Todo esto se conserva. `estiloInput` (`:75-78`) se ELIMINA (los inputs nuevos usan el patrón de variables CSS de `Input.tsx`) |
+| Estados | `:80-83` | `formData: DatosTarjeta` (init `FORMULARIO_VACIO`), `isSubmitting`, `error`, `isMobile` |
+| Breakpoint móvil | `:85-90` | useEffect con `window.innerWidth < 640` + listener resize — conservar idéntico |
+| Carga inicial | `:92-98` | Al abrir: `setFormData(initialData ? { ...FORMULARIO_VACIO, ...initialData } : FORMULARIO_VACIO); setError(null); setIsSubmitting(false);` — conservar idéntico |
+| Mutadores | `:100-104` | `actualizar = <K extends keyof DatosTarjeta>(campo: K, valor: DatosTarjeta[K]) => setFormData(prev => ({...prev, [campo]: valor}));` y `contar = (campo: "title" \| "subtitle") => formData[campo].length;` — conservar |
+| `handleSubmit` | `:106-150` | **Conservar ÍNTEGRO** (ver bloque de código más abajo) |
+| Portal | `:311-314` | `createPortal(<ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>, document.body)` — conservar |
+
+`handleSubmit` exacto a conservar (copiar tal cual en la reescritura):
+```tsx
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+
+  if (!formData.image) {
+    setError("La imagen es obligatoria");
+    return;
+  }
+  if (formData.linkType === "CATEGORY" && !formData.linkValue) {
+    setError("Seleccioná una categoría de destino");
+    return;
+  }
+  if (formData.linkType === "PAGE") {
+    const destino = formData.linkValue.trim();
+    if (!/^\/(?!\/)/.test(destino)) {
+      setError("La página debe comenzar con una sola barra (/)");
+      return;
+    }
+  }
+  if (formData.linkType === "EXTERNAL") {
+    const url = formData.linkValue.trim();
+    if (!/^https?:\/\//.test(url)) {
+      setError("La URL externa debe empezar con http:// o https://");
+      return;
+    }
+  }
+  if (contar("title") > LIMITES_TARJETA.title || contar("subtitle") > LIMITES_TARJETA.subtitle) {
+    setError("El título o el subtítulo superan el límite de caracteres");
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    onSave({
+      ...formData,
+      linkType: formData.linkType,
+      linkValue: formData.linkValue.trim(),
+    });
+    onClose();
+  } catch {
+    setError("Error al guardar la tarjeta");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+```
+IMPORTANTE: NO agregar validación nueva para `buttonText` (el contador 50 es solo visual, no bloquea).
+
+#### Tipos y constantes (`modal/tipos.ts`, 58 líneas — casi intacto)
+- `DatosTarjeta` (`:6-20`): `id?`, `title`, `subtitle`, `image`, `linkType: "NONE" | "CATEGORY" | "PAGE" | "EXTERNAL"`, `linkValue`, `subtitleNeon`, `subtitleDim`, `linkStyle: "IMAGE" | "BUTTON"`, `buttonVariant: "DEFAULT" | "STRAIGHT" | "TRANSPARENT"`, `buttonText`, `buttonBgColor`, `buttonTextColor`. NO se cambia nada.
+- `LIMITES_TARJETA` (`:22-25`): `{ title: 60, subtitle: 120 }`. **Cambio aditivo:** agregar `boton: 50` (única fuente para el contador visual del texto del botón; solo lo importa `GridModal`, verificado).
+- `FORMULARIO_VACIO`, `OPCIONES_DESTINO` (NONE "Sin destino", CATEGORY "Categoría", PAGE "Página", EXTERNAL "URL externa"), `OPCIONES_ENLACE` (IMAGE "Imagen", BUTTON "Botón"), `OPCIONES_BOTON` (DEFAULT "Predeterminado", STRAIGHT "Recto", TRANSPARENT "Transparente") — **intactos** (los componentes nuevos los importan de acá).
+
+#### Hijos actuales
+- `ControlesEnlace.tsx` (132 l.): "Click en" segmentado, "Estilo del botón" segmentado, input texto del botón (sin límite), dos `<input type="color">` h-14. **Solo lo importa `GridModal` (verificado con grep)** → su funcionalidad se redistribuye en los componentes nuevos y el archivo se elimina.
+- `SelectorDestino.tsx` (81 l.): `<select>` de `OPCIONES_DESTINO`; al cambiar tipo hace `alCambiar("linkType", ...)` + `alCambiar("linkValue", "")` (reset — conservar); rama CATEGORY con segundo `<select>` ("Seleccionar categoría..."); rama PAGE/EXTERNAL con input (placeholders `/mi-pagina` / `https://ejemplo.com`; hint "Debe empezar con http:// o https://"). La validación vive en `GridModal.handleSubmit`, no acá. Solo lo importa `GridModal`.
+- `SubidaImagen` (`src/components/imagen/SubidaImagen.tsx`, 354 l.): el modal la usa con `valor={formData.image}`, `alCambiar`, `relacionAspecto`, `obligatoria`, `etiqueta="Imagen de la sección"`. Ya tiene variante `"zona"` (líneas 150-254) con: zona dashed clicable, overlay "Procesando…", hover "Cambiar imagen", fila de acciones (Cambiar imagen / Editar recorte / Quitar), `alCambiarEditorAbierto` y `contenidoSuperpuesto`. **Único detalle: la variante zona tiene `aspect-video` hardcodeado (línea 158) — se parametriza (ver plan, archivo 2).**
+
+### Sistema visual de referencia (patrones YA implementados a copiar — coherencia obligatoria)
+
+Estos patrones están commiteados en el rediseño del modal de imágenes. COPIARLOS tal cual; no inventar otro lenguaje visual:
+1. **Panel + a11y** (`SlideEditor.tsx:202-214`): `role="dialog" aria-modal="true" aria-labelledby="..."`; `w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl`; móvil `fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up`; desktop `animate-slide-down`.
+2. **Header sticky** (`SlideEditor.tsx:215-229`): `flex items-center justify-between p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl` con `backgroundColor: secondaryColor + "F0"`; botón cerrar con `aria-label="Cerrar ventana"`, color `textColor + "99"`, hover con `onMouseEnter/Leave` (bg `primaryColor + "1A"`, color `primaryColor`).
+3. **Footer sticky** (`SlideEditor.tsx:292-315`): FUERA del `<form>`; `flex justify-end gap-3 px-5 py-4 sticky bottom-0 z-10 backdrop-blur rounded-b-2xl` con bg `secondaryColor + "F0"`; botón secundario `border: 1px solid textColor + "30"`, texto `textColor + "99"`, hover bg `textColor + "0A"`; botón primario bg `primaryColor`, texto `getContrastColor(primaryColor)`, `disabled={isSubmitting}`, `aria-busy={isSubmitting}`, `disabled:opacity-50 disabled:cursor-not-allowed`, hover opacity 0.9.
+4. **ESC con guarda** (`SlideEditor.tsx:131-140`):
+```tsx
+useEffect(() => {
+  if (!isOpen) return;
+  const manejarTecla = (evento: KeyboardEvent) => {
+    if (evento.key === "Escape" && !recorteAbierto && !isSubmitting) {
+      onClose();
+    }
+  };
+  document.addEventListener("keydown", manejarTecla);
+  return () => document.removeEventListener("keydown", manejarTecla);
+}, [isOpen, recorteAbierto, isSubmitting, onClose]);
+```
+5. **Acordeón** (`OpcionesAvanzadasSlide.tsx:86-152`): contenedor `overflow-hidden rounded-xl border transition-colors duration-200` con `borderColor: textColor + "20"`; botón cabecera `type="button"` con `aria-expanded` + `aria-controls="id-unico"` (`flex w-full items-center justify-between px-4 py-3 cursor-pointer`); título `text-sm font-semibold` color `textColor + "CC"`; `ChevronDown size={18}` con `transition-transform duration-200` + `rotate-180` cuando abierto, color `textColor + "80"`; panel con `cn("grid transition-all duration-200", abiertas ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")` > `div.overflow-hidden` > `div.space-y-4 px-4 pb-4`.
+6. **Switch con descripción** (`OpcionesAvanzadasSlide.tsx:17-53`): fila `flex items-center justify-between gap-3`; a la izquierda etiqueta `text-sm font-medium` color `textColor + "CC"` + descripción `text-xs` color `textColor + "80"`; a la derecha botón `type="button"` con `aria-label`, `role="switch"`, `aria-checked`, `relative h-7 w-14 shrink-0 rounded-full transition-colors cursor-pointer`, bg `activo ? primaryColor : textColor + "40"`, pastilla `absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform` con `left: activo ? "calc(100% - 24px)" : "4px"`.
+7. **Input moderno** (`page-config/shared/Input.tsx:39-51`): variables CSS + Tailwind:
+```tsx
+style={{ "--input-fondo": textColor + "08", "--input-borde": textColor + "30", "--input-texto": textColor, "--input-placeholder": textColor + "80", "--input-foco": primaryColor } as CSSProperties}
+className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all duration-200 bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)] focus:ring-2 ring-[var(--input-foco)]/20"
+```
+8. **Select moderno** (`LinkTypeSelector.tsx:35-49`): estilo inline `{ backgroundColor: secondaryColor, border: "1px solid " + textColor + "30", color: textColor }` + className `w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer`; focus: `borderColor = primaryColor` + `boxShadow = 0 0 0 2px ${primaryColor}33` (manejar con `onFocus`/`onBlur`); cada `<option>` con `style={{ backgroundColor: secondaryColor, color: textColor }}`.
+9. **Campo con contador** (`SeccionContenidoSlide.tsx:38-105`): label `flex items-center justify-between gap-2 text-sm font-medium` color `textColor + "CC"`; contador `font-mono` color `textColor + "80"` (rojo `text-red-400` al exceder) con formato `n/límite`; input con `className={cn(isOverLimit && "border-red-500/50 focus:border-red-500")}`; mensaje `<p className="text-xs text-red-400">Excede el límite de N caracteres</p>`.
+10. **Caja de error** (`SlideEditor.tsx:283-288`): `p-3 rounded-lg flex items-center gap-2 text-sm` con `backgroundColor: primaryColor + "1A"`, `borderColor: primaryColor + "50"`, `color: primaryColor`, icono `AlertCircle w-4 h-4 flex-shrink-0`.
+11. **Colores:** SOLO esquema hex + sufijos alpha (`+"08"`, `+"0D"`, `+"14"`, `+"1A"`, `+"20"`, `+"30"`, `+"33"`, `+"40"`, `+"50"`, `+"80"`, `+"99"`, `+"CC"`, `+"F0"`). **PROHIBIDO usar tokens `--admin-*`** y `ui/switch.tsx` (esquema distinto).
+12. **Animaciones disponibles** (`globals.css`): `animate-slide-up`, `animate-slide-down`, `animate-shimmer`, `animate-shake`. No crear keyframes nuevos.
+13. **Iconos lucide-react** a usar: `X`, `Loader2`, `Save`, `AlertCircle`, `ChevronDown`, `Upload`, `Crop`, `Sparkles` (Apariencia), `Link2` (Botón y enlace), `Image` (alias `IconoImagen` para no chocar con next/image), `MousePointerClick`.
+
+### Decisiones confirmadas con el usuario
+1. **Texto del botón:** contador visual `0/50` (fuente `LIMITES_TARJETA.boton = 50`) que se pone rojo y muestra "Excede el límite de 50 caracteres" al exceder, pero **NO bloquea el guardado** (no se agrega validación a `handleSubmit`).
+2. **Colapsables "Apariencia" y "Botón y enlace": arrancan CERRADAS** en creación y en edición.
+3. **Ancho del modal:** `max-w-4xl` (igual que el modal de imágenes).
+4. **Footer:** se conservan los textos actuales: **Cancelar** y **Guardar** ("Guardando..." con Loader2 durante el submit). No cambian a "Crear/Actualizar".
+5. **Preview:** columna izquierda, aproximación visual pura (sin duplicar lógica de render del ecommerce; la referencia es `CategoryCard.tsx`).
+
+### Nueva estructura visual
+```
+Desktop (≥1024px)                            Mobile (<640px, bottom-sheet)
+┌────────────────────────────────────────┐   ┌───────────────────────┐
+│ Header sticky: título + descripción + X│   │ Header sticky         │
+├──────────────────┬─────────────────────┤   ├───────────────────────┤
+│ PREVIEW          │ CONTENIDO           │   │ Preview (arriba)      │
+│ (imagen + título │ Título 0/60         │   ├───────────────────────┤
+│  + subtítulo +   │ Subtítulo 0/120     │   │ Contenido             │
+│  botón aprox.)   │ Imagen (zona)       │   ├───────────────────────┤
+├──────────────────┴─────────────────────┤   │ ⌄ Apariencia          │
+│ ⌄ ✨ Apariencia                         │   ├───────────────────────┤
+├────────────────────────────────────────┤   │ ⌄ Botón y enlace      │
+│ ⌄ 🔗 Botón y enlace                    │   ├───────────────────────┤
+├────────────────────────────────────────┤   │ Footer sticky         │
+│ Footer sticky: Cancelar | Guardar      │   └───────────────────────┘
+└────────────────────────────────────────┘
+```
+- **Contenido** = título, subtítulo, zona de imagen (dropzone moderna). Visible siempre.
+- **Apariencia** (cerrada) = efectos del subtítulo (neón/opaco), estilo del botón (selección visual), colores del botón.
+- **Botón y enlace** (cerrada) = click en (cards visuales), texto del botón (contador 50), destino del enlace.
+
+### Plan detallado por archivo (orden de implementación obligatorio)
+
+#### 1. `src/components/admin/design/modal/tipos.ts` (cambio aditivo)
+En `LIMITES_TARJETA` agregar una línea:
+```ts
+export const LIMITES_TARJETA = {
+  title: 60,
+  subtitle: 120,
+  boton: 50,
+};
+```
+Nada más cambia en este archivo.
+
+#### 2. `src/components/imagen/SubidaImagen.tsx` (+2 líneas, retrocompatible)
+- En `SubidaImagenProps` (líneas 11-26) agregar: `claseZona?: string;`
+- En la desestructuración (líneas 30-45) agregar: `claseZona = "aspect-video",`
+- En la variante zona, reemplazar la clase hardcodeada `aspect-video` del botón (línea 158) por `{claseZona}`.
+- Resultado: `SlideEditor` y los demás consumidores quedan exactamente igual (default). `GridModal`/`ContenidoSeccion` pasará `claseZona="aspect-[16/10]"` o `"aspect-[4/3]"` según `relacionAspecto` (16/10 y 4/3 son los dos únicos valores que envía el padre; cualquier otro valor → `aspect-[16/10]`).
+
+#### 3. `src/components/admin/design/modal/AcordeonSeccion.tsx` (NUEVO, ~45 líneas, una función exportada)
+Props:
+```ts
+interface AcordeonSeccionProps {
+  abierto: boolean;
+  alAlternar: () => void;
+  titulo: string;
+  icono: LucideIcon;
+  id: string;          // id único para aria-controls (ej: "panel-apariencia", "panel-boton-enlace")
+  children: ReactNode;
+  textColor: string;
+}
+```
+Render: EXACTAMENTE el patrón de `OpcionesAvanzadasSlide.tsx:86-152` pero con `icono` antes del título (size 16, color `textColor + "80"`) y sin borde top/bottom extra: contenedor `overflow-hidden rounded-xl border transition-colors duration-200` + `style={{ borderColor: textColor + "20" }}`; cabecera `type="button"` `flex w-full items-center justify-between px-4 py-3 cursor-pointer` con `aria-expanded={abierto}` `aria-controls={id}`; título `text-sm font-semibold` color `textColor + "CC"`; `ChevronDown size={18}` con `cn("transition-transform duration-200", abierto && "rotate-180")` color `textColor + "80"`; panel `<div id={id} className={cn("grid transition-all duration-200", abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}><div className="overflow-hidden"><div className="space-y-4 px-4 pb-4">{children}</div></div></div>`.
+
+#### 4. `src/components/admin/design/modal/InterruptorConDescripcion.tsx` (NUEVO, ~45 líneas, una función exportada)
+Props:
+```ts
+interface InterruptorConDescripcionProps {
+  activo: boolean;
+  etiqueta: string;
+  descripcion: string;
+  alCambiar: () => void;
+  primaryColor: string;
+  textColor: string;
+}
+```
+Render: copiar EXACTO el patrón `InterruptorOpcion` de `OpcionesAvanzadasSlide.tsx:17-53` (fila flex con textos a la izquierda y switch `w-14 h-7` a la derecha; `aria-label={etiqueta}`, `role="switch"`, `aria-checked`).
+
+#### 5. `src/components/admin/design/modal/VistaPreviaSeccion.tsx` (NUEVO, ~110 líneas, una función exportada)
+Propósito: preview aproximada y en tiempo real (re-renderiza sola porque recibe `datos` del estado del modal). Referencia visual: `CategoryCard.tsx` (gradiente inferior, título blanco, subtítulo con neón/opaco, botón según variante). NO usa `motion`, NO usa hooks de tema: recibe los colores por props.
+Props:
+```ts
+interface VistaPreviaSeccionProps {
+  datos: DatosTarjeta;
+  relacionAspecto: number;
+  primaryColor: string;
+  secondaryColor: string;
+  textColor: string;
+}
+```
+Render detallado:
+- Wrapper: `div` con `className="space-y-2"` que contiene un contenedor `relative w-full overflow-hidden rounded-xl border` con `style={{ aspectRatio: relacionAspecto, borderColor: textColor + "20", backgroundColor: secondaryColor }}`. Encima (fuera, debajo) una leyenda `<p className="text-xs" style={{ color: textColor + "60" }}>Vista previa aproximada</p>`.
+- Si `datos.image` existe:
+  - `<img src={datos.image} alt="Vista previa de la sección" className="absolute inset-0 h-full w-full object-cover" />`
+  - Capa de gradiente: `<div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.05))" }} />`
+  - Contenido: `<div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6">`:
+    - Subtítulo (solo si `datos.subtitle`): `<p>` con estilos según flags, MISMA lógica que `CategoryCard.tsx:52-62`:
+      - `subtitleDim`: `className="text-xs sm:text-sm text-white/70 mb-2"` sin estilo extra.
+      - si no: `className="text-[10px] font-black tracking-[0.35em] uppercase mb-2"` + `style={{ color: primaryColor, ...(subtitleNeon ? { textShadow: "0 0 10px " + primaryColor + ", 0 0 20px " + primaryColor + "80" } : {}) }}`.
+    - Título (siempre que exista): `<h3 className="text-white font-black text-xl sm:text-2xl tracking-tighter uppercase italic leading-none">{datos.title}</h3>`
+    - Botón (solo si `datos.linkStyle === "BUTTON"`): `<span>` inline-flex con el estilo del botón según variante (misma lógica que `CategoryCard.tsx:64-78`):
+      - base: `"inline-flex items-center mt-4 px-6 py-2 font-black uppercase tracking-wider text-xs"` + `rounded-lg` (DEFAULT), `rounded-none` (STRAIGHT), `rounded-lg bg-transparent border-2` (TRANSPARENT).
+      - colores: `const bgBoton = datos.buttonBgColor || primaryColor; const colorBoton = datos.buttonTextColor || getContrastColor(bgBoton);` TRANSPARENT → `style={{ color: colorBoton, borderColor: bgBoton, backgroundColor: "transparent" }}`; resto → `style={{ backgroundColor: bgBoton, color: colorBoton }}`.
+      - texto: `datos.buttonText || "Ver más"`.
+- Si NO hay `datos.image`: estado vacío centrado `absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4`: icono `IconoImagen` (lucide `Image` alias) size 28 color `textColor + "40"` + `<p className="text-xs" style={{ color: textColor + "60" }}>Subí una imagen para ver la vista previa</p>`.
+- Importa: `type DatosTarjeta` de `./tipos`, `getContrastColor` de `@/lib/utils`, `Image as IconoImagen` de lucide-react. Cero lógica de negocio: solo presentación.
+
+#### 6. `src/components/admin/design/modal/ContenidoSeccion.tsx` (NUEVO, ~140 líneas, una función exportada)
+Contiene cabecera "Contenido" + título + subtítulo + zona de imagen. Props:
+```ts
+interface ContenidoSeccionProps {
+  title: string;
+  subtitle: string;
+  image: string;
+  alCambiar: <K extends "title" | "subtitle" | "image">(campo: K, valor: DatosTarjeta[K]) => void;
+  relacionAspecto: number;
+  deshabilitada: boolean;               // isSubmitting del modal
+  alCambiarEditorAbierto: (abierto: boolean) => void;  // burbujea al modal para la guarda de ESC
+  primaryColor: string;
+  secondaryColor: string;
+  textColor: string;
+}
+```
+Render:
+- Cabecera: `<h3 className="text-xs font-black uppercase tracking-widest" style={{ color: textColor + "99" }}>Contenido</h3>` (patrón `SeccionContenidoSlide.tsx:31-36`).
+- Título y Subtítulo: campos con contador EXACTOS al patrón de `SeccionContenidoSlide.tsx:38-105` (label + contador `font-mono` `n/60` o `n/120` rojo al exceder; input con vars CSS del patrón 7; `border-red-500/50 focus:border-red-500` al exceder; mensaje "Excede el límite de N caracteres"). Placeholders: `"Título de la sección"` y `"Subtítulo opcional"` (textos actuales). Los límites se leen de `LIMITES_TARJETA`. La función `excede` local: `(campo) => (campo === "title" ? title : subtitle).length > LIMITES_TARJETA[...]`. Para el input usar el patrón de `Input.tsx` inline (NO usar el componente `Input` compartido porque su label no admite contador): copiar el objeto `style` con `--input-*` y la className exacta del patrón 7. Requiere `import type { CSSProperties } from "react"` y `cn` de `@/lib/utils`.
+- Zona de imagen (dentro de un `div.space-y-1`, SIN label "Imagen *" para reducir ruido — la zona ya comunica el estado; el asterisco rojo actual no aporta y la validación sigue igual):
+```tsx
+<SubidaImagen
+  valor={image}
+  alCambiar={(valor) => alCambiar("image", valor)}
+  relacionAspecto={relacionAspecto}
+  obligatoria
+  etiqueta="Imagen de la sección"
+  textoAyuda="PNG, JPG, WebP"
+  variante="zona"
+  claseZona={relacionAspecto === 4 / 3 ? "aspect-[4/3]" : "aspect-[16/10]"}
+  deshabilitada={deshabilitada}
+  alCambiarEditorAbierto={alCambiarEditorAbierto}
+/>
+```
+Nota: la variante zona ya trae loading ("Procesando…"), errores, "Cambiar imagen", "Editar recorte" y "Quitar" — NO reimplementar nada de eso.
+- Imports: `cn` de `@/lib/utils`, `SubidaImagen`, `LIMITES_TARJETA` y `type DatosTarjeta` de `./tipos`, `type CSSProperties` de react.
+
+#### 7. `src/components/admin/design/modal/AparienciaSeccion.tsx` (NUEVO, ~180 líneas, una función exportada)
+Contenido del acordeón "✨ Apariencia". Props:
+```ts
+interface AparienciaSeccionProps {
+  abierta: boolean;
+  alAlternar: () => void;
+  subtitleNeon: boolean;
+  subtitleDim: boolean;
+  buttonVariant: DatosTarjeta["buttonVariant"];
+  buttonBgColor: string;
+  buttonTextColor: string;
+  alCambiar: <K extends "subtitleNeon" | "subtitleDim" | "buttonVariant" | "buttonBgColor" | "buttonTextColor">(campo: K, valor: DatosTarjeta[K]) => void;
+  primaryColor: string;
+  textColor: string;
+}
+```
+Estructura interna (todo dentro de `<AcordeonSeccion abierto={abierta} alAlternar={alAlternar} titulo="Apariencia" icono={Sparkles} id="panel-apariencia" textColor={textColor}>`):
+1. **Bloque "Subtítulo"** con mini-título `text-xs font-bold uppercase tracking-[0.2em]` color `textColor + "99"` y dos `InterruptorConDescripcion`:
+   - `activo={subtitleNeon}` `etiqueta="Efecto neón"` `descripcion="Aplica un efecto luminoso al subtítulo"` `alCambiar={() => alCambiar("subtitleNeon", !subtitleNeon)}`
+   - `activo={subtitleDim}` `etiqueta="Texto opaco"` `descripcion="Reduce el contraste del subtítulo"` `alCambiar={() => alCambiar("subtitleDim", !subtitleDim)}`
+2. **Bloque "Estilo del botón"** con mini-título igual. Grid `grid grid-cols-3 gap-2` de 3 botones `type="button"` (uno por `OPCIONES_BOTON`, valores EXACTOS `"DEFAULT" | "STRAIGHT" | "TRANSPARENT"`). Cada opción:
+   - Contenedor: `flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 pt-3 transition-all duration-200 cursor-pointer`
+   - Estado seleccionado: `borderColor: primaryColor`, `backgroundColor: primaryColor + "0D"`, label color `primaryColor`.
+   - No seleccionado: `borderColor: textColor + "20"`, bg `transparent`, label color `textColor + "80"`; hover: `borderColor: textColor + "40"`.
+   - Mini-preview del botón dentro (representación visual, NO funcional): `<span>` con texto `"Ver más"`, `className="px-3 py-1 text-[10px] font-black uppercase tracking-wider"` + `rounded-lg` (DEFAULT) / `rounded-none` (STRAIGHT) / `rounded-lg border-2 bg-transparent` (TRANSPARENT); colores igual que en la preview: `bgBoton = buttonBgColor || primaryColor`, `colorBoton = buttonTextColor || getContrastColor(bgBoton)`; TRANSPARENT → borde `bgBoton`, texto `colorBoton`, fondo transparente; resto → fondo `bgBoton`, texto `colorBoton`.
+   - Label debajo: `text-xs font-medium` con el label de `OPCIONES_BOTON` ("Predeterminado", "Recto", "Transparente").
+   - `onClick={() => alCambiar("buttonVariant", opt.value as DatosTarjeta["buttonVariant"])}`.
+3. **Bloque "Colores del botón"** con mini-título igual. `grid grid-cols-2 gap-3` con dos controles (Fondo / Texto). Cada control (patrón compartido, hacer un closure interno `MuestraColor` NO exportado — se permite, es helper trivial):
+   - Label: `text-xs font-medium` color `textColor + "80"` ("Fondo" / "Texto").
+   - Botón `type="button"` que dispara el input oculto: `flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors duration-200 cursor-pointer` con `borderColor: textColor + "20"`, bg `transparent`; hover `backgroundColor: textColor + "08"`.
+   - Círculo de color: `h-6 w-6 shrink-0 rounded-full border` con `borderColor: textColor + "30"` y `backgroundColor: valor \|\| fallback` (fallback `"#000000"` para fondo, `"#ffffff"` para texto — los MISMOS fallbacks del código actual).
+   - Hex visible: `<span className="font-mono text-xs" style={{ color: textColor + "80" }}>{valor || fallback}</span>`.
+   - Input oculto: `<input type="color" value={valor || fallback} onChange={(e) => alCambiar(campo, e.target.value)} className="sr-only" ref={refDelInput} />`. Disparo: dos `useRef<HTMLInputElement>(null)` (uno por color) — los refs viven en el closure interno `MuestraColor` para que cada instancia tenga el suyo. `aria-label`: "Color de fondo del botón" / "Color del texto del botón".
+   - **Formato almacenado:** el `<input type="color">` nativo devuelve `#rrggbb` — idéntico al comportamiento actual. No agregar normalización.
+- Imports: `Sparkles` de lucide-react, `useRef` y `type RefObject` no (usar `useRef<HTMLInputElement>(null)` dentro del closure), `getContrastColor` y `cn` de `@/lib/utils`, `AcordeonSeccion`, `InterruptorConDescripcion`, `OPCIONES_BOTON` y `type DatosTarjeta` de `./tipos`.
+
+#### 8. `src/components/admin/design/modal/BotonEnlaceSeccion.tsx` (NUEVO, ~170 líneas, una función exportada)
+Contenido del acordeón "🔗 Botón y enlace". Props:
+```ts
+interface BotonEnlaceSeccionProps {
+  abierta: boolean;
+  alAlternar: () => void;
+  linkStyle: DatosTarjeta["linkStyle"];
+  buttonText: string;
+  linkType: DatosTarjeta["linkType"];
+  linkValue: string;
+  categorias: SelectorCategoria[];
+  alCambiar: <K extends "linkStyle" | "buttonText" | "linkType" | "linkValue">(campo: K, valor: DatosTarjeta[K]) => void;
+  primaryColor: string;
+  secondaryColor: string;
+  textColor: string;
+}
+```
+Estructura interna (dentro de `<AcordeonSeccion ... titulo="Botón y enlace" icono={Link2} id="panel-boton-enlace" ...>`):
+1. **Bloque "Click en"** (mini-título igual que Apariencia). Pregunta amable: `<p className="text-xs" style={{ color: textColor + "80" }}>¿Qué elemento abre el enlace?</p>`. Grid `grid grid-cols-2 gap-3` de 2 cards `type="button"` con `OPCIONES_ENLACE` (valores EXACTOS `"IMAGE"` / `"BUTTON"`):
+   - Card: `flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer`
+   - Iconos: IMAGE → `<IconoImagen size={22} />`; BUTTON → `<MousePointerClick size={22} />`.
+   - Label: `text-sm font-semibold` ("Imagen" / "Botón").
+   - Seleccionado: `borderColor: primaryColor`, `backgroundColor: primaryColor + "0D"`, `color: primaryColor` + `aria-pressed="true"`. No seleccionado: `borderColor: textColor + "20"`, `color: textColor + "80"` + `aria-pressed="false"`; hover `borderColor: textColor + "40"`.
+   - `onClick={() => alCambiar("linkStyle", opt.value as DatosTarjeta["linkStyle"])}`.
+2. **Bloque "Texto del botón"**: label con contador `0/50` (patrón de `SeccionContenidoSlide`, límite `LIMITES_TARJETA.boton`): label `flex items-center justify-between` con texto "Texto del botón" + span `font-mono` `{buttonText.length}/{LIMITES_TARJETA.boton}` (rojo si excede); input moderno (patrón 7) con placeholder `"Ej: Ver más"` y `value={buttonText}` / `onChange={(e) => alCambiar("buttonText", e.target.value)}`; si excede: `<p className="text-xs text-red-400">Excede el límite de {LIMITES_TARJETA.boton} caracteres</p>`. **SIN validación de bloqueo** (recordar decisión 1).
+3. **`SelectorDestino`** (el archivo restyleado): pasar `linkType`, `linkValue`, `categorias`, `secondaryColor`, `textColor` y `alCambiar` (el genérico del modal lo acepta: `SelectorDestino` restringe a `"linkType" | "linkValue"` y el genérico `alCambiar` de `BotonEnlaceSeccion` incluye esas claves — TypeScript lo resuelve por narrowing de `K`).
+- Imports: `Link2`, `Image as IconoImagen`, `MousePointerClick` de lucide-react; `cn` de `@/lib/utils`; `AcordeonSeccion`, `SelectorDestino`, `OPCIONES_ENLACE`, `LIMITES_TARJETA`, `type DatosTarjeta` y `type SelectorCategoria` de `./tipos`.
+
+#### 9. `src/components/admin/design/modal/SelectorDestino.tsx` (RESTYLE, ~85 líneas, lógica intacta)
+Conservar ÍNTEGRO: props (`:6-13`), reset de `linkValue` al cambiar tipo (`:30-33`), ramas CATEGORY/PAGE/EXTERNAL, placeholders, hint "Debe empezar con http:// o https://", opciones de `OPCIONES_DESTINO`. Cambios SOLO de estética:
+- Eliminar la label `text-xs font-black uppercase tracking-[0.2em]` actual; usar mini-título igual al de los otros bloques del acordeón (`text-xs font-bold uppercase tracking-[0.2em]` color `textColor + "99"`, texto "Destino del enlace").
+- Los 3 controles (select principal, select categoría, input PAGE/EXTERNAL) pasan al estilo moderno del patrón 8 (select: bg `secondaryColor`, borde `textColor + "30"`, `px-4 py-2.5 rounded-xl text-sm`, focus con `primaryColor` + ring `0 0 0 2px ${primaryColor}33` vía `onFocus`/`onBlur`; options con bg `secondaryColor`/color `textColor`). El input de PAGE/EXTERNAL usa el patrón 7 (vars `--input-*`).
+- `mt-2` entre select principal y el control secundario; hint de EXTERNAL con `text-xs mt-1` color `textColor + "60"` (como hoy).
+
+#### 10. `src/components/admin/design/GridModal.tsx` (REESCRITURA, ~280 líneas, ≤400)
+Conservar SIN cambios (copiar del archivo actual): props (`:17-26`), `export type` (`:15`), resolución de colores (`:69-74`), estados `formData`/`isSubmitting`/`error`/`isMobile` (`:80-83`), efecto breakpoint (`:85-90`), efecto de carga inicial (`:92-98`), `actualizar` (`:100-102`), `contar` (`:104`), `handleSubmit` íntegro (bloque de arriba), `if (!isOpen) return null;`, portal + capas (`:311-314`).
+
+NUEVO:
+- Estados adicionales: `recorteAbierto` (`useState(false)`), `aparienciaAbierta` (`useState(false)`), `botonesAbiertos` (`useState(false)`). Resetear los dos acordeones a `false` dentro del useEffect de carga inicial (junto al reset actual) para que cada apertura arranque cerrada.
+- Efecto ESC: copiar el patrón de `SlideEditor.tsx:131-140` (guarda `!recorteAbierto && !isSubmitting`).
+- Imports: quitar `ControlesEnlace`, `SelectorDestino`, `SubidaImagen`, `LIMITES_TARJETA` se usan solo en los hijos ahora; agregar `VistaPreviaSeccion`, `ContenidoSeccion`, `AparienciaSeccion`, `BotonEnlaceSeccion`. Conservar `X, Loader2, Save, AlertCircle`, `cn, getContrastColor`, `usePageConfig`, `ContextoCapas`, `useCapa`, `FORMULARIO_VACIO`, `type DatosTarjeta, type SelectorCategoria`. Eliminar `estiloInput`.
+- Panel: `role="dialog" aria-modal="true" aria-labelledby="titulo-modal-seccion"`; clases: `cn("w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl", isMobile ? "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up" : "animate-slide-down")`; `style={{ backgroundColor: secondaryColor, color: textColor, borderColor: primaryColor }}`.
+- Header sticky (`p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl`, bg `secondaryColor + "F0"`): lado izquierdo `div` con:
+  - `<h2 id="titulo-modal-seccion" className="text-xl font-bold" style={{ color: textColor }}>{initialData ? "Editar" : "Nueva"} sección</h2>` (texto exacto actual).
+  - `<p className="text-sm" style={{ color: textColor + "80" }}>{initialData ? "Modificá el contenido y apariencia de esta sección" : "Creá y personalizá el contenido de esta sección"}</p>`
+  - Botón X: `type="button"` (evitar submit accidental), `aria-label="Cerrar ventana"`, hover onMouseEnter/Leave con `primaryColor + "1A"` / `primaryColor` (patrón 2).
+- Body: `<form onSubmit={handleSubmit} className="p-5 space-y-4">`:
+```tsx
+<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start">
+  <VistaPreviaSeccion
+    datos={formData}
+    relacionAspecto={relacionAspecto}
+    primaryColor={primaryColor}
+    secondaryColor={secondaryColor}
+    textColor={textColor}
+  />
+  <ContenidoSeccion
+    title={formData.title}
+    subtitle={formData.subtitle}
+    image={formData.image}
+    alCambiar={actualizar}
+    relacionAspecto={relacionAspecto}
+    deshabilitada={isSubmitting}
+    alCambiarEditorAbierto={setRecorteAbierto}
+    primaryColor={primaryColor}
+    secondaryColor={secondaryColor}
+    textColor={textColor}
+  />
+</div>
+
+<AparienciaSeccion
+  abierta={aparienciaAbierta}
+  alAlternar={() => setAparienciaAbierta(!aparienciaAbierta)}
+  subtitleNeon={formData.subtitleNeon}
+  subtitleDim={formData.subtitleDim}
+  buttonVariant={formData.buttonVariant}
+  buttonBgColor={formData.buttonBgColor}
+  buttonTextColor={formData.buttonTextColor}
+  alCambiar={actualizar}
+  primaryColor={primaryColor}
+  textColor={textColor}
+/>
+
+<BotonEnlaceSeccion
+  abierta={botonesAbiertos}
+  alAlternar={() => setBotonesAbiertos(!botonesAbiertos)}
+  linkStyle={formData.linkStyle}
+  buttonText={formData.buttonText}
+  linkType={formData.linkType}
+  linkValue={formData.linkValue}
+  categorias={categorias}
+  alCambiar={actualizar}
+  primaryColor={primaryColor}
+  secondaryColor={secondaryColor}
+  textColor={textColor}
+/>
+
+{error && ( /* caja de error: patrón 10, textos del handleSubmit */ )}
+```
+- Footer FUERA del form (patrón 3): `flex justify-end gap-3 px-5 py-4 sticky bottom-0 z-10 backdrop-blur rounded-b-2xl` con bg `secondaryColor + "F0"`:
+  - Cancelar: `type="button"` `onClick={onClose}`, `px-4 py-2 rounded-lg font-medium transition-all cursor-pointer`, borde `textColor + "30"`, texto `textColor + "99"`, hover bg `textColor + "0A"`.
+  - Guardar: `type="submit"` con `form="id-del-form"`… OJO: si el footer queda fuera del `<form>`, el botón submit debe asociarse con `form="form-seccion"`. Alternativa más simple: **mantener el footer DENTRO del form** como el `GridModal` actual (así no cambia el comportamiento de submit con Enter). Decisión para el ejecutor: conservar footer dentro de `<form>` (es lo que hace hoy `GridModal.tsx:284-305` y funciona); solo modernizar estilos. Botón: `disabled={isSubmitting}` `aria-busy={isSubmitting}`, `px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`, bg `primaryColor`, texto `getContrastColor(primaryColor)`, hover opacity 0.9 (onMouseEnter/Leave con guarda de disabled); contenido: `{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {isSubmitting ? "Guardando..." : "Guardar"}` — textos exactos actuales.
+- Nada más: sin scroll-lock, sin cambios de capas, sin animaciones nuevas.
+
+#### 11. ELIMINAR `src/components/admin/design/modal/ControlesEnlace.tsx`
+- Verificar primero (grep `ControlesEnlace` en todo `src/`): solo lo importaba `GridModal`, que ya no lo usa. Borrar el archivo (con `Remove-Item` o `git rm`).
+
+### Fuera de alcance (NO se toca)
+- Prisma/schema, server actions (`src/actions/page-config/home.actions.ts`, `getCategoriesPicker`), Cloudinary (`cloudinary-service.ts`), validaciones de `handleSubmit`, `FORMULARIO_VACIO`, contratos de `onSave`.
+- `HomeSectionsDesign.tsx` (padre), `CategoryCard.tsx` (render público), resto del admin.
+- `SubidaImagen` más allá del prop `claseZona`; `EditorRecorte` (ya tiene ESC).
+- Scroll-lock (igual que el modal de imágenes: queda fuera, evaluado aparte).
+- Ninguna dependencia nueva.
+
+### Riesgos conocidos
+- **Retrocompatibilidad `SubidaImagen`:** el único cambio es el prop opcional `claseZona` con default `"aspect-video"`. Verificar que `SlideEditor` (vía `ZonaImagenSlide`) y `ImageUploader` no se afectan.
+- **Footer dentro del form:** conservar como hoy (submit con Enter sigue funcionando; el modal de imágenes lo tiene fuera porque su form es solo de campos, acá no conviene moverlo).
+- **Tipos genéricos:** `actualizar` se pasa a hijos que restringen `K` a subconjuntos de claves de `DatosTarjeta` — el mismo patrón que ya usaban `ControlesEnlace`/`SelectorDestino`, no introduce problemas.
+- **Contador 50:** si un dato viejo tiene `buttonText` > 50, se verá rojo pero NO bloqueará el guardado (comportamiento decidido).
+- **Límite de 400 líneas:** todos los archivos nuevos quedan ≤180 líneas; `GridModal` reescrito ~280. Si algo se pasa, desglosar (regla boy scout).
+
+### Ejecución (orden estricto)
+1. `tipos.ts` (agregar `boton: 50`).
+2. `SubidaImagen.tsx` (prop `claseZona`).
+3. Crear `AcordeonSeccion.tsx` e `InterruptorConDescripcion.tsx` (infraestructura compartida).
+4. Crear `VistaPreviaSeccion.tsx`, `ContenidoSeccion.tsx`, `AparienciaSeccion.tsx`, `BotonEnlaceSeccion.tsx`.
+5. Restylear `SelectorDestino.tsx`.
+6. Reescribir `GridModal.tsx` (conservando los bloques de lógica listados).
+7. Eliminar `ControlesEnlace.tsx`.
+8. Verificación global (abajo).
+
+### Verificación (checklist completa)
+**Estática:** `npx tsc --noEmit` sin errores; `npm run lint` sin errores; sin warnings de React nuevos; grep de `ControlesEnlace` = 0 resultados; cada archivo tocado ≤400 líneas y con una sola función exportada; imports con `@/`; español; sin `any`; sin tokens `--admin-*` en los archivos nuevos.
+
+**Funcional (crear y editar en el mismo modal):**
+- [ ] Crear: título "Nueva sección" + descripción "Creá y personalizá el contenido de esta sección"; campos vacíos; acordeones cerrados; guardar exige imagen ("La imagen es obligatoria").
+- [ ] Editar: título "Editar sección" + descripción "Modificá el contenido y apariencia de esta sección"; TODOS los valores precargados (imagen, título, subtítulo, neón, opaco, variante, colores, click en, texto botón, destino).
+- [ ] Subir imagen (zona dashed → validación formato/tamaño → "Procesando…" → recorte → imagen en zona y preview), cambiar imagen, editar recorte, quitar imagen (limpia zona y preview).
+- [ ] Contadores `0/60`, `0/120` y `0/50` en tiempo real; rojo + mensaje al exceder; los 60/120 bloquean al guardar ("El título o el subtítulo superan el límite de caracteres"), el 50 NO bloquea.
+- [ ] Validaciones intactas: categoría vacía, página sin `/` inicial, URL externa sin http(s).
+- [ ] Preview actualiza al tipear: título, subtítulo (normal/neón/opaco), botón según variante y colores, click en.
+- [ ] Apariencia: switches neón/opaco persisten igual; selección visual de estilos guarda los MISMOS valores DEFAULT/STRAIGHT/TRANSPARENT; color pickers guardan `#rrggbb` igual que hoy.
+- [ ] Botón y enlace: click en IMAGE/BUTTON (mismo valor), texto del botón persiste, destino: Sin destino/Categoría/Página/URL externa con reset de valor al cambiar tipo.
+- [ ] Guardar: "Guardando..." con Loader2, disabled, sin doble submit; error visible en caja; cierre tras éxito (onSave + onClose igual que hoy).
+- [ ] Cancelar, X y ESC cierran (ESC no cierra con el recorte abierto ni durante el submit).
+- [ ] El guardado en `HomeSectionsDesign` sigue funcionando (estado local + acción del padre intactos).
+
+**UX / Responsive / Accesibilidad:**
+- [ ] Desktop (≥1024): 2 columnas (preview | contenido) + acordeones full-width; modal `max-w-4xl` con scroll interno; header/footer sticky.
+- [ ] Mobile (<640): bottom-sheet una columna (preview → contenido → apariencia → botón y enlace → footer) con `animate-slide-up`; sin overflow horizontal; footer siempre accesible.
+- [ ] Tablet intermedia: grid colapsa a una columna sin cortes (breakpoint `lg`).
+- [ ] A11y: `role="dialog" aria-modal aria-labelledby`; X con `aria-label`; switches `role="switch" aria-checked`; acordeones `aria-expanded`/`aria-controls` con ids únicos; cards de selección con `aria-pressed`; focus visibles; disabled con contraste; transiciones 150-200 ms.
+
+---
+
+## Refactor UI/UX — Modal de creación y edición de imágenes/slides (`SlideEditor`)
+
+### Objetivo
+Transformar el modal que crea/edita imágenes (slides) del panel administrativo en un **editor visual de contenido moderno** (estética SaaS/CMS): imagen protagonista, jerarquía clara, opciones secundarias colapsadas, preview en tiempo real, feedback de estados y diseño responsive. El refactor es **principalmente visual y de UX**; toda la lógica funcional existente se conserva intacta.
+
+### Alcance exacto
+- Modal objetivo: `src/components/admin/carousel/SlideEditor.tsx` (369 líneas hoy). Único consumidor: `src/components/admin/carousel/CarouselWizard.tsx:306-314`, que se abre desde `src/components/admin/diseno/contenido/GestorContenido.tsx:347-352`.
+- Un solo componente para **crear y editar** (títulos actuales: "Nueva imagen" / "Editar imagen"). No se crea un segundo modal.
+- La lógica que decide crear vs. editar (`initialData`) y la carga de valores iniciales NO se modifican.
+
+### Estado actual (relevado completo)
+
+#### `SlideEditor.tsx` — contrato y lógica (no tocar)
+| Elemento | Ubicación actual | Detalle |
+|---|---|---|
+| Props | `SlideEditor.tsx:17-23` | `isOpen`, `onClose`, `onSave: (data: SlideFormData) => Promise<void>`, `initialData?: SlideData`, `carouselType` (prop recibida pero actualmente sin uso en el cuerpo) |
+| Tipos | `:25-45` | `SlideData` / `SlideFormData` (`image`, `title`, `subtitle`, `description`, `ctaText`, `url`, `linkType`, `config: Record<string, unknown>`) |
+| Límites | `:47-52` | `title: 100`, `subtitle: 150`, `description: 500`, `ctaText: 50` |
+| Estados | `:67-81` | `formData`, `showText` (texto sobre imagen), `hideButton` (botón oculto), `isSubmitting`, `error`, `isMobile` (breakpoint 640px) |
+| Carga inicial | `:90-127` | Al abrir: si `initialData` → `showText = !config.hideText`, `hideButton = !!config.hideButton`, `linkType` desde `linkType` → `config.linkType` → `url` http; `url` normalizada con `normalizarValorEnlace` para CATEGORY/PRODUCT. Si no → reset completo. `setError(null)` |
+| Validación URL | `:129-135` | `validateUrl`: solo si `linkType === "EXTERNAL"` y `url` no empieza con `http` → error "La URL externa debe empezar con http:// o https://" |
+| `handleChange` | `:137-142` | actualiza `formData[field]`; si es `url` string, revalida |
+| Contadores | `:144-151` | `getCharCount` / `isOverLimit` por campo |
+| `handleSubmit` | `:153-184` | 1) imagen obligatoria ("La imagen es obligatoria"); 2) URL externa debe empezar con http; 3) `cleanConfig` (quita valores `undefined`; `hideText: true` si `!showText`, se borra si no; `hideButton: true` si `hideButton`, se borra si no); 4) `await onSave({...formData, config: cleanConfig})` → `onClose()`; error → `setError`; `finally setIsSubmitting(false)` (previene doble submit) |
+| UI actual | `:188-366` | Portal (`createPortal` + `ContextoCapas.Provider value={nivel + 1}`); overlay `fixed inset-0 bg-black/80 backdrop-blur-sm`; panel `max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl`; mobile: bottom-sheet `h-[90vh] animate-slide-up`; header sticky con título + botón cerrar (sin `aria-label`); `SubidaImagen` (16/9, 5MB, obligatoria, "Imagen de portada"); `Input`/`Textarea` de `page-config/shared` con contadores `n/límite` en el label; `LinkTypeSelector`; toggle custom "Mostrar texto sobre la imagen" (`showText`); toggle custom "Ocultar botón" (`hideButton`, descripción "Muestra el slide sin botón de acción"); caja de error; footer sticky con **Cancelar** y **Crear/Actualizar** (Loader2 + Save, `disabled` al enviar) |
+
+Observaciones:
+- **NO existe** hoy: cierre con ESC, `role="dialog"`, `aria-modal`, scroll-lock, animación de entrada en desktop.
+- Los límites de caracteres se muestran en rojo al exceder pero **no bloquean el submit** (comportamiento actual a preservar).
+- `onSave` resuelve contra el estado local del wizard (`CarouselWizard.tsx:129-148`: agrega si `isNew`, reemplaza si existe) → el guardado del modal es casi instantáneo. La subida real a Cloudinary ocurre al guardar el wizard completo (`GestorContenido` → `carousel.actions` → `procesarSlide` → `subirImagen` a `carousels/{id}`). **No se tocan server actions ni Cloudinary.**
+- El estado "lento" percibido proviene de la compresión/crop en cliente (`SubidaImagen`: `compressImage` 1200px q0.8, PNG pasa crudo por `fileToBase64`) y de la falta de feedback visual en la zona de imagen, no del submit.
+
+#### Componentes hijos (relevados)
+1. **`src/components/imagen/SubidaImagen.tsx`** (221 líneas) — props: `valor`, `alCambiar`, `relacionAspecto` (16/9), `formaRecorte`, `tamanoMaximoMb` (5), `obligatoria`, `etiqueta`, `textoAyuda`, `anchoMaximoCompresion` (1200), `errorExterno`, `deshabilitada`. Lógica: valida formato (png/jpeg/webp) y tamaño → comprime → abre `EditorRecorte` → `alCambiar(base64)`. Estados internos: `imagenFuente`, `editorAbierto`, `procesando`, `error`. UI: botón seleccionar (spinner "Procesando…"), preview 64px, "Editar recorte" (solo data:), "Quitar". Consumidores actuales: `SlideEditor`, `GridModal` (`admin/design`), `ImageUploader` (`admin/page-config/shared`) → **cualquier cambio debe ser 100% retrocompatible (props nuevas opcionales con default = comportamiento actual)**.
+2. **`src/components/imagen/EditorRecorte.tsx`** (174 líneas) — modal portal con `react-easy-crop`, zoom, Confirmar/Cancelar. No cierra con ESC. Capas vía `useCapa` (base 200, incremento 100).
+3. **`src/components/admin/page-config/shared/Input.tsx` (58) / `Textarea.tsx` (61)** — `borderColor = getContrastColor(primaryColor)` (borde sólido fuerte), `bgColor = primaryColor + "1A"`, alto fijo `h-14`, sin estado de focus. **Solo los consume el dominio carousel** (`SlideEditor` + `LinkTypeSelector`) → se pueden modernizar sin afectar otros flujos.
+4. **`src/components/admin/carousel/LinkTypeSelector.tsx`** (111 líneas) — `LINK_TYPES`: NONE "Sin enlace" / CATEGORY / PRODUCT / EXTERNAL; `<select>` nativo con bg `primaryColor + "1A"` y borde `primaryColor + "40"`; select de categoría/producto (opciones con bg `secondaryColor`); rama EXTERNAL con `Input` + `CheckCircle`/`AlertCircle` + mensaje. **Único consumidor: `SlideEditor`** → restyling sin riesgo.
+5. **`useOpcionesEnlace`** (`admin/carousel/useOpcionesEnlace.ts`) — carga `getProductsPicker`/`getCategoriesPicker` al montar. No tocar.
+6. **Capas** — `ContextoCapas`/`useCapa` (`src/contextos/capas/`): `zIndice = CAPA_BASE_MODAL (200) + nivel * 100`. `SlideEditor` se renderiza dentro del wizard (nivel +1) → z 300. Mantener el patrón exacto.
+
+#### Convenciones del proyecto (a respetar)
+- Colores de los modales de carousel: `usePageConfig()` (`primaryColor`/`secondaryColor`) + `getContrastColor` de `@/lib/utils` + sufijos alpha hex (`+"1A"`, `+"40"`, `+"F0"`…). NO usar los tokens CSS `--admin-*` (son para las pantallas del admin; el wizard detrás del modal usa el esquema hex).
+- Animaciones ya disponibles en `globals.css`: `animate-slide-up` (bottom-sheet mobile), `animate-slide-down` (fade + translateY(-10px), reutilizable como entrada desktop), `animate-shimmer`, `animate-shake`. No crear keyframes nuevos si no hace falta.
+- Patrón de toggle reutilizable: `Interruptor` interno de `GridModal.tsx:28-57` (botón `role="switch"` `aria-checked`, pastilla con transición). Replicar ese patrón interno en el componente de opciones avanzadas (no exportarlo).
+- AGENTS.md: español, una función exportada por archivo, ≤400 líneas (boy scout), imports `@/`, sin `any`, archivos en carpeta de dominio (`src/components/admin/carousel/`).
+
+### Decisiones confirmadas con el usuario
+1. **Botón principal:** mantener "Crear" / "Actualizar" con icono Save + Loader2 (convención del wizard; no "Guardar cambios").
+2. **Ancho del modal:** `max-w-4xl` (hoy `max-w-xl`).
+3. **Preview:** texto superpuesto sobre la imagen en la columna izquierda (aproximación del slide, sin duplicar lógica de render).
+4. **Cierre con ESC:** agregar (con guarda para no cerrar el modal base cuando el recorte está abierto ni durante el submit).
+5. **"Mostrar botón":** presentación positiva — el switch se muestra como `activo = !hideButton` con descripción "El botón aparecerá sobre la imagen"; internamente se sigue guardando `config.hideButton` exactamente igual que hoy (solo cambia la presentación).
+
+### Nueva estructura visual
+```
+Desktop (≥1024px)                       Mobile (<640px, bottom-sheet)
+┌──────────────────────────────────┐    ┌────────────────────┐
+│ Header sticky: "Nueva/Editar imagen"│    │ Header sticky     │
+├────────────────┬─────────────────┤    ├────────────────────┤
+│ ZONA IMAGEN    │ CONTENIDO       │    │ Zona imagen        │
+│ (aspect-video, │ Título   0/100  │    ├────────────────────┤
+│  grande, con   │ Subtítulo 0/150 │    │ Contenido          │
+│  preview de    │ Descripción 0/500│   ├────────────────────┤
+│  texto encima) │ Texto botón 0/50│    │ Opciones avanzadas │
+│ [Cambiar]      ├─────────────────┤    ├────────────────────┤
+│ [Editar rec.]  │ ⌄ Opciones      │    │ Footer sticky      │
+│ [Quitar]       │   avanzadas     │    └────────────────────┘
+├────────────────┴─────────────────┤
+│ Footer sticky: Cancelar | Crear/Actualizar │
+└──────────────────────────────────┘
+```
+- **Columna izquierda** (imagen protagonista): vacía → zona dashed clicable con icono Upload, "Seleccionar imagen", "PNG, JPG, WebP · máx 5MB". Con imagen → preview grande + (si `showText`) overlay con gradiente oscuro y subtítulo/título/descripción/botón CTA en tiempo real; acciones "Cambiar imagen", "Editar recorte", "Quitar".
+- **Columna derecha:** sección "Contenido" con los 4 campos actuales (labels + contadores + placeholders + errores de límite) y debajo "Opciones avanzadas" colapsable (cerrada por defecto) con: destino del enlace, "Mostrar texto sobre la imagen" y "Mostrar botón".
+- **Footer:** sticky, Cancelar + Crear/Actualizar.
+- **Inputs modernos:** fondo sutil (`textColor + "08"`), borde suave (`textColor + "30"`), focus claro (borde `primaryColor` + ring suave), placeholder discreto (`textColor + "80"`), transición 150-200ms. Sin bordes fuertes ni cards por campo.
+
+### Plan de solución detallado por archivo
+
+#### 1. `src/components/imagen/SubidaImagen.tsx` (modificar → ~300 líneas, ≤400)
+Nuevas props **opcionales** (retrocompatibles; GridModal y ImageUploader siguen igual por defecto):
+- `variante?: "boton" | "zona"` (default `"boton"` = render actual intacto).
+- `alCambiarEditorAbierto?: (abierto: boolean) => void` — notifica al padre cuándo el EditorRecorte está abierto (llamarlo con `true` en `abrirArchivo`/`reabrirEditor` tras `setEditorAbierto(true)` y con `false` en `confirmarRecorte` y en el `alCancelar` del editor). Único propósito: que `SlideEditor` ignore ESC mientras el recorte está abierto.
+
+Variante `"zona"` (misma lógica de selección/validación/compresión, sin duplicarla):
+- Botón grande clicable `w-full aspect-video rounded-xl border-2 border-dashed` (`disabled` cuando `procesando || deshabilitada`, `aria-label="Seleccionar imagen"`, `cursor-pointer`) que dispara el mismo `inputRef.current?.click()`.
+- Estado vacío: icono `Upload` (w-8 h-8) + "Seleccionar imagen" + "PNG, JPG, WebP · máx 5MB" (colores con alpha del tema).
+- Con imagen: `<img src={valor} className="absolute inset-0 w-full h-full object-cover" />` con hover sutil ("Cambiar imagen").
+- `procesando`: overlay con spinner + "Procesando…" (opacity/transición suave), botón disabled.
+- Fila de acciones debajo de la zona (visible cuando `valor`): "Cambiar imagen" (abre input), "Editar recorte" (si `puedeEditarRecorte`), "Quitar" (misma lógica actual).
+- Errores (`error`/`errorExterno`) igual que hoy, debajo.
+- No cambia el mecanismo real de subida (compresión/crop/base64 igual).
+
+#### 2. `src/components/imagen/EditorRecorte.tsx` (modificar, +~8 líneas)
+- Agregar listener `keydown` en `document` mientras `abierto`: `Escape` → `alCancelar()`. Limpieza en el cleanup del useEffect. Nada más cambia (crop, zoom, confirmar, capas intactos).
+
+#### 3. `src/components/admin/carousel/SlideEditor.tsx` (reescribir → objetivo ~280-320 líneas)
+Conservar **sin cambios**: props, interfaces, `LIMITS`, todos los estados actuales, los dos `useEffect` de carga/reset, `validateUrl`, `handleChange`, `getCharCount`, `isOverLimit`, `handleSubmit` íntegro (validaciones, `cleanConfig`, `hideText`/`hideButton`, doble submit, error), portal con `ContextoCapas.Provider value={nivel + 1}`, colores por `usePageConfig` + `getContrastColor`, mobile bottom-sheet.
+
+Nuevo:
+- Estados: `recorteAbierto` (alimentado por `alCambiarEditorAbierto` de `SubidaImagen`), `avanzadasAbiertas` (default `false`).
+- ESC: `useEffect` con `keydown` en `document` cuando `isOpen`: si `Escape && !recorteAbierto && !isSubmitting` → `onClose()`.
+- Panel: `w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl` + `role="dialog" aria-modal="true" aria-labelledby="titulo-modal-slide"`; desktop: `animate-slide-down`; mobile: bottom-sheet `animate-slide-up` (igual que hoy).
+- Header sticky: `<h2 id="titulo-modal-slide">` con `{initialData ? "Editar" : "Nueva"} imagen` (texto actual) + botón cerrar con `aria-label="Cerrar ventana"`.
+- Body: `<form>` con `grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] p-5`:
+  - Izquierda: `<ZonaImagenSlide … />`.
+  - Derecha: `<SeccionContenidoSlide … />` + `<OpcionesAvanzadasSlide … />` + caja de error actual.
+- Footer sticky (fuera del scroll, igual que hoy): Cancelar + Crear/Actualizar con Loader2/Save, `disabled={isSubmitting}`, `aria-busy={isSubmitting}`.
+
+#### 4. `src/components/admin/carousel/ZonaImagenSlide.tsx` (nuevo, ~130 líneas, una función exportada)
+- Props: `imagen`, `alCambiarImagen`, `deshabilitada`, `alCambiarEditorAbierto`, `showText`, `hideButton`, `titulo`, `subtitulo`, `descripcion`, `textoBoton`, `url`, `primaryColor`, `secondaryColor`, `textColor`.
+- Render: wrapper `relative` → `SubidaImagen variante="zona"` (relacionAspecto 16/9, 5MB, obligatoria, etiqueta/textoAyuda actuales) + capa de preview `absolute inset-0 pointer-events-none` (solo si `imagen && showText`): gradiente oscuro (patrón visual del `HeroLayout`: lineal inferior + radial), subtítulo (small/uppercase), título (bold), descripción (`line-clamp-2`), botón CTA (bg `primaryColor`, texto `getContrastColor(primaryColor)`) visible solo si `!hideButton && (textoBoton || url)`. Transición de opacidad `duration-200` al aparecer/cambiar. Cero lógica de negocio: es una representación aproximada, no el render real del ecommerce.
+
+#### 5. `src/components/admin/carousel/SeccionContenidoSlide.tsx` (nuevo, ~120 líneas, una función exportada)
+- Cabecera "Contenido" + los 4 campos actuales (mover JSX de `SlideEditor.tsx:219-288` tal cual): labels con contador `font-mono` `n/límite` (rojo al exceder), placeholders ("Título principal", "Subtítulo opcional", "Descripción opcional", "Ej: Ver más, Comprar ahora"), mensaje "Excede el límite de N caracteres", `Input`/`Textarea` compartidos.
+- Props: `formData`, `alCambiar`, `getCharCount`, `isOverLimit`, `limites`, `primaryColor`, `secondaryColor`, `textColor`.
+
+#### 6. `src/components/admin/carousel/OpcionesAvanzadasSlide.tsx` (nuevo, ~130 líneas, una función exportada)
+- Cabecera colapsable (botón `type="button"`, `aria-expanded`, `aria-controls="panel-opciones-avanzadas"`): "Opciones avanzadas" + `ChevronDown` con `rotate-180` al abrir, `transition-transform duration-200`.
+- Contenido con apertura suave (~200ms, `grid-rows-[0fr]/[1fr]` + opacity o max-height) que incluye:
+  1. `LinkTypeSelector` (destino del enlace, sin cambios de lógica).
+  2. Toggle "Mostrar texto sobre la imagen" (`activo = showText`, `role="switch"` `aria-checked`, patrón `Interruptor` interno no exportado estilo GridModal).
+  3. Toggle "Mostrar botón" (`activo = !hideButton`, descripción "El botón aparecerá sobre la imagen"; onClick → `alCambiarHideButton` que en el padre ejecuta `setHideButton(!hideButton)`). La persistencia en `config.hideButton` queda idéntica.
+- Props: `abiertas`, `alAlternar`, `formData`, `alCambiar`, `productos`, `categorias`, `showText`, `alCambiarShowText`, `hideButton`, `alCambiarHideButton`, `primaryColor`, `secondaryColor`, `textColor`.
+
+#### 7. `src/components/admin/carousel/LinkTypeSelector.tsx` (restyle ligero, lógica intacta)
+- `<select>`: borde sutil (`textColor + "30"`), bg `secondaryColor`, texto `textColor`, focus con borde `primaryColor` + ring suave, transición; `option` con bg `secondaryColor` (mantener legibilidad). Rama EXTERNAL y validaciones iguales.
+
+#### 8. `src/components/admin/page-config/shared/Input.tsx` y `Textarea.tsx` (modernizar, solo consumidor = dominio carousel)
+- Mantener props y label opcional; reemplazar estilos inline duros por variables CSS + clases Tailwind v4: `style={{ "--input-fondo": textColor + "08", "--input-borde": textColor + "30", "--input-texto": textColor, "--input-placeholder": textColor + "80", "--input-foco": primaryColor }}` + `className` con `bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)]` + `focus:ring-2 ring-[var(--input-foco)]/20` + `transition-all duration-200`. Tamaño moderno (`px-4 py-2.5 text-sm`, sin `h-14`). `borderColor = getContrastColor(primaryColor)` y `bgColor = primaryColor + "1A"` desaparecen.
+
+### Fuera de alcance (NO se toca)
+- Prisma/schema, server actions (`carousel.actions.ts`, `carousel-slide.actions.ts`, `procesar-slide.ts`), `carouselWizardSlideSchema` (zod), Cloudinary (`cloudinary-service.ts`, `/api/upload-image`).
+- `CarouselWizard` (salvo que no cambia: sigue montando `SlideEditor` con las mismas props), `GestorContenido`, render público de slides (`HeroLayout*`, `BannerLayout`, `CardsLayout*`), otros modales (`GridModal`, `CarouselDesignModal`, etc.).
+- Scroll-lock: hoy el modal no bloquea el scroll del body y el wizard tampoco; queda fuera de este refactor (existe `useBloqueoScroll` pero aplicarlo cambia comportamiento del flujo carousel → se evalúa aparte).
+- Ninguna dependencia nueva; no se usa `ui/switch.tsx` (tokens `--admin-*`, esquema distinto al de estos modales).
+
+### Riesgos conocidos
+- **Retrocompatibilidad de `SubidaImagen`**: 3 consumidores. Las props nuevas son opcionales con default = comportamiento actual; verificar `GridModal` (variante botón) y `ImageUploader` de branding tras el cambio.
+- **Límite de 400 líneas**: `SlideEditor` se descompone en 3 componentes nuevos (`ZonaImagenSlide`, `SeccionContenidoSlide`, `OpcionesAvanzadasSlide`); boy scout si algún archivo queda fuera de límites.
+- **ESC anidado**: el orden de listeners de `document` no es confiable entre modales apilados; por eso la guarda es por estado (`recorteAbierto` notificado por callback), no por propagación de eventos. `EditorRecorte` cierra solo el recorte; el modal base permanece.
+- **Preview con `pointer-events-none`**: la capa de texto no debe bloquear el clic de "Cambiar imagen"; los controles viven fuera de la capa.
+- **`carouselType`** sigue sin uso lógico (como hoy); el preview es una aproximación genérica (gradiente + texto centrado), sin diferenciar HERO/BANNER/CARDS para no duplicar lógica de render.
+- **Inputs compartidos**: al modernizar `Input`/`Textarea` de `page-config/shared` solo se afecta el dominio carousel (verificado: sin otros importadores); igualmente revisar visualmente `LinkTypeSelector` (URL externa) tras el cambio.
+
+### Ejecución
+- Entorno actual: solo está disponible el subagente `explore` (solo lectura, no escribe código). La implementación la ejecuta el orquestador directamente en este orden:
+  1. `SubidaImagen.tsx` (variante `"zona"` + callback) y `EditorRecorte.tsx` (ESC) — base del resto.
+  2. `Input.tsx` / `Textarea.tsx` compartidos + `LinkTypeSelector.tsx` (estilos).
+  3. Componentes nuevos: `ZonaImagenSlide.tsx`, `SeccionContenidoSlide.tsx`, `OpcionesAvanzadasSlide.tsx`.
+  4. Reescritura de `SlideEditor.tsx` (layout dos columnas, secciones, ESC, footer, a11y).
+- Tras implementar, el orquestador ejecuta la verificación global (rol de "verificador"): reglas AGENTS.md (español, una función exportada por archivo, ≤400 líneas en cada archivo tocado, imports `@/`, sin `any`, archivos en dominio), coherencia de props entre componentes, y reparación si algo falla.
+- Comandos: `npm run lint` (script existente) y `npx tsc --noEmit` (no hay script `typecheck`; `npm run build` requiere BD).
+
+### Verificación (checklist completa)
+**Estática:** `npm run lint` sin errores; `npx tsc --noEmit` sin errores; sin warnings de React nuevos; sin estados/render innecesarios evidentes; cada archivo tocado ≤400 líneas con una sola función exportada.
+
+**Funcional (crear y editar en el mismo modal):**
+- [ ] Crear: título "Nueva imagen", campos vacíos, `linkType` NONE, switches en default, guardar exige imagen ("La imagen es obligatoria").
+- [ ] Editar: título "Editar imagen", TODOS los valores precargados (`image`, `title`, `subtitle`, `description`, `ctaText`, `url`, `linkType`, `config.hideText` → `showText` invertido, `config.hideButton`).
+- [ ] Subir imagen (selección → validación de formato/tamaño → "Procesando…" → recorte → preview grande), cambiar imagen, editar recorte, quitar imagen.
+- [ ] Contadores `0/100`, `0/150`, `0/500`, `0/50` en tiempo real; rojo + mensaje al exceder (sin bloquear el submit, como hoy).
+- [ ] Destino del enlace: "Sin enlace" / Categoría / Producto (con opciones cargadas y normalización de URL) / URL externa (validación http://, iconos Check/Alert).
+- [ ] "Mostrar texto sobre la imagen": al apagarlo la preview oculta el texto; al guardar, `config.hideText` queda como hoy.
+- [ ] "Mostrar botón" (presentación positiva): ON = botón visible en preview; al guardar, `config.hideButton = false` (invertido correcto, sin cambios en la lógica almacenada). Verificar round-trip editando un slide existente con `hideButton: true` (switch aparece OFF).
+- [ ] Guardar/Actualizar: loading (Loader2), botón disabled, sin doble submit; error de `onSave` visible en la caja de error; cierre solo tras éxito.
+- [ ] Cancelar y cerrar (X) funcionan; ESC cierra el modal (excepto con el recorte abierto o durante el submit).
+- [ ] Integración con server actions/Cloudinary intacta (el wizard guarda y las imágenes llegan a `carousels/{id}`).
+
+**UX / Responsive / Accesibilidad:**
+- [ ] Desktop: dos columnas (imagen protagonista + contenido), modal `max-w-4xl` con scroll interno, header/footer sticky.
+- [ ] Tablet: columnas se adaptan sin corte; mobile (<640px): bottom-sheet de una columna (imagen → contenido → opciones avanzadas → footer) con `animate-slide-up`, sin cortes, footer siempre visible.
+- [ ] Preview en tiempo real: al tipear título/subtítulo/descripción/botón, el overlay se actualiza; transiciones sutiles (150-200ms) en imagen, colapsable, chevron y foco.
+- [ ] A11y: `role="dialog" aria-modal aria-labelledby`, botón cerrar con `aria-label`, switches con `role="switch" aria-checked`, colapsable con `aria-expanded`/`aria-controls`, focus states visibles en inputs/toggles, estados disabled con contraste, mensajes de error legibles.
+
+
 
 ### Síntoma
 Al cargar `/` en dev se lanza:
