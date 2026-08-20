@@ -6,18 +6,15 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
-import { FUENTES_DISPONIBLES } from "@/components/apariencia/fuentes";
 import { aplicarTipografiaDocumento } from "@/lib/apariencia/aplicar-tipografia-documento";
 
+import SelectorFuente from "./SelectorFuente";
 import { ConfigApariencia } from "./tipos-apariencia";
 
 interface EstadoFuentes {
   principal: string;
   secundaria: string;
 }
-
-const CLASES_SELECT =
-  "w-full rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-3 py-2 text-sm text-[var(--admin-texto)] focus:border-[var(--admin-primario)] focus:outline-none";
 
 export default function SeccionTipografia({
   config,
@@ -80,55 +77,19 @@ export default function SeccionTipografia({
 
       <form onSubmit={guardar} className="space-y-6 p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="fuente-principal"
-              className="mb-1.5 block text-xs font-medium text-[var(--admin-texto)]"
-            >
-              Fuente principal
-            </label>
-            <select
-              id="fuente-principal"
-              value={fuentes.principal}
-              onChange={(evento) => cambiarPrincipal(evento.target.value)}
-              className={CLASES_SELECT}
-            >
-              {FUENTES_DISPONIBLES.map((fuente) => (
-                <option
-                  key={fuente.valor}
-                  value={fuente.valor}
-                  style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}
-                >
-                  {fuente.etiqueta}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectorFuente
+            id="fuente-principal"
+            etiqueta="Fuente principal"
+            valor={fuentes.principal}
+            alCambiar={cambiarPrincipal}
+          />
 
-          <div>
-            <label
-              htmlFor="fuente-secundaria"
-              className="mb-1.5 block text-xs font-medium text-[var(--admin-texto)]"
-            >
-              Fuente secundaria
-            </label>
-            <select
-              id="fuente-secundaria"
-              value={fuentes.secundaria}
-              onChange={(evento) => cambiarSecundaria(evento.target.value)}
-              className={CLASES_SELECT}
-            >
-              {FUENTES_DISPONIBLES.map((fuente) => (
-                <option
-                  key={fuente.valor}
-                  value={fuente.valor}
-                  style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}
-                >
-                  {fuente.etiqueta}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectorFuente
+            id="fuente-secundaria"
+            etiqueta="Fuente secundaria"
+            valor={fuentes.secundaria}
+            alCambiar={cambiarSecundaria}
+          />
         </div>
 
         <div className="rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">

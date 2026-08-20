@@ -9,7 +9,6 @@ import {
   Clock,
   Cpu,
   CreditCard,
-  FileStack,
   Globe,
   History,
   Lock,
@@ -71,11 +70,6 @@ export default function PanelConfiguracion({
   const tieneContacto = Boolean(config.phone || config.whatsapp || config.email);
   const tieneUbicacion = config.locationEnabled && Boolean(config.address);
   const seoCompleto = Boolean(config.metaTitle?.trim() && config.metaDescription?.trim());
-  const cantidadPaginasActivas = [
-    config.escuelaEnabled,
-    config.arreglosEnabled,
-    config.personalizadoEnabled,
-  ].filter(Boolean).length;
   const tieneTextosLegales = Boolean(
     config.termsAndConditions?.trim() && config.privacyPolicy?.trim()
   );
@@ -171,18 +165,6 @@ export default function PanelConfiguracion({
               varianteBadge={seoCompleto ? "activo" : "sin-configurar"}
               textoBadge={seoCompleto ? "Completo" : "Incompleto"}
               alClick={() => setDrawerAbierto("seo")}
-            />
-            <ItemConfiguracion
-              icono={FileStack}
-              titulo="Páginas del sitio"
-              descripcion="Escuela, arreglos y tablas personalizadas"
-              varianteBadge={cantidadPaginasActivas > 0 ? "activo" : "inactivo"}
-              textoBadge={
-                cantidadPaginasActivas > 0
-                  ? `${cantidadPaginasActivas} activas`
-                  : "Ocultas"
-              }
-              alClick={() => setDrawerAbierto("paginas-sitio")}
             />
             <ItemConfiguracion
               icono={PanelBottom}

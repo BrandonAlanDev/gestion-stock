@@ -48,6 +48,7 @@ export default function GridModal({
   const [formData, setFormData] = useState<DatosTarjeta>(FORMULARIO_VACIO);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [intentosError, setIntentosError] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [recorteAbierto, setRecorteAbierto] = useState(false);
   const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
@@ -67,6 +68,7 @@ export default function GridModal({
       setBotonesAbiertos(false);
       setError(null);
       setIsSubmitting(false);
+      setIntentosError(0);
     }
   }, [isOpen, initialData]);
 
@@ -91,27 +93,32 @@ export default function GridModal({
     e.preventDefault();
     setError(null);
 
+    const marcarError = (mensaje: string) => {
+      setError(mensaje);
+      setIntentosError((prev) => prev + 1);
+    };
+
     if (!formData.image) {
-      setError("La imagen es obligatoria");
+      marcarError("La imagen es obligatoria");
       return;
     }
     if (formData.linkType === "CATEGORY" && !formData.linkValue) {
-      setError("Seleccioná una categoría de destino");
+      marcarError("Seleccioná una categoría de destino");
       return;
     }
     if (formData.linkType === "PRODUCT" && !formData.linkValue) {
-      setError("Seleccioná un producto de destino");
+      marcarError("Seleccioná un producto de destino");
       return;
     }
     if (formData.linkType === "EXTERNAL") {
       const url = formData.linkValue.trim();
       if (!/^https?:\/\//.test(url)) {
-        setError("La URL externa debe empezar con http:// o https://");
+        marcarError("La URL externa debe empezar con http:// o https://");
         return;
       }
     }
     if (contar("title") > LIMITES_TARJETA.title || contar("subtitle") > LIMITES_TARJETA.subtitle) {
-      setError("El título o el subtítulo superan el límite de caracteres");
+      marcarError("El título o el subtítulo superan el límite de caracteres");
       return;
     }
 
@@ -124,7 +131,7 @@ export default function GridModal({
       });
       onClose();
     } catch {
-      setError("Error al guardar la tarjeta");
+      marcarError("Error al guardar la tarjeta");
     } finally {
       setIsSubmitting(false);
     }
@@ -238,10 +245,14 @@ export default function GridModal({
               Cancelar
             </button>
             <button
+              key={intentosError}
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className={cn(
+                "px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                intentosError > 0 && "animate-shake"
+              )}
               style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
               onMouseEnter={(e) => {
                 if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9";

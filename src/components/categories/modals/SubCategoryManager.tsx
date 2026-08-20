@@ -15,6 +15,7 @@ interface SubCategoryManagerProps {
   textColor: string;
   overlayBorder: string;
   innerBg: string;
+  onCategoryChange?: () => void;
 }
 
 export default function SubCategoryManager({
@@ -25,6 +26,7 @@ export default function SubCategoryManager({
   textColor,
   overlayBorder,
   innerBg,
+  onCategoryChange,
 }: SubCategoryManagerProps) {
   const [subLoading, setSubLoading] = useState(false);
   const [subData, setSubData] = useState({ name: "", sizeTypeId: "" });
@@ -40,7 +42,7 @@ export default function SubCategoryManager({
         categoryId: category.id,
       });
       if (res?.error) { toast.error(res.error); }
-      else { toast.success("Subcategoría añadida"); setSubData({ name: "", sizeTypeId: "" }); }
+      else { toast.success("Subcategoría añadida"); setSubData({ name: "", sizeTypeId: "" }); onCategoryChange?.(); }
     } catch {
       toast.error("Error al crear subcategoría");
     } finally {
@@ -52,7 +54,7 @@ export default function SubCategoryManager({
     if (!confirm("¿Eliminar esta subcategoría de forma permanente?")) return;
     const res = await deleteSubCategory(subId);
     if (res?.error) { toast.error(res.error); }
-    else { toast.success("Subcategoría removida"); }
+    else { toast.success("Subcategoría removida"); onCategoryChange?.(); }
   };
 
   return (
@@ -181,6 +183,7 @@ export default function SubCategoryManager({
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             padding: "8px 0",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -190,9 +193,8 @@ export default function SubCategoryManager({
           onMouseEnter={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
           onMouseLeave={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
         >
-          {subLoading
-            ? <Loader2 className="animate-spin" size={12} />
-            : <><Plus size={12} /> Confirmar Subgrupo</>}
+          {subLoading && <Loader2 className="animate-spin" size={12} />}
+          <Plus size={12} /> Confirmar Subgrupo
         </button>
       </form>
     </div>
