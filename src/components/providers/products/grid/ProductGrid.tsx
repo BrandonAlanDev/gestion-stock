@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, Tag, Layers, Palette, ShoppingBag } from "lucide-react";
+import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
 type Color = { id: string; name: string; hex: string | null; active?: boolean };
 type Size = { id: string; value: string; order: number; active?: boolean; sizeTypeId?: string };
@@ -43,8 +44,9 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
       >
         {cover ? (
           <img
-            src={cover}
+            src={obtenerUrlImagenOptimizada(cover, 600) || undefined}
             alt={garment.name}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -154,7 +156,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
               <div className="aspect-square rounded-2xl overflow-hidden bg-[var(--superficie-imagen)] relative">
                 {garment.images[selectedImg] ? (
                   <img
-                    src={garment.images[selectedImg].srcImage}
+                    src={obtenerUrlImagenOptimizada(garment.images[selectedImg].srcImage, 1200) || undefined}
                     alt={garment.name}
                     className="w-full h-full object-cover"
                   />
@@ -180,7 +182,7 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                       onClick={() => setSelectedImg(i)}
                       className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-[var(--color-primario)]" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
-                      <img src={img.srcImage} alt={img.alt || ""} className="w-full h-full object-cover" />
+                      <img src={obtenerUrlImagenOptimizada(img.srcImage, 200) || undefined} alt={img.alt || ""} loading="lazy" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>

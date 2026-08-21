@@ -92,7 +92,14 @@ export default function PiePagina({ alAbrirPrivacidad, alAbrirTerminos }: PiePag
           }}
         >
           <p>© {anio} {copyright}</p>
-          <p>Creado por LOGABYTE</p>
+          <a
+            href="https://logabyte.com.ar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-all duration-300 hover:opacity-100 hover:[text-shadow:0_0_8px_var(--color-primario),0_0_16px_var(--color-primario)]"
+          >
+            Creado por LOGABYTE
+          </a>
         </div>
       </div>
     </footer>

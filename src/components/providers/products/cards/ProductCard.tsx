@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
 interface Props {
   product: any;
@@ -15,10 +16,13 @@ const ProductCard = ({ product }: Props) => {
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  const images =
-    product.images?.length > 1
-      ? product.images.slice(1).map((img: any) => img.srcImage)
-      : product.images?.map((img: any) => img.srcImage) || [];
+  const images = useMemo(
+    () =>
+      product.images?.length > 1
+        ? product.images.slice(1).map((img: any) => img.srcImage)
+        : product.images?.map((img: any) => img.srcImage) || [],
+    [product.images]
+  );
 
   useEffect(() => {
     if (!isHovering || images.length <= 1) {
@@ -78,10 +82,12 @@ const ProductCard = ({ product }: Props) => {
           style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
-            src={images[currentImage] || "/images/placeholder.avif"}
+            src={obtenerUrlImagenOptimizada(images[currentImage], 600) || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            loading="lazy"
             className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] mix-blend-multiply ${fade ? "opacity-100" : "opacity-0"
               }`}
             style={{ padding: "12px" }}

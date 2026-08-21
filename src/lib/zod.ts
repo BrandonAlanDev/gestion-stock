@@ -15,50 +15,6 @@ export const registerSchema = loginSchema.extend({
   telefono: z.string().optional(),
 });
 
-export const changePasswordSchema = z.object({
-  oldPassword: z.string().optional(),
-  newPassword: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
-  confirmPassword: z.string()
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Las contraseñas nuevas no coinciden",
-  path: ["confirmPassword"],
-});
-
-
-export const updateProfileSchema = z.object({
-  name: z.string().min(2).regex(nameRegex, "El nombre solo debe contener letras"),
-  telefono: z.string().optional(),
-});
-
-
-// ==========================================
-// CATEGORÍAS
-// ==========================================
-export const categorySchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio"),
-  description: z.string().optional(),
-  sizeTypeId: z.string().optional().nullable(), // AGREGAR ESTA LÍNEA
-});
-
-// ==========================================
-// MOVIMIENTOS DE STOCK
-// ==========================================
-export const movementSchema = z.object({
-  variantId: z.string(),
-  type: z.enum(["IN", "OUT"]),
-  quantity: z.number().int().positive(),
-  note: z.string().optional()
-});
-
-
-export const variantSchema = z.object({
-  sizeId: z.string().optional().nullable(),
-  colorId: z.string().min(1, "Selecciona un color"),
-  sku: z.string().optional(),
-  stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
-  attributes: z.any().optional().nullable(),
-});
-
 export const garmentSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   price: z.coerce.number().positive(),
@@ -92,9 +48,7 @@ export const garmentSchema = z.object({
 
 
 // Tipos para TypeScript
-export type MovementInput = z.infer<typeof movementSchema>;
 export type GarmentInput = z.infer<typeof garmentSchema>;
-export type CategoryInput = z.infer<typeof categorySchema>;
 
 
 // Providers
@@ -154,12 +108,6 @@ export const SizeValueSchema = z.string()
   .min(1, "El valor del talle no puede estar vacío")
   .regex(/^[a-zA-Z0-9.\-\/']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
 
-// COLOR
-export const colorSchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio"),
-  hex: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Formato hex inválido").optional().nullable(),
-});
-
 // ─── CARRUSELES ─────────────────────────────────────────────────────
 export const carouselSettingsSchema = z.object({
   // HERO DEFAULT
@@ -185,53 +133,10 @@ export const carouselSettingsSchema = z.object({
   hideButtons: z.boolean().default(false),
 }).passthrough();
 
-export const carouselLimitsSchema = z.object({
-  carouselHeroLimit: z.number().int().min(1).max(10).default(1),
-  carouselBannerLimit: z.number().int().min(1).max(10).default(1),
-  carouselCardsLimit: z.number().int().min(1).max(20).default(3),
-});
-
-export const carouselSchema = z.object({
-  type: z.enum(["HERO", "BANNER", "CARDS"]),
-  title: z.string().max(100).optional(),
-  active: z.boolean().default(true),
-  order: z.number().int().min(0).default(0),
-  settings: carouselSettingsSchema.optional(),
-});
-
-export const carouselUpdateSchema = carouselSchema.partial().extend({
-  id: z.string().cuid(),
-});
-
 export const slideConfigSchema = z.object({}).passthrough();
-
-export const carouselSlideSchema = z.object({
-  carouselId: z.string().cuid(),
-  order: z.number().int().min(0).default(0),
-  image: z.union([
-    z.string().url(),
-    z.string().startsWith("data:image"),
-  ]),
-  title: z.string().max(100).optional(),
-  subtitle: z.string().max(150).optional(),
-  description: z.string().max(500).optional(),
-  ctaText: z.string().max(50).optional(),
-  url: z.string().optional().or(z.literal("")),
-  linkType: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE")),
-  config: slideConfigSchema.optional(),
-});
-
-export const carouselSlideUpdateSchema = carouselSlideSchema.partial().extend({
-  id: z.string().cuid(),
-});
 
 export const carouselReorderSchema = z.object({
   carouselIds: z.array(z.string().cuid()).min(1),
-});
-
-export const slideReorderSchema = z.object({
-  carouselId: z.string().cuid(),
-  slideIds: z.array(z.string().cuid()).min(1),
 });
 
 // Wizard schemas (para validación en el modal unificado)
@@ -254,17 +159,6 @@ export const carouselWizardSchema = z.object({
   title: z.string().max(100).optional(),
   settings: carouselSettingsSchema,
   slides: z.array(carouselWizardSlideSchema).min(1, "Mínimo 1 slide"),
-});
-
-export type CarouselLimitsInput = z.infer<typeof carouselLimitsSchema>;
-export type CarouselWizardInput = z.infer<typeof carouselWizardSchema>;
-
-export const aparienciaSchema = z.object({
-  fontPrimary: z.string().min(1).max(100),
-  fontSecondary: z.string().min(1).max(100),
-  borderRadius: z.enum(["recto", "redondeado", "muy-redondeado"]),
-  shadowLevel: z.enum(["sin-sombra", "sutil", "marcada"]),
-  density: z.enum(["compacta", "comoda", "espaciosa"]),
 });
 
 export const flagsPaginaSchema = z.object({

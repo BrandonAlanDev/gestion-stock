@@ -102,43 +102,33 @@ export async function updateGarmentWithDetails(
     },
   });
 
-  // 2. Sincronizar variantes
-  const currentVariants = await prisma.garmentVariant.findMany({ where: { garmentId: id } });
-  const currentVariantIds = currentVariants.map((v) => v.id);
-  const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id!);
+  // 2. Sincronizar variantes (transaccional y paralelo)
+  await prisma.$transaction(async (tx) => {
+    const currentVariants = await tx.garmentVariant.findMany({ where: { garmentId: id } });
+    const currentVariantIds = currentVariants.map((v) => v.id);
+    const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id as string);
 
-  // Eliminar las que ya no están
-  const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
-  if (idsToDelete.length > 0) {
-    await prisma.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
-  }
-
-  // Actualizar existentes o crear nuevas
-  for (const v of variants) {
-    if (v.id) {
-      await prisma.garmentVariant.update({
-        where: { id: v.id },
-        data: {
-          sku: v.sku,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes ?? undefined,
-        },
-      });
-    } else {
-      await prisma.garmentVariant.create({
-        data: {
-          garmentId: id,
-          sku: v.sku,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes ?? undefined,
-        },
-      });
+    const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
+    if (idsToDelete.length > 0) {
+      await tx.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
     }
-  }
+
+    await Promise.all(
+      variants.map((v) => {
+        const data = {
+          sku: v.sku,
+          stock: Number(v.stock),
+          sizeId: v.sizeId || null,
+          colorId: v.colorId || null,
+          attributes: v.attributes ?? undefined,
+        };
+        if (v.id) {
+          return tx.garmentVariant.update({ where: { id: v.id }, data });
+        }
+        return tx.garmentVariant.create({ data: { garmentId: id, ...data } });
+      })
+    );
+  });
 
   // 3. Sincronizar imágenes
   await prisma.garmentImage.deleteMany({ where: { garmentId: id } });

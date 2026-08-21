@@ -89,6 +89,8 @@ model Garment {
   images        GarmentImage[]
 
   @@index([categoryId])
+  @@index([categoryId, createdAt])
+  @@index([subCategoryId, createdAt])
   @@index([subCategoryId])
   @@index([supplierId])
 }
@@ -191,6 +193,7 @@ model Movement {
   garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@index([variantId])
+  @@index([type, createdAt])
 }
 
 model PageConfig {
@@ -389,6 +392,7 @@ model CustomSection {
   page     CustomPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
   items    CustomSectionItem[]
 
+  @@index([pageId])
   @@map("CustomPageSections")
 }
 
@@ -404,6 +408,7 @@ model CustomSectionItem {
   config      Json?
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  @@index([sectionId])
   @@map("CustomPageItems")
 }
 
@@ -439,6 +444,8 @@ model Grid {
   buttonBgColor   String?
   buttonTextColor String?
   homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+
+  @@index([homegridId])
 }
 
 enum LinkStyle {

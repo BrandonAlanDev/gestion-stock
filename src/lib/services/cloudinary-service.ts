@@ -28,7 +28,9 @@ export async function subirImagen(
 ): Promise<{ url: string; publicId: string }> {
   const opciones: UploadApiOptions = {
     format: "webp",
-    transformation: [{ fetch_format: "auto", quality: "auto" }],
+    transformation: [
+      { width: 1200, height: 1200, crop: "limit", fetch_format: "auto", quality: "auto" },
+    ],
   };
   if (prefijoNombre) {
     opciones.public_id = `${carpeta}/${prefijoNombre}`;

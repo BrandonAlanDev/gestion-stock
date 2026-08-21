@@ -2,7 +2,7 @@ import { getMovements } from "@/actions/movements";
 import { ArrowUpCircle, ArrowDownCircle, Calendar, Package } from "lucide-react";
 
 export default async function MovementsPage() {
-  const movements = await getMovements();
+  const { movements } = await getMovements(1, 100);
 
   return (
     <div className="p-8 bg-[var(--color-fondo-sitio)] min-h-screen text-[var(--texto-sobre-fondo)] pt-24">

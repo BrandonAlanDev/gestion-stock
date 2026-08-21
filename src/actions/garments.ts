@@ -5,7 +5,7 @@ import { garmentSchema, type GarmentInput } from "@/lib/zod";
 import { revalidateTag } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import * as garmentService from "@/lib/services/garment-service";
-import { getCachedProducts, getCachedProductById } from "@/lib/cache";
+import { getCachedProducts, getCachedProductById, getCachedCategories } from "@/lib/cache";
 import {
   obtenerCarpetaPrenda,
   subirImagen,
@@ -114,20 +114,24 @@ export async function getGarmentsByNames(
   search?: string,
   subcategoria?: string
 ) {
-  const prisma = (await import("@/lib/prisma")).prisma;
   let categoryId: string | undefined;
-  if (categoria) {
-    const decoded = decodeURIComponent(categoria).trim().toLowerCase();
-    const cats = await prisma.category.findMany();
-    const match = cats.find(c => c.id === decoded || c.name.trim().toLowerCase() === decoded);
-    categoryId = match?.id;
-  }
   let subCategoryId: string | undefined;
-  if (subcategoria && categoryId) {
-    const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
-    const subs = await prisma.subCategory.findMany({ where: { categoryId } });
-    const match = subs.find(s => s.id === decoded || s.name.trim().toLowerCase() === decoded);
-    subCategoryId = match?.id;
+  if (categoria || subcategoria) {
+    const cats = await getCachedCategories();
+    if (categoria) {
+      const decoded = decodeURIComponent(categoria).trim().toLowerCase();
+      categoryId = cats.find(
+        (c) => c.id === decoded || c.name.trim().toLowerCase() === decoded
+      )?.id;
+    }
+    if (subcategoria && categoryId) {
+      const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
+      subCategoryId = cats
+        .find((c) => c.id === categoryId)
+        ?.subCategories.find(
+          (s) => s.id === decoded || s.name.trim().toLowerCase() === decoded
+        )?.id;
+    }
   }
   return getGarments(page, limit, categoryId, search, subCategoryId);
 }

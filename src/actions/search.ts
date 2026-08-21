@@ -16,19 +16,36 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
   try {
     const searchIndex: SearchItem[] = [];
 
-    // 1. OBTENER PRODUCTOS
-    const garments = await prisma.garment.findMany({
-      where: { active: true },
-      select: { 
-        id: true, 
-        name: true, 
-        images: {
-          orderBy: { order: 'asc' },
-          take: 1,
-          select: { srcImage: true }
+    const [garments, categories, subCategories, customPages] = await Promise.all([
+      prisma.garment.findMany({
+        where: { active: true },
+        select: {
+          id: true,
+          name: true,
+          images: {
+            orderBy: { order: 'asc' },
+            take: 1,
+            select: { srcImage: true }
+          }
         }
-      }
-    });
+      }),
+      prisma.category.findMany({
+        where: { active: true },
+        select: { id: true, name: true }
+      }),
+      prisma.subCategory.findMany({
+        where: { active: true },
+        include: {
+          category: {
+            select: { name: true }
+          }
+        }
+      }),
+      prisma.customPage.findMany({
+        where: { isActive: true },
+        select: { id: true, title: true, slug: true }
+      }),
+    ]);
 
     garments.forEach(g => {
       searchIndex.push({
@@ -40,12 +57,6 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
       });
     });
 
-    // 2. OBTENER CATEGORÍAS
-    const categories = await prisma.category.findMany({ 
-      where: { active: true },
-      select: { id: true, name: true }
-    });
-
     categories.forEach(c => {
       searchIndex.push({
         id: c.id,
@@ -55,16 +66,6 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
       });
     });
 
-    // 3. OBTENER SUBCATEGORÍAS
-    const subCategories = await prisma.subCategory.findMany({ 
-      where: { active: true },
-      include: { 
-        category: {
-          select: { name: true }
-        } 
-      }
-    });
-
     subCategories.forEach(s => {
       searchIndex.push({
         id: s.id,
@@ -72,12 +73,6 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
         title: s.name,
         url: `/productos?categoria=${encodeURIComponent(s.category.name)}&subcategoria=${encodeURIComponent(s.name)}`,
       });
-    });
-
-    // 4. OBTENER CUSTOM PAGES
-    const customPages = await prisma.customPage.findMany({ 
-      where: { isActive: true },
-      select: { id: true, title: true, slug: true }
     });
 
     customPages.forEach(cp => {

@@ -1,8 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
-export async function getPageConfig() {
+export const getPageConfig = unstable_cache(
+  async () => {
   try {
     const pageConfig = await prisma.pageConfig.findUnique({
       where: { id: 1 },
@@ -107,4 +109,7 @@ export async function getPageConfig() {
       error: "Error configuración",
     };
   }
-}
+  },
+  ["page-config-completa"],
+  { revalidate: 3600, tags: ["page-config"] }
+);

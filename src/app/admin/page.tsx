@@ -1,7 +1,9 @@
 import { getDashboardStats } from "@/actions/graficas.actions";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { getContrastColor } from "@/lib/utils";
-import ChartWrapper from "@/components/ui/ChartsWrapper";
+import dynamic from "next/dynamic";
+
+const ChartWrapper = dynamic(() => import("@/components/ui/ChartsWrapper"), { ssr: false });
 
 export default async function AdminPage() {
   const stats = await getDashboardStats();
