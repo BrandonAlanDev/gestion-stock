@@ -10,13 +10,6 @@ export type PageConfigInput = {
 
   primaryColor?: string | null;
   secondaryColor?: string | null;
-  bgColor?: string | null;
-
-  fontPrimary?: string;
-  fontSecondary?: string;
-  borderRadius?: string;
-  shadowLevel?: string;
-  density?: string;
 
   ecommerceEnabled?: boolean;
   cartEnabled?: boolean;
@@ -46,19 +39,6 @@ export type PageConfigInput = {
   language?: string;
 
   maintenanceMode?: boolean;
-
-  arreglosEnabled?: boolean;
-  escuelaEnabled?: boolean;
-  personalizadoEnabled?: boolean;
-
-  footerAboutText?: string | null;
-  footerCopyrightText?: string | null;
-  footerShowSobre?: boolean;
-  footerShowNavegacion?: boolean;
-  footerShowContacto?: boolean;
-  footerShowUbicacion?: boolean;
-  footerShowRedes?: boolean;
-  footerShowLegales?: boolean;
 
   metaTitle?: string | null;
   metaDescription?: string | null;

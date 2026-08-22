@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Edit3 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import ProductModal from "./ProductModal";
 import ProviderModal from "./ProviderModal";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
@@ -20,16 +20,8 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function QuickViewTable({ garments, categories, sizeTypes, providers, colors, onProductsChanged }: {
-  garments: any[];
-  categories: any[];
-  sizeTypes: any[];
-  providers: any[];
-  colors: any[];
-  onProductsChanged?: () => void;
-}) {
+export default function QuickViewTable({ garments, categories, sizeTypes, providers, colors }: any) {
   const pageConfig = usePageConfig();
-  const [editingGarment, setEditingGarment] = useState<any | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -71,7 +63,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
         className="overflow-x-auto rounded-[1.0rem] shadow-sm border"
         style={{ borderColor: overlayBorder, backgroundColor: secondaryColor }}
       >
-        <table className="w-full min-w-[900px] text-left border-collapse">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr
               className="text-[9px] uppercase font-black border-b"
@@ -203,14 +195,13 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   {/* Acciones */}
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => setEditingGarment(item)}
-                        className="transition-colors cursor-pointer opacity-40 hover:opacity-100"
-                        style={{ color: textColor }}
-                        title="Editar producto"
-                      >
-                        <Edit3 size={16} />
-                      </button>
+                      <ProductModal
+                        garment={item}
+                        categories={categories}
+                        sizes={sizeTypes}
+                        providers={providers}
+                        colors={colors || []}
+                      />
                       <button
                         onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                         className="transition-colors cursor-pointer opacity-40 hover:opacity-100"
@@ -228,21 +219,6 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
           </tbody>
         </table>
       </div>
-
-      {/* ── MODAL PRODUCTO (uno solo, on-demand) ── */}
-      {editingGarment && (
-        <ProductModal
-          garment={editingGarment}
-          categories={categories}
-          sizes={sizeTypes}
-          providers={providers}
-          colors={colors || []}
-          onSuccess={() => {
-            setEditingGarment(null);
-            onProductsChanged?.();
-          }}
-        />
-      )}
 
       {/* ── MODAL PROVEEDOR ── */}
       {selectedProvider && (

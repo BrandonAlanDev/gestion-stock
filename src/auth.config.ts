@@ -1,19 +1,12 @@
 import type { NextAuthConfig } from "next-auth";
-import Google from "next-auth/providers/google";
 
 export const authConfig = {
   session: { 
     strategy: "jwt",
-    maxAge: 24 * 60 * 60,
-    updateAge: 60 * 60,
+    maxAge: 24 * 60 * 60, // 1 dia expira
+    updateAge: 60 * 60, // refresca cada 1 hora si hay actividad
   },
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
-  ],
+  providers: [],
   callbacks: {
     jwt({ token, user }) {
       if (user){
@@ -31,6 +24,7 @@ export const authConfig = {
         session.user.telefono = token.telefono as string | null;
         session.user.image = token.image as string | null;
       } 
+
       return session;
     },
   },

@@ -4,22 +4,25 @@ import * as categoryService from "./services/category-service";
 import * as providerService from "./services/provider-service";
 import * as sizeService from "./services/size-service";
 import * as colorService from "./services/color-service";
-import * as carouselService from "./services/carousel-service";
+import { prisma } from "./prisma";
 
-// ── PRODUCTOS (cache real de servidor, tag "products") ──
-export const getCachedProducts = unstable_cache(
-  async (
-    page: number,
-    limit: number,
-    categoryId?: string,
-    search?: string,
-    subCategoryId?: string
-  ) => {
-    return garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId);
-  },
-  ["products"],
-  { revalidate: 300, tags: ["products"] }
+// ── PAGE CONFIG ──────────────────────────────────
+export const getCachedPageConfig = unstable_cache(
+  async () => prisma.pageConfig.findFirst(),
+  ["page-config"],
+  { revalidate: 3600 }
 );
+
+// ── PRODUCTOS (función directa, sin caché por closure) ──
+export async function getCachedProducts(
+  page: number,
+  limit: number,
+  categoryId?: string,
+  search?: string,
+  subCategoryId?: string
+) {
+  return garmentService.getGarmentsPaginated(page, limit, categoryId, search, subCategoryId);
+}
 
 // ── PRODUCTO INDIVIDUAL (cacheado por ID) ──
 export const getCachedProductById = (id: string) =>
@@ -55,12 +58,4 @@ export const getCachedColors = unstable_cache(
   colorService.getColors,
   ["all-colors"],
   { revalidate: 3600, tags: ["colors"] }
-);
-
-// ─── CARRUSELES ────────────────────────────────────────────────────
-export const getCachedCarousels = unstable_cache(
-  async () =>
-    carouselService.getCarousels(undefined, true),
-  ["carousels"],
-  { revalidate: 3600, tags: ["carousels"] }
 );

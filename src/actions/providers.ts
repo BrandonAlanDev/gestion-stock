@@ -19,19 +19,22 @@ export async function createProvider(raw: unknown) {
   const { name, details, contacts } = parsed.data;
   try {
     const provider = await providerService.createProvider({
-      name,
-      details,
-      contacts: {
-        create: contacts.map((c) => {
-          const contact = normalizeContact(c);
-          return { contact, type: getContactType(contact) };
-        }),
+      data: {
+        name,
+        details,
+        contacts: {
+          create: contacts.map((c) => {
+            const contact = normalizeContact(c);
+            return { contact, type: getContactType(contact) };
+          }),
+        },
       },
+      include: { contacts: true },
     });
     revalidateTag("providers");
     return { success: true, provider };
-  } catch (e: unknown) {
-    if ((e as { code?: string })?.code === "P2002") return { error: "Proveedor o contacto duplicado" };
+  } catch (e: any) {
+    if (e.code === "P2002") return { error: "Proveedor o contacto duplicado" };
     return { error: "Error al crear" };
   }
 }

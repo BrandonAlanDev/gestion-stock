@@ -72,7 +72,7 @@ function ProvidersContent() {
   return (
 
     <div style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }} className="transition-colors duration-200 p-6 sm:p-8 pt-12 w-full">
-      <div className="p-0 max-w-6xl mx-auto space-y-8 pt-12 sm:p-8">
+      <div className="p-8 max-w-6xl mx-auto space-y-8 pt-12">
         
         <div className="flex justify-between items-end border-b pb-6 font-black italic uppercase tracking-tighter" style={{ borderColor: `${textColor}20` }}>
           <h1 className="text-3xl flex items-center gap-3">
@@ -91,8 +91,8 @@ function ProvidersContent() {
             <input className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm placeholder:opacity-50 focus:ring-2 outline-none" placeholder="Detalles..." value={form.details} onChange={e => setForm({...form, details: e.target.value})} />
           </div>
 
-          <div className="flex gap-2 w-full">
-            <input className="flex-1 min-w-0 bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none" placeholder="Añadir contacto" value={newContact} onChange={e => setNewContact(e.target.value)} />
+          <div className="flex gap-2">
+            <input className="flex-1 bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none" placeholder="Añadir contacto" value={newContact} onChange={e => setNewContact(e.target.value)} />
             <button type="button" onClick={addContact} className="p-3 rounded-xl" style={{ backgroundColor: accent, color: accentTextColor }}>
               <Plus size={20} />
             </button>

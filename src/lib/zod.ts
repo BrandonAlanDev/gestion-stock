@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CarouselType } from '../../generated/prisma/client';
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -15,6 +16,50 @@ export const registerSchema = loginSchema.extend({
   telefono: z.string().optional(),
 });
 
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().optional(),
+  newPassword: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Las contraseñas nuevas no coinciden",
+  path: ["confirmPassword"],
+});
+
+
+export const updateProfileSchema = z.object({
+  name: z.string().min(2).regex(nameRegex, "El nombre solo debe contener letras"),
+  telefono: z.string().optional(),
+});
+
+
+// ==========================================
+// CATEGORÍAS
+// ==========================================
+export const categorySchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio"),
+  description: z.string().optional(),
+  sizeTypeId: z.string().optional().nullable(), // AGREGAR ESTA LÍNEA
+});
+
+// ==========================================
+// MOVIMIENTOS DE STOCK
+// ==========================================
+export const movementSchema = z.object({
+  variantId: z.string(),
+  type: z.enum(["IN", "OUT"]),
+  quantity: z.number().int().positive(),
+  note: z.string().optional()
+});
+
+
+export const variantSchema = z.object({
+  sizeId: z.string().optional().nullable(),
+  colorId: z.string().min(1, "Selecciona un color"),
+  sku: z.string().optional(),
+  stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo"),
+  attributes: z.any().optional().nullable(),
+});
+
 export const garmentSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   price: z.coerce.number().positive(),
@@ -26,14 +71,7 @@ export const garmentSchema = z.object({
   subCategoryId: z.string().optional().nullable(),
 
   supplierId: z.string().optional().nullable(),
-  images: z
-    .array(
-      z.string().refine(
-        (v) => v.startsWith("data:image") || v.startsWith("http"),
-        { message: "Cada imagen debe ser un archivo nuevo o una URL válida" }
-      )
-    )
-    .optional(),
+  images: z.array(z.string()).optional(),
   variants: z.array(
     z.object({
       id: z.string().optional(), // Por si editas
@@ -48,7 +86,9 @@ export const garmentSchema = z.object({
 
 
 // Tipos para TypeScript
+export type MovementInput = z.infer<typeof movementSchema>;
 export type GarmentInput = z.infer<typeof garmentSchema>;
+export type CategoryInput = z.infer<typeof categorySchema>;
 
 
 // Providers
@@ -108,81 +148,60 @@ export const SizeValueSchema = z.string()
   .min(1, "El valor del talle no puede estar vacío")
   .regex(/^[a-zA-Z0-9.\-\/']+$/, "Solo se permiten letras, números y puntos (sin espacios)");
 
-// ─── CARRUSELES ─────────────────────────────────────────────────────
-export const carouselSettingsSchema = z.object({
-  // HERO DEFAULT
-  heroStyle: z.enum(["DEFAULT", "SHOWCASE"]).default("DEFAULT"),
-  slideLayout: z.enum(["standard", "split", "minimal"]).default("standard"),
-  transitionDuration: z.number().int().positive().default(6000),
-  autoPlay: z.boolean().default(true),
-  showDots: z.boolean().default(true),
-  showNavButtons: z.boolean().default(true),
-  overlayOpacity: z.number().min(0).max(1).default(0.9),
-
-  // HERO SHOWCASE
-  slidesToScroll: z.number().int().positive().default(1),
-  gap: z.number().int().min(0).default(16),
-  showArrows: z.boolean().default(true),
-  autoplayDelay: z.number().int().positive().default(5000),
-
-  // BANNER
-  height: z.number().int().positive().default(300),
-
-  // CARDS
-  layout: z.enum(["simple", "offers"]).default("simple"),
-  hideButtons: z.boolean().default(false),
-}).passthrough();
-
-export const slideConfigSchema = z.object({}).passthrough();
-
-export const carouselReorderSchema = z.object({
-  carouselIds: z.array(z.string().cuid()).min(1),
+// COLOR
+export const colorSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio"),
+  hex: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Formato hex inválido").optional().nullable(),
 });
 
-// Wizard schemas (para validación en el modal unificado)
-export const carouselWizardSlideSchema = z.object({
-  id: z.string().optional(), // temp-* durante wizard
-  image: z.string().min(1, "Imagen requerida"),
-  title: z.string().max(100).optional(),
-  subtitle: z.string().max(150).optional(),
-  description: z.string().max(500).optional(),
-  ctaText: z.string().max(50).optional(),
-  url: z.string().optional().or(z.literal("")),
-  linkType: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum(["NONE", "CATEGORY", "PRODUCT", "PAGE", "EXTERNAL"]).optional().default("NONE")),
-  config: slideConfigSchema.optional(),
-  order: z.number().int().min(0).default(0),
+export const carouselTypeSchema = z.nativeEnum(CarouselType);
+
+// Esquema base para un banner (slide)
+export const bannerBaseSchema = z.object({
+  image: z.string().url("La imagen es obligatoria"),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  text: z.string().optional(),
+  url: z.string().url().optional().or(z.literal("")),
+  order: z.number().int().optional(),
+  active: z.boolean().optional(),
 });
 
-export const carouselWizardSchema = z.object({
-  id: z.string().cuid().optional(),
-  type: z.enum(["HERO", "BANNER", "CARDS"]),
-  title: z.string().max(100).optional(),
-  settings: carouselSettingsSchema,
-  slides: z.array(carouselWizardSlideSchema).min(1, "Mínimo 1 slide"),
-});
+// Esquema dinámico según el tipo de carrusel seleccionado
+export const bannerSchema = (carouselType: CarouselType) => {
+  return bannerBaseSchema.superRefine((data, ctx) => {
+    if (
+      (carouselType === "HERO_TITULO" || carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
+      !data.title
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El título es obligatorio para este tipo de carrusel",
+        path: ["title"],
+      });
+    }
+    if (
+      (carouselType === "HERO_TEXTO" || carouselType === "HERO_LINK") &&
+      !data.text
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El texto es obligatorio para este tipo de carrusel",
+        path: ["text"],
+      });
+    }
+    if (carouselType === "HERO_LINK" && !data.url) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El enlace es obligatorio para este tipo de carrusel",
+        path: ["url"],
+      });
+    }
+  });
+};
 
-export const flagsPaginaSchema = z.object({
-  arreglosEnabled: z.boolean().optional(),
-  escuelaEnabled: z.boolean().optional(),
-  personalizadoEnabled: z.boolean().optional(),
-  planAhorroEnabled: z.boolean().optional(),
-  maintenanceMode: z.boolean().optional(),
-});
-
-export const regionalSchema = z.object({
-  currency: z.string().min(1).max(10).optional(),
-  language: z.string().min(1).max(10).optional(),
-  termsAndConditions: z.string().nullable().optional(),
-  privacyPolicy: z.string().nullable().optional(),
-});
-
-export const footerSchema = z.object({
-  footerAboutText: z.string().max(300).nullable().optional(),
-  footerCopyrightText: z.string().max(150).nullable().optional(),
-  footerShowSobre: z.boolean().optional(),
-  footerShowNavegacion: z.boolean().optional(),
-  footerShowContacto: z.boolean().optional(),
-  footerShowUbicacion: z.boolean().optional(),
-  footerShowRedes: z.boolean().optional(),
-  footerShowLegales: z.boolean().optional(),
+export const carouselConfigSchema = z.object({
+  carouselType: carouselTypeSchema,
+  carouselAutoplay: z.boolean(),
+  carouselInterval: z.number().int().min(1000),
 });

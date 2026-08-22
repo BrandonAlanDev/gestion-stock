@@ -5,21 +5,13 @@ import {
   useContext,
 } from "react";
 
-interface PageConfigContextType {
-  ok: boolean;
-  pageConfig: Record<string, unknown>;
-}
-
 const PageConfigContext =
-  createContext<PageConfigContextType | null>(null);
+  createContext<any>(null);
 
 export function PageConfigProvider({
   children,
   pageConfig,
-}: {
-  children: React.ReactNode;
-  pageConfig: PageConfigContextType;
-}) {
+}: any) {
   return (
     <PageConfigContext.Provider
       value={pageConfig}
@@ -29,7 +21,8 @@ export function PageConfigProvider({
   );
 }
 
-export function usePageConfig(): PageConfigContextType {
-  const ctx = useContext(PageConfigContext);
-  return ctx ?? { ok: false, pageConfig: {} };
+export function usePageConfig() {
+  return useContext(
+    PageConfigContext
+  );
 }

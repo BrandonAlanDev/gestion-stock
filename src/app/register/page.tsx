@@ -8,11 +8,50 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { User, Mail, Lock, Rocket, Shirt } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
+function adjustColor(hex: string, percent: number) {
+  let color = hex.replace("#", "");
+
+  if (color.length === 3) {
+    color = color
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+
+  const num = parseInt(color, 16);
+
+  let r = (num >> 16) & 255;
+  let g = (num >> 8) & 255;
+  let b = num & 255;
+
+  r = Math.min(255, Math.max(0, r + (255 * percent) / 100));
+  g = Math.min(255, Math.max(0, g + (255 * percent) / 100));
+  b = Math.min(255, Math.max(0, b + (255 * percent) / 100));
+
+  return `#${[r, g, b]
+    .map((v) => Math.round(v).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [state, action, isPending] = useActionState(registerAction, { error: "", success: false });
   const {pageConfig} = usePageConfig();
   const [hover, setHover] = useState(false);
+  const primary = pageConfig?.primaryColor || "#f59e0b";
+  const darker = adjustColor(primary, -12);
+  const lighter = adjustColor(primary, 12);
+  const hoverDarker = adjustColor(primary, -6);
+  const hoverLighter = adjustColor(primary, 18);
 
   useEffect(() => {
     if (state.success) {
@@ -22,21 +61,23 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout>
-      <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-[linear-gradient(to_bottom_right,color-mix(in_srgb,var(--color-fondo-sitio)_60%,transparent),color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent))] border border-[color-mix(in_srgb,var(--texto-sobre-fondo)_10%,transparent)] rounded-3xl p-8 shadow-2xl relative">
+      <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-linear-to-br from-gray-950/60 to-gray-850/20 border border-white/10 rounded-3xl p-8 shadow-2xl relative">
         <div className="text-center mb-6">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${pageConfig?.logo ? '' : 'bg-[color-mix(in_srgb,var(--color-fondo-sitio)_80%,transparent)] border border-[color-mix(in_srgb,var(--color-primario)_20%,transparent)] '} mb-4`}>
-              {typeof pageConfig?.logo === "string" && pageConfig.logo ? (
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${pageConfig?.logo ? '' : 'bg-black/80 border border-blue-500/30 '} mb-4`}>
+              {pageConfig?.logo? (
                 <img src={pageConfig.logo} alt="Logo" width={32} height={32} />
               ):(
-                <Shirt className="w-8 h-8 text-[var(--color-primario)]"
+                <Shirt className="w-8 h-8 text-amber-300"
+                style={{ color: pageConfig?.primaryColor }}
               />
               )}
           </div>
-          <h1 className="text-3xl font-black text-[var(--texto-sobre-fondo)] italic uppercase tracking-tighter">
-            Obtén tu <span className="text-[var(--color-primario)]"
+          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+            Obtén tu <span className="text-amber-300"
+            style={{ color: pageConfig?.primaryColor }}
             >permiso</span>
           </h1>
-          <p className="text-[var(--texto-sobre-fondo)]/70 text-sm mt-1">Regístrate y espera la aprobacion de tu cuenta</p>
+          <p className="text-gray-400 text-sm mt-1">Regístrate y espera la aprobacion de tu cuenta</p>
         </div>
 
         <div className="space-y-3 mb-6">
@@ -44,9 +85,9 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[color-mix(in_srgb,var(--texto-sobre-fondo)_10%,transparent)]" /></div>
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
           <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
-            <span className="bg-[var(--color-primario)] px-3 text-[var(--texto-sobre-primario)] rounded-4xl">O mediante Email</span>
+            <span className="bg-white px-3 text-gray-950 rounded-4xl">O mediante Email</span>
           </div>
         </div>
 
@@ -55,14 +96,15 @@ export default function RegisterPage() {
             {/* Input Nombre */}
             <div className="space-y-1">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-primario)]/50" 
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500/50" 
+                style={{ color: pageConfig?.primaryColor }}
                 />
                 <input
                   name="name"
                   type="text"
                   placeholder="Nombre Completo"
                   required
-                  className="w-full bg-[color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent)] border border-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)] rounded-xl py-3 pl-10 pr-4 text-[var(--texto-sobre-fondo)] focus:border-[var(--color-primario)] transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-amber-500 transition-all"
                 />
               </div>
             </div>
@@ -70,14 +112,15 @@ export default function RegisterPage() {
             {/* Input Email */}
             <div className="space-y-1">
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-primario)]/50" 
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500/50" 
+                style={{ color: pageConfig?.primaryColor }}
                 />
                 <input
                   name="email"
                   type="email"
                   placeholder="Correo de contacto"
                   required
-                  className="w-full bg-[color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent)] border border-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)] rounded-xl py-3 pl-10 pr-4 text-[var(--texto-sobre-fondo)] focus:border-[var(--color-primario)] transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-amber-500 transition-all"
                 />
               </div>
             </div>
@@ -85,14 +128,15 @@ export default function RegisterPage() {
             {/* Input Password */}
             <div className="space-y-1">
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-primario)]/50" 
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500/50" 
+                  style={{ color: pageConfig?.primaryColor }}
                 />
                 <input
                   name="password"
                   type="password"
                   placeholder="Contraseña"
                   required
-                  className="w-full bg-[color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent)] border border-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)] rounded-xl py-3 pl-10 pr-4 text-[var(--texto-sobre-fondo)] focus:border-[var(--color-primario)] transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-amber-500 transition-all"
                 />
               </div>
             </div>
@@ -109,12 +153,12 @@ export default function RegisterPage() {
             disabled={isPending}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
-            className="w-full font-black py-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.25)] transition-all duration-300 flex items-center justify-center gap-3 uppercase italic hover:cursor-pointer"
+            className="w-full text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.25)] transition-all duration-300 flex items-center justify-center gap-3 uppercase italic hover:cursor-pointer"
             style={{
               background: hover
-                ? "linear-gradient(to right, color-mix(in srgb, var(--color-primario) 94%, black), color-mix(in srgb, var(--color-primario) 82%, white))"
-                : "linear-gradient(to right, color-mix(in srgb, var(--color-primario) 88%, black), color-mix(in srgb, var(--color-primario) 88%, white))",
-              color: "var(--texto-sobre-primario)",
+                ? `linear-gradient(to right, ${hoverDarker}, ${hoverLighter})`
+                : `linear-gradient(to right, ${darker}, ${lighter})`,
+              color: getContrastColor(primary),
             }}
           >
             {isPending ? "Procesando..." : (
@@ -127,9 +171,10 @@ export default function RegisterPage() {
         </form>
 
         <div className="text-center mt-6">
-          <p className="text-xs text-[var(--texto-sobre-fondo)]/50 uppercase tracking-widest">
+          <p className="text-xs text-gray-500 uppercase tracking-widest">
             ¿Ya eres miembro?{" "}
-            <Link href="/login" className="text-[var(--color-primario)] font-black hover:opacity-80 transition-colors"
+            <Link href="/login" className="text-amber-500 font-black hover:text-amber-400 transition-colors"
+              style={{ color: pageConfig?.primaryColor }}
             >
               Log In
             </Link>

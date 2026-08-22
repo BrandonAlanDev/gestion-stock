@@ -115,7 +115,7 @@ export default function SizesPage() {
       style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }}
       className="transition-colors duration-200 p-6 sm:p-8 pt-12 w-full"
     >
-      <div className="p-0 max-w-6xl mx-auto space-y-8 pt-12 sm:p-8">
+      <div className="p-8 max-w-6xl mx-auto space-y-8 pt-12">
         
         <div className="flex justify-between items-end border-b pb-6" style={{ borderColor: `${textColor}20` }}>
           <div>
@@ -138,16 +138,16 @@ export default function SizesPage() {
           <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: accent }}>
             <Layers size={14} /> Nuevo Grupo
           </h3>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex gap-3">
             <input 
-              className="flex-1 w-full bg-black/20 border border-white/10 rounded-[1.0rem] p-3 text-sm placeholder:opacity-50 focus:ring-1 outline-none"
+              className="flex-1 bg-black/20 border border-white/10 rounded-[1.0rem] p-3 text-sm placeholder:opacity-50 focus:ring-1 outline-none"
               placeholder="Nombre del grupo (ej: Calzados, Remeras...)"
               value={newTypeName}
               onChange={e => setNewTypeName(e.target.value)}
             />
             <button 
               type="submit" 
-              className="w-full sm:w-auto font-bold uppercase tracking-tighter px-8 rounded-[1.0rem] hover:opacity-90 transition-all shadow-md text-sm"
+              className="font-bold uppercase tracking-tighter px-8 rounded-[1.0rem] hover:opacity-90 transition-all shadow-md text-sm"
               style={{ backgroundColor: accent, color: accentTextColor }}
             >
               Crear Grupo

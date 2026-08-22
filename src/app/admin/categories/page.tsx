@@ -5,23 +5,28 @@ import ManageCategoryModal from "@/components/categories/modals/ManageCategoryMo
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
 import { Tag, Layers, FolderDot } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getCategories } from "@/actions/categories";
 import { getSizeTypes } from "@/actions/sizes";
-import { getContrastColor } from "@/lib/utils";
-import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
+
+// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
 
 export default function CategoriesAdminPage() {
-  const { pageConfig } = usePageConfig();
-  const [categories, setCategories] = useState<CategoriaConSubs[]>([]);
-  const [sizeTypes, setSizeTypes] = useState<TalleTipoConSizes[]>([]);
+  const pageConfig = usePageConfig();
+  const [categories, setCategories] = useState<any[]>([]);
+  const [sizeTypes, setSizeTypes] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  const refreshCategories = useCallback(async () => {
-    const catData = await getCategories();
-    setCategories(catData || []);
-  }, []);
-
+  // Carga de datos del lado del cliente compartiendo la consistencia de estados
   useEffect(() => {
     Promise.all([getCategories(), getSizeTypes()]).then(([catData, sizeData]) => {
       setCategories(catData || []);
@@ -30,27 +35,32 @@ export default function CategoriesAdminPage() {
     });
   }, []);
 
-  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor(background);
+  // Variables dinámicas de color
+  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
+  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
+
+  // Cálculos de legibilidad y contraste
+  const textColor = getContrastColor(secondaryColor);
   const isDarkBg = textColor === "#ffffff";
 
+  // Estilos y bordes dinámicos basados en opacidad
   const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
   const innerCardBg = isDarkBg ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.02)";
-  const cardBg = isDarkBg ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.03)";
+  const pageBackground = isDarkBg ? "#0f172a" : "#f8fafc";
 
   if (!mounted) return null;
 
   return (
-    <div className="p-6 sm:p-8 w-full" style={{ backgroundColor: background, color: textColor }}>
+
+    <div className=" p-6 sm:p-8 w-full " style={{ backgroundColor: pageBackground, color: textColor }}>
       {/* HEADER */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between my-6 sm:my-12">
+      <div className="flex justify-between items-center my-12">
         <div>
           <h1
             className="text-3xl font-black uppercase italic flex items-center gap-3"
             style={{ color: textColor }}
           >
-            <Tag style={{ color: accent }} />
+            <Tag style={{ color: primaryColor }} />
             Estructura de Catálogo
           </h1>
           <p
@@ -60,17 +70,17 @@ export default function CategoriesAdminPage() {
             Gestión de categorías y subgrupos
           </p>
         </div>
-        <ManageCategoryModal sizeTypes={sizeTypes} onCategoryChange={refreshCategories} />
+        <ManageCategoryModal sizeTypes={sizeTypes} />
       </div>
 
       {/* GRID DE CATEGORÍAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat) => (
+        {categories.map((cat: any) => (
           <div
             key={cat.id}
             className="flex flex-col relative border shadow-sm"
             style={{
-              backgroundColor: cardBg,
+              backgroundColor: secondaryColor,
               borderColor: overlayBorder,
               borderRadius: "1rem",
               padding: "1.5rem",
@@ -81,8 +91,8 @@ export default function CategoriesAdminPage() {
               <div
                 className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase border"
                 style={{
-                  color: accent,
-                  backgroundColor: innerCardBg,
+                  color: primaryColor,
+                  backgroundColor: isDarkBg ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.03)",
                   borderColor: overlayBorder,
                   borderRadius: "8px",
                 }}
@@ -90,7 +100,7 @@ export default function CategoriesAdminPage() {
                 <FolderDot size={12} />
                 Categoría Principal
               </div>
-              <ManageCategoryModal sizeTypes={sizeTypes} category={cat} onCategoryChange={refreshCategories} />
+              <ManageCategoryModal sizeTypes={sizeTypes} category={cat} />
             </div>
 
             {/* Nombre categoría */}
@@ -111,7 +121,7 @@ export default function CategoriesAdminPage() {
               </h4>
 
               <div className="space-y-2" style={{ minHeight: "50px" }}>
-                {cat.subCategories?.map((sub) => (
+                {cat.subCategories?.map((sub: any) => (
                   <div
                     key={sub.id}
                     className="flex justify-between items-center p-3 border"
@@ -130,12 +140,12 @@ export default function CategoriesAdminPage() {
                       </p>
                       <p
                         className="text-[8px] font-black uppercase mt-0.5"
-                        style={{ color: accent }}
+                        style={{ color: primaryColor }}
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
                     </div>
-                    <DeleteSubBtn id={sub.id} onDeleted={refreshCategories} />
+                    <DeleteSubBtn id={sub.id} />
                   </div>
                 ))}
 
@@ -149,7 +159,7 @@ export default function CategoriesAdminPage() {
 
             {/* Formulario agregar subcategoría */}
             <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: `1px solid ${overlayBorder}` }}>
-              <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} onSuccess={refreshCategories} />
+              <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} />
             </div>
           </div>
         ))}

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useState, useEffect, useContext, useMemo, ReactNode } from "react";
+import { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import { toast } from "sonner";
 
 export interface CartItem {
@@ -19,20 +19,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("tech_cart");
-      if (saved) setCartItems(JSON.parse(saved));
-    } catch {
-      localStorage.removeItem("tech_cart");
-    }
+    const saved = localStorage.getItem("tech_cart");
+    if (saved) setCartItems(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("tech_cart", JSON.stringify(cartItems));
-    } catch {
-      // sin acción: el carrito sigue funcionando en memoria
-    }
+    localStorage.setItem("tech_cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
   const openCart = () => setIsCartOpen(true);
@@ -62,13 +54,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     toast.success("Especificaciones actualizadas");
   };
 
-  const valor = useMemo(
-    () => ({ cartItems, isCartOpen, openCart, closeCart, addToCart, updateQty, removeItem, updateCartItemSpecs }),
-    [cartItems, isCartOpen]
-  );
-
   return (
-    <CartContext.Provider value={valor}>
+    <CartContext.Provider value={{ cartItems, isCartOpen, openCart, closeCart, addToCart, updateQty, removeItem, updateCartItemSpecs }}>
       {children}
     </CartContext.Provider>
   );
