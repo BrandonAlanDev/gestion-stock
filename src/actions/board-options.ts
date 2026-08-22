@@ -1,13 +1,8 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
 
 export async function getBoardOptions() {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
-  if (!habilitado) {
-    return { types: [], materials: [], deliveryOptions: [], whatsapp: null };
-  }
   try {
     const [types, materials, deliveryOptions, pageConfig] = await Promise.all([
       prisma.boardTypeOption.findMany({

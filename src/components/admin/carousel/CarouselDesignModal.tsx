@@ -7,8 +7,6 @@ import { getContrastColor } from "@/lib/utils";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { updateCarousel } from "@/actions/carousel/carousel.actions";
 import { toast } from "sonner";
-import { ContextoCapas } from "@/contextos/capas/contexto-capas";
-import { useCapa } from "@/contextos/capas/use-capa";
 import type { Carousel } from "@/types/carousel";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -48,7 +46,6 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
 
   const [settings, setSettings] = useState<Record<string, unknown>>(carousel.settings || {});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { nivel, zIndice } = useCapa();
 
   const heroStyle = (settings.heroStyle as "DEFAULT" | "SHOWCASE") || "DEFAULT";
 
@@ -80,9 +77,6 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
           url: s.url || "",
           order: s.order,
           config: s.config || {},
-          linkType:
-            (s.config?.linkType as string) ||
-            (s.url?.startsWith("http") ? "EXTERNAL" : "NONE"),
         })),
       });
       if (res.success && res.data) {
@@ -182,7 +176,7 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
   );
 
   const modalContent = (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl" style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}>
         <div className="flex items-center justify-between p-4 border-b sticky top-0 backdrop-blur z-10 rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor + "40" }}>
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: textColor }}>
@@ -233,5 +227,5 @@ export default function CarouselDesignModal({ isOpen, onClose, carousel, onSave 
     </div>
   );
 
-  return createPortal(<ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>, document.body);
+  return createPortal(modalContent, document.body);
 }

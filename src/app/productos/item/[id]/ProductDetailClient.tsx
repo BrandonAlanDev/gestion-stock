@@ -16,7 +16,7 @@ export default function ProductDetailClient({ id, initialProduct }: Props) {
   if (isLoading && !product) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-[var(--color-primario)] animate-spin" />
+        <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
       </div>
     );
   }

@@ -32,7 +32,6 @@ export default function DrawerSeccionDestacada({
         config={config}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
-        alGuardar={alCerrar}
       />
     </Sheet>
   );

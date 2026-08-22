@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ComponentProps } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import HeroLayout from "@/components/carousel/layouts/hero/HeroLayout";
 import BannerLayout from "@/components/carousel/layouts/banner/BannerLayout";
@@ -66,16 +66,16 @@ function renderCarousel(carousel: CarouselData, storeName?: string) {
   switch (carousel.type) {
     case "HERO":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <HeroLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof HeroLayout>["carousel"]} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
+        : <HeroLayout key={carousel.id} carousel={carousel} />;
     case "BANNER":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <BannerLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof BannerLayout>["carousel"]} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
+        : <BannerLayout key={carousel.id} carousel={carousel} />;
     case "CARDS":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <CardsLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof CardsLayout>["carousel"]} storeName={storeName} />;
+        ? <ShowcaseLayout key={carousel.id} carousel={carousel} />
+        : <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
     default:
       return null;
   }
@@ -85,12 +85,14 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
+  const primaryColor = (config?.primaryColor as string) || "#06b6d4";
+  const secondaryColor = (config?.secondaryColor as string) || "#f8fafc";
   const showLocation = config?.locationEnabled && config?.address;
 
   const sectionOrder = parseSectionOrder(config?.sectionOrder);
   const hasCustomOrder = sectionOrder.length > 0;
 
-  const carousels = (config?.carousels as CarouselData[]) || [];
+  const carousels = (config?.carousels as any[]) || [];
   const heroSettings = carousels.find(c => c.type === "HERO")?.settings as Record<string, unknown> | undefined;
   const cardsSettings = carousels.find(c => c.type === "CARDS")?.settings as Record<string, unknown> | undefined;
   const featuredLayout = config?.featuredLayout as string | undefined;
@@ -169,9 +171,9 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
         );
       case "featured":
         return (
-          <section key="featured">
+          <main key="featured">
             <ProductLayout />
-          </section>
+          </main>
         );
       case "cards":
         return (
@@ -188,8 +190,8 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
             key="location"
             className="flex items-center justify-center p-6 py-16 border-t-2"
             style={{
-              backgroundColor: "var(--color-fondo-sitio)",
-              borderColor: "var(--color-primario)",
+              backgroundColor: secondaryColor,
+              borderColor: `${primaryColor}20`,
             }}
           >
             <LocationCard
@@ -214,23 +216,23 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden max-w-full" style={{ backgroundColor: "var(--color-fondo-sitio)" }}>
+    <div className="min-h-screen overflow-x-hidden max-w-full" style={{ backgroundColor: `${primaryColor}05` }}>
       {hasCustomOrder ? (
         sectionOrder.map((section, index) => renderWithMt(section, index))
       ) : (
         <>
           <AllCarousels storeName={config?.storeName as string} />
 
-          <section className={getSectionMt("featured", getSubtype("featured")) > 0 ? `mt-${getSectionMt("featured", getSubtype("featured"))}` : ''}>
+          <main className={getSectionMt("featured", getSubtype("featured")) > 0 ? `mt-${getSectionMt("featured", getSubtype("featured"))}` : ''}>
             <ProductLayout />
-          </section>
+          </main>
 
           {showLocation && (
             <section
               className="flex items-center justify-center p-6 py-16 border-t-2"
               style={{
-                backgroundColor: "var(--color-fondo-sitio)",
-                borderColor: "var(--color-primario)",
+                backgroundColor: secondaryColor,
+                borderColor: `${primaryColor}20`,
               }}
             >
               <LocationCard

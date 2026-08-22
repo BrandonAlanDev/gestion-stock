@@ -10,5 +10,4 @@ export type ClaveDrawer =
   | "avanzado"
   | "seo"
   | "paginas-sitio"
-  | "legal"
-  | "footer";
+  | "legal";

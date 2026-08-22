@@ -10,7 +10,6 @@ import type { ConfigAjustes } from "@/components/admin/diseno/ajustes/tipos-ajus
 import SeccionIdentidad from "@/components/admin/diseno/apariencia/SeccionIdentidad";
 import type { ConfigApariencia } from "@/components/admin/diseno/apariencia/tipos-apariencia";
 import ContactSection from "@/components/admin/page-config/ContactSection";
-import FooterSection from "@/components/admin/page-config/FooterSection";
 import LocationSection from "@/components/admin/page-config/LocationSection";
 import SocialsSection from "@/components/admin/page-config/SocialsSection";
 import DrawerSeccion from "./DrawerSeccion";
@@ -38,12 +37,19 @@ export default function DrawersConfiguracion({
     favicon: config.favicon ?? null,
     primaryColor: config.primaryColor ?? "#06b6d4",
     secondaryColor: config.secondaryColor ?? "#ffffff",
-    bgColor: config.bgColor ?? "#09090b",
     fontPrimary: config.fontPrimary,
     fontSecondary: config.fontSecondary,
     borderRadius: config.borderRadius,
     shadowLevel: config.shadowLevel,
     density: config.density,
+    banners: config.banners.map((banner) => ({
+      id: banner.id,
+      image: banner.image ?? null,
+      title: banner.title ?? null,
+      subtitle: banner.subtitle ?? null,
+      text: banner.text ?? null,
+      url: banner.url ?? null,
+    })),
   });
 
   const aConfigAjustes = (): ConfigAjustes => ({
@@ -58,7 +64,6 @@ export default function DrawersConfiguracion({
     arreglosEnabled: config.arreglosEnabled,
     escuelaEnabled: config.escuelaEnabled,
     personalizadoEnabled: config.personalizadoEnabled,
-    planAhorroEnabled: config.planAhorroEnabled,
     termsAndConditions: config.termsAndConditions ?? null,
     privacyPolicy: config.privacyPolicy ?? null,
   });
@@ -200,26 +205,6 @@ export default function DrawersConfiguracion({
         descripcion="Acciones peligrosas"
       >
         <PanelAvanzado config={config} />
-      </DrawerSeccion>
-
-      <DrawerSeccion
-        abierto={drawerAbierto === "footer"}
-        alCerrar={alCerrar}
-        titulo="Footer"
-        descripcion="Textos y visibilidad del pie de página"
-      >
-        <FooterSection
-          config={{
-            footerAboutText: config.footerAboutText,
-            footerCopyrightText: config.footerCopyrightText,
-            footerShowSobre: config.footerShowSobre,
-            footerShowNavegacion: config.footerShowNavegacion,
-            footerShowContacto: config.footerShowContacto,
-            footerShowUbicacion: config.footerShowUbicacion,
-            footerShowRedes: config.footerShowRedes,
-            footerShowLegales: config.footerShowLegales,
-          }}
-        />
       </DrawerSeccion>
     </>
   );

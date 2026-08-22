@@ -21,7 +21,7 @@ export default function MovementsPage() {
   const accent = pageConfig?.primaryColor || "#FFFFFF";
   const contrast = getContrastColor(background);
 
-  useEffect(() => { getMovements(1, 100).then(d => { setMovements(d.movements); setLoading(false); }); }, []);
+  useEffect(() => { getMovements().then(d => { setMovements(d); setLoading(false); }); }, []);
 
   return (
 

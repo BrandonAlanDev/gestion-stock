@@ -11,6 +11,7 @@ import {
   Truck,
   type LucideIcon,
 } from "lucide-react";
+import { getContrastColor } from "@/lib/utils";
 
 interface IconoFlotante {
   icono: LucideIcon;
@@ -21,6 +22,8 @@ interface IconoFlotante {
 }
 
 interface NotFoundClientProps {
+  primaryColor: string;
+  secondaryColor: string;
   storeName: string;
   logo: string | null;
 }
@@ -38,8 +41,18 @@ const TRANSICION_APARICION = {
   ease: [0.22, 1, 0.36, 1] as const,
 };
 
-function IconoFlotanteBurbuja({ item }: { item: IconoFlotante }) {
+function IconoFlotanteBurbuja({
+  item,
+  primaryColor,
+  secondaryColor,
+}: {
+  item: IconoFlotante;
+  primaryColor: string;
+  secondaryColor: string;
+}) {
   const esPrimario = item.variante === "primario";
+  const colorFondo = esPrimario ? primaryColor : secondaryColor;
+  const colorIcono = esPrimario ? getContrastColor(primaryColor) : primaryColor;
   const Icono = item.icono;
 
   return (
@@ -61,14 +74,14 @@ function IconoFlotanteBurbuja({ item }: { item: IconoFlotante }) {
       <div
         className={`${item.tamano} rounded-full flex items-center justify-center shadow-lg`}
         style={{
-          backgroundColor: esPrimario ? "var(--color-primario)" : "var(--color-secundario)",
-          border: "1px solid color-mix(in srgb, var(--color-primario) 18%, transparent)",
-          boxShadow: "0 8px 24px color-mix(in srgb, var(--color-primario) 15%, transparent)",
+          backgroundColor: colorFondo,
+          border: `1px solid ${primaryColor}30`,
+          boxShadow: `0 8px 24px ${primaryColor}25`,
         }}
       >
         <Icono
           className="w-1/2 h-1/2"
-          style={{ color: esPrimario ? "var(--texto-sobre-primario)" : "var(--color-primario)" }}
+          style={{ color: colorIcono }}
           strokeWidth={2}
         />
       </div>
@@ -77,25 +90,29 @@ function IconoFlotanteBurbuja({ item }: { item: IconoFlotante }) {
 }
 
 export default function NotFoundClient({
+  primaryColor,
+  secondaryColor,
   storeName,
   logo,
 }: NotFoundClientProps) {
+  const colorTextoPrimario = getContrastColor(primaryColor);
+
   return (
     <main
       className="relative min-h-[70vh] flex-1 flex items-center justify-center overflow-hidden px-4 py-16"
-      style={{ backgroundColor: "color-mix(in srgb, var(--color-secundario) 33%, transparent)" }}
+      style={{ backgroundColor: `${secondaryColor}55` }}
     >
       <motion.div
         aria-hidden
         className="absolute top-[-10%] left-[-5%] w-[45%] h-[55%] rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 18%, transparent)" }}
+        style={{ backgroundColor: `${primaryColor}30` }}
         animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         aria-hidden
         className="absolute bottom-[-15%] right-[-8%] w-[50%] h-[60%] rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 15%, transparent)" }}
+        style={{ backgroundColor: `${primaryColor}25` }}
         animate={{ scale: [1.1, 0.95, 1.1], opacity: [0.4, 0.7, 0.4] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
       />
@@ -120,7 +137,7 @@ export default function NotFoundClient({
         <div className="relative mb-8 flex items-center justify-center w-full">
           <motion.h1
             className="text-[8rem] leading-none md:text-[10rem] font-black tracking-tighter select-none"
-            style={{ color: "var(--color-primario)" }}
+            style={{ color: primaryColor }}
             initial={{ opacity: 0, scale: 0.5, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.2 }}
@@ -129,12 +146,17 @@ export default function NotFoundClient({
           </motion.h1>
 
           {ICONOS_FLOTANTES.map((item, index) => (
-            <IconoFlotanteBurbuja key={index} item={item} />
+            <IconoFlotanteBurbuja
+              key={index}
+              item={item}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+            />
           ))}
         </div>
 
         <motion.h2
-          className="text-2xl md:text-3xl font-bold text-[var(--texto-sobre-fondo)] mb-3"
+          className="text-2xl md:text-3xl font-bold text-gray-800 mb-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSICION_APARICION, delay: 0.5 }}
@@ -143,7 +165,7 @@ export default function NotFoundClient({
         </motion.h2>
 
         <motion.p
-          className="text-base md:text-lg text-[var(--texto-sobre-fondo)] opacity-70 mb-10 max-w-md"
+          className="text-base md:text-lg text-gray-600 mb-10 max-w-md"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSICION_APARICION, delay: 0.65 }}
@@ -163,8 +185,8 @@ export default function NotFoundClient({
               href="/"
               className="inline-flex items-center justify-center px-8 py-3 rounded-full font-semibold transition-opacity hover:opacity-90"
               style={{
-                backgroundColor: "var(--color-primario)",
-                color: "var(--texto-sobre-primario)",
+                backgroundColor: primaryColor,
+                color: colorTextoPrimario,
               }}
             >
               Volver al inicio
@@ -174,10 +196,10 @@ export default function NotFoundClient({
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
             <Link
               href="/productos"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-full font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--color-primario)_10%,transparent)]"
+              className="inline-flex items-center justify-center px-8 py-3 rounded-full font-semibold transition-colors hover:bg-white/60"
               style={{
-                color: "var(--color-primario)",
-                border: "2px solid var(--color-primario)",
+                color: primaryColor,
+                border: `2px solid ${primaryColor}`,
               }}
             >
               Ver catálogo

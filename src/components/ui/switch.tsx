@@ -47,7 +47,7 @@ export default function Switch({
       aria-checked={activo}
       disabled={deshabilitado}
       onClick={() => alCambiar(!activo)}
-      className={cn(clasesBase, "cursor-pointer")}
+      className={clasesBase}
     >
       {conTexto && (
         <span className="flex min-w-0 flex-col items-start text-left">

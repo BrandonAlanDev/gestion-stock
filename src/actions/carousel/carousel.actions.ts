@@ -6,17 +6,13 @@ import { serializeData } from "@/lib/utils";
 import {
   carouselReorderSchema,
   carouselWizardSchema,
+  carouselWizardSlideSchema,
 } from "@/lib/zod";
 import * as carouselService from "@/lib/services/carousel-service";
-import {
-  obtenerCarpetaCarrusel,
-  subirImagen,
-  eliminarImagenes,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { uploadCarouselImage, deleteCarouselImage } from "./helpers";
+import { extractPublicId } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "../../../generated/prisma/client";
-import { procesarSlide } from "./procesar-slide";
+import { resolverEnlaceGuardado } from "@/helpers/resolverEnlaceGuardado";
 import type { CarouselSettings, SlideConfig } from "@/types/carousel";
 
 async function requireAdmin(): Promise<boolean> {
@@ -33,13 +29,11 @@ function migrateSettings(data: unknown): unknown {
 
   const oldLayout = s.layout;
   if (oldLayout === "grid" || oldLayout === "collage" || oldLayout === "minimal") {
-    const layoutsValidos = ["standard", "split", "minimal"];
-    const slideLayoutActual = typeof s.slideLayout === "string" ? s.slideLayout : "";
     return {
       ...d,
       settings: {
         ...s,
-        slideLayout: layoutsValidos.includes(slideLayoutActual) ? slideLayoutActual : "standard",
+        slideLayout: s.slideLayout ?? oldLayout,
         layout: "simple",
       },
     };
@@ -62,48 +56,33 @@ export async function createCarousel(data: unknown) {
     const maxOrderResult = await carouselService.getMaxOrder();
     const nextOrder = (maxOrderResult ?? -1) + 1;
 
+    const slidesWithImages = await Promise.all(
+      parsed.data.slides.map(async (slide, index) => {
+        let imageUrl = slide.image;
+        if (imageUrl.startsWith("data:image")) {
+          const uploaded = await uploadCarouselImage(imageUrl, "slide");
+          imageUrl = uploaded.url;
+        }
+        const linkType = slide.linkType && slide.linkType !== "NONE" ? slide.linkType : undefined;
+        let config = slide.config;
+        if (linkType) {
+          config = { ...(slide.config ?? {}), linkType };
+        } else if (slide.linkType === "NONE" && slide.config && "linkType" in slide.config) {
+          config = Object.fromEntries(Object.entries(slide.config).filter(([clave]) => clave !== "linkType"));
+        }
+        const urlResuelta = resolverEnlaceGuardado(slide.linkType, slide.url);
+        return { ...slide, image: imageUrl, order: index, config, url: urlResuelta, linkType: undefined };
+      })
+    );
+
     const carousel = await carouselService.createCarousel({
       type: parsed.data.type,
       title: parsed.data.title,
       active: true,
       order: nextOrder,
       settings: parsed.data.settings,
-      slides: [],
+      slides: slidesWithImages,
     });
-
-    const subidas: string[] = [];
-    try {
-      const slidesProcesados = [];
-      for (let index = 0; index < parsed.data.slides.length; index++) {
-        const procesado = await procesarSlide(parsed.data.slides[index], carousel.id);
-        if (
-          parsed.data.slides[index].image.startsWith("data:image") &&
-          procesado.publicId
-        ) {
-          subidas.push(procesado.publicId);
-        }
-        slidesProcesados.push({ ...procesado, order: index });
-      }
-
-      await prisma.carouselSlide.createMany({
-        data: slidesProcesados.map((slide) => ({
-          carouselId: carousel.id,
-          image: slide.image,
-          publicId: slide.publicId,
-          title: slide.title,
-          subtitle: slide.subtitle,
-          description: slide.description,
-          ctaText: slide.ctaText,
-          url: slide.url,
-          config: slide.config as unknown as Prisma.InputJsonValue,
-          order: slide.order,
-        })),
-      });
-    } catch (error) {
-      await eliminarImagenes(subidas);
-      await carouselService.deleteCarousel(carousel.id);
-      throw error;
-    }
 
     revalidateTag("carousels");
     return { success: true, data: serializeData(carousel) };
@@ -111,7 +90,7 @@ export async function createCarousel(data: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
       return { error: "Ya existe un carrusel con ese orden" };
     }
-    console.error("Error creando carrusel:", error);
+    console.error("Error creating carousel:", error);
     return { error: "Error al crear carrusel" };
   }
 }
@@ -129,58 +108,38 @@ export async function updateCarousel(data: unknown) {
     const existing = await carouselService.getCarouselById(id);
     if (!existing) return { error: "Carrusel no encontrado" };
 
-    const publicIdPorImagen = new Map<string, string | null>();
-    for (const slide of existing.slides ?? []) {
-      publicIdPorImagen.set(slide.image ?? "", slide.publicId ?? null);
-    }
-
-    const subidasNuevas: string[] = [];
-    const finalSlides = [];
-    for (let index = 0; index < wizardData.slides.length; index++) {
-      const slideDelWizard = wizardData.slides[index];
-      const procesado = await procesarSlide(slideDelWizard, id);
-      if (slideDelWizard.image.startsWith("data:image") && procesado.publicId) {
-        subidasNuevas.push(procesado.publicId);
-      }
-      finalSlides.push({
-        ...procesado,
-        order: index,
-        publicId: publicIdPorImagen.get(procesado.image) ?? procesado.publicId,
-      });
-    }
-
-    let carousel;
-    try {
-      carousel = await carouselService.updateCarousel({
-        id,
-        type: wizardData.type,
-        title: wizardData.title,
-        active: existing.active,
-        settings: wizardData.settings,
-        slides: finalSlides,
-      });
-    } catch (error) {
-      await eliminarImagenes(subidasNuevas);
-      throw error;
-    }
-
-    const publicIdsFinales = new Set(
-      finalSlides.map((s) => s.publicId ?? undefined).filter(Boolean)
+    const slidesWithImages = await Promise.all(
+      wizardData.slides.map(async (slide, index) => {
+        let imageUrl = slide.image;
+        if (imageUrl.startsWith("data:image")) {
+          const uploaded = await uploadCarouselImage(imageUrl, "slide");
+          imageUrl = uploaded.url;
+        }
+        const linkType = slide.linkType && slide.linkType !== "NONE" ? slide.linkType : undefined;
+        let config = slide.config;
+        if (linkType) {
+          config = { ...(slide.config ?? {}), linkType };
+        } else if (slide.linkType === "NONE" && slide.config && "linkType" in slide.config) {
+          config = Object.fromEntries(Object.entries(slide.config).filter(([clave]) => clave !== "linkType"));
+        }
+        const urlResuelta = resolverEnlaceGuardado(slide.linkType, slide.url);
+        return { ...slide, image: imageUrl, order: index, config, url: urlResuelta, linkType: undefined };
+      })
     );
-    const publicIdsViejos = (existing.slides ?? [])
-      .map((s) => s.publicId ?? obtenerPublicIdDesdeUrl(s.image ?? ""))
-      .filter((p): p is string => !!p && !publicIdsFinales.has(p));
-    if (publicIdsViejos.length > 0) {
-      await eliminarImagenes(publicIdsViejos);
-    }
+
+    const carousel = await carouselService.updateCarousel({
+      id,
+      type: wizardData.type,
+      title: wizardData.title,
+      active: true,
+      settings: wizardData.settings,
+      slides: slidesWithImages,
+    });
 
     revalidateTag("carousels");
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "P2002") {
-      return { error: "Ya existe un carrusel con ese orden" };
-    }
-    console.error("Error actualizando carrusel:", error);
+    console.error("Error updating carousel:", error);
     return { error: "Error al actualizar carrusel" };
   }
 }
@@ -189,14 +148,17 @@ export async function deleteCarousel(id: string) {
   if (!(await requireAdmin())) return { error: "No autorizado" };
   try {
     const carousel = await carouselService.getCarouselById(id);
-    if (!carousel) return { error: "Carrusel no encontrado" };
-
+    if (carousel?.slides) {
+      await Promise.all(
+        carousel.slides.map(async (slide) => {
+          if (slide.image) {
+            const publicId = extractPublicId(slide.image);
+            if (publicId) await deleteCarouselImage(publicId);
+          }
+        })
+      );
+    }
     await carouselService.deleteCarousel(id);
-
-    const publicIds = (carousel.slides ?? []).map((slide) =>
-      slide.publicId ?? obtenerPublicIdDesdeUrl(slide.image ?? "")
-    );
-    await eliminarImagenes(publicIds);
 
     const pageConfig = await prisma.pageConfig.findUnique({ where: { id: 1 } });
     if (pageConfig?.sectionOrder) {
@@ -247,6 +209,112 @@ export async function getCarousels(type?: "HERO" | "BANNER" | "CARDS") {
   }
 }
 
+export async function addCarouselSlide(carouselId: string, slideData: unknown) {
+  try {
+    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const parsed = carouselWizardSlideSchema.safeParse(slideData);
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+    let imageUrl = parsed.data.image;
+    if (imageUrl.startsWith("data:image")) {
+      const uploaded = await uploadCarouselImage(imageUrl, "slide");
+      imageUrl = uploaded.url;
+    }
+
+    const order = parsed.data.order ?? 0;
+    const linkType = parsed.data.linkType !== "NONE" ? parsed.data.linkType : undefined;
+    let config = parsed.data.config;
+    if (linkType) {
+      config = { ...(parsed.data.config ?? {}), linkType };
+    } else if (parsed.data.linkType === "NONE" && parsed.data.config && "linkType" in parsed.data.config) {
+      config = Object.fromEntries(Object.entries(parsed.data.config).filter(([clave]) => clave !== "linkType"));
+    }
+    const urlResuelta = resolverEnlaceGuardado(parsed.data.linkType, parsed.data.url);
+    const slide = await carouselService.createSlide({
+      carouselId,
+      image: imageUrl,
+      title: parsed.data.title,
+      subtitle: parsed.data.subtitle,
+      description: parsed.data.description,
+      ctaText: parsed.data.ctaText,
+      url: urlResuelta,
+      config,
+      order,
+    });
+
+    revalidateTag("carousels");
+    return { success: true, data: serializeData(slide) };
+  } catch (error: unknown) {
+    console.error("Error adding slide:", error);
+    return { error: "Error al agregar slide" };
+  }
+}
+
+export async function updateCarouselSlide(slideId: string, slideData: unknown) {
+  try {
+    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const parsed = carouselWizardSlideSchema.safeParse(slideData);
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+    let imageUrl = parsed.data.image;
+    if (imageUrl.startsWith("data:image")) {
+      const uploaded = await uploadCarouselImage(imageUrl, "slide");
+      imageUrl = uploaded.url;
+    }
+
+    const linkType = parsed.data.linkType !== "NONE" ? parsed.data.linkType : undefined;
+    let config = parsed.data.config;
+    if (linkType) {
+      config = { ...(parsed.data.config ?? {}), linkType };
+    } else if (parsed.data.linkType === "NONE" && parsed.data.config && "linkType" in parsed.data.config) {
+      config = Object.fromEntries(Object.entries(parsed.data.config).filter(([clave]) => clave !== "linkType"));
+    }
+    const urlResuelta = resolverEnlaceGuardado(parsed.data.linkType, parsed.data.url);
+    const slide = await carouselService.updateSlide({
+      id: slideId,
+      image: imageUrl,
+      title: parsed.data.title,
+      subtitle: parsed.data.subtitle,
+      description: parsed.data.description,
+      ctaText: parsed.data.ctaText,
+      url: urlResuelta,
+      config,
+      order: parsed.data.order,
+    });
+
+    revalidateTag("carousels");
+    return { success: true, data: serializeData(slide) };
+  } catch (error: unknown) {
+    console.error("Error updating slide:", error);
+    return { error: "Error al actualizar slide" };
+  }
+}
+
+export async function deleteCarouselSlide(slideId: string, carouselId: string) {
+  try {
+    if (!(await requireAdmin())) return { error: "No autorizado" };
+
+    const slide = await carouselService.getSlideById(slideId);
+    if (slide?.image) {
+      const publicId = extractPublicId(slide.image);
+      if (publicId) await deleteCarouselImage(publicId);
+    }
+
+    await carouselService.deleteSlide(slideId);
+
+    const remaining = await carouselService.getSlidesByCarouselId(carouselId);
+    await Promise.all(
+      remaining.map((s, i) => carouselService.updateSlideOrder(s.id, i))
+    );
+
+    revalidateTag("carousels");
+    return { success: true };
+  } catch (error: unknown) {
+    console.error("Error deleting slide:", error);
+    return { error: "Error al eliminar slide" };
+  }
+}
+
 export async function getAllCarousels() {
   try {
     const carousels = await carouselService.getCarousels(undefined, false);
@@ -287,64 +355,28 @@ export async function duplicateCarousel(id: string) {
     const maxOrderResult = await carouselService.getMaxOrder();
     const nextOrder = (maxOrderResult ?? -1) + 1;
 
-    const copia = await carouselService.createCarousel({
+    const slides = (original.slides ?? []).map((slide, index) => ({
+      image: slide.image ?? "",
+      title: slide.title ?? undefined,
+      subtitle: slide.subtitle ?? undefined,
+      description: slide.description ?? undefined,
+      ctaText: slide.ctaText ?? undefined,
+      url: slide.url ?? undefined,
+      config: (slide.config ?? undefined) as SlideConfig | undefined,
+      order: index,
+    }));
+
+    const carousel = await carouselService.createCarousel({
       type: original.type,
       title: `${original.title ?? "Carrusel"} (copia)`,
       active: original.active,
       order: nextOrder,
       settings: (original.settings ?? undefined) as CarouselSettings | undefined,
-      slides: [],
+      slides,
     });
 
-    const subidas: string[] = [];
-    try {
-      const slides = [];
-      for (let index = 0; index < (original.slides ?? []).length; index++) {
-        const slideOriginal = original.slides?.[index];
-        if (!slideOriginal) continue;
-        let image = slideOriginal.image ?? "";
-        let publicId: string | null | undefined;
-        if (slideOriginal.publicId || obtenerPublicIdDesdeUrl(image)) {
-          const subida = await subirImagen(image, obtenerCarpetaCarrusel(copia.id));
-          image = subida.url;
-          publicId = subida.publicId;
-          subidas.push(subida.publicId);
-        }
-        slides.push({
-          image,
-          publicId,
-          title: slideOriginal.title ?? undefined,
-          subtitle: slideOriginal.subtitle ?? undefined,
-          description: slideOriginal.description ?? undefined,
-          ctaText: slideOriginal.ctaText ?? undefined,
-          url: slideOriginal.url ?? undefined,
-          config: (slideOriginal.config ?? undefined) as SlideConfig | undefined,
-          order: index,
-        });
-      }
-
-      await prisma.carouselSlide.createMany({
-        data: slides.map((slide) => ({
-          carouselId: copia.id,
-          image: slide.image,
-          publicId: slide.publicId,
-          title: slide.title,
-          subtitle: slide.subtitle,
-          description: slide.description,
-          ctaText: slide.ctaText,
-          url: slide.url,
-          config: slide.config as unknown as Prisma.InputJsonValue,
-          order: slide.order,
-        })),
-      });
-    } catch (error) {
-      await eliminarImagenes(subidas);
-      await carouselService.deleteCarousel(copia.id);
-      throw error;
-    }
-
     revalidateTag("carousels");
-    return { success: true, data: serializeData(copia) };
+    return { success: true, data: serializeData(carousel) };
   } catch (error) {
     console.error("Error al duplicar carrusel:", error);
     return { error: "Error al duplicar carrusel" };

@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
 
 export type CustomBoardInput = {
   tipo: string;
@@ -18,10 +17,6 @@ export type CustomBoardInput = {
 };
 
 export async function createCustomBoard(data: CustomBoardInput) {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
-  if (!habilitado) {
-    return { error: "El módulo de tablas personalizadas está desactivado." };
-  }
   try {
     const newBoard = await prisma.customBoard.create({
       data: {
@@ -47,10 +42,6 @@ export async function createCustomBoard(data: CustomBoardInput) {
 }
 
 export async function getCustomBoards() {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
-  if (!habilitado) {
-    return [];
-  }
   try {
     const boards = await prisma.customBoard.findMany({
       orderBy: {

@@ -13,7 +13,7 @@ export async function getGarmentsPaginated(
     active: true,
     ...(categoryId && { categoryId }),
     ...(subCategoryId && { subCategoryId }),
-    ...(search && { name: { contains: search } }),
+    ...(search && { name: { contains: search, mode: 'insensitive' } }),
   };
 
   const [garments, total] = await Promise.all([
@@ -51,11 +51,11 @@ export async function getGarmentById(id: string) {
   });
 }
 
-export async function createGarment(data: Prisma.GarmentUncheckedCreateInput) {
+export async function createGarment(data: any) {
   return prisma.garment.create({ data });
 }
 
-export async function updateGarment(id: string, data: Prisma.GarmentUpdateInput) {
+export async function updateGarment(id: string, data: any) {
   return prisma.garment.update({ where: { id }, data });
 }
 
@@ -80,9 +80,9 @@ export async function updateGarmentWithDetails(
       stock: number;
       sizeId?: string | null;
       colorId?: string | null;
-      attributes?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+      attributes?: any;
     }>;
-    images: Array<{ url: string; publicId?: string | null; order: number }>;
+    images: string[]; // URLs finales de Cloudinary
   }
 ) {
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
@@ -93,7 +93,7 @@ export async function updateGarmentWithDetails(
     data: {
       name,
       price,
-      maxPrice: typeof maxPrice === "number" ? maxPrice : null,
+      maxPrice: (typeof maxPrice === 'number' ? maxPrice : null) as any,// Aseguramos que sea number o null
       cost,
       description,
       categoryId,
@@ -102,43 +102,52 @@ export async function updateGarmentWithDetails(
     },
   });
 
-  // 2. Sincronizar variantes (transaccional y paralelo)
-  await prisma.$transaction(async (tx) => {
-    const currentVariants = await tx.garmentVariant.findMany({ where: { garmentId: id } });
-    const currentVariantIds = currentVariants.map((v) => v.id);
-    const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id as string);
+  // 2. Sincronizar variantes
+  const currentVariants = await prisma.garmentVariant.findMany({ where: { garmentId: id } });
+  const currentVariantIds = currentVariants.map((v) => v.id);
+  const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id!);
 
-    const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
-    if (idsToDelete.length > 0) {
-      await tx.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
-    }
+  // Eliminar las que ya no están
+  const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
+  if (idsToDelete.length > 0) {
+    await prisma.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
+  }
 
-    await Promise.all(
-      variants.map((v) => {
-        const data = {
+  // Actualizar existentes o crear nuevas
+  for (const v of variants) {
+    if (v.id) {
+      await prisma.garmentVariant.update({
+        where: { id: v.id },
+        data: {
           sku: v.sku,
           stock: Number(v.stock),
           sizeId: v.sizeId || null,
           colorId: v.colorId || null,
-          attributes: v.attributes ?? undefined,
-        };
-        if (v.id) {
-          return tx.garmentVariant.update({ where: { id: v.id }, data });
-        }
-        return tx.garmentVariant.create({ data: { garmentId: id, ...data } });
-      })
-    );
-  });
+          attributes: v.attributes || null,
+        },
+      });
+    } else {
+      await prisma.garmentVariant.create({
+        data: {
+          garmentId: id,
+          sku: v.sku,
+          stock: Number(v.stock),
+          sizeId: v.sizeId || null,
+          colorId: v.colorId || null,
+          attributes: v.attributes || null,
+        },
+      });
+    }
+  }
 
   // 3. Sincronizar imágenes
   await prisma.garmentImage.deleteMany({ where: { garmentId: id } });
   if (images.length > 0) {
     await prisma.garmentImage.createMany({
-      data: images.map(({ url, publicId, order }) => ({
+      data: images.map((url, index) => ({
         garmentId: id,
         srcImage: url,
-        publicId: publicId ?? null,
-        order,
+        order: index,
       })),
     });
   }

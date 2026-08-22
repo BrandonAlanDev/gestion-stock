@@ -37,7 +37,7 @@ export interface CustomPage {
 
 export default function PageRenderer({ page }: { page: CustomPage }) {
   return (
-    <main className="w-full min-h-screen bg-[var(--color-fondo-sitio)] text-[var(--texto-sobre-fondo)] pt-24 uppercase tracking-wide selection:bg-[var(--color-primario)] selection:text-[var(--texto-sobre-primario)]">
+    <main className="w-full min-h-screen bg-white pt-24 uppercase tracking-wide selection:bg-[#f0fafa] selection:text-[#0d5c63]">
       {page.sections.map((section) => (
         <SectionRenderer key={section.id} section={section} />
       ))}

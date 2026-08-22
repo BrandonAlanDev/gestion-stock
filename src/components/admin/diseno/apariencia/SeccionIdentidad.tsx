@@ -1,7 +1,6 @@
 "use client";
 
 import { Save, Store } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
@@ -24,7 +23,6 @@ export default function SeccionIdentidad({
 }: {
   config: ConfigApariencia;
 }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<FormIdentidad>({
     storeName: config.storeName,
@@ -47,7 +45,6 @@ export default function SeccionIdentidad({
         return;
       }
       toast.success("Cambios guardados");
-      router.refresh();
     });
   };
 
@@ -118,14 +115,12 @@ export default function SeccionIdentidad({
             label="Logo"
             value={form.logo}
             onChange={(valor) => actualizar("logo", valor)}
-            relacionAspecto={1}
           />
 
           <ImageUploader
             label="Favicon"
             value={form.favicon}
             onChange={(valor) => actualizar("favicon", valor)}
-            relacionAspecto={1}
           />
         </div>
 

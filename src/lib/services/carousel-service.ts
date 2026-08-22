@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { CarouselType, CarouselSettings, SlideConfig } from "@/types/carousel";
-import type { Prisma } from "../../../generated/prisma/client";
 
 export interface CarouselSlideInput {
   id?: string;
   image: string;
-  publicId?: string | null;
   title?: string;
   subtitle?: string;
   description?: string;
@@ -94,8 +92,8 @@ export async function createCarousel(data: CarouselCreateInput) {
       data: {
         ...data,
         pageConfigId: 1,
-        slides: { create: data.slides as Prisma.CarouselSlideCreateWithoutCarouselInput[] },
-      } as unknown as Prisma.CarouselCreateInput,
+        slides: { create: data.slides },
+      },
       include: { slides: { orderBy: { order: "asc" } } },
     });
     return carousel;
@@ -109,7 +107,7 @@ export async function updateCarousel(data: CarouselUpdateInput) {
     if (Object.keys(carouselData).length > 0) {
       await tx.carousel.update({
         where: { id },
-        data: carouselData as Prisma.CarouselUpdateInput,
+        data: carouselData,
       });
     }
 
@@ -122,7 +120,6 @@ export async function updateCarousel(data: CarouselUpdateInput) {
         data: slides.map((slide) => ({
           carouselId: id,
           image: slide.image,
-          publicId: slide.publicId,
           title: slide.title,
           subtitle: slide.subtitle,
           description: slide.description,
@@ -130,7 +127,7 @@ export async function updateCarousel(data: CarouselUpdateInput) {
           url: slide.url,
           config: slide.config,
           order: slide.order,
-        })) as Prisma.CarouselSlideCreateManyInput[],
+        })),
       });
     }
 
@@ -157,17 +154,12 @@ export async function reorderCarousels(ids: string[]) {
 }
 
 export async function createSlide(data: CarouselSlideInput & { carouselId: string }) {
-  return prisma.carouselSlide.create({
-    data: data as unknown as Prisma.CarouselSlideCreateInput,
-  });
+  return prisma.carouselSlide.create({ data });
 }
 
 export async function updateSlide(data: CarouselSlideInput & { id: string }) {
   const { id, ...rest } = data;
-  return prisma.carouselSlide.update({
-    where: { id },
-    data: rest as unknown as Prisma.CarouselSlideUpdateInput,
-  });
+  return prisma.carouselSlide.update({ where: { id }, data: rest });
 }
 
 export async function deleteSlide(id: string) {

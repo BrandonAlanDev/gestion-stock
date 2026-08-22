@@ -14,10 +14,9 @@ interface ManageCategoryModalProps {
   sizeTypes: TalleTipoConSizes[];
   category?: CategoriaConSubs;
   variant?: "admin" | "tienda";
-  onCategoryChange?: () => void;
 }
 
-export default function ManageCategoryModal({ sizeTypes, category, variant = "tienda", onCategoryChange }: ManageCategoryModalProps) {
+export default function ManageCategoryModal({ sizeTypes, category, variant = "tienda" }: ManageCategoryModalProps) {
   const { pageConfig } = usePageConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -76,7 +75,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     },
     submitBtn: {
       height: "48px",
-      width: "100%",
       borderRadius: "12px",
       fontSize: "13px",
       border: isEdit ? `1px solid ${overlayBorder}` : "none",
@@ -104,7 +102,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
         toast.error(res.error);
       } else {
         toast.success(isEdit ? "Categoría actualizada" : "Categoría creada");
-        onCategoryChange?.();
         if (!isEdit) { setIsOpen(false); setFormData({ name: "" }); }
       }
     } catch {
@@ -121,7 +118,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     const res = await deleteCategory(category.id);
     setLoading(false);
     if (res?.error) { toast.error(res.error); }
-    else { toast.success("Categoría eliminada"); setIsOpen(false); onCategoryChange?.(); }
+    else { toast.success("Categoría eliminada"); setIsOpen(false); }
   };
 
   return (
@@ -220,8 +217,9 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                     (e.currentTarget as HTMLButtonElement).style.opacity = "1";
                   } : undefined}
                 >
-                  {loading && <Loader2 className="animate-spin" size={18} />}
-                  {isEdit ? "Actualizar Nombre Principal" : "Crear Categoría Madre"}
+                  {loading
+                    ? <Loader2 className="animate-spin" size={18} />
+                    : isEdit ? "Actualizar Nombre Principal" : "Crear Categoría Madre"}
                 </button>
               </form>
 
@@ -234,7 +232,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                   textColor={textColor}
                   overlayBorder={overlayBorder}
                   innerBg={innerBg}
-                  onCategoryChange={onCategoryChange}
                 />
               )}
             </div>

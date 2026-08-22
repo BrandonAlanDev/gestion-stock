@@ -16,8 +16,6 @@ import CarouselWizardStep3 from "./CarouselWizardStep3";
 import SlideEditor from "./SlideEditor";
 import type { SlideFormData } from "./SlideEditor";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { ContextoCapas } from "@/contextos/capas/contexto-capas";
-import { useCapa } from "@/contextos/capas/use-capa";
 import type { CarouselWizardData, SlideWizardData, CarouselType, CarouselSettings } from "@/types/carousel";
 
 interface CarouselWizardProps {
@@ -56,7 +54,6 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
   const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
   const textColor = getContrastColor(secondaryColor);
 
-  const { nivel, zIndice } = useCapa();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,12 +78,12 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           description: (s.description as string) || "",
           ctaText: (s.ctaText as string) || "",
           url: (s.url as string) || "",
-          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "NONE",
+          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "",
           order: (s.order as number) ?? i,
           isNew: false,
         })),
       });
-      setStep(3);
+      setStep(1);
     } else {
       setStep(1);
       setWizardData(DEFAULT_WIZARD_DATA);
@@ -180,7 +177,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div
           className={cn(
             "w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl"
@@ -301,7 +298,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
   );
 
   return createPortal(
-    <ContextoCapas.Provider value={nivel + 1}>
+    <>
       {modalContent}
       {editingSlide && (
         <SlideEditor
@@ -312,7 +309,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           carouselType={wizardData.type}
         />
       )}
-    </ContextoCapas.Provider>,
+    </>,
     document.body
   );
 }

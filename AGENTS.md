@@ -63,13 +63,12 @@ código nuevo y toda modificación. Su objetivo es mantener una arquitectura ord
    límites de líneas, una función por archivo, imports con `@/`, etc.).
 3. **Paralelización:** lanzar varios subagentes en paralelo cuando las sub-tareas sean
    independientes entre sí (un solo mensaje con múltiples llamadas a `task`).
-4. **Agente verificador global:** cuando una fase requiera muchos subagentes (3 o más) y
+4. **Agente verificador global:** cuando una fase requiera muchos subagentes (3 o más) o
    toque código compartido entre ellos, tras completar los subagentes se debe lanzar un
    agente verificador (`verificador`) que revise TODO el código producido en la fase,
    detecte fallas, incoherencias, violaciones de las reglas de este documento y archivos
    fuera de límites, y las repare. El verificador es el último paso de la fase y su
-   aprobación es requisito para dar la fase por terminada. La unica exepción es solo si 
-   es una armado de un plan no se va a requerir de un agente verificador global.
+   aprobación es requisito para dar la fase por terminada.
 5. **Nunca delegar la coordinación:** la orquestación de subagentes, la definición de
    interfaces entre sub-tareas y la decisión final sobre resultados siempre las hace el
    agente principal, no los subagentes.

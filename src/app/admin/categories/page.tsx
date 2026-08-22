@@ -5,7 +5,7 @@ import ManageCategoryModal from "@/components/categories/modals/ManageCategoryMo
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
 import { Tag, Layers, FolderDot } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getCategories } from "@/actions/categories";
 import { getSizeTypes } from "@/actions/sizes";
 import { getContrastColor } from "@/lib/utils";
@@ -16,11 +16,6 @@ export default function CategoriesAdminPage() {
   const [categories, setCategories] = useState<CategoriaConSubs[]>([]);
   const [sizeTypes, setSizeTypes] = useState<TalleTipoConSizes[]>([]);
   const [mounted, setMounted] = useState(false);
-
-  const refreshCategories = useCallback(async () => {
-    const catData = await getCategories();
-    setCategories(catData || []);
-  }, []);
 
   useEffect(() => {
     Promise.all([getCategories(), getSizeTypes()]).then(([catData, sizeData]) => {
@@ -60,7 +55,7 @@ export default function CategoriesAdminPage() {
             Gestión de categorías y subgrupos
           </p>
         </div>
-        <ManageCategoryModal sizeTypes={sizeTypes} onCategoryChange={refreshCategories} />
+        <ManageCategoryModal sizeTypes={sizeTypes} />
       </div>
 
       {/* GRID DE CATEGORÍAS */}
@@ -90,7 +85,7 @@ export default function CategoriesAdminPage() {
                 <FolderDot size={12} />
                 Categoría Principal
               </div>
-              <ManageCategoryModal sizeTypes={sizeTypes} category={cat} onCategoryChange={refreshCategories} />
+              <ManageCategoryModal sizeTypes={sizeTypes} category={cat} />
             </div>
 
             {/* Nombre categoría */}
@@ -135,7 +130,7 @@ export default function CategoriesAdminPage() {
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
                     </div>
-                    <DeleteSubBtn id={sub.id} onDeleted={refreshCategories} />
+                    <DeleteSubBtn id={sub.id} />
                   </div>
                 ))}
 
@@ -149,7 +144,7 @@ export default function CategoriesAdminPage() {
 
             {/* Formulario agregar subcategoría */}
             <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: `1px solid ${overlayBorder}` }}>
-              <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} onSuccess={refreshCategories} />
+              <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} />
             </div>
           </div>
         ))}

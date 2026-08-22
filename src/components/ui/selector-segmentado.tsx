@@ -36,7 +36,7 @@ export default function SelectorSegmentado({
             aria-pressed={activo}
             onClick={() => alCambiar(opcion.valor)}
             className={cn(
-              "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition cursor-pointer sm:flex-none",
+              "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition sm:flex-none",
               activo
                 ? "bg-[var(--admin-primario)] text-[var(--admin-primario-texto)]"
                 : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]",

@@ -1,3 +1,5 @@
+import QueryProvider from "@/providers/QueryProvider";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <QueryProvider>{children}</QueryProvider>;
 }

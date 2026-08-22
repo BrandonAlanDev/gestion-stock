@@ -1,277 +1,324 @@
 "use client";
 
+import { X, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Loader2, Save, AlertCircle } from "lucide-react";
-import { cn, getContrastColor } from "@/lib/utils";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import ZonaImagenSeccion from "./modal/ZonaImagenSeccion";
-import ContenidoSeccion from "./modal/ContenidoSeccion";
-import AparienciaSeccion from "./modal/AparienciaSeccion";
-import BotonEnlaceSeccion from "./modal/BotonEnlaceSeccion";
-import { FORMULARIO_VACIO, LIMITES_TARJETA, type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./modal/tipos";
-import { ContextoCapas } from "@/contextos/capas/contexto-capas";
-import { useCapa } from "@/contextos/capas/use-capa";
-
-export type { DatosTarjeta, SelectorCategoria, SelectorProducto } from "./modal/tipos";
+import { Destination, SelectItem } from "@/components/admin/destination-picker/types";
+import DestinationPicker from "@/components/admin/destination-picker/DestinationPicker";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: DatosTarjeta) => void;
-  initialData: DatosTarjeta | null;
-  categorias: SelectorCategoria[];
-  productos: SelectorProducto[];
-  relacionAspecto?: number;
+  onSave: (data: any) => void;
+  initialData: any;
+  products: SelectItem[];
+  categories: SelectItem[];
   primaryColor?: string;
   secondaryColor?: string;
 }
 
-export default function GridModal({
-  isOpen,
-  onClose,
-  onSave,
-  initialData,
-  categorias,
-  productos,
-  relacionAspecto = 16 / 10,
-  primaryColor: primaryProp,
-  secondaryColor: secondaryProp,
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
+}
+
+export default function GridModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialData, 
+  products, 
+  categories,
+  primaryColor = "#06b6d4",
+  secondaryColor = "#ffffff"
 }: Props) {
-  const { nivel, zIndice } = useCapa();
-  const { pageConfig } = usePageConfig();
-  const configNido = (pageConfig?.pageConfig ?? pageConfig) as Record<string, unknown> | undefined;
-  const primaryColor = primaryProp || (configNido?.primaryColor as string) || "#06b6d4";
-  const secondaryColor = secondaryProp || (configNido?.secondaryColor as string) || "#ffffff";
-  const textColor = getContrastColor(secondaryColor);
 
-  const [formData, setFormData] = useState<DatosTarjeta>(FORMULARIO_VACIO);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [intentosError, setIntentosError] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [recorteAbierto, setRecorteAbierto] = useState(false);
-  const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
-  const [botonesAbiertos, setBotonesAbiertos] = useState(false);
+  const [formData, setFormData] = useState(
+    initialData || {
+      title: "",
+      subtitle: "",
+      image: "",
+      order: 0,
+      subtitleNeon: false,
+      subtitleDim: false,
+      linkStyle: "IMAGE",
+      buttonVariant: "DEFAULT",
+      buttonText: "",
+      buttonBgColor: "",
+      buttonTextColor: "",
+      destination: {
+        type: "none",
+        value: "",
+      },
+    }
+  );
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(initialData ? { ...FORMULARIO_VACIO, ...initialData } : FORMULARIO_VACIO);
-      setAparienciaAbierta(false);
-      setBotonesAbiertos(false);
-      setError(null);
-      setIsSubmitting(false);
-      setIntentosError(0);
-    }
-  }, [isOpen, initialData]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const manejarTecla = (evento: KeyboardEvent) => {
-      if (evento.key === "Escape" && !recorteAbierto && !isSubmitting) {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", manejarTecla);
-    return () => document.removeEventListener("keydown", manejarTecla);
-  }, [isOpen, recorteAbierto, isSubmitting, onClose]);
-
-  const actualizar = <K extends keyof DatosTarjeta>(campo: K, valor: DatosTarjeta[K]) => {
-    setFormData((prev) => ({ ...prev, [campo]: valor }));
-  };
-
-  const contar = (campo: "title" | "subtitle") => formData[campo].length;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const marcarError = (mensaje: string) => {
-      setError(mensaje);
-      setIntentosError((prev) => prev + 1);
-    };
-
-    if (!formData.image) {
-      marcarError("La imagen es obligatoria");
-      return;
-    }
-    if (formData.linkType === "CATEGORY" && !formData.linkValue) {
-      marcarError("Seleccioná una categoría de destino");
-      return;
-    }
-    if (formData.linkType === "PRODUCT" && !formData.linkValue) {
-      marcarError("Seleccioná un producto de destino");
-      return;
-    }
-    if (formData.linkType === "EXTERNAL") {
-      const url = formData.linkValue.trim();
-      if (!/^https?:\/\//.test(url)) {
-        marcarError("La URL externa debe empezar con http:// o https://");
-        return;
-      }
-    }
-    if (contar("title") > LIMITES_TARJETA.title || contar("subtitle") > LIMITES_TARJETA.subtitle) {
-      marcarError("El título o el subtítulo superan el límite de caracteres");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      onSave({
-        ...formData,
-        linkType: formData.linkType,
-        linkValue: formData.linkValue.trim(),
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        title: "",
+        subtitle: "",
+        image: "",
+        order: 0,
+        subtitleNeon: false,
+        subtitleDim: false,
+        linkStyle: "IMAGE",
+        buttonVariant: "DEFAULT",
+        buttonText: "",
+        buttonBgColor: "",
+        buttonTextColor: "",
+        destination: { type: "none", value: "" },
       });
-      onClose();
-    } catch {
-      marcarError("Error al guardar la tarjeta");
-    } finally {
-      setIsSubmitting(false);
+    }
+  }, [initialData, isOpen]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   if (!isOpen) return null;
 
-  const modalContent = (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="titulo-modal-seccion"
-        className={cn(
-          "w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-oculta rounded-2xl border shadow-2xl",
-          isMobile
-            ? "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
-            : "animate-slide-down"
-        )}
-        style={{ backgroundColor: secondaryColor, color: textColor, borderColor: primaryColor }}
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div 
+        className="w-full max-w-lg rounded-3xl shadow-2xl border flex flex-col"
+        style={{
+          backgroundColor: secondaryColor,
+          color: getContrastColor(secondaryColor),
+          borderColor: getContrastColor(secondaryColor).concat("22")
+        }}
       >
-        <div
-          className="flex items-center justify-between p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl"
-          style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}
-        >
-          <div>
-            <h2 id="titulo-modal-seccion" className="text-xl font-bold" style={{ color: textColor }}>
-              {initialData ? "Editar" : "Nueva"} sección
-            </h2>
-            <p className="text-sm" style={{ color: textColor + "80" }}>
-              {initialData
-                ? "Modificá el contenido y apariencia de esta sección"
-                : "Creá y personalizá el contenido de esta sección"}
-            </p>
-          </div>
+        <div className="flex justify-between items-center p-4 pb-0 sm:p-8">
+          <h3 className="text-lg font-black uppercase">Configurar Sección</h3>
+          <button onClick={onClose} className="hover:opacity-70 transition-opacity">
+            <X size={24} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <ZonaImagenSeccion
-            datos={formData}
-            relacionAspecto={relacionAspecto}
-            deshabilitada={isSubmitting}
-            alCambiarEditorAbierto={setRecorteAbierto}
-            alCambiarImagen={(valor) => actualizar("image", valor)}
-            primaryColor={primaryColor}
-            textColor={textColor}
+        <div className="p-4 pt-4 sm:p-8 max-h-[60vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
+        <div className="space-y-4">
+          <input
+            placeholder="Título"
+            className="w-full p-4 border rounded-xl bg-transparent"
+            style={{ borderColor: getContrastColor(secondaryColor).concat("44") }}
+            value={formData.title || ""}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
-
-          <ContenidoSeccion
-            title={formData.title}
-            subtitle={formData.subtitle}
-            alCambiar={actualizar}
-            primaryColor={primaryColor}
-            textColor={textColor}
+          <input
+            placeholder="Subtítulo"
+            className="w-full p-4 border rounded-xl bg-transparent"
+            style={{ borderColor: getContrastColor(secondaryColor).concat("44") }}
+            value={formData.subtitle || ""}
+            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
           />
-
-          <AparienciaSeccion
-            abierta={aparienciaAbierta}
-            alAlternar={() => setAparienciaAbierta(!aparienciaAbierta)}
-            subtitleNeon={formData.subtitleNeon}
-            subtitleDim={formData.subtitleDim}
-            buttonVariant={formData.buttonVariant}
-            buttonBgColor={formData.buttonBgColor}
-            buttonTextColor={formData.buttonTextColor}
-            alCambiar={actualizar}
-            primaryColor={primaryColor}
-            textColor={textColor}
-          />
-
-          <BotonEnlaceSeccion
-            abierta={botonesAbiertos}
-            alAlternar={() => setBotonesAbiertos(!botonesAbiertos)}
-            linkStyle={formData.linkStyle}
-            buttonText={formData.buttonText}
-            linkType={formData.linkType}
-            linkValue={formData.linkValue}
-            categorias={categorias}
-            productos={productos}
-            alCambiar={actualizar}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            textColor={textColor}
-          />
-
-          {error && (
-            <div
-              className="p-3 rounded-lg flex items-center gap-2 text-sm"
-              style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}
+          
+          {/* Efecto neón en subtítulo */}
+          <div className="flex items-center justify-between p-4 border rounded-xl" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
+            <label className="font-bold text-sm">Subtítulo con efecto neón</label>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, subtitleNeon: !formData.subtitleNeon })}
+              className="w-12 h-6 rounded-full transition-colors relative"
+              style={{
+                backgroundColor: formData.subtitleNeon ? primaryColor : getContrastColor(secondaryColor).concat("33"),
+              }}
             >
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+              <div
+                className="w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm"
+                style={{ left: formData.subtitleNeon ? "calc(100% - 20px)" : "4px" }}
+              />
+            </button>
+          </div>
+
+          {/* Subtítulo opaco/gris */}
+          <div className="flex items-center justify-between p-4 border rounded-xl" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
+            <label className="font-bold text-sm">Subtítulo opaco (gris)</label>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, subtitleDim: !formData.subtitleDim })}
+              className="w-12 h-6 rounded-full transition-colors relative"
+              style={{
+                backgroundColor: formData.subtitleDim ? primaryColor : getContrastColor(secondaryColor).concat("33"),
+              }}
+            >
+              <div
+                className="w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm"
+                style={{ left: formData.subtitleDim ? "calc(100% - 20px)" : "4px" }}
+              />
+            </button>
+          </div>
+
+          {/* Tipo de enlace */}
+          <div>
+            <label className="text-xs font-black uppercase tracking-[0.2em] mb-2 block" style={{ color: getContrastColor(secondaryColor) + "aa" }}>
+              Click en
+            </label>
+            <div className="flex gap-2">
+              {[
+                { value: "IMAGE", label: "Imagen" },
+                { value: "BUTTON", label: "Botón" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, linkStyle: opt.value })}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all"
+                  style={{
+                    borderColor: formData.linkStyle === opt.value ? primaryColor : getContrastColor(secondaryColor).concat("22"),
+                    backgroundColor: formData.linkStyle === opt.value ? primaryColor.concat("15") : "transparent",
+                    color: formData.linkStyle === opt.value ? primaryColor : getContrastColor(secondaryColor),
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Variante de botón (solo visible si linkStyle === BUTTON) */}
+          {formData.linkStyle === "BUTTON" && (
+            <div>
+              <label className="text-xs font-black uppercase tracking-[0.2em] mb-2 block" style={{ color: getContrastColor(secondaryColor) + "aa" }}>
+                Estilo del botón
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: "DEFAULT", label: "Predeterminado" },
+                  { value: "STRAIGHT", label: "Recto" },
+                  { value: "TRANSPARENT", label: "Transparente" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, buttonVariant: opt.value })}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all"
+                    style={{
+                      borderColor: formData.buttonVariant === opt.value ? primaryColor : getContrastColor(secondaryColor).concat("22"),
+                      backgroundColor: formData.buttonVariant === opt.value ? primaryColor.concat("15") : "transparent",
+                      color: formData.buttonVariant === opt.value ? primaryColor : getContrastColor(secondaryColor),
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Texto del botón */}
+              <input
+                placeholder="Texto del botón (ej: Ver más)"
+                className="w-full p-4 border rounded-xl bg-transparent mt-4"
+                style={{ borderColor: getContrastColor(secondaryColor).concat("44") }}
+                value={formData.buttonText || ""}
+                onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
+              />
+
+              {/* Color de fondo del botón */}
+              <div className="mt-4">
+                <label className="text-xs font-black uppercase tracking-[0.2em] mb-2 block" style={{ color: getContrastColor(secondaryColor) + "aa" }}>
+                  Color de fondo del botón
+                </label>
+                <input
+                  type="color"
+                  value={formData.buttonBgColor || "#000000"}
+                  onChange={(e) => setFormData({ ...formData, buttonBgColor: e.target.value })}
+                  className="w-full h-14 rounded-2xl cursor-pointer"
+                />
+              </div>
+
+              {/* Color del texto del botón */}
+              <div className="mt-4">
+                <label className="text-xs font-black uppercase tracking-[0.2em] mb-2 block" style={{ color: getContrastColor(secondaryColor) + "aa" }}>
+                  Color del texto del botón
+                </label>
+                <input
+                  type="color"
+                  value={formData.buttonTextColor || "#ffffff"}
+                  onChange={(e) => setFormData({ ...formData, buttonTextColor: e.target.value })}
+                  className="w-full h-14 rounded-2xl cursor-pointer"
+                />
+              </div>
             </div>
           )}
 
-          <div
-            className="flex justify-end gap-3 pt-4 sticky bottom-0 backdrop-blur z-10 rounded-b-2xl"
-            style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
-              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = textColor + "08";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              key={intentosError}
-              type="submit"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
-              className={cn(
-                "px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-                intentosError > 0 && "animate-shake"
+          <DestinationPicker
+            value={formData.destination}
+            products={products}
+            categories={categories}
+            onChange={(destination: Destination) =>
+              setFormData({
+                ...formData,
+                destination,
+              })
+            }
+          />
+
+          <div className="mt-4">
+            <label className="block text-sm font-bold mb-2">Imagen de la sección</label>
+            <div className="flex items-center gap-4">
+              <label 
+                className="flex-1 border-2 border-dashed rounded-xl p-4 flex items-center justify-center cursor-pointer transition-colors"
+                style={{ 
+                  borderColor: getContrastColor(secondaryColor).concat("44"),
+                  backgroundColor: getContrastColor(secondaryColor).concat("05")
+                }}
+              >
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+                <span className="flex items-center gap-2 opacity-80">
+                  <Upload size={20} /> Seleccionar archivo
+                </span>
+              </label>
+
+              {formData.image && (
+                <div className="relative inline-block">
+                  <div className="w-16 h-16 overflow-hidden select-none rounded border" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, image: "" })}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors shadow-md border border-white"
+                    title="Quitar imagen"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               )}
-              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1";
-              }}
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {isSubmitting ? "Guardando..." : "Guardar"}
-            </button>
+            </div>
           </div>
-        </form>
+        </div>
+      </div>
+
+      <div className="p-4 pt-0 sm:p-8">
+        <button
+          onClick={() => onSave(formData)}
+          className="w-full py-4 font-black rounded-xl hover:opacity-90 transition-opacity uppercase tracking-wider"
+          style={{
+            backgroundColor: primaryColor,
+            color: getContrastColor(primaryColor)
+          }}
+        >
+          Guardar Cambios
+        </button>
       </div>
     </div>
-  );
-
-  return createPortal(
-    <ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>,
-    document.body
+    </div>
   );
 }

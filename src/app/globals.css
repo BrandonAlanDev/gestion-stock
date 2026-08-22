@@ -1,10 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--fuente-principal, 'Outfit'), ui-sans-serif, system-ui, sans-serif;
-}
-
 @custom-variant corto (@media (max-height: 720px));
 
 @utility scrollbar-oculta {
@@ -19,19 +15,6 @@
 ========================= */
 
 :root {
-  /* Fallbacks del tema de marca (JS los sobreescribe con la config de la BD) */
-  --color-primario: #06b6d4;
-  --color-secundario: #ffffff;
-  --color-fondo-sitio: #09090b;
-  --texto-sobre-primario: #000000;
-  --texto-sobre-secundario: #000000;
-  --texto-sobre-fondo: #ffffff;
-  --superficie-fondo: #181a1a;
-  --superficie-imagen: #ffffff;
-
-  --fuente-principal: 'Outfit', sans-serif;
-  --fuente-secundaria: 'Playfair Display', serif;
-
   --background: 0 0% 100%;
   --foreground: 0 0% 8%;
 
@@ -153,17 +136,6 @@ body {
   padding: 0;
 }
 
-button:not(:disabled),
-[role="button"]:not(:disabled),
-select:not(:disabled) {
-  cursor: pointer;
-}
-
-button:disabled,
-select:disabled {
-  cursor: not-allowed;
-}
-
 /* Headings */
 h1,
 h2,
@@ -259,6 +231,6 @@ h3 {
   width: 5px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primario);
+  background: #2563eb;
   border-radius: 10px;
 }

@@ -11,9 +11,10 @@ interface OfferCardProps {
   href?: string;
   hideButton?: boolean;
   hideButtons?: boolean;
+  primaryColor?: string;
 }
 
-export default function OfferCard({ image, title, subtitle, discount, buttonText = "Comprar", href, hideButton, hideButtons = false }: OfferCardProps) {
+export default function OfferCard({ image, title, subtitle, discount, buttonText = "Comprar", href, hideButton, hideButtons = false, primaryColor = "#06b6d4" }: OfferCardProps) {
   const CardContent = (
     <motion.div
       className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer group"
@@ -32,7 +33,7 @@ export default function OfferCard({ image, title, subtitle, discount, buttonText
 
       {discount && (
         <div className="absolute top-3 left-3 z-10">
-          <div className="bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] text-xs font-black px-3 py-1.5 rounded-full flex items-center gap-1">
+          <div className="bg-black text-white text-xs font-black px-3 py-1.5 rounded-full flex items-center gap-1">
             <span>🔥</span>
             <span>{discount}% OFF</span>
           </div>
@@ -53,9 +54,9 @@ export default function OfferCard({ image, title, subtitle, discount, buttonText
         {!hideButtons && !hideButton && (
           <motion.button
             type="button"
-            className="px-4 py-1.5 md:px-5 md:py-2 rounded-lg text-xs md:text-sm font-black uppercase tracking-wider transition-opacity"
-            style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-            whileHover={{ opacity: 0.9 }}
+            className="px-4 py-1.5 md:px-5 md:py-2 rounded-lg text-xs md:text-sm font-black uppercase tracking-wider transition-colors"
+            style={{ backgroundColor: "#ffffff", color: "#1a1a1a" }}
+            whileHover={{ backgroundColor: primaryColor, color: "#ffffff" }}
             transition={{ duration: 0.2 }}
           >
             {buttonText}

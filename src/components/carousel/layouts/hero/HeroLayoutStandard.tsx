@@ -8,8 +8,10 @@ import HeroCtaButton from "./HeroCtaButton";
 
 export default function HeroLayoutStandard({
   slide,
+  primaryColor,
 }: {
   slide: CarouselSlide;
+  primaryColor: string;
 }) {
   return (
     <motion.div
@@ -30,9 +32,9 @@ export default function HeroLayoutStandard({
           <span
             className="inline-flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-md text-xs uppercase tracking-[0.35em] font-black"
             style={{
-              borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)",
-              color: "var(--color-primario)",
-              background: "color-mix(in srgb, var(--color-primario) 6%, transparent)",
+              borderColor: `${primaryColor}40`,
+              color: primaryColor,
+              background: `${primaryColor}10`,
             }}
           >
             <Store size={14} />
@@ -61,7 +63,7 @@ export default function HeroLayoutStandard({
         </motion.p>
       )}
 
-      <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} hideButton={slide.config?.hideButton} />
+      <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} primaryColor={primaryColor} hideButton={slide.config?.hideButton} />
     </motion.div>
   );
 }

@@ -29,9 +29,10 @@ interface BannerLayoutProps {
     };
     slides: CarouselSlide[];
   };
+  primaryColor?: string;
 }
 
-export default function BannerLayout({ carousel }: BannerLayoutProps) {
+export default function BannerLayout({ carousel, primaryColor = "#06b6d4" }: BannerLayoutProps) {
   const { settings, slides } = carousel;
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -82,7 +83,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
       {!slide.config?.hideText && (
         <>
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/70" />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--color-primario) 13%, transparent) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${primaryColor}22 0%, transparent 70%)` }} />
         </>
       )}
 
@@ -100,7 +101,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
               {slide.subtitle && (
                 <motion.p
                   className="text-xs font-black tracking-[0.35em] uppercase mb-2"
-                  style={{ color: "var(--color-primario)" }}
+                  style={{ color: primaryColor }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
@@ -129,7 +130,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
               {(slide.url?.trim() || slide.ctaText) && (
                 <motion.a
                   href={resolverEnlaceSlide(slide) || "#"}
-                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] font-black uppercase tracking-wider text-sm hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-white text-black font-black uppercase tracking-wider text-sm hover:bg-neutral-100 transition-colors"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
@@ -151,7 +152,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
                 "absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-md border transition-all",
                 isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
               )}
-              style={{ borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)", background: "rgba(0,0,0,0.3)" }}
+              style={{ borderColor: `${primaryColor}40`, background: `rgba(0,0,0,0.3)` }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Slide anterior"
@@ -167,7 +168,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
                 "absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-md border transition-all",
                 isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
               )}
-              style={{ borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)", background: "rgba(0,0,0,0.3)" }}
+              style={{ borderColor: `${primaryColor}40`, background: `rgba(0,0,0,0.3)` }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Slide siguiente"
@@ -196,8 +197,8 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
                   index === current ? "w-10" : "w-2"
                 )}
                 style={{
-                  backgroundColor: index === current ? "var(--color-primario)" : "rgba(255,255,255,0.4)",
-                  boxShadow: index === current ? "0 0 15px var(--color-primario)" : "none",
+                  backgroundColor: index === current ? primaryColor : "rgba(255,255,255,0.4)",
+                  boxShadow: index === current ? `0 0 15px ${primaryColor}` : "none",
                 }}
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}

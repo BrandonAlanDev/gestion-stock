@@ -1,8 +1,7 @@
 "use client";
 
-import { Save, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Sparkles } from "lucide-react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
@@ -41,31 +40,18 @@ export default function SeccionEstilo({
 }: {
   config: ConfigApariencia;
 }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [estilo, setEstilo] = useState<EstadoEstilo>({
     radio: config.borderRadius,
     sombra: config.shadowLevel,
     densidad: config.density,
   });
-  const [base, setBase] = useState<EstadoEstilo>({
-    radio: config.borderRadius,
-    sombra: config.shadowLevel,
-    densidad: config.density,
-  });
 
-  const tieneCambios =
-    estilo.radio !== base.radio ||
-    estilo.sombra !== base.sombra ||
-    estilo.densidad !== base.densidad;
-
-  const guardar = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const guardar = (nuevoEstilo: EstadoEstilo) => {
     startTransition(async () => {
       const resultado = await updateBrandingConfig({
-        borderRadius: estilo.radio,
-        shadowLevel: estilo.sombra,
-        density: estilo.densidad,
+        borderRadius: nuevoEstilo.radio,
+        shadowLevel: nuevoEstilo.sombra,
+        density: nuevoEstilo.densidad,
       });
 
       if (!resultado.ok) {
@@ -73,9 +59,7 @@ export default function SeccionEstilo({
         return;
       }
 
-      setBase({ radio: estilo.radio, sombra: estilo.sombra, densidad: estilo.densidad });
       toast.success("Cambios guardados");
-      router.refresh();
     });
   };
 
@@ -91,7 +75,7 @@ export default function SeccionEstilo({
         </p>
       </div>
 
-      <form onSubmit={guardar} className="space-y-4 p-5">
+      <div className="space-y-4 p-5">
         <FilaSelector
           etiqueta="Bordes"
           valor={estilo.radio}
@@ -100,9 +84,11 @@ export default function SeccionEstilo({
             { valor: "redondeado", etiqueta: "Redondeado" },
             { valor: "muy-redondeado", etiqueta: "Muy redondeado" },
           ]}
-          alCambiar={(valor) =>
-            setEstilo((actual) => ({ ...actual, radio: valor }))
-          }
+          alCambiar={(valor) => {
+            const nuevo = { ...estilo, radio: valor };
+            setEstilo(nuevo);
+            guardar(nuevo);
+          }}
         />
 
         <FilaSelector
@@ -113,9 +99,11 @@ export default function SeccionEstilo({
             { valor: "sutil", etiqueta: "Sutil" },
             { valor: "marcada", etiqueta: "Marcada" },
           ]}
-          alCambiar={(valor) =>
-            setEstilo((actual) => ({ ...actual, sombra: valor }))
-          }
+          alCambiar={(valor) => {
+            const nuevo = { ...estilo, sombra: valor };
+            setEstilo(nuevo);
+            guardar(nuevo);
+          }}
         />
 
         <FilaSelector
@@ -126,22 +114,13 @@ export default function SeccionEstilo({
             { valor: "comoda", etiqueta: "Cómoda" },
             { valor: "espaciosa", etiqueta: "Espaciosa" },
           ]}
-          alCambiar={(valor) =>
-            setEstilo((actual) => ({ ...actual, densidad: valor }))
-          }
+          alCambiar={(valor) => {
+            const nuevo = { ...estilo, densidad: valor };
+            setEstilo(nuevo);
+            guardar(nuevo);
+          }}
         />
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isPending || !tieneCambios}
-            className="inline-flex items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm font-semibold text-[var(--admin-primario-texto)] transition hover:opacity-90 disabled:opacity-50"
-          >
-            <Save size={16} />
-            {isPending ? "Guardando..." : "Guardar estilo"}
-          </button>
-        </div>
-      </form>
+      </div>
     </section>
   );
 }

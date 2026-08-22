@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MapPin, Clock, Phone, Navigation } from "lucide-react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface LocationCardProps {
   title?: string;
@@ -23,8 +24,12 @@ export default function LocationCard({
   hours = "09:00 - 18:00",
   config,
 }: LocationCardProps) {
+  const { pageConfig } = usePageConfig();
+  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+  
+  // Estado añadido para corregir el ReferenceError
   const [isHovered, setIsHovered] = useState(false);
-
+  
   const { address, city, province, phone, whatsapp, mapsUrl } = config;
 
   if (!address) return null;
@@ -42,27 +47,27 @@ export default function LocationCard({
   const contactPhone = whatsapp || phone;
 
   return (
-    <div
-      className="w-full max-w-md p-6 shadow-xl border border-[var(--color-secundario)] transition-all duration-300"
+    <div 
+      className="w-full max-w-md p-6 shadow-xl border border-neutral-200 transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: "var(--color-secundario)",
+      style={{ 
+        background: "#ffffff",
         borderRadius: "24px",
-        boxShadow: isHovered ? "0 20px 25px -5px color-mix(in srgb, var(--color-primario) 20%, transparent)" : undefined
+        boxShadow: isHovered ? `0 20px 25px -5px ${primaryColor}30` : undefined
       }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--color-secundario)]">
-        <div className="p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 8%, transparent)", color: "var(--color-primario)" }}>
+      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-neutral-100">
+        <div className="p-3 rounded-xl" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
           <MapPin size={24} />
         </div>
         <div>
-          <h3 className="text-lg font-black uppercase italic text-[var(--texto-sobre-secundario)]">
+          <h3 className="text-lg font-black uppercase italic text-neutral-800">
             {title}
           </h3>
           {city && (
-            <p className="text-sm font-semibold" style={{ color: "var(--color-primario)" }}>
+            <p className="text-sm font-semibold" style={{ color: primaryColor }}>
               {city}{province ? `, ${province}` : ""}
             </p>
           )}
@@ -72,28 +77,28 @@ export default function LocationCard({
       {/* Detalles del Lugar */}
       <div className="space-y-4 my-5 text-sm">
         <div className="flex items-start gap-3">
-          <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
-          <span className="font-medium text-[var(--texto-sobre-secundario)]">
+          <MapPin size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+          <span className="font-medium text-neutral-700">
             {address}
           </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
+          <Clock size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
           <div>
-            <p className="font-bold text-[var(--texto-sobre-secundario)]">{days}</p>
-            <p className="text-xs text-[var(--texto-sobre-secundario)] opacity-60">{hours}</p>
+            <p className="font-bold text-neutral-700">{days}</p>
+            <p className="text-xs text-neutral-500">{hours}</p>
           </div>
         </div>
 
         {contactPhone && (
           <div className="flex items-start gap-3">
-            <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-primario)" }} />
-            <a
-              href={`tel:${contactPhone.replace(/\s+/g, '')}`}
-              className="font-medium hover:underline text-[var(--texto-sobre-secundario)] transition-colors"
-              onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primario)"}
-              onMouseLeave={(e) => e.currentTarget.style.color = "var(--texto-sobre-secundario)"}
+            <Phone size={18} className="mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+            <a 
+              href={`tel:${contactPhone.replace(/\s+/g, '')}`} 
+              className="font-medium hover:underline text-neutral-700 transition-colors"
+              onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#404040"}
             >
               {contactPhone}
             </a>
@@ -107,8 +112,8 @@ export default function LocationCard({
         onClick={handleDirectionsClick}
         className="w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all group cursor-pointer"
         style={{
-          backgroundColor: "var(--color-primario)",
-          color: "var(--texto-sobre-primario)",
+          backgroundColor: primaryColor,
+          color: "#ffffff",
           borderRadius: "14px",
           fontSize: "13px",
         }}

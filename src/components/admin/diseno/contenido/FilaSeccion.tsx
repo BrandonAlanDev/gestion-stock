@@ -43,7 +43,7 @@ interface FilaSeccionProps extends AccionesFilaSeccion {
 }
 
 const estiloBotonAccion =
-  "cursor-pointer rounded-md p-1.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
+  "rounded-md p-1.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
 
 export default function FilaSeccion({
   id,

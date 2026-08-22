@@ -9,13 +9,13 @@ import {
   Clock,
   Cpu,
   CreditCard,
+  FileStack,
   Globe,
   History,
   Lock,
   MapPin,
   MessageCircle,
   MoreHorizontal,
-  PanelBottom,
   Percent,
   Phone,
   Plug,
@@ -70,6 +70,11 @@ export default function PanelConfiguracion({
   const tieneContacto = Boolean(config.phone || config.whatsapp || config.email);
   const tieneUbicacion = config.locationEnabled && Boolean(config.address);
   const seoCompleto = Boolean(config.metaTitle?.trim() && config.metaDescription?.trim());
+  const cantidadPaginasActivas = [
+    config.escuelaEnabled,
+    config.arreglosEnabled,
+    config.personalizadoEnabled,
+  ].filter(Boolean).length;
   const tieneTextosLegales = Boolean(
     config.termsAndConditions?.trim() && config.privacyPolicy?.trim()
   );
@@ -167,38 +172,16 @@ export default function PanelConfiguracion({
               alClick={() => setDrawerAbierto("seo")}
             />
             <ItemConfiguracion
-              icono={PanelBottom}
-              titulo="Footer"
-              descripcion="Textos y visibilidad del pie de página"
-              varianteBadge={
-                config.footerAboutText?.trim() ||
-                config.footerCopyrightText?.trim() ||
-                [
-                  config.footerShowSobre,
-                  config.footerShowNavegacion,
-                  config.footerShowContacto,
-                  config.footerShowUbicacion,
-                  config.footerShowRedes,
-                  config.footerShowLegales,
-                ].some((visible) => visible === false)
-                  ? "activo"
-                  : "sin-configurar"
-              }
+              icono={FileStack}
+              titulo="Páginas del sitio"
+              descripcion="Escuela, arreglos y tablas personalizadas"
+              varianteBadge={cantidadPaginasActivas > 0 ? "activo" : "inactivo"}
               textoBadge={
-                config.footerAboutText?.trim() ||
-                config.footerCopyrightText?.trim() ||
-                [
-                  config.footerShowSobre,
-                  config.footerShowNavegacion,
-                  config.footerShowContacto,
-                  config.footerShowUbicacion,
-                  config.footerShowRedes,
-                  config.footerShowLegales,
-                ].some((visible) => visible === false)
-                  ? "Configurado"
-                  : "Por defecto"
+                cantidadPaginasActivas > 0
+                  ? `${cantidadPaginasActivas} activas`
+                  : "Ocultas"
               }
-              alClick={() => setDrawerAbierto("footer")}
+              alClick={() => setDrawerAbierto("paginas-sitio")}
             />
             <ItemConfiguracion icono={Clock} titulo="Horarios" proximamente />
           </GrupoConfiguracion>

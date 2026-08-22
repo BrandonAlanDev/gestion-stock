@@ -25,6 +25,21 @@ export function getContrastColor(hexColor: string): string {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
+export function extractPublicId(url: string): string | null {
+  try {
+    const parts = url.split('/');
+    const uploadIndex = parts.findIndex(p => p === 'upload');
+    if (uploadIndex !== -1) {
+      const pathParts = parts.slice(uploadIndex + 2);
+      const fileName = pathParts.join('/');
+      return fileName.split('.')[0];
+    }
+  } catch (e) {
+    console.error("Error extracting public ID", e);
+  }
+  return null;
+}
+
 export function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

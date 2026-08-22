@@ -7,85 +7,25 @@ import { useState, useTransition, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import GridModal, { type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./GridModal";
-import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
+import GridModal from "./GridModal";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
+import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
-import { getContrastColor } from "@/lib/utils";
 
-export interface GridLocal extends DatosTarjeta {
-  id: string;
-}
+import { SelectItem } from "@/components/admin/destination-picker/types";
 
-interface GridConfig {
-  id: string | number;
-  title?: string | null;
-  subtitle?: string | null;
-  image?: string;
-  linkType?: string;
-  linkValue?: string | null;
-  subtitleNeon?: boolean;
-  subtitleDim?: boolean;
-  linkStyle?: string;
-  buttonVariant?: string;
-  buttonText?: string | null;
-  buttonBgColor?: string | null;
-  buttonTextColor?: string | null;
-  order?: number;
-}
-
-interface ConfigHomeSections {
-  featuredLayout?: string | null;
-  homegrid?: {
-    id?: string;
-    title?: string | null;
-    grids: GridConfig[];
-  } | null;
-}
-
-interface Props {
-  config?: ConfigHomeSections;
-  primaryColor?: string;
-  secondaryColor?: string;
-  alGuardar?: () => void;
-}
-
-const RELACION_ASPECTO: Record<string, number> = {
-  grid: 16 / 10,
-  collage: 16 / 10,
-  minimal: 4 / 3,
-};
-
-function normalizarGrid(grid: GridConfig): GridLocal {
-  const tiposEnlace = ["NONE", "CATEGORY", "PRODUCT", "EXTERNAL"] as const;
-  const estilosEnlace = ["IMAGE", "BUTTON"] as const;
-  const variantesBoton = ["DEFAULT", "STRAIGHT", "TRANSPARENT"] as const;
-
-  return {
-    id: String(grid.id),
-    title: grid.title ?? "",
-    subtitle: grid.subtitle ?? "",
-    image: grid.image ?? "",
-    linkType: tiposEnlace.includes(grid.linkType as (typeof tiposEnlace)[number])
-      ? (grid.linkType as DatosTarjeta["linkType"])
-      : "NONE",
-    linkValue: grid.linkValue ?? "",
-    subtitleNeon: grid.subtitleNeon ?? false,
-    subtitleDim: grid.subtitleDim ?? false,
-    linkStyle: estilosEnlace.includes(grid.linkStyle as (typeof estilosEnlace)[number])
-      ? (grid.linkStyle as DatosTarjeta["linkStyle"])
-      : "IMAGE",
-    buttonVariant: variantesBoton.includes(grid.buttonVariant as (typeof variantesBoton)[number])
-      ? (grid.buttonVariant as DatosTarjeta["buttonVariant"])
-      : "DEFAULT",
-    buttonText: grid.buttonText ?? "",
-    buttonBgColor: grid.buttonBgColor ?? "",
-    buttonTextColor: grid.buttonTextColor ?? "",
-  };
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
 function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove }: {
-  grid: GridLocal;
+  grid: any;
   primaryColor: string;
   secondaryColor: string;
   onEdit: () => void;
@@ -130,24 +70,19 @@ function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove
   );
 }
 
-export default function HomeSectionsDesign({
-  config,
-  primaryColor = "#06b6d4",
-  secondaryColor = "#ffffff",
-  alGuardar,
-}: Props) {
+export default function HomeSectionsDesign({ config, primaryColor = "#06b6d4", secondaryColor = "#ffffff" }: any) {
   const [isPending, startTransition] = useTransition();
   const [layout, setLayout] = useState(config?.featuredLayout?.toLowerCase() ?? "grid");
-  const [grids, setGrids] = useState<GridLocal[]>(
-    (config?.homegrid?.grids || []).map(normalizarGrid)
+  const [grids, setGrids] = useState(
+    (config?.homegrid?.grids || []).map((g: any) => ({ ...g, id: String(g.id) }))
   );
   const [sectionTitle, setSectionTitle] = useState(config?.homegrid?.title || "Home Destacado");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingGrid, setEditingGrid] = useState<GridLocal | null>(null);
+  const [editingGrid, setEditingGrid] = useState<any>(null);
 
-  const [categories, setCategories] = useState<SelectorCategoria[]>([]);
-  const [productos, setProductos] = useState<SelectorProducto[]>([]);
+  const [products, setProducts] = useState<SelectItem[]>([]);
+  const [categories, setCategories] = useState<SelectItem[]>([]);
 
   const router = useRouter();
 
@@ -159,8 +94,8 @@ export default function HomeSectionsDesign({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = grids.findIndex((g) => g.id === active.id);
-    const newIndex = grids.findIndex((g) => g.id === over.id);
+    const oldIndex = grids.findIndex((g: any) => g.id === active.id);
+    const newIndex = grids.findIndex((g: any) => g.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
     setGrids(arrayMove(grids, oldIndex, newIndex));
   };
@@ -169,33 +104,41 @@ export default function HomeSectionsDesign({
     setLayout(config?.featuredLayout?.toLowerCase() ?? "grid");
     setSectionTitle(config?.homegrid?.title || "Home Destacado");
     const rawGrids = config?.homegrid?.grids || [];
-    setGrids(rawGrids.map(normalizarGrid));
+    const gridsWithDestination = rawGrids.map((grid: any) => ({
+      ...grid,
+      id: String(grid.id),
+      destination: {
+        type: grid.linkType?.toLowerCase() || "none",
+        value: grid.linkValue || "",
+      },
+    }));
+    setGrids(gridsWithDestination); 
 
-    async function cargarOpciones() {
-      const [categoriasData, productosData] = await Promise.all([
-        getCategoriesPicker(),
-        getProductsPicker(),
-      ]);
-      setCategories(
-        categoriasData.map((c) => ({
-          id: c.id,
-          label: c.name,
-        }))
-      );
-      setProductos(
-        productosData.map((p) => ({
+    async function loadPickers() {
+      const productsData = await getProductsPicker();
+      const categoriesData = await getCategoriesPicker();
+
+      setProducts(
+        productsData.map((p: any) => ({
           id: p.id,
           label: p.name,
         }))
       );
+
+      setCategories(
+        categoriesData.map((c: any) => ({
+          id: c.id,
+          label: c.name,
+        }))
+      );
     }
 
-    cargarOpciones();
+    loadPickers();
   }, [config]);
 
-  const handleAddOrEdit = (data: DatosTarjeta) => {
+  const handleAddOrEdit = (data: any) => {
     if (editingGrid) {
-      setGrids(grids.map((g) => (g.id === editingGrid.id ? { ...g, ...data } : g)));
+      setGrids(grids.map((g: any) => g.id === editingGrid.id ? { ...g, ...data } : g));
     } else {
       setGrids([...grids, { ...data, id: Math.random().toString(36).substr(2, 9) }]);
     }
@@ -204,7 +147,7 @@ export default function HomeSectionsDesign({
   };
 
   const handleRemove = (id: string) => {
-    setGrids(grids.filter((g) => g.id !== id));
+    setGrids(grids.filter((g: any) => g.id !== id));
   };
 
   const handleSave = async () => {
@@ -212,21 +155,21 @@ export default function HomeSectionsDesign({
 
     startTransition(async () => {
       try {
-        const gridsForServer = grids.map((g, idx) => ({
+        const gridsForServer = grids.map((g: any, idx: number) => ({
           id: g.id,
-          title: g.title.trim(),
-          subtitle: g.subtitle.trim(),
+          title: g.title,
+          subtitle: g.subtitle,
           image: g.image,
           order: idx,
-          linkType: g.linkType || "NONE",
-          linkValue: g.linkValue || "",
+          linkType: g.destination?.type?.toUpperCase() || "NONE",
+          linkValue: g.destination?.value || "",
           subtitleNeon: g.subtitleNeon ?? false,
           subtitleDim: g.subtitleDim ?? false,
           linkStyle: g.linkStyle || "IMAGE",
           buttonVariant: g.buttonVariant || "DEFAULT",
-          buttonText: g.buttonText || undefined,
-          buttonBgColor: g.buttonBgColor || undefined,
-          buttonTextColor: g.buttonTextColor || undefined,
+          buttonText: g.buttonText || null,
+          buttonBgColor: g.buttonBgColor || null,
+          buttonTextColor: g.buttonTextColor || null,
         }));
 
         const [layoutRes, gridRes] = await Promise.all([
@@ -235,24 +178,21 @@ export default function HomeSectionsDesign({
         ]);
 
         if (!layoutRes.ok || !gridRes.ok) {
-          const layoutError = "error" in layoutRes ? layoutRes.error : "";
-          const gridError = "error" in gridRes ? gridRes.error : "";
-          toast.error("Error al guardar: " + (layoutError || gridError));
+          toast.error("Error al guardar: " + (layoutRes.error || gridRes.error));
         } else {
           toast.success("Todo guardado correctamente");
           setIsModalOpen(false);
           setEditingGrid(null);
-          alGuardar?.();
           router.refresh();
         }
-      } catch {
+      } catch (e) {
         toast.error("Error inesperado al guardar");
       }
     });
   };
 
   return (
-    <section
+    <section 
       className="space-y-8 rounded-[2rem] border p-4 shadow-sm sm:p-8"
       style={{
         backgroundColor: secondaryColor,
@@ -262,8 +202,8 @@ export default function HomeSectionsDesign({
     >
       {/* 1. SECTOR DE DISEÑO */}
       <div>
-        <h2
-          className="text-xl font-black uppercase italic mb-6"
+        <h2 
+          className="text-xl font-black uppercase italic mb-6" 
           style={{ color: primaryColor }}
         >
           Sección Destacada
@@ -291,22 +231,21 @@ export default function HomeSectionsDesign({
           {["grid", "collage", "minimal"].map((type) => {
             const isSelected = layout === type;
             return (
-              <button
-                key={type}
-                type="button"
+              <button 
+                key={type} 
                 onClick={() => setLayout(type)}
-                aria-pressed={isSelected}
-                className="cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 hover:opacity-90 flex flex-col items-center justify-center gap-3"
+                className="p-4 rounded-2xl gap-4 border-2 transition-all transition-200 hover:scale-[1.02] flex flex-col items-center justify-center"
                 style={{
                   borderColor: isSelected ? primaryColor : getContrastColor(secondaryColor).concat("22"),
                   backgroundColor: isSelected ? primaryColor.concat("15") : "transparent",
                   color: isSelected ? primaryColor : getContrastColor(secondaryColor),
+                  scale: isSelected ? 1.06 : 1,
                 }}
               >
-                {type === "grid" && <Grid2X2 size={40} className="shrink-0" />}
-                {type === "collage" && <LayoutDashboard size={40} className="shrink-0" />}
-                {type === "minimal" && <Columns3 size={40} className="shrink-0" />}
-                <span className="text-sm sm:text-base font-bold text-center leading-tight px-1">
+                <span className="text-2xl font-bold flex flex-row justify-center text-center align-middle items-center gap-2">
+                  {type.toUpperCase() === "GRID" && <Grid2X2 size={48} className="text-2xl font-bold align-middle text-center" />}
+                  {type.toUpperCase() === "COLLAGE" && <LayoutDashboard size={48} className="text-2xl font-bold align-middle text-center" />}
+                  {type.toUpperCase() === "MINIMAL" && <Columns3 size={48} className="text-2xl font-bold align-middle text-center" />}
                   {type === "grid" ? "CUADRÍCULA" : type === "collage" ? "MOSAICO" : "MINIMALISTA"}
                 </span>
               </button>
@@ -319,9 +258,9 @@ export default function HomeSectionsDesign({
       <div className="border-t pt-8" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
         <h3 className="font-bold mb-4">Secciones actuales ({grids.length})</h3>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={grids.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={grids.map((g: any) => g.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-4">
-              {grids.map((grid) => (
+              {grids.map((grid: any) => (
                 <SortableGridItem
                   key={grid.id}
                   grid={grid}
@@ -335,25 +274,25 @@ export default function HomeSectionsDesign({
           </SortableContext>
         </DndContext>
 
-        <button
-          onClick={() => { setEditingGrid(null); setIsModalOpen(true); }}
-          className="w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 transition-all opacity-80 hover:opacity-100"
-          style={{
-            borderColor: getContrastColor(secondaryColor).concat("44"),
-            backgroundColor: getContrastColor(secondaryColor).concat("05")
-          }}
-        >
-          <Plus size={20} /> Agregar Nueva Sección
-        </button>
+          <button
+            onClick={() => { setEditingGrid(null); setIsModalOpen(true); }}
+            className="w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 transition-all opacity-80 hover:opacity-100"
+            style={{ 
+              borderColor: getContrastColor(secondaryColor).concat("44"),
+              backgroundColor: getContrastColor(secondaryColor).concat("05")
+            }}
+          >
+            <Plus size={20} /> Agregar Nueva Sección
+          </button>
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={isPending}
-        className="w-full h-14 font-black rounded-2xl transition-opacity hover:opacity-90 uppercase tracking-wider"
-        style={{
-          backgroundColor: primaryColor,
-          color: getContrastColor(primaryColor)
+      <button 
+        onClick={handleSave} 
+        disabled={isPending} 
+        className="w-full h-14 font-black rounded-2xl transition-opacity hover:opacity-90 uppercase tracking-wider" 
+        style={{ 
+          backgroundColor: primaryColor, 
+          color: getContrastColor(primaryColor) 
         }}
       >
         {isPending ? "Guardando..." : "Guardar Todo"}
@@ -364,9 +303,8 @@ export default function HomeSectionsDesign({
         onClose={() => setIsModalOpen(false)}
         onSave={handleAddOrEdit}
         initialData={editingGrid}
-        categorias={categories}
-        productos={productos}
-        relacionAspecto={RELACION_ASPECTO[layout] ?? 16 / 10}
+        products={products}
+        categories={categories}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       />

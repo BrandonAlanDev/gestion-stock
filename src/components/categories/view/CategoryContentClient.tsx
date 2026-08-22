@@ -27,9 +27,9 @@ export default function CategoryContentClient({
       <div className="flex flex-col md:flex-row gap-8">
         {/* SIDEBAR */}
         <aside className="w-full md:w-64 flex-shrink-0">
-          <div className="sticky top-28 bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-2xl p-5">
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-70 mb-4 flex items-center gap-2">
-              <Layers size={14} className="text-[var(--color-primario)]" />
+          <div className="sticky top-28 bg-neutral-50 border-neutral-100 rounded-2xl p-5">
+            <h2 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-4 flex items-center gap-2">
+              <Layers size={14} className="text-cyan-500" />
               Estilos
             </h2>
             <div className="space-y-1">
@@ -38,8 +38,8 @@ export default function CategoryContentClient({
                 href={basePath}
                 className={`w-full block px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
                   selectedSubId === "all"
-                    ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] shadow-lg"
-                    : "text-[var(--texto-sobre-secundario)] opacity-70 hover:bg-[var(--color-fondo-sitio)]/10 hover:opacity-100"
+                    ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 }`}
               >
                 Todos los productos
@@ -54,8 +54,8 @@ export default function CategoryContentClient({
                     href={`${basePath}?subcategory=${sub.id}`}
                     className={`w-full block px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
                       isActive
-                        ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] shadow-lg"
-                        : "text-[var(--texto-sobre-secundario)] opacity-70 hover:bg-[var(--color-fondo-sitio)]/10 hover:opacity-100"
+                        ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                     }`}
                   >
                     {sub.name}
@@ -71,12 +71,12 @@ export default function CategoryContentClient({
           {garments.length > 0 ? (
             <ProductGrid garments={garments} />
           ) : (
-            <div className="text-center py-24 bg-[var(--color-secundario)] border border-[var(--color-secundario)] rounded-3xl">
-              <Package size={44} className="mx-auto mb-4 text-[var(--color-primario)]/30" />
-              <p className="font-bold text-[var(--texto-sobre-secundario)] uppercase tracking-wide text-sm">
+            <div className="text-center py-24 bg-neutral-50 border border-neutral-100 rounded-3xl text-neutral-400">
+              <Package size={44} className="mx-auto mb-4 text-cyan-500/30" />
+              <p className="font-bold text-neutral-700 uppercase tracking-wide text-sm">
                 No hay productos cargados
               </p>
-              <p className="text-xs text-[var(--texto-sobre-secundario)] opacity-70 mt-1">
+              <p className="text-xs text-neutral-400 mt-1">
                 Pronto vas a encontrar novedades en esta sección.
               </p>
             </div>

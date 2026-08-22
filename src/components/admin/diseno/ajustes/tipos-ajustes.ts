@@ -10,7 +10,6 @@ export interface ConfigAjustes {
   arreglosEnabled: boolean;
   escuelaEnabled: boolean;
   personalizadoEnabled: boolean;
-  planAhorroEnabled: boolean;
   termsAndConditions: string | null;
   privacyPolicy: string | null;
 }

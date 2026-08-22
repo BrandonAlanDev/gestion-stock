@@ -8,8 +8,10 @@ import HeroCtaButton from "./HeroCtaButton";
 
 export default function HeroLayoutMinimal({
   slide,
+  primaryColor,
 }: {
   slide: CarouselSlide;
+  primaryColor: string;
 }) {
   return (
     <motion.div
@@ -23,7 +25,7 @@ export default function HeroLayoutMinimal({
       {slide.subtitle && (
         <motion.p
           className="text-xs font-black tracking-[0.35em] uppercase mb-4"
-          style={{ color: "var(--color-primario)" }}
+          style={{ color: primaryColor }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -52,7 +54,7 @@ export default function HeroLayoutMinimal({
         </motion.p>
       )}
 
-      <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} hideButton={slide.config?.hideButton} />
+      <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} primaryColor={primaryColor} hideButton={slide.config?.hideButton} />
     </motion.div>
   );
 }

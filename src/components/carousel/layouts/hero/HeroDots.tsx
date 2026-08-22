@@ -7,10 +7,12 @@ export default function HeroDots({
   slidesCount,
   current,
   onChange,
+  primaryColor,
 }: {
   slidesCount: number;
   current: number;
   onChange: (index: number) => void;
+  primaryColor: string;
 }) {
   return (
     <motion.div
@@ -28,8 +30,8 @@ export default function HeroDots({
             index === current ? "w-14" : "w-2.5"
           )}
           style={{
-            backgroundColor: index === current ? "var(--color-primario)" : "rgba(255,255,255,0.4)",
-            boxShadow: index === current ? "0 0 20px var(--color-primario)" : "none",
+            backgroundColor: index === current ? primaryColor : "rgba(255,255,255,0.4)",
+            boxShadow: index === current ? `0 0 20px ${primaryColor}` : "none",
           }}
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
@@ -41,7 +43,7 @@ export default function HeroDots({
               "absolute inset-0 rounded-full",
               index === current ? "opacity-100" : "opacity-0"
             )}
-            style={{ backgroundColor: "var(--color-primario)" }}
+            style={{ backgroundColor: primaryColor }}
           />
         </motion.button>
       ))}

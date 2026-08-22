@@ -1,7 +1,6 @@
 // src/components/legal/CookieModal.tsx
 "use client";
 import { useState, useEffect } from "react";
-import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface CookieModalProps {
   onAccept?: () => void;
@@ -11,8 +10,6 @@ interface CookieModalProps {
 
 export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: CookieModalProps) {
   const [visible, setVisible] = useState(false);
-
-  useBloqueoScroll(visible);
 
   useEffect(() => {
     const acknowledged = localStorage.getItem("allConsentsAcknowledged");
@@ -33,19 +30,19 @@ export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: Co
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
-      <div className="bg-[var(--color-secundario)] rounded-2xl p-6 max-w-md w-full text-left border-2 border-[color-mix(in_srgb,var(--color-primario)_25%,transparent)] shadow-xl">
-        <h2 className="text-xl font-semibold mb-4 text-[var(--texto-sobre-secundario)] text-center">
+      <div className="bg-black rounded-2xl p-6 max-w-md w-full text-left border-2 border-white shadow-xl">
+        <h2 className="text-xl font-semibold mb-4 text-white text-center">
           Aviso de Consentimiento
         </h2>
 
-        <p className="text-[var(--texto-sobre-secundario)] opacity-60 text-sm mb-6 text-center">
+        <p className="text-gray-400 text-sm mb-6 text-center">
           Este sitio utiliza cookies esenciales para gestionar la autenticación y
           garantizar un funcionamiento seguro. Al hacer clic en &quot;Aceptar&quot;
           confirmás que has leído y aceptás nuestra{" "}
           <button
             type="button"
             onClick={onOpenPrivacy}
-            className="text-[var(--color-primario)] underline hover:opacity-80"
+            className="text-blue-400 underline hover:text-blue-300"
           >
             política de privacidad
           </button>{" "}
@@ -53,7 +50,7 @@ export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: Co
           <button
             type="button"
             onClick={onOpenTerms}
-            className="text-[var(--color-primario)] underline hover:opacity-80"
+            className="text-blue-400 underline hover:text-blue-300"
           >
             términos de uso
           </button>
@@ -63,7 +60,7 @@ export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: Co
         <div className="flex justify-center">
           <button
             onClick={handleAccept}
-            className="w-full px-4 py-2 rounded-xl border border-[var(--color-primario)] text-[var(--texto-sobre-secundario)] hover:bg-[var(--color-primario)] hover:text-[var(--texto-sobre-primario)] transition"
+            className="w-full px-4 py-2 rounded-xl border border-gray-300 text-white hover:bg-white hover:text-black transition"
           >
             Aceptar
           </button>

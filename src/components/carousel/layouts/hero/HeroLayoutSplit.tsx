@@ -9,8 +9,10 @@ import HeroCtaButton from "./HeroCtaButton";
 
 export default function HeroLayoutSplit({
   slide,
+  primaryColor,
 }: {
   slide: CarouselSlide;
+  primaryColor: string;
 }) {
   return (
     <motion.div
@@ -45,7 +47,7 @@ export default function HeroLayoutSplit({
         transition={{ delay: 0.2 }}
       >
         {slide.subtitle && (
-          <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-4" style={{ color: "var(--color-primario)" }}>
+          <motion.p className="text-xs font-black tracking-[0.35em] uppercase mb-4" style={{ color: primaryColor }}>
             <Store className="inline-block w-4 h-4 mr-2 align-middle" /> {slide.subtitle}
           </motion.p>
         )}
@@ -60,7 +62,7 @@ export default function HeroLayoutSplit({
           </motion.p>
         )}
 
-        <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} hideButton={slide.config?.hideButton} />
+        <HeroCtaButton url={resolverEnlaceSlide(slide) ?? undefined} ctaText={slide.ctaText} primaryColor={primaryColor} hideButton={slide.config?.hideButton} />
       </motion.div>
     </motion.div>
   );

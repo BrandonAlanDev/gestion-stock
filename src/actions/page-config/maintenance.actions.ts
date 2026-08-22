@@ -1,19 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import cloudinary from "@/lib/cloudinary";
 import { revalidateTag } from "next/cache";
-import {
-  eliminarImagenes,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
-import { RESET_DATA } from "@/actions/page-config/shared/reset-data";
+import { extractPublicId } from "@/lib/utils";
+import { RESET_DATA } from "@/actions/page-config/shared/reset-data"
 
 export async function clearPageConfig() {
   try {
-    const existing = await prisma.pageConfig.findUnique({
-      where: { id: 1 },
-      include: { banners: true },
-    });
+    const existing =
+      await prisma.pageConfig.findUnique({
+        where: { id: 1 },
+      });
 
     if (!existing) {
       return {
@@ -23,29 +21,37 @@ export async function clearPageConfig() {
       };
     }
 
-    const publicIdsAEliminar: Array<string | null | undefined> = [
-      obtenerPublicIdDesdeUrl(existing.logo ?? ""),
-      obtenerPublicIdDesdeUrl(existing.favicon ?? ""),
-      ...existing.banners.map((banner) =>
-        obtenerPublicIdDesdeUrl(banner.image ?? "")
-      ),
-    ].filter((publicId) => publicId !== null);
+    const images = [
+      existing.logo,
+      existing.banner,
+      existing.favicon,
+    ];
+
+    for (const image of images) {
+      if (!image) continue;
+
+      const publicId =
+        extractPublicId(image);
+
+      if (publicId) {
+        await cloudinary.uploader.destroy(
+          publicId
+        );
+      }
+    }
 
     const pageConfig =
       await prisma.pageConfig.update({
         where: { id: 1 },
 
-        data: { ...RESET_DATA, banners: { deleteMany: {} } },
+        data: RESET_DATA,
       });
-
-    await eliminarImagenes(publicIdsAEliminar);
 
     revalidateTag("page-config");
     revalidateTag("branding-config");
 
     return { ok: true, pageConfig };
-  } catch (error) {
-    console.error("[CLOUDINARY][PAGE-CONFIG][MAINTENANCE]", error);
+  } catch {
     return { ok: false, error: "Error al limpiar configuración" };
   }
 }

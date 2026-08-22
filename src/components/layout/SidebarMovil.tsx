@@ -1,7 +1,8 @@
 "use client";
 
 import ContenidoSidebar from "@/components/layout/ContenidoSidebar";
-import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { getContrastColor } from "@/lib/utils";
 
 export default function SidebarMovil({
   isOpen,
@@ -10,7 +11,11 @@ export default function SidebarMovil({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  useBloqueoScroll(isOpen);
+  const pageConfig = usePageConfig();
+
+  const rawSecondary = pageConfig?.pageConfig?.secondaryColor;
+  const secondaryColor =
+    typeof rawSecondary === "string" && rawSecondary.length > 0 ? rawSecondary : "#FFFFFF";
 
   return (
     <>
@@ -18,7 +23,7 @@ export default function SidebarMovil({
         className={`md:hidden fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         style={{
-          backgroundColor: "var(--superficie-fondo)",
+          backgroundColor: secondaryColor,
         }}
       >
         <ContenidoSidebar onNavegar={onClose} />

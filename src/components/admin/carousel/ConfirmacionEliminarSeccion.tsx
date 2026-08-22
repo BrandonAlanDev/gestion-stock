@@ -2,8 +2,6 @@
 
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { getContrastColor } from "@/lib/utils";
-import { ContextoCapas } from "@/contextos/capas/contexto-capas";
-import { useCapa } from "@/contextos/capas/use-capa";
 
 interface ConfirmacionEliminarSeccionProps {
   onCancelar: () => void;
@@ -19,11 +17,9 @@ export default function ConfirmacionEliminarSeccion({
   secondaryColor,
 }: ConfirmacionEliminarSeccionProps) {
   const textColor = getContrastColor(secondaryColor);
-  const { nivel, zIndice } = useCapa();
 
   return (
-    <ContextoCapas.Provider value={nivel + 1}>
-      <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border shadow-2xl p-6" style={{ backgroundColor: secondaryColor, borderColor: primaryColor, color: textColor }}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor + "20" }}>
@@ -54,7 +50,6 @@ export default function ConfirmacionEliminarSeccion({
           </button>
         </div>
       </div>
-      </div>
-    </ContextoCapas.Provider>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import HeroLayoutMinimal from "./HeroLayoutMinimal";
 import HeroNavButtons from "./HeroNavButtons";
 import HeroDots from "./HeroDots";
 
-export default function HeroLayout({ carousel }: HeroLayoutProps) {
+export default function HeroLayout({ carousel, primaryColor = "#06b6d4" }: HeroLayoutProps) {
   const { settings, slides } = carousel;
   const [current, setCurrent] = useState(0);
 
@@ -64,7 +64,7 @@ export default function HeroLayout({ carousel }: HeroLayoutProps) {
           >
             <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.6), rgba(0,0,0,0.15))" }} />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent, rgba(0,0,0,0.35))" }} />
-            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--color-primario) 20%, transparent) 0%, transparent 70%)" }} />
+            <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${primaryColor}33 0%, transparent 70%)` }} />
           </motion.div>
         </AnimatePresence>
       )}
@@ -72,18 +72,18 @@ export default function HeroLayout({ carousel }: HeroLayoutProps) {
       <div className="relative h-full flex items-center justify-center px-4 md:px-12 lg:px-16">
         {!slide.config?.hideText && (
           <AnimatePresence mode="wait">
-            {layout === "standard" && <HeroLayoutStandard slide={slide} />}
-            {layout === "split" && <HeroLayoutSplit slide={slide} />}
-            {layout === "minimal" && <HeroLayoutMinimal slide={slide} />}
+            {layout === "standard" && <HeroLayoutStandard slide={slide} primaryColor={primaryColor} />}
+            {layout === "split" && <HeroLayoutSplit slide={slide} primaryColor={primaryColor} />}
+            {layout === "minimal" && <HeroLayoutMinimal slide={slide} primaryColor={primaryColor} />}
           </AnimatePresence>
         )}
 
         {showNavButtons && slides.length > 1 && (
-          <HeroNavButtons handlePrev={handlePrev} handleNext={handleNext} />
+          <HeroNavButtons handlePrev={handlePrev} handleNext={handleNext} primaryColor={primaryColor} />
         )}
 
         {showDots && slides.length > 1 && (
-          <HeroDots slidesCount={slides.length} current={current} onChange={setCurrent} />
+          <HeroDots slidesCount={slides.length} current={current} onChange={setCurrent} primaryColor={primaryColor} />
         )}
       </div>
     </section>
