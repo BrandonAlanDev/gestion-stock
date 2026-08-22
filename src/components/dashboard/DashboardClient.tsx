@@ -122,6 +122,7 @@ export default function DashboardClient() {
             sizeTypes={sizeTypes || []}
             providers={providers || []}
             colors={colors || []}
+            onProductsChanged={invalidateProducts}
           />
 
           {/* PAGINACIÓN */}

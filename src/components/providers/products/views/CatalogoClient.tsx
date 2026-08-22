@@ -8,7 +8,19 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useCallback } from "react";
 
-export default function CatalogoClient() {
+export default function CatalogoClient({
+  initialGarments,
+  initialCategories,
+}: {
+  initialGarments?: {
+    success: boolean;
+    data: unknown[];
+    total: number;
+    page: number;
+    totalPages: number;
+  };
+  initialCategories?: unknown[];
+}) {
   const { addToCart } = useCart();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -23,9 +35,10 @@ export default function CatalogoClient() {
     limit,
     categoria,
     undefined,
-    subcategoria
+    subcategoria,
+    initialGarments
   );
-  const { data: categoriesData } = useCatalogCategories();
+  const { data: categoriesData } = useCatalogCategories(initialCategories);
 
   const garments = garmentsData?.data || [];
   const categories = categoriesData || [];
@@ -56,9 +69,9 @@ export default function CatalogoClient() {
 
   return (
     <div className="relative">
-      {isFetching && (
-        <div className="fixed inset-0 z-50 bg-white/70 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+      {isFetching && garments.length === 0 && (
+        <div className="fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--color-fondo-sitio)_70%,transparent)] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[var(--color-primario)] animate-spin" />
         </div>
       )}
       <ProductsPage
