@@ -2,13 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import type { PageConfig_featuredLayout } from "../../../generated/prisma/client";
-import {
-  obtenerCarpetaGrids,
-  subirImagen,
-  eliminarImagenes,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { PageConfig_featuredLayout } from "../../../generated/prisma"; 
+import cloudinary from "@/lib/cloudinary";
 
 export interface UpdateConfigData {
   featuredLayout?: string;
@@ -27,13 +22,6 @@ interface GridItem {
   | "PAGE"
   | "EXTERNAL";
   linkValue?: string;
-  subtitleNeon?: boolean;
-  subtitleDim?: boolean;
-  linkStyle?: "IMAGE" | "BUTTON";
-  buttonVariant?: "DEFAULT" | "STRAIGHT" | "TRANSPARENT";
-  buttonText?: string;
-  buttonBgColor?: string;
-  buttonTextColor?: string;
 }
 
 export async function updateSectionVisibility(data: UpdateConfigData) {
@@ -57,106 +45,63 @@ export async function updateSectionVisibility(data: UpdateConfigData) {
 
 export async function updateHomeGrids(
   homegridId: string | undefined | null,
-  grids: GridItem[],
-  title?: string
+  grids: GridItem[]
 ) {
-  const publicIdsSubidos: string[] = [];
   try {
-    const destinosPaginaValidos = grids.every((grid) =>
-      grid.linkType !== "PAGE" || /^\/(?!\/)/.test(grid.linkValue?.trim() || "")
+    const processedGrids = await Promise.all(
+      grids.map(async (g) => {
+        if (g.image.startsWith("data:image")) {
+          const uploadResponse = await cloudinary.uploader.upload(g.image, {
+            folder: "gestion-stock/home-grids",
+          });
+          return { ...g, image: uploadResponse.secure_url };
+        }
+        return g;
+      })
     );
-    if (!destinosPaginaValidos) {
-      return { ok: false, error: "Las páginas de destino deben comenzar con una sola barra (/)" };
-    }
 
-    let targetHomegridId = homegridId;
+    const finalHomegridId = await prisma.$transaction(async (tx) => {
+      let targetHomegridId = homegridId;
 
-    if (!targetHomegridId) {
-      const nuevoHomegrid = await prisma.homegrid.create({
-        data: {
-          title: title || "Home Destacado",
-          subtitle: "",
-          style: 1,
-          columns: "md:grid-cols-2",
-        },
-      });
+      if (!targetHomegridId) {
+        const newHomegrid = await tx.homegrid.create({
+          data: {
+            title: "Home Destacado",      
+            subtitle: "",
+            style: 1,                    
+            columns: "md:grid-cols-2",
+          },
+        });
 
-      await prisma.pageConfig.update({
-        where: { id: 1 },
-        data: { homegridId: nuevoHomegrid.id },
-      });
+        await tx.pageConfig.update({
+          where: { id: 1 },
+          data: { homegridId: newHomegrid.id },
+        });
 
-      targetHomegridId = nuevoHomegrid.id;
-    } else if (title) {
-      await prisma.homegrid.update({
-        where: { id: targetHomegridId },
-        data: { title },
-      });
-    }
+        targetHomegridId = newHomegrid.id;
+      }
 
-    const gridsExistentes = await prisma.grid.findMany({
-      where: { homegridId: targetHomegridId },
-    });
-
-    let gridsProcesados: GridItem[] | null = null;
-    try {
-      gridsProcesados = await Promise.all(
-        grids.map(async (g, indice) => {
-          if (g.image.startsWith("data:image")) {
-            const subida = await subirImagen(
-              g.image,
-              obtenerCarpetaGrids(targetHomegridId),
-              `imagen-${Date.now()}-${indice + 1}`
-            );
-            publicIdsSubidos.push(subida.publicId);
-            return { ...g, image: subida.url };
-          }
-          return g;
-        })
-      );
-    } catch (error) {
-      console.error("[CLOUDINARY][PAGE-CONFIG][HOME-GRIDS][SUBIDA]", error);
-      await eliminarImagenes(publicIdsSubidos);
-      return { ok: false, error: "No se pudieron actualizar las secciones" };
-    }
-
-    await prisma.$transaction(async (tx) => {
       await tx.grid.deleteMany({ where: { homegridId: targetHomegridId } });
 
       await tx.grid.createMany({
-        data: gridsProcesados!.map((g) => ({
+        data: processedGrids.map((g) => ({
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,
           order: g.order || 0,
           linkType: g.linkType,
           linkValue: g.linkValue,
-          subtitleNeon: g.subtitleNeon ?? false,
-          subtitleDim: g.subtitleDim ?? false,
-          linkStyle: g.linkStyle ?? "IMAGE",
-          buttonVariant: g.buttonVariant ?? "DEFAULT",
-          buttonText: g.buttonText || null,
-          buttonBgColor: g.buttonBgColor || null,
-          buttonTextColor: g.buttonTextColor || null,
           homegridId: targetHomegridId,
         })),
       });
+
+      return targetHomegridId;
     });
 
-    const urlsFinales = new Set(
-      gridsProcesados!.map((g) => g.image)
-    );
-    const publicIdsARemover = gridsExistentes
-      .filter((grid) => !urlsFinales.has(grid.image))
-      .map((grid) => obtenerPublicIdDesdeUrl(grid.image));
-
-    await eliminarImagenes(publicIdsARemover);
-
-    revalidatePath("/", "layout");
-    return { ok: true, homegridId: targetHomegridId };
+    revalidatePath("/admin/pageConfig");
+    return { ok: true, homegridId: finalHomegridId };
   } catch (error) {
-    console.error("[CLOUDINARY][PAGE-CONFIG][HOME-GRIDS]", error);
-    await eliminarImagenes(publicIdsSubidos);
+    console.error("Error en updateHomeGrids:", error);
     return { ok: false, error: "No se pudieron actualizar las secciones" };
   }
 }

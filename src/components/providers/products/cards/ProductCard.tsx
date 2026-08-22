@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface Props {
   product: any;
@@ -12,17 +12,17 @@ interface Props {
 }
 
 const ProductCard = ({ product }: Props) => {
+  const { pageConfig } = usePageConfig();
+  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
+
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  const images = useMemo(
-    () =>
-      product.images?.length > 1
-        ? product.images.slice(1).map((img: any) => img.srcImage)
-        : product.images?.map((img: any) => img.srcImage) || [],
-    [product.images]
-  );
+  const images =
+    product.images?.length > 1
+      ? product.images.slice(1).map((img: any) => img.srcImage)
+      : product.images?.map((img: any) => img.srcImage) || [];
 
   useEffect(() => {
     if (!isHovering || images.length <= 1) {
@@ -62,7 +62,7 @@ const ProductCard = ({ product }: Props) => {
           {isNew && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)", borderRadius: "4px" }}
+              style={{ backgroundColor: primaryColor, color: "#ffffff", borderRadius: "4px" }}
             >
               Nuevo
             </span>
@@ -70,7 +70,7 @@ const ProductCard = ({ product }: Props) => {
           {totalStock <= 0 && (
             <span
               className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 10%, transparent)", color: "var(--color-primario)", borderRadius: "4px" }}
+              style={{ backgroundColor: `${primaryColor}1A`, color: primaryColor, borderRadius: "4px" }}
             >
               Consultar stock
             </span>
@@ -79,16 +79,14 @@ const ProductCard = ({ product }: Props) => {
 
         <div
           className="overflow-hidden mb-5 relative"
-          style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
+          style={{ background: "#f8fafc", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
-            src={obtenerUrlImagenOptimizada(images[currentImage], 600) || "/images/placeholder.avif"}
+            src={images[currentImage] || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            loading="lazy"
-            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] mix-blend-multiply ${fade ? "opacity-100" : "opacity-0"
+            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
               }`}
             style={{ padding: "12px" }}
           />
@@ -96,7 +94,7 @@ const ProductCard = ({ product }: Props) => {
           {/* Nombre superpuesto */}
           <h3
             className="absolute bottom-4 left-0 right-0 text-center font-black uppercase italic px-3 line-clamp-2"
-            style={{ color: "var(--color-primario)", fontSize: "22px", letterSpacing: "-0.02em" }}
+            style={{ color: primaryColor, fontSize: "22px", letterSpacing: "-0.02em" }}
           >
             {product.name}
           </h3>

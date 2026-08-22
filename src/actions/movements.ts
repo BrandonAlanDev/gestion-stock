@@ -49,29 +49,25 @@ export async function createMovement(data: {
 
     revalidateTag("products");
     return { success: true, data: JSON.parse(JSON.stringify(result)) };
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("Movement Error:", error);
-    return { error: "Error al registrar movimiento" };
+    return { error: error.message || "Error al registrar movimiento" };
   }
 }
 
-export async function getMovements(page = 1, limit = 100) {
-  const skip = (page - 1) * limit;
-  const [movements, total] = await Promise.all([
-    prisma.movement.findMany({
-      include: {
-        garmentVariant: {
-          include: {
-            garment: true,
-            size: true,
-          },
+export async function getMovements() {
+  const movements = await prisma.movement.findMany({
+    include: {
+      garmentVariant: {
+        include: {
+          garment: true,
+          size: true,
         },
       },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-    }),
-    prisma.movement.count(),
-  ]);
-  return { movements, total };
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return movements;
 }

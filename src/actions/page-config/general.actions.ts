@@ -1,10 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { unstable_cache } from "next/cache";
 
-export const getPageConfig = unstable_cache(
-  async () => {
+export async function getPageConfig() {
   try {
     const pageConfig = await prisma.pageConfig.findUnique({
       where: { id: 1 },
@@ -16,12 +14,6 @@ export const getPageConfig = unstable_cache(
         favicon: true,
         primaryColor: true,
         secondaryColor: true,
-        bgColor: true,
-        fontPrimary: true,
-        fontSecondary: true,
-        borderRadius: true,
-        shadowLevel: true,
-        density: true,
         ecommerceEnabled: true,
         cartEnabled: true,
         checkoutEnabled: true,
@@ -44,24 +36,11 @@ export const getPageConfig = unstable_cache(
         currency: true,
         language: true,
         maintenanceMode: true,
-        arreglosEnabled: true,
-        escuelaEnabled: true,
-        personalizadoEnabled: true,
-        planAhorroEnabled: true,
-        footerAboutText: true,
-        footerCopyrightText: true,
-        footerShowSobre: true,
-        footerShowNavegacion: true,
-        footerShowContacto: true,
-        footerShowUbicacion: true,
-        footerShowRedes: true,
-        footerShowLegales: true,
         metaTitle: true,
         metaDescription: true,
         termsAndConditions: true,
         privacyPolicy: true,
         featuredLayout: true,
-        sectionOrder: true,
 
         // Mantenemos tus banners
         banners: {
@@ -70,6 +49,7 @@ export const getPageConfig = unstable_cache(
           },
         },
 
+        // Agregamos la relación homegrid y sus grids hijos usando select
         homegrid: {
           select: {
             id: true,
@@ -86,15 +66,6 @@ export const getPageConfig = unstable_cache(
             },
           },
         },
-
-        carousels: {
-          select: {
-            id: true,
-            type: true,
-            title: true,
-            settings: true,
-          },
-        },
       },
     });
 
@@ -102,14 +73,12 @@ export const getPageConfig = unstable_cache(
       ok: true,
       pageConfig,
     };
-  } catch (error: unknown) {
-    console.error("Error real:", error instanceof Error ? error.message : error);
+  } catch (error:any) {
+    console.error("Error real:", error.message);
+    console.error(error);
     return {
       ok: false,
       error: "Error configuración",
     };
   }
-  },
-  ["page-config-completa"],
-  { revalidate: 3600, tags: ["page-config"] }
-);
+}

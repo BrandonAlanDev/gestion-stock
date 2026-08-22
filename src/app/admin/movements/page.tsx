@@ -21,7 +21,7 @@ export default function MovementsPage() {
   const accent = pageConfig?.primaryColor || "#FFFFFF";
   const contrast = getContrastColor(background);
 
-  useEffect(() => { getMovements(1, 100).then(d => { setMovements(d.movements); setLoading(false); }); }, []);
+  useEffect(() => { getMovements().then(d => { setMovements(d); setLoading(false); }); }, []);
 
   return (
 
@@ -34,7 +34,7 @@ export default function MovementsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto overflow-x-auto rounded-[1.0rem] bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl">
-        <table className="w-full min-w-[700px] text-left border-collapse">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-white/20 text-[9px] uppercase tracking-[0.3em] font-black opacity-70">
               <th className="px-8 py-6">Fecha</th>

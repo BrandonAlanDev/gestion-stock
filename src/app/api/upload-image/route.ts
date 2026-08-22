@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import {
-  subirImagen,
-  obtenerCarpetaIdentidad,
-} from "@/lib/services/cloudinary-service";
+import cloudinary from "@/lib/cloudinary";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      );
-    }
-
     const formData = await req.formData();
 
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file") as File;
 
     if (!file) {
       return NextResponse.json(
@@ -27,20 +15,29 @@ export async function POST(req: Request) {
     }
 
     const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString("base64");
-    const dataUri = `data:${file.type || "image/png"};base64,${base64}`;
+    const buffer = Buffer.from(bytes);
 
-    const resultado = await subirImagen(
-      dataUri,
-      obtenerCarpetaIdentidad()
+    const result = await new Promise<any>(
+      (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            {
+              folder: "page-config",
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
+      }
     );
 
     return NextResponse.json({
-      url: resultado.url,
-      publicId: resultado.publicId,
+      url: result.secure_url,
     });
   } catch (error) {
-    console.error("[CLOUDINARY][PAGE-CONFIG][UPLOAD]", error);
+    console.error(error);
 
     return NextResponse.json(
       { error: "Error subiendo imagen" },

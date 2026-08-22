@@ -7,17 +7,11 @@ import {
   getCustomPages,
   createCustomPage,
   deleteCustomPage,
+  updateCustomPageContent,
 } from "@/actions/custom-page.actions";
-import { updateCustomPageContent } from "@/actions/custom-page-builder.actions";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { DeleteConfirmModal, ViewPageModal, PageBuilderModal } from "@/components/admin/custom-page/Modals";
-
-type PaginaCustomizada = Awaited<ReturnType<typeof getCustomPages>>[number];
-type DatosPagina = Parameters<typeof updateCustomPageContent>[1] & {
-  title: string;
-  slug: string;
-};
 
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
@@ -36,14 +30,14 @@ export default function CustomPagesPage() {
   const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#fff";
   const contrastColor = getContrastColor(primaryColor);
 
-  const [pages, setPages] = useState<PaginaCustomizada[]>([]);
+  const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const [selectedPage, setSelectedPage] = useState<PaginaCustomizada | null>(null);
+  const [selectedPage, setSelectedPage] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const loadPages = async () => {
@@ -62,22 +56,22 @@ export default function CustomPagesPage() {
     setIsBuilderOpen(true);
   };
 
-  const handleOpenEdit = (page: PaginaCustomizada) => {
+  const handleOpenEdit = (page: any) => {
     setSelectedPage(page);
     setIsBuilderOpen(true);
   };
 
-  const handleOpenView = (page: PaginaCustomizada) => {
+  const handleOpenView = (page: any) => {
     setSelectedPage(page);
     setIsViewerOpen(true);
   };
 
-  const handleOpenDelete = (page: PaginaCustomizada) => {
+  const handleOpenDelete = (page: any) => {
     setSelectedPage(page);
     setIsDeleteOpen(true);
   };
 
-  const handleSavePage = async (formData: DatosPagina) => {
+  const handleSavePage = async (formData: any) => {
     setIsProcessing(true);
     try {
       let pageId = selectedPage?.id;
@@ -254,7 +248,7 @@ export default function CustomPagesPage() {
                 </div>
                 <h3 className="font-black text-xl text-gray-700">No hay páginas dinámicas creadas</h3>
                 <p className="text-gray-500 mt-2 max-w-sm">
-                  Utiliza el botón de &quot;Crear Página&quot; para comenzar a armar tu primera landing page modular.
+                  Utiliza el botón de "Crear Página" para comenzar a armar tu primera landing page modular.
                 </p>
               </div>
             )}

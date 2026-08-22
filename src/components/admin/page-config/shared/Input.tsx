@@ -1,54 +1,47 @@
-"use client";
-
-import type { CSSProperties } from "react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface Props {
-  label?: string;
+  label: string;
   value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
+  onChange: (
+    value: string
+  ) => void;
+}
+
+function getContrastColor(hexColor: string) {
+  if (!hexColor) return "#000000";
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
 export default function Input({
   label,
   value,
   onChange,
-  placeholder,
-  className,
-  primaryColor = "#06b6d4",
-  secondaryColor = "#ffffff",
 }: Props) {
-  const textColor = getContrastColor(secondaryColor);
-
+    const pageConfig = usePageConfig();
   return (
     <div>
-      {label && (
-        <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3" style={{ color: textColor }}>
-          {label}
-        </label>
-      )}
+      <label className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3"
+      style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor)}}
+      >
+        {label}
+      </label>
 
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={
-          {
-            "--input-fondo": textColor + "08",
-            "--input-borde": textColor + "30",
-            "--input-texto": textColor,
-            "--input-placeholder": textColor + "80",
-            "--input-foco": primaryColor,
-          } as CSSProperties
+        onChange={(e) =>
+          onChange(e.target.value)
         }
-        className={cn(
-          "w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all duration-200 bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)] focus:ring-2 ring-[var(--input-foco)]/20",
-          className
-        )}
+        style={{ color: getContrastColor(pageConfig?.pageConfig?.secondaryColor),
+        backgroundColor: pageConfig?.pageConfig?.primaryColor.concat("1A"),
+        borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor)
+        }}
+        className="w-full h-14 px-5 rounded-2xl border text-sm font-bold outline-none transition-all"
       />
     </div>
   );

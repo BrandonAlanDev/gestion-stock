@@ -1,59 +1,57 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, ArrowRight } from "lucide-react";
-import { useCart, type CartItem } from "@/context/CartContext";
-import { useState, useMemo, useEffect } from "react";
+import { useCart } from "@/context/CartContext";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { useState, useMemo } from "react";
 import CartItemRow from "@/context/CartItemRow";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
-import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
-
-interface ItemCarrito extends CartItem {
-  esTabla?: boolean;
-}
-
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Función auxiliar para contraste
+function getContrastColor(hex: string) {
+  if (!hex) return "#000000";
+  const r = parseInt(hex.replace("#", "").substring(0, 2), 16) || 0;
+  const g = parseInt(hex.replace("#", "").substring(2, 4), 16) || 0;
+  const b = parseInt(hex.replace("#", "").substring(4, 6), 16) || 0;
+  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
+}
+
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, updateCartItemSpecs } = useCart() as {
-    cartItems: ItemCarrito[];
-    updateCartItemSpecs: (uid: string, newSpecs: Record<string, unknown>) => void;
-  };
-  const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
+  const { cartItems, updateCartItemSpecs } = useCart();
+  const { pageConfig } = usePageConfig();
+  const [editingItem, setEditingItem] = useState<any>(null);
 
-  useBloqueoScroll(isOpen);
+  const primaryColor = pageConfig?.primaryColor || "#000000";
+  const secondaryColor = pageConfig?.secondaryColor || "#FFFFFF";
+  const textColor = getContrastColor(secondaryColor);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const { totalUSD, totalARS } = useMemo(() => {
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (editingItem) {
-          setEditingItem(null);
-          return;
+    return cartItems.reduce(
+      (acc: { totalUSD: number; totalARS: number }, item: any) => {
+        const price = parseFloat(item.price) * item.qty;
+        if (item.esTabla) {
+          acc.totalUSD += price;
+        } else {
+          acc.totalARS += price;
         }
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingItem, isOpen, onClose]);
-
-  const subtotal = useMemo(() =>
-    cartItems.reduce((acc: number, item) => acc + (Number(item.price) * item.qty), 0),
-    [cartItems]
-  );
+        return acc;
+      },
+      { totalUSD: 0, totalARS: 0 }
+    );
+  }, [cartItems]);
 
   const handleWhatsAppCheckout = () => {
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
-    cartItems.forEach((item) => {
-      message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
+    cartItems.forEach((item: any) => {
+      const currencySymbol = item.esTabla ? "USD" : "$";
+      message += `• *${item.name}* (x${item.qty}) - ${currencySymbol}${(Number(item.price) * item.qty).toLocaleString()}\n`;
 
-      // Si el producto tiene especificaciones (specs), las agregamos al mensaje
       if (item.esTabla && item.specs) {
         Object.entries(item.specs).forEach(([key, value]) => {
           if (value) message += `   - ${key}: ${value}\n`;
@@ -62,12 +60,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       message += "\n";
     });
 
-    message += `*TOTAL: $${subtotal.toLocaleString()}*`;
+    message += `*TOTAL TABLAS: USD ${totalUSD.toLocaleString()}*\n`;
+    message += `*TOTAL OTROS: $${totalARS.toLocaleString()}*`;
 
     const phone = "2235644043";
-    //const phone = pageConfig?.whatsapp || "2235644043";
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-
     window.open(whatsappUrl, "_blank");
   };
 
@@ -76,29 +73,21 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/50"
-            onClick={onClose}
-          >
-          <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="absolute right-0 top-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col p-6"
-            style={{ backgroundColor: "var(--color-secundario)", color: "var(--texto-sobre-secundario)" }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed right-0 top-0 h-full w-full sm:w-[400px] shadow-2xl z-[101] flex flex-col p-6"
+            style={{ backgroundColor: secondaryColor, color: textColor }}
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingBag style={{ color: "var(--color-primario)" }} /> Carrito
+                <ShoppingBag style={{ color: primaryColor }} /> Carrito
               </h2>
-              <button onClick={onClose} className="cursor-pointer transition-opacity hover:opacity-70"><X /></button>
+              <button onClick={onClose}><X /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3">
-              {cartItems.map((item) => (
+              {cartItems.map((item: any) => (
                 <CartItemRow
                   key={`${item.id}-${JSON.stringify(item.specs)}`}
                   item={item}
@@ -107,19 +96,26 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               ))}
             </div>
 
-            <div className="border-t pt-4 mt-4" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
-              <div className="flex justify-between font-bold mb-4">
-                <span>Total</span> <span>${subtotal.toLocaleString()}</span>
-              </div>
+            <div className="border-t pt-4 mt-4 space-y-2" style={{ borderColor: `${textColor}20` }}>
+              {totalUSD > 0 && (
+                <div className="flex justify-between font-bold">
+                  <span>Total Tablas</span> <span>USD {totalUSD.toLocaleString()}</span>
+                </div>
+              )}
+              {totalARS > 0 && (
+                <div className="flex justify-between font-bold">
+                  <span>Total Otros</span> <span>${totalARS.toLocaleString()}</span>
+                </div>
+              )}
+
               <button
                 onClick={handleWhatsAppCheckout}
-                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
+                className="w-full text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 mt-4"
+                style={{ backgroundColor: primaryColor }}
               >
                 Finalizar Pedido <ArrowRight size={16} />
               </button>
             </div>
-          </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

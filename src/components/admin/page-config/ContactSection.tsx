@@ -57,7 +57,7 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
         borderColor:getContrastColor(secondaryColor || "black")
       }}
     >
-      <div className="border-b border-neutral-900 px-4 py-4 sm:px-8 sm:py-6 flex items-center gap-4">
+      <div className="border-b border-neutral-900 px-8 py-6 flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400"
           style={{
             backgroundColor:primaryColor?.concat("33"),
@@ -78,7 +78,7 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 sm:p-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
         <Input
           label="Teléfono"
           value={form.phone}
@@ -98,11 +98,11 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
         />
       </div>
 
-      <div className="px-4 pb-4 sm:px-8 sm:pb-8 flex justify-end">
+      <div className="px-8 pb-8 flex justify-end">
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="w-full sm:w-auto justify-center h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3 hover:cursor-pointer opacity-90 hover:opacity-100 transition"
+          className="h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3 hover:cursor-pointer opacity-90 hover:opacity-100 transition"
           style={{
             backgroundColor: primaryColor || "black",
             color: getContrastColor(primaryColor || "black"),
