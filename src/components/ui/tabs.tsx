@@ -7,6 +7,7 @@ interface ElementoTab {
   href: string;
   etiqueta: string;
   icono?: LucideIcon;
+  activoPrefijo?: string;
 }
 
 interface TabsProps {
@@ -19,7 +20,11 @@ export default function Tabs({ elementos, activo }: TabsProps) {
     <nav className="flex gap-1 overflow-x-auto border-b border-[var(--admin-borde)] px-1 -mb-px">
       {elementos.map((elemento) => {
         const Icono = elemento.icono;
-        const esActivo = elemento.href === activo;
+        const esActivo =
+          elemento.href === activo ||
+          (elemento.activoPrefijo
+            ? activo.startsWith(elemento.activoPrefijo)
+            : false);
         return (
           <Link
             key={elemento.href}

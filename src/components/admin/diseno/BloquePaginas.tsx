@@ -7,6 +7,7 @@ interface ConfigPaginas {
   escuelaEnabled: boolean;
   arreglosEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
 }
 
 interface PaginaResumen {
@@ -63,33 +64,34 @@ export default function BloquePaginas({ config, paginas }: PropsPaginas) {
         href="/productos"
         badge={<Badge variante="activo">Activa</Badge>}
       />
-      <FilaPagina
-        etiqueta="Escuela"
-        href="/escuela"
-        badge={
-          <Badge variante={config.escuelaEnabled ? "activo" : "inactivo"}>
-            {config.escuelaEnabled ? "Activa" : "Inactiva"}
-          </Badge>
-        }
-      />
-      <FilaPagina
-        etiqueta="Arreglos"
-        href="/arreglos"
-        badge={
-          <Badge variante={config.arreglosEnabled ? "activo" : "inactivo"}>
-            {config.arreglosEnabled ? "Activa" : "Inactiva"}
-          </Badge>
-        }
-      />
-      <FilaPagina
-        etiqueta="Personalizado"
-        href="/personalizado"
-        badge={
-          <Badge variante={config.personalizadoEnabled ? "activo" : "inactivo"}>
-            {config.personalizadoEnabled ? "Activa" : "Inactiva"}
-          </Badge>
-        }
-      />
+      {config.escuelaEnabled && (
+        <FilaPagina
+          etiqueta="Escuela"
+          href="/escuela"
+          badge={<Badge variante="activo">Activa</Badge>}
+        />
+      )}
+      {config.arreglosEnabled && (
+        <FilaPagina
+          etiqueta="Arreglos"
+          href="/arreglos"
+          badge={<Badge variante="activo">Activa</Badge>}
+        />
+      )}
+      {config.personalizadoEnabled && (
+        <FilaPagina
+          etiqueta="Personalizado"
+          href="/personalizado"
+          badge={<Badge variante="activo">Activa</Badge>}
+        />
+      )}
+      {config.planAhorroEnabled && (
+        <FilaPagina
+          etiqueta="Plan de ahorro"
+          href="/plan-de-ahorro"
+          badge={<Badge variante="activo">Activa</Badge>}
+        />
+      )}
       {paginas.slice(0, 6).map((pagina) => (
         <FilaPagina
           key={pagina.id}

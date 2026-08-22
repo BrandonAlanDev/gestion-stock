@@ -10,6 +10,8 @@ import LayoutComponent from "@/components/layout/LayoutComponent";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
 import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
+import FuentesGoogle from "@/components/apariencia/FuentesGoogle";
+import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -91,12 +93,24 @@ export default async function RootLayout({
   const pageConfig = await getCachedPageConfig();
 
   return (
-    <html lang="es" className="dark">
+    <html
+      lang="es"
+      className="dark"
+      style={obtenerVariablesTema(
+        (pageConfig?.pageConfig ?? {}) as Record<string, unknown>
+      ) as React.CSSProperties}
+    >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden bg-black text-white`}
+        style={{ backgroundColor: "var(--color-fondo-sitio)" }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden text-[var(--texto-sobre-fondo)]`}
       >
         <QueryProvider>
           <PageConfigProvider pageConfig={pageConfig}>
+            <FuentesGoogle
+              pageConfig={
+                (pageConfig?.pageConfig ?? {}) as Record<string, unknown>
+              }
+            />
             <EstilosApariencia />
             <LayoutComponent>
               <AppGate>

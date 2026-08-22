@@ -2,11 +2,16 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
+
+const moduloActivo = () => moduloHabilitado("personalizadoEnabled");
+const ERROR_MODULO = "El módulo de tablas personalizadas está desactivado.";
 
 /* =========================================
    OBTENER TODAS LAS OPCIONES
 ========================================= */
 export async function getBoardAdminOptions() {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const [types, tails, fins, configs, materials, deliveryOptions] = await Promise.all([
       prisma.boardTypeOption.findMany({
@@ -35,6 +40,7 @@ export async function getBoardAdminOptions() {
    TIPOS DE TABLA (Modelos)
 ========================================= */
 export async function createBoardType(data: { name: string; svgPath?: string; tailIds: string[]; finIds: string[]; configIds: string[] }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardTypeOption.create({
       data: {
@@ -55,6 +61,7 @@ export async function createBoardType(data: { name: string; svgPath?: string; ta
 }
 
 export async function updateBoardType(id: string, data: { name: string; svgPath?: string; active: boolean; tailIds: string[]; finIds: string[]; configIds: string[] }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardTypeOption.update({
       where: { id },
@@ -77,6 +84,7 @@ export async function updateBoardType(id: string, data: { name: string; svgPath?
 }
 
 export async function deleteBoardType(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardTypeOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
@@ -92,6 +100,7 @@ export async function deleteBoardType(id: string) {
    COLAS (Tails)
 ========================================= */
 export async function createBoardTail(data: { name: string; svgPath?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardTailOption.create({ data: { name: data.name, svgPath: data.svgPath || null } });
     revalidatePath("/admin/personalizado");
@@ -102,6 +111,7 @@ export async function createBoardTail(data: { name: string; svgPath?: string }) 
 }
 
 export async function updateBoardTail(id: string, data: { name: string; svgPath?: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardTailOption.update({
       where: { id },
@@ -116,6 +126,7 @@ export async function updateBoardTail(id: string, data: { name: string; svgPath?
 }
 
 export async function deleteBoardTail(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardTailOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
@@ -130,6 +141,7 @@ export async function deleteBoardTail(id: string) {
    QUILLAS (Fins)
 ========================================= */
 export async function createBoardFin(data: { name: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardFinOption.create({ data: { name: data.name } });
     revalidatePath("/admin/personalizado");
@@ -140,6 +152,7 @@ export async function createBoardFin(data: { name: string }) {
 }
 
 export async function updateBoardFin(id: string, data: { name: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardFinOption.update({ where: { id }, data: { name: data.name, active: data.active } });
     revalidatePath("/admin/personalizado");
@@ -151,6 +164,7 @@ export async function updateBoardFin(id: string, data: { name: string; active: b
 }
 
 export async function deleteBoardFin(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardFinOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
@@ -165,6 +179,7 @@ export async function deleteBoardFin(id: string) {
    CONFIGS QUILLAS (Fin Configs)
 ========================================= */
 export async function createBoardFinConfig(data: { name: string; count: number }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardFinConfigOption.create({ data: { name: data.name, count: data.count } });
     revalidatePath("/admin/personalizado");
@@ -175,6 +190,7 @@ export async function createBoardFinConfig(data: { name: string; count: number }
 }
 
 export async function updateBoardFinConfig(id: string, data: { name: string; count: number; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardFinConfigOption.update({ where: { id }, data: { name: data.name, count: data.count, active: data.active } });
     revalidatePath("/admin/personalizado");
@@ -186,6 +202,7 @@ export async function updateBoardFinConfig(id: string, data: { name: string; cou
 }
 
 export async function deleteBoardFinConfig(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardFinConfigOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
@@ -200,6 +217,7 @@ export async function deleteBoardFinConfig(id: string) {
    MATERIALES
 ========================================= */
 export async function createBoardMaterial(data: { name: string; description?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardMaterialOption.create({ data: { name: data.name, description: data.description || null } });
     revalidatePath("/admin/personalizado");
@@ -210,6 +228,7 @@ export async function createBoardMaterial(data: { name: string; description?: st
 }
 
 export async function updateBoardMaterial(id: string, data: { name: string; description?: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardMaterialOption.update({ where: { id }, data: { name: data.name, description: data.description || null, active: data.active } });
     revalidatePath("/admin/personalizado");
@@ -221,6 +240,7 @@ export async function updateBoardMaterial(id: string, data: { name: string; desc
 }
 
 export async function deleteBoardMaterial(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardMaterialOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
@@ -235,6 +255,7 @@ export async function deleteBoardMaterial(id: string) {
    OPCIONES DE ENTREGA
 ========================================= */
 export async function createDeliveryOption(data: { label: string; description?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardDeliveryOption.create({
       data: { label: data.label, description: data.description || null },
@@ -251,6 +272,7 @@ export async function updateDeliveryOption(
   id: string,
   data: { label: string; description?: string; active: boolean }
 ) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardDeliveryOption.update({
       where: { id },
@@ -265,6 +287,7 @@ export async function updateDeliveryOption(
 }
 
 export async function deleteDeliveryOption(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardDeliveryOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");

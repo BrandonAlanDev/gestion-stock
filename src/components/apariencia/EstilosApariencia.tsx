@@ -1,58 +1,46 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
-
-const FUENTES_BASE = new Set(["Outfit", "Playfair Display"]);
+import { getPageConfig } from "@/actions/page-config/general.actions";
+import { aplicarTipografiaDocumento } from "@/lib/apariencia/aplicar-tipografia-documento";
+import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 
 export default function EstilosApariencia() {
-  const { pageConfig } = usePageConfig();
-  const linksCargados = useRef(new Map<string, HTMLLinkElement>());
-
-  const fontPrimary =
-    typeof pageConfig.fontPrimary === "string"
-      ? pageConfig.fontPrimary
-      : "Outfit";
-
-  const fontSecondary =
-    typeof pageConfig.fontSecondary === "string"
-      ? pageConfig.fontSecondary
-      : "Playfair Display";
+  const pathname = usePathname();
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--fuente-principal",
-      `'${fontPrimary}', sans-serif`,
-    );
+    let activo = true;
 
-    document.documentElement.style.setProperty(
-      "--fuente-secundaria",
-      `'${fontSecondary}', serif`,
-    );
+    void getPageConfig().then((resultado) => {
+      if (!activo || !resultado.ok || !resultado.pageConfig) return;
 
-    const fuentesNecesarias = new Set(
-      [fontPrimary, fontSecondary].filter(
-        (fuente) => !FUENTES_BASE.has(fuente),
-      ),
-    );
+      const variablesTema = obtenerVariablesTema(
+        resultado.pageConfig as Record<string, unknown>,
+      );
 
-    for (const [fuente, link] of linksCargados.current) {
-      if (!fuentesNecesarias.has(fuente)) {
-        link.remove();
-        linksCargados.current.delete(fuente);
+      for (const [clave, valor] of Object.entries(variablesTema)) {
+        document.documentElement.style.setProperty(clave, valor);
       }
-    }
 
-    for (const fuente of fuentesNecesarias) {
-      if (linksCargados.current.has(fuente)) continue;
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = `https://fonts.googleapis.com/css2?family=${fuente.replaceAll(" ", "+")}:wght@300;400;500;600;700&display=swap`;
-      document.head.appendChild(link);
-      linksCargados.current.set(fuente, link);
-    }
-  }, [fontPrimary, fontSecondary]);
+      const principal =
+        typeof resultado.pageConfig.fontPrimary === "string"
+          ? resultado.pageConfig.fontPrimary
+          : "Outfit";
+
+      const secundaria =
+        typeof resultado.pageConfig.fontSecondary === "string"
+          ? resultado.pageConfig.fontSecondary
+          : "Playfair Display";
+
+      aplicarTipografiaDocumento(principal, secundaria);
+    });
+
+    return () => {
+      activo = false;
+    };
+  }, [pathname]);
 
   return null;
 }

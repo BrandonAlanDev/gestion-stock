@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { T } from "./escuela.data";
+import { verificarModuloHabilitado } from "@/lib/modulos/verificar-modulo";
 import EscuelaHero from "./sections/EscuelaHero";
 import EscuelaLevels from "./sections/EscuelaLevels";
 import EscuelaIncludes from "./sections/EscuelaIncludes";
@@ -11,9 +11,10 @@ export const metadata: Metadata = {
   description: "Clases de surf para todos los niveles en Mar del Plata. Principiantes, intermedios y avanzados. Tabla y traje incluidos.",
 };
 
-export default function NewSurfBoardPage() {
+export default async function NewSurfBoardPage() {
+  await verificarModuloHabilitado("escuelaEnabled");
   return (
-    <main className="min-h-screen font-sans" style={{ background: T.bg1, color: T.text }}>
+    <main className="min-h-screen" style={{ background: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}>
       <EscuelaHero />
       <EscuelaLevels />
       <EscuelaIncludes />

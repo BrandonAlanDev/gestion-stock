@@ -5,12 +5,10 @@ import { ArrowRight } from "lucide-react";
 export default function HeroCtaButton({
   url,
   ctaText,
-  primaryColor,
   hideButton,
 }: {
   url?: string;
   ctaText?: string;
-  primaryColor: string;
   hideButton?: boolean;
 }) {
   if (hideButton || !url) return null;
@@ -23,9 +21,9 @@ export default function HeroCtaButton({
         }}
         className="group relative overflow-hidden px-8 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm flex items-center gap-3 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         style={{
-          background: primaryColor,
-          color: "#000",
-          boxShadow: `0 0 40px ${primaryColor}35`,
+          background: "var(--color-primario)",
+          color: "var(--texto-sobre-primario)",
+          boxShadow: "0 0 40px color-mix(in srgb, var(--color-primario) 20%, transparent)",
         }}
       >
         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

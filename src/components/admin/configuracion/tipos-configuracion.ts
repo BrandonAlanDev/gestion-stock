@@ -15,6 +15,7 @@ export interface ConfigCompleta {
   favicon: string | null;
   primaryColor: string;
   secondaryColor: string;
+  bgColor: string;
   fontPrimary: string;
   fontSecondary: string;
   borderRadius: string;
@@ -44,8 +45,17 @@ export interface ConfigCompleta {
   arreglosEnabled: boolean;
   escuelaEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   termsAndConditions: string | null;
   privacyPolicy: string | null;
+  footerAboutText: string | null;
+  footerCopyrightText: string | null;
+  footerShowSobre: boolean;
+  footerShowNavegacion: boolean;
+  footerShowContacto: boolean;
+  footerShowUbicacion: boolean;
+  footerShowRedes: boolean;
+  footerShowLegales: boolean;
 }

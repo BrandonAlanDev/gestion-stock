@@ -89,6 +89,8 @@ model Garment {
   images        GarmentImage[]
 
   @@index([categoryId])
+  @@index([categoryId, createdAt])
+  @@index([subCategoryId, createdAt])
   @@index([subCategoryId])
   @@index([supplierId])
 }
@@ -96,6 +98,7 @@ model Garment {
 model GarmentImage {
   id        String  @id @default(cuid())
   srcImage  String  @db.Text
+  publicId  String? @db.Text
   alt       String?
   order     Int     @default(0)
   garmentId String
@@ -190,6 +193,7 @@ model Movement {
   garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@index([variantId])
+  @@index([type, createdAt])
 }
 
 model PageConfig {
@@ -201,8 +205,9 @@ model PageConfig {
   slogan               String?
   logo                 String?                   @db.Text
   favicon              String?                   @db.Text
-  primaryColor         String?                   @default("#000000")
+  primaryColor         String?                   @default("#06b6d4")
   secondaryColor       String?                   @default("#FFFFFF")
+  bgColor              String?                   @default("#09090b")
   ecommerceEnabled     Boolean                   @default(true)
   cartEnabled          Boolean                   @default(true)
   checkoutEnabled      Boolean                   @default(true)
@@ -231,9 +236,18 @@ model PageConfig {
   privacyPolicy        String?                   @db.Text
   featuredLayout       PageConfig_featuredLayout @default(GRID)
   homegridId           String?
-  arreglosEnabled      Boolean                   @default(true)
-  escuelaEnabled       Boolean                   @default(true)
-  personalizadoEnabled Boolean                   @default(true)
+  arreglosEnabled      Boolean                   @default(false)
+  escuelaEnabled       Boolean                   @default(false)
+  personalizadoEnabled Boolean                   @default(false)
+  planAhorroEnabled    Boolean                   @default(false)
+  footerAboutText      String?                   @db.Text
+  footerCopyrightText  String?
+  footerShowSobre      Boolean                   @default(true)
+  footerShowNavegacion Boolean                   @default(true)
+  footerShowContacto   Boolean                   @default(true)
+  footerShowUbicacion  Boolean                   @default(true)
+  footerShowRedes      Boolean                   @default(true)
+  footerShowLegales    Boolean                   @default(true)
   sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
   fontPrimary          String                    @default("Outfit")
   fontSecondary        String                    @default("Playfair Display")
@@ -378,6 +392,7 @@ model CustomSection {
   page     CustomPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
   items    CustomSectionItem[]
 
+  @@index([pageId])
   @@map("CustomPageSections")
 }
 
@@ -393,6 +408,7 @@ model CustomSectionItem {
   config      Json?
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  @@index([sectionId])
   @@map("CustomPageItems")
 }
 
@@ -428,6 +444,8 @@ model Grid {
   buttonBgColor   String?
   buttonTextColor String?
   homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+
+  @@index([homegridId])
 }
 
 enum LinkStyle {
@@ -507,6 +525,7 @@ model CarouselSlide {
 
   order       Int
   image       String? @db.Text
+  publicId    String? @db.Text
   title       String?
   subtitle    String?
   description String? @db.Text

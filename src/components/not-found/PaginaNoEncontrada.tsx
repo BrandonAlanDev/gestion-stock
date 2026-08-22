@@ -6,16 +6,6 @@ export default async function PaginaNoEncontrada() {
 
   const config = (pageConfig || {}) as Record<string, unknown>;
 
-  const primaryColor =
-    typeof config.primaryColor === "string" && config.primaryColor.length > 0
-      ? config.primaryColor
-      : "#0f766e";
-
-  const secondaryColor =
-    typeof config.secondaryColor === "string" && config.secondaryColor.length > 0
-      ? config.secondaryColor
-      : "#f0fdfa";
-
   const storeName =
     typeof config.storeName === "string" && config.storeName.length > 0
       ? config.storeName
@@ -28,8 +18,6 @@ export default async function PaginaNoEncontrada() {
 
   return (
     <NotFoundClient
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
       storeName={storeName}
       logo={logo}
     />

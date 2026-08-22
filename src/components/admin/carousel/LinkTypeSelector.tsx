@@ -32,6 +32,22 @@ export default function LinkTypeSelector({
   textColor,
   secondaryColor,
 }: LinkTypeSelectorProps) {
+  const estiloSelect = {
+    backgroundColor: secondaryColor,
+    border: "1px solid " + textColor + "30",
+    color: textColor,
+  };
+
+  const manejarFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = primaryColor;
+    e.currentTarget.style.boxShadow = `0 0 0 2px ${primaryColor}33`;
+  };
+
+  const manejarBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = textColor + "30";
+    e.currentTarget.style.boxShadow = "none";
+  };
+
   return (
     <>
       <div className="space-y-1">
@@ -39,10 +55,10 @@ export default function LinkTypeSelector({
         <select
           value={linkType}
           onChange={(e) => onChange("linkType", e.target.value)}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
-          style={{ backgroundColor: primaryColor + "1A", border: "1px solid " + primaryColor + "40", color: textColor }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = primaryColor; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = primaryColor + "40"; }}
+          onFocus={manejarFocus}
+          onBlur={manejarBlur}
+          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer"
+          style={estiloSelect}
         >
           {LINK_TYPES.map((t) => (
             <option key={t.value} value={t.value} style={{ backgroundColor: secondaryColor, color: textColor }}>{t.label}</option>
@@ -58,10 +74,10 @@ export default function LinkTypeSelector({
           <select
             value={url}
             onChange={(e) => onChange("url", e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
-            style={{ backgroundColor: primaryColor + "1A", border: "1px solid " + primaryColor + "40", color: textColor }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = primaryColor; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = primaryColor + "40"; }}
+            onFocus={manejarFocus}
+            onBlur={manejarBlur}
+            className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer"
+            style={estiloSelect}
           >
             <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>-- Seleccionar --</option>
             {(linkType === "CATEGORY" ? categories : products).map((item) => (

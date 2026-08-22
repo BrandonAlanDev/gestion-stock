@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, Edit, GripVertical, Image as ImageIcon, Link, AlertTriangle, ChevronLeft } from "lucide-react";
+import { Image as ImageIcon, AlertTriangle, ChevronLeft } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { getContrastColor } from "@/lib/utils";
+import SlideOrdenable from "./SlideOrdenable";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 const TYPE_LABELS: Record<string, string> = {
   HERO: "Portada principal",
@@ -36,6 +38,7 @@ export default function CarouselWizardStep3({
   secondaryColor,
 }: CarouselWizardStep3Props) {
   const textColor = getContrastColor(secondaryColor);
+  const { nivel, zIndice } = useCapa();
   const [sortableSlides, setSortableSlides] = useState<SlideWizardData[]>([...slides].sort((a, b) => a.order - b.order));
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -103,6 +106,7 @@ export default function CarouselWizardStep3({
           </span>
         </h3>
         <button
+          type="button"
           onClick={handleAddSlide}
           className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors cursor-pointer" style={{ backgroundColor: primaryColor + "20", borderColor: primaryColor + "40", color: primaryColor }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "30"; }}
@@ -123,7 +127,7 @@ export default function CarouselWizardStep3({
           <SortableContext items={sortableSlides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
               {sortableSlides.map((slide) => (
-                <SortableSlideItem
+                <SlideOrdenable
                   key={slide.id}
                   slide={slide}
                   onEdit={onSlideEditProp}
@@ -151,7 +155,8 @@ export default function CarouselWizardStep3({
       </div>
 
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <ContextoCapas.Provider value={nivel + 1}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
           <div className="w-full max-w-sm rounded-2xl border shadow-2xl p-6" style={{ backgroundColor: secondaryColor, borderColor: primaryColor, color: textColor }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor + "20" }}>
@@ -162,6 +167,7 @@ export default function CarouselWizardStep3({
             <p className="mb-6" style={{ color: textColor + "CC" }}>¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.</p>
             <div className="flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
                 style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
@@ -171,6 +177,7 @@ export default function CarouselWizardStep3({
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={() => confirmDeleteSlide(deleteConfirm)}
                 className="px-4 py-2 rounded-lg font-medium hover:bg-red-600 cursor-pointer" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
@@ -181,103 +188,8 @@ export default function CarouselWizardStep3({
             </div>
           </div>
         </div>
+        </ContextoCapas.Provider>
       )}
-    </div>
-  );
-}
-
-export function SortableSlideItem({
-  slide,
-  onEdit,
-  onDelete,
-  primaryColor,
-  secondaryColor,
-}: {
-  slide: SlideWizardData;
-  onEdit?: (slide: SlideWizardData) => void;
-  onDelete: (id: string) => void;
-  primaryColor: string;
-  secondaryColor: string;
-}) {
-  const textColor = getContrastColor(secondaryColor);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: slide.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const borderColor = primaryColor + "40";
-  const iconColor = textColor + "80";
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, backgroundColor: primaryColor + "10", borderColor, color: textColor }}
-      className="group relative rounded-xl p-3 transition-colors"
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="flex items-start gap-3 cursor-grab active:cursor-grabbing"
-      >
-        <GripVertical className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: iconColor }} />
-
-        <div className="relative w-16 h-12 sm:w-24 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden" style={{ backgroundColor: primaryColor + "15" }}>
-          {slide.image ? (
-            <img src={slide.image} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ color: iconColor }}>
-              <ImageIcon className="w-8 h-8" />
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
-              #{slide.order + 1}
-            </span>
-            <h4 className="font-medium truncate" style={{ color: textColor }}>{slide.title || "Sin título"}</h4>
-          </div>
-          <p className="text-sm truncate" style={{ color: textColor + "99" }}>{slide.subtitle || slide.description || "Sin descripción"}</p>
-          <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: textColor + "80" }}>
-            {slide.ctaText && <span className="flex items-center gap-1"><Link className="w-3 h-3" style={{ color: primaryColor }} /> {slide.ctaText}</span>}
-            {slide.url && <span className="flex items-center gap-1"><ImageIcon className="w-3 h-3" style={{ color: primaryColor }} /> Enlace configurado</span>}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {onEdit && (
-            <button
-              onClick={() => onEdit(slide)}
-              className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; e.currentTarget.style.color = primaryColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
-              title="Editar"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(slide.id)}
-            className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "#ef4444"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
-            title="Eliminar"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

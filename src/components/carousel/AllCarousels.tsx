@@ -105,12 +105,12 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
 function SkeletonAll() {
   return (
     <div className="carousel-container space-y-0">
-      <div className="w-full h-[100dvh] bg-neutral-900 animate-pulse" />
-      <div className="w-full h-[300px] bg-neutral-800 animate-pulse" />
-      <div className="w-full py-16 px-4 md:px-12 lg:px-16 bg-white">
+      <div className="w-full h-[100dvh] bg-[var(--color-fondo-sitio)] animate-pulse" />
+      <div className="w-full h-[300px] bg-[var(--superficie-fondo)] animate-pulse" />
+      <div className="w-full py-16 px-4 md:px-12 lg:px-16 bg-[var(--color-fondo-sitio)]">
         <div className="grid md:grid-cols-2 gap-0">
-          <div className="h-[50vh] bg-neutral-200 animate-pulse" />
-          <div className="h-[50vh] bg-neutral-300 animate-pulse" />
+          <div className="h-[50vh] bg-[var(--superficie-fondo)] animate-pulse" />
+          <div className="h-[50vh] bg-[var(--color-secundario)] animate-pulse" />
         </div>
       </div>
     </div>

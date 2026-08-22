@@ -1,12 +1,14 @@
 "use client";
 
-import { Type } from "lucide-react";
-import { startTransition, useState } from "react";
+import { Save, Type } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
-import { FUENTES_DISPONIBLES } from "@/components/apariencia/fuentes";
+import { aplicarTipografiaDocumento } from "@/lib/apariencia/aplicar-tipografia-documento";
 
+import SelectorFuente from "./SelectorFuente";
 import { ConfigApariencia } from "./tipos-apariencia";
 
 interface EstadoFuentes {
@@ -14,24 +16,31 @@ interface EstadoFuentes {
   secundaria: string;
 }
 
-const CLASES_SELECT =
-  "w-full rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-3 py-2 text-sm text-[var(--admin-texto)] focus:border-[var(--admin-primario)] focus:outline-none";
-
 export default function SeccionTipografia({
   config,
 }: {
   config: ConfigApariencia;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [fuentes, setFuentes] = useState<EstadoFuentes>({
     principal: config.fontPrimary,
     secundaria: config.fontSecondary,
   });
+  const [base, setBase] = useState<EstadoFuentes>({
+    principal: config.fontPrimary,
+    secundaria: config.fontSecondary,
+  });
 
-  const guardar = (nuevasFuentes: EstadoFuentes) => {
+  const tieneCambios =
+    fuentes.principal !== base.principal || fuentes.secundaria !== base.secundaria;
+
+  const guardar = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     startTransition(async () => {
       const resultado = await updateBrandingConfig({
-        fontPrimary: nuevasFuentes.principal,
-        fontSecondary: nuevasFuentes.secundaria,
+        fontPrimary: fuentes.principal,
+        fontSecondary: fuentes.secundaria,
       });
 
       if (!resultado.ok) {
@@ -39,20 +48,19 @@ export default function SeccionTipografia({
         return;
       }
 
+      setBase({ principal: fuentes.principal, secundaria: fuentes.secundaria });
       toast.success("Cambios guardados");
+      router.refresh();
+      aplicarTipografiaDocumento(fuentes.principal, fuentes.secundaria);
     });
   };
 
   const cambiarPrincipal = (valor: string) => {
-    const nuevas = { ...fuentes, principal: valor };
-    setFuentes(nuevas);
-    guardar(nuevas);
+    setFuentes((actuales) => ({ ...actuales, principal: valor }));
   };
 
   const cambiarSecundaria = (valor: string) => {
-    const nuevas = { ...fuentes, secundaria: valor };
-    setFuentes(nuevas);
-    guardar(nuevas);
+    setFuentes((actuales) => ({ ...actuales, secundaria: valor }));
   };
 
   return (
@@ -67,60 +75,24 @@ export default function SeccionTipografia({
         </p>
       </div>
 
-      <div className="p-5">
+      <form onSubmit={guardar} className="space-y-6 p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="fuente-principal"
-              className="mb-1.5 block text-xs font-medium text-[var(--admin-texto)]"
-            >
-              Fuente principal
-            </label>
-            <select
-              id="fuente-principal"
-              value={fuentes.principal}
-              onChange={(evento) => cambiarPrincipal(evento.target.value)}
-              className={CLASES_SELECT}
-            >
-              {FUENTES_DISPONIBLES.map((fuente) => (
-                <option
-                  key={fuente.valor}
-                  value={fuente.valor}
-                  style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}
-                >
-                  {fuente.etiqueta}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectorFuente
+            id="fuente-principal"
+            etiqueta="Fuente principal"
+            valor={fuentes.principal}
+            alCambiar={cambiarPrincipal}
+          />
 
-          <div>
-            <label
-              htmlFor="fuente-secundaria"
-              className="mb-1.5 block text-xs font-medium text-[var(--admin-texto)]"
-            >
-              Fuente secundaria
-            </label>
-            <select
-              id="fuente-secundaria"
-              value={fuentes.secundaria}
-              onChange={(evento) => cambiarSecundaria(evento.target.value)}
-              className={CLASES_SELECT}
-            >
-              {FUENTES_DISPONIBLES.map((fuente) => (
-                <option
-                  key={fuente.valor}
-                  value={fuente.valor}
-                  style={{ color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" }}
-                >
-                  {fuente.etiqueta}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectorFuente
+            id="fuente-secundaria"
+            etiqueta="Fuente secundaria"
+            valor={fuentes.secundaria}
+            alCambiar={cambiarSecundaria}
+          />
         </div>
 
-        <div className="mt-4 rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">
+        <div className="rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">
           <h4
             className="mb-2 text-lg font-bold text-[var(--admin-texto)]"
             style={{ fontFamily: `'${fuentes.secundaria}', serif` }}
@@ -135,7 +107,18 @@ export default function SeccionTipografia({
             principal en tu tienda.
           </p>
         </div>
-      </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isPending || !tieneCambios}
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm font-semibold text-[var(--admin-primario-texto)] transition hover:opacity-90 disabled:opacity-50"
+          >
+            <Save size={16} />
+            {isPending ? "Guardando..." : "Guardar tipografía"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }

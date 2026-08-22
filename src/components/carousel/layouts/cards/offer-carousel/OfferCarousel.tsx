@@ -11,7 +11,6 @@ export default function OfferCarousel({
   title,
   subtitle,
   items,
-  primaryColor = "#06b6d4",
   autoplay = true,
   autoplayDelay = 5000,
   hideHeader = false,
@@ -58,11 +57,11 @@ export default function OfferCarousel({
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10 md:mb-14">
           <div>
             {subtitle && (
-              <span className="text-[10px] font-black tracking-[0.4em] uppercase block mb-2" style={{ color: primaryColor }}>
+              <span className="text-[10px] font-black tracking-[0.4em] uppercase block mb-2" style={{ color: "var(--color-primario)" }}>
                 {subtitle}
               </span>
             )}
-            <h2 className="text-3xl md:text-5xl font-black text-black tracking-tight" style={{ color: "#1a1a1a" }}>
+            <h2 className="text-3xl md:text-5xl font-black text-[var(--texto-sobre-fondo)] tracking-tight">
               {title || "Ofertas"}
             </h2>
           </div>
@@ -87,7 +86,6 @@ export default function OfferCarousel({
                     href={item.href}
                     hideButton={item.hideButton}
                     hideButtons={hideButtons}
-                    primaryColor={primaryColor}
                   />
                 </div>
               </div>
@@ -95,7 +93,7 @@ export default function OfferCarousel({
           </div>
         </div>
 
-        <CarouselNavigation onPrev={scrollPrev} onNext={scrollNext} primaryColor={primaryColor} />
+        <CarouselNavigation onPrev={scrollPrev} onNext={scrollNext} />
       </div>
 
       {scrollSnaps.length > 1 && (
@@ -109,7 +107,8 @@ export default function OfferCarousel({
               style={{
                 width: selectedIndex === index ? "24px" : "8px",
                 height: "8px",
-                backgroundColor: selectedIndex === index ? primaryColor : "#d4d4d4",
+                backgroundColor: selectedIndex === index ? "var(--color-primario)" : "var(--texto-sobre-fondo)",
+                opacity: selectedIndex === index ? 1 : 0.4,
               }}
               aria-label={"Ir al slide " + (index + 1)}
             />
@@ -122,7 +121,7 @@ export default function OfferCarousel({
   if (hideHeader) return carouselContent;
 
   return (
-    <section className="w-full bg-white py-16 md:py-20 lg:py-24">
+    <section className="w-full bg-[var(--color-fondo-sitio)] py-16 md:py-20 lg:py-24">
       {carouselContent}
     </section>
   );

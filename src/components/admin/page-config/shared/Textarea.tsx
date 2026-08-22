@@ -1,6 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
+import { cn, getContrastColor } from "@/lib/utils";
 
 interface Props {
   label?: string;
@@ -11,16 +12,6 @@ interface Props {
   rows?: number;
   primaryColor?: string;
   secondaryColor?: string;
-}
-
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#ffffff";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
 export default function Textarea({
@@ -34,8 +25,6 @@ export default function Textarea({
   secondaryColor = "#ffffff",
 }: Props) {
   const textColor = getContrastColor(secondaryColor);
-  const bgColor = primaryColor + "1A";
-  const borderColor = getContrastColor(primaryColor);
 
   return (
     <div>
@@ -50,9 +39,17 @@ export default function Textarea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        style={{ color: textColor, backgroundColor: bgColor, borderColor }}
+        style={
+          {
+            "--input-fondo": textColor + "08",
+            "--input-borde": textColor + "30",
+            "--input-texto": textColor,
+            "--input-placeholder": textColor + "80",
+            "--input-foco": primaryColor,
+          } as CSSProperties
+        }
         className={cn(
-          "w-full p-5 rounded-2xl border text-sm font-bold outline-none transition-all resize-none",
+          "w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all duration-200 resize-none bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)] focus:ring-2 ring-[var(--input-foco)]/20",
           className
         )}
       />

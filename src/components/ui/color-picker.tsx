@@ -80,7 +80,7 @@ export default function ColorPicker({
                 type="button"
                 onClick={() => alCambiar(preset)}
                 className={cn(
-                  "h-7 w-7 rounded-md border border-[var(--admin-borde)]",
+                  "h-7 w-7 cursor-pointer rounded-md border border-[var(--admin-borde)]",
                   preset.toLowerCase() === valor.toLowerCase() &&
                     "ring-2 ring-[var(--admin-primario)]",
                 )}

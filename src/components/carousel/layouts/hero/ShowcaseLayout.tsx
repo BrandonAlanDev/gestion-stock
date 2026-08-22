@@ -28,10 +28,9 @@ interface ShowcaseLayoutProps {
     };
     slides: Slide[];
   };
-  primaryColor?: string;
 }
 
-export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: ShowcaseLayoutProps) {
+export default function ShowcaseLayout({ carousel }: ShowcaseLayoutProps) {
   const { settings, slides } = carousel;
   const height = settings.height || 500;
   const gap = settings.gap ?? 16;
@@ -86,7 +85,7 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
             >
               <div
                 className="h-full w-full rounded-2xl overflow-hidden relative group cursor-pointer"
-                style={{ backgroundColor: primaryColor + "10" }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 6%, transparent)" }}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
@@ -98,7 +97,7 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
                 {!slide.config?.hideText && (
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     {slide.subtitle && (
-                      <p className="text-xs font-black tracking-[0.3em] uppercase mb-1" style={{ color: primaryColor }}>
+                      <p className="text-xs font-black tracking-[0.3em] uppercase mb-1" style={{ color: "var(--color-primario)" }}>
                         {slide.subtitle}
                       </p>
                     )}
@@ -110,7 +109,7 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
                     {slide.ctaText && (
                       <span
                         className="inline-block mt-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider"
-                        style={{ backgroundColor: primaryColor, color: "#000" }}
+                        style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
                       >
                         {slide.ctaText}
                       </span>
@@ -129,9 +128,9 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
             onClick={scrollPrev}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md border"
             style={{
-              backgroundColor: `${primaryColor}20`,
-              borderColor: `${primaryColor}40`,
-              color: primaryColor,
+              backgroundColor: "color-mix(in srgb, var(--color-primario) 12%, transparent)",
+              borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)",
+              color: "var(--color-primario)",
             }}
             aria-label="Anterior"
           >
@@ -141,9 +140,9 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
             onClick={scrollNext}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md border"
             style={{
-              backgroundColor: `${primaryColor}20`,
-              borderColor: `${primaryColor}40`,
-              color: primaryColor,
+              backgroundColor: "color-mix(in srgb, var(--color-primario) 12%, transparent)",
+              borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)",
+              color: "var(--color-primario)",
             }}
             aria-label="Siguiente"
           >
@@ -161,7 +160,7 @@ export default function ShowcaseLayout({ carousel, primaryColor = "#06b6d4" }: S
               className="h-2.5 rounded-full transition-all duration-300"
               style={{
                 width: index === selectedIndex ? "2rem" : "0.5rem",
-                backgroundColor: index === selectedIndex ? primaryColor : `${primaryColor}40`,
+                backgroundColor: index === selectedIndex ? "var(--color-primario)" : "color-mix(in srgb, var(--color-primario) 25%, transparent)",
               }}
               aria-label={`Ir a slide ${index + 1}`}
             />

@@ -17,6 +17,7 @@ export async function getOrCreatePageConfig() {
           storeName: DEFAULT_VALUES.storeName,
           primaryColor: DEFAULT_VALUES.primaryColor,
           secondaryColor: DEFAULT_VALUES.secondaryColor,
+          bgColor: DEFAULT_VALUES.bgColor,
         },
       });
   }

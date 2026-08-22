@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getContrastColor } from "@/lib/utils";
 
-export default function DeleteSubBtn({ id }: { id: string }) {
+export default function DeleteSubBtn({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
   const { pageConfig } = usePageConfig();
   const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
   const textColor = getContrastColor(background);
@@ -14,7 +14,7 @@ export default function DeleteSubBtn({ id }: { id: string }) {
     if (!confirm("¿Eliminar esta subcategoría?")) return;
     const res = await deleteSubCategory(id);
     if (res?.error) toast.error(res.error);
-    else toast.success("Removido");
+    else { toast.success("Removido"); onDeleted?.(); }
   };
 
   return (

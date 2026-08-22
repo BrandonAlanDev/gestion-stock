@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
 import {
   Package, Tags, Truck, Ruler, LogOut, User, History,
   Store, LayoutDashboard, Settings, Image as ImageIcon,
@@ -27,23 +26,14 @@ export default function ContenidoSidebar({
   const pageConfig = usePageConfig();
   const config = pageConfig?.pageConfig;
 
-  const rawPrimary = pageConfig?.pageConfig?.primaryColor;
-  const rawSecondary = pageConfig?.pageConfig?.secondaryColor;
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
 
-  const primaryColor =
-    typeof rawPrimary === "string" && rawPrimary.length > 0 ? rawPrimary : "#000000";
-  const secondaryColor =
-    typeof rawSecondary === "string" && rawSecondary.length > 0 ? rawSecondary : "#FFFFFF";
   const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
   const storeName =
     typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "VALEN";
 
-  const textColor = getContrastColor(secondaryColor);
-  const primaryTextColor = getContrastColor(primaryColor);
-  const isDarkBg = textColor === "#ffffff";
-  const overlayColor = isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
 
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -63,7 +53,7 @@ export default function ContenidoSidebar({
       href: "/admin/personalizado",
       label: "Personalizado",
       icon: Settings,
-      enabled: config ? Boolean(config.personalizadoEnabled) : true
+      enabled: config ? Boolean(config.personalizadoEnabled) : false
     },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
@@ -73,7 +63,7 @@ export default function ContenidoSidebar({
     window.location.href = "/";
   };
 
-  const hoverFondo = isDarkBg ? "hover:bg-white/[0.08]" : "hover:bg-black/[0.06]";
+  const hoverFondo = "hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)]";
 
   const linkClases = (active: boolean) =>
     `group relative flex items-center py-3 rounded-xl font-bold transition-all active:scale-[0.98] select-none ${colapsado
@@ -85,8 +75,8 @@ export default function ContenidoSidebar({
     `overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : `${maxW} opacity-100`}`;
 
   const linkStyle = (active: boolean) => ({
-    ...(active ? { backgroundColor: primaryColor } : {}),
-    color: active ? primaryTextColor : textColor,
+    ...(active ? { backgroundColor: "var(--color-primario)" } : {}),
+    color: active ? "var(--texto-sobre-primario)" : "var(--texto-sobre-fondo)",
   });
 
   const bloquearArrastre = (e: React.DragEvent) => e.preventDefault();
@@ -98,16 +88,16 @@ export default function ContenidoSidebar({
         draggable={false}
         onDragStart={bloquearArrastre}
         className={`flex items-center gap-3 pb-6 border-b transition-all duration-300 select-none ${colapsado ? "pl-1" : ""}`}
-        style={{ borderColor: overlayColor }}
+        style={{ borderColor: overlaySuave }}
       >
         {logo ? (
           <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" draggable={false} />
         ) : (
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0" style={{ borderColor: primaryColor }}>
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0" style={{ borderColor: "var(--color-primario)" }}>
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />
           </div>
         )}
-        <span className={`${etiquetaClases("max-w-32")} text-sm font-black tracking-tight uppercase italic`} style={{ color: textColor }}>
+        <span className={`${etiquetaClases("max-w-32")} text-sm font-black tracking-tight uppercase italic`} style={{ color: "var(--texto-sobre-fondo)" }}>
           {storeName}
         </span>
       </Link>
@@ -123,7 +113,7 @@ export default function ContenidoSidebar({
                 draggable={false}
               />
             ) : (
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
                 {session.user.name?.[0]?.toUpperCase()}
               </div>
             )}
@@ -131,22 +121,22 @@ export default function ContenidoSidebar({
               onClick={onToggleColapsado}
               aria-label="Expandir menú"
               className={`absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-300 ${colapsado ? "opacity-0 group-hover:opacity-100" : "opacity-0 pointer-events-none"}`}
-              style={{ backgroundColor: "rgba(0,0,0,0.55)", color: "#ffffff" }}
+              style={{ backgroundColor: "color-mix(in srgb, var(--color-fondo-sitio) 55%, transparent)", color: "var(--texto-sobre-fondo)" }}
             >
               <PanelLeftOpen size={16} />
             </button>
           </div>
           <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-full opacity-100"}`}>
-            <span className="text-xs font-bold truncate" style={{ color: textColor }}>{session.user.name}</span>
-            <span className="text-[10px] opacity-60 truncate" style={{ color: textColor }}>{session.user.email}</span>
+            <span className="text-xs font-bold truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.name}</span>
+            <span className="text-[10px] opacity-60 truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.email}</span>
           </div>
           <button
             onClick={onToggleColapsado}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = overlayColor; }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = overlaySuave; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             aria-label="Contraer menú"
             className={`p-2 rounded-xl overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-8 opacity-100"}`}
-            style={{ color: textColor, backgroundColor: "transparent" }}
+            style={{ color: "var(--texto-sobre-fondo)", backgroundColor: "transparent" }}
           >
             <PanelLeftClose size={16} />
           </button>
@@ -155,10 +145,10 @@ export default function ContenidoSidebar({
 
       <div className="space-y-1 mt-4">
         <div className="h-3 flex items-center overflow-hidden">
-          <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: textColor }}>
+          <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: "var(--texto-sobre-fondo)" }}>
             Tienda
           </span>
-          <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlayColor }} />
+          <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
         </div>
         {userLinks.map((link) => {
           const active = pathname === link.href;
@@ -179,7 +169,7 @@ export default function ContenidoSidebar({
               {colapsado && (
                 <span
                   className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                  style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                  style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
                 >
                   {link.label}
                 </span>
@@ -192,10 +182,10 @@ export default function ContenidoSidebar({
       {isAdmin && (
         <div className="space-y-1 mt-6">
           <div className="h-3 flex items-center overflow-hidden">
-            <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: textColor }}>
+            <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: "var(--texto-sobre-fondo)" }}>
               Admin
             </span>
-            <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlayColor }} />
+            <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
           </div>
           {adminLinks
             .filter((link) => link.enabled !== false)
@@ -218,7 +208,7 @@ export default function ContenidoSidebar({
                   {colapsado && (
                     <span
                       className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                      style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                      style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
                     >
                       {link.label}
                     </span>
@@ -229,7 +219,7 @@ export default function ContenidoSidebar({
         </div>
       )}
 
-      <div className="mt-auto pt-6 border-t" style={{ borderColor: overlayColor }}>
+      <div className="mt-auto pt-6 border-t" style={{ borderColor: overlaySuave }}>
         {session ? (
           <button
             onClick={handleLogout}
@@ -241,7 +231,7 @@ export default function ContenidoSidebar({
             {colapsado && (
               <span
                 className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
                 Cerrar Sesión
               </span>
@@ -255,14 +245,14 @@ export default function ContenidoSidebar({
             onDragStart={bloquearArrastre}
             title="Iniciar Sesión"
             className={`group relative flex items-center w-full rounded-xl font-bold uppercase text-xs transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-2 pl-4 pr-4 py-3"}`}
-            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+            style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
           >
             <User size={16} className="shrink-0" />
             <span className={etiquetaClases("max-w-28")}>Iniciar Sesión</span>
             {colapsado && (
               <span
                 className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
                 Iniciar Sesión
               </span>

@@ -13,6 +13,7 @@ interface EstadoPaginas {
   escuelaEnabled: boolean;
   arreglosEnabled: boolean;
   personalizadoEnabled: boolean;
+  planAhorroEnabled: boolean;
 }
 
 type CampoPagina = keyof EstadoPaginas;
@@ -26,6 +27,7 @@ export default function SeccionPaginasSitio({
     escuelaEnabled: config.escuelaEnabled,
     arreglosEnabled: config.arreglosEnabled,
     personalizadoEnabled: config.personalizadoEnabled,
+    planAhorroEnabled: config.planAhorroEnabled,
   });
 
   const cambiar = (campo: CampoPagina, valor: boolean) => {
@@ -73,6 +75,12 @@ export default function SeccionPaginasSitio({
           alCambiar={(valor) => cambiar("personalizadoEnabled", valor)}
           etiqueta="Tablas personalizadas"
           descripcion="Constructor de tablas a medida"
+        />
+        <Switch
+          activo={estado.planAhorroEnabled}
+          alCambiar={(valor) => cambiar("planAhorroEnabled", valor)}
+          etiqueta="Plan de ahorro"
+          descripcion="Página de plan de ahorro"
         />
       </div>
     </section>

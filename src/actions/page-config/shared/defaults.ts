@@ -5,6 +5,7 @@ export const DEFAULT_VALUES = {
 
   primaryColor: "#06b6d4",
   secondaryColor: "#ffffff",
+  bgColor: "#09090b",
 
   ecommerceEnabled: false,
   cartEnabled: false,

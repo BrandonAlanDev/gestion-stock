@@ -7,6 +7,7 @@ interface ConfigIdentidad {
   logo: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  bgColor: string | null;
   fontPrimary: string | null;
   fontSecondary: string | null;
   borderRadius: string | null;
@@ -75,6 +76,10 @@ export default function BloqueIdentidadVisual({
         <span
           className="h-4 w-4 rounded-full border border-[var(--admin-borde)]"
           style={{ backgroundColor: config.secondaryColor ?? "#fafafa" }}
+        />
+        <span
+          className="h-4 w-4 rounded-full border border-[var(--admin-borde)]"
+          style={{ backgroundColor: config.bgColor ?? "#09090b" }}
         />
         <span className="text-xs text-[var(--admin-texto-suave)]">Colores</span>
       </div>

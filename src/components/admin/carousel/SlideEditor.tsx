@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2, Save, AlertCircle, Eye, EyeOff } from "lucide-react";
-import { cn, getContrastColor, fileToBase64 } from "@/lib/utils";
-import Input from "@/components/admin/page-config/shared/Input";
-import Textarea from "@/components/admin/page-config/shared/Textarea";
-import ImageUploader from "./ImageUploader";
-import LinkTypeSelector from "./LinkTypeSelector";
+import { X, Loader2, Save, AlertCircle } from "lucide-react";
+import { cn, getContrastColor } from "@/lib/utils";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { compressImage } from "@/lib/image-utils";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
+import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+import ZonaImagenSlide from "./ZonaImagenSlide";
+import SeccionContenidoSlide from "./SeccionContenidoSlide";
+import OpcionesAvanzadasSlide from "./OpcionesAvanzadasSlide";
+import { ContextoCapas } from "@/contextos/capas/contexto-capas";
+import { useCapa } from "@/contextos/capas/use-capa";
 
 interface SlideEditorProps {
   isOpen: boolean;
@@ -57,8 +58,9 @@ export default function SlideEditor({
 }: SlideEditorProps) {
   const { pageConfig } = usePageConfig();
   const { productos, categorias } = useOpcionesEnlace();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
+  const { nivel, zIndice } = useCapa();
+  const primaryColor = (pageConfig?.primaryColor as string) || "#06b6d4";
+  const secondaryColor = (pageConfig?.secondaryColor as string) || "#fafafa";
   const textColor = getContrastColor(secondaryColor);
 
   const [formData, setFormData] = useState<SlideFormData>({
@@ -76,6 +78,8 @@ export default function SlideEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [recorteAbierto, setRecorteAbierto] = useState(false);
+  const [avanzadasAbiertas, setAvanzadasAbiertas] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -92,10 +96,8 @@ export default function SlideEditor({
         setHideButton(!!initialData.config?.hideButton);
         const linkType = initialData.linkType || ((initialData.config as Record<string, unknown> | undefined)?.linkType as string) || (initialData.url?.startsWith("http") ? "EXTERNAL" : "NONE");
         let urlInicial = initialData.url || "";
-        if (linkType === "CATEGORY" && urlInicial.startsWith("/productos?categoria=")) {
-          urlInicial = decodeURIComponent(urlInicial.slice("/productos?categoria=".length));
-        } else if (linkType === "PRODUCT" && urlInicial.startsWith("/productos/item/")) {
-          urlInicial = urlInicial.slice("/productos/item/".length);
+        if (linkType === "CATEGORY" || linkType === "PRODUCT") {
+          urlInicial = normalizarValorEnlace(urlInicial);
         }
         setFormData({
           image: initialData.image || "",
@@ -121,17 +123,29 @@ export default function SlideEditor({
           config: {},
         });
       }
+      setAvanzadasAbiertas(false);
       setError(null);
     }
   }, [isOpen, initialData]);
 
-  const validateUrl = (url: string) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const manejarTecla = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape" && !recorteAbierto && !isSubmitting) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", manejarTecla);
+    return () => document.removeEventListener("keydown", manejarTecla);
+  }, [isOpen, recorteAbierto, isSubmitting, onClose]);
+
+  const validateUrl = useCallback((url: string) => {
     if (formData.linkType === "EXTERNAL" && url && !url.startsWith("http")) {
       setError("La URL externa debe empezar con http:// o https://");
     } else {
       setError(null);
     }
-  };
+  }, [formData.linkType]);
 
   const handleChange = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -139,31 +153,6 @@ export default function SlideEditor({
       validateUrl(value);
     }
   }, [validateUrl]);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement> | string) => {
-    if (typeof e === "string") {
-      setFormData((prev) => ({ ...prev, image: e }));
-      return;
-    }
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("La imagen supera los 5MB");
-        return;
-      }
-      (async () => {
-        try {
-          const compressedFile = await compressImage(file, 1200, 1200, 0.8);
-          const base64 = await fileToBase64(compressedFile);
-          setFormData((prev) => ({ ...prev, image: base64 }));
-          setError(null);
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : "Error al procesar la imagen";
-          setError(message);
-        }
-      })();
-    }
-  };
 
   const getCharCount = (field: keyof SlideFormData) => {
     const valor = formData[field];
@@ -210,164 +199,104 @@ export default function SlideEditor({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-modal-slide"
         className={cn(
-          "w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
-          isMobile && "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
-        )} style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+          "w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
+          isMobile
+            ? "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
+            : "animate-slide-down"
+        )}
+        style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
       >
-        <div className="flex items-center justify-between p-4 sticky top-0 backdrop-blur z-10 rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
-          <h2 className="text-xl font-bold" style={{ color: textColor }}>
+        <div className="flex items-center justify-between p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
+          <h2 id="titulo-modal-slide" className="text-xl font-bold" style={{ color: textColor }}>
             {initialData ? "Editar" : "Nueva"} imagen
           </h2>
-          <button onClick={onClose} className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "99" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar ventana"
+            className="p-2 rounded-lg transition-colors cursor-pointer"
+            style={{ color: textColor + "99" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
             <div className="space-y-1">
-              <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Imagen <span className="text-red-400">*</span></label>
-              <ImageUploader
-                value={formData.image}
-                onChange={handleFileSelect}
-                label="Imagen de portada"
-                maxSizeMB={5}
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-sm font-medium" style={{ color: textColor + "CC" }}>
-                Título <span className={cn("font-mono", isOverLimit("title") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
-                  {getCharCount("title")}/{LIMITS.title}
-                </span>
+              <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>
+                Imagen <span className="text-red-400">*</span>
               </label>
-              <Input
-                value={formData.title}
-                onChange={(value) => handleChange("title", value)}
-                placeholder="Título principal"
+              <ZonaImagenSlide
+                imagen={formData.image}
+                alCambiarImagen={(valor) => handleChange("image", valor)}
+                deshabilitada={isSubmitting}
+                alCambiarEditorAbierto={setRecorteAbierto}
+                showText={showText}
+                hideButton={hideButton}
+                titulo={formData.title}
+                subtitulo={formData.subtitle}
+                descripcion={formData.description}
+                textoBoton={formData.ctaText}
+                url={formData.url}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
-                className={cn(isOverLimit("title") && "border-red-500/50 focus:border-red-500")}
+                textColor={textColor}
               />
-              {isOverLimit("title") && <p className="text-xs text-red-400">Excede el límite de {LIMITS.title} caracteres</p>}
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-sm font-medium" style={{ color: textColor + "CC" }}>
-                Subtítulo <span className={cn("font-mono", isOverLimit("subtitle") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
-                  {getCharCount("subtitle")}/{LIMITS.subtitle}
-                </span>
-              </label>
-              <Input
-                value={formData.subtitle}
-                onChange={(value) => handleChange("subtitle", value)}
-                placeholder="Subtítulo opcional"
+            <div className="space-y-4">
+              <SeccionContenidoSlide
+                formData={formData}
+                alCambiar={handleChange}
+                getCharCount={getCharCount}
+                isOverLimit={isOverLimit}
+                limites={LIMITS}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
-                className={cn(isOverLimit("subtitle") && "border-red-500/50 focus:border-red-500")}
+                textColor={textColor}
               />
-              {isOverLimit("subtitle") && <p className="text-xs text-red-400">Excede el límite de {LIMITS.subtitle} caracteres</p>}
-            </div>
-            <div className="space-y-1">
-              <label className="flex items-center justify-between text-sm font-medium" style={{ color: textColor + "CC" }}>
-                Texto del botón <span className={cn("font-mono", isOverLimit("ctaText") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
-                  {getCharCount("ctaText")}/{LIMITS.ctaText}
-                </span>
-              </label>
-              <Input
-                value={formData.ctaText}
-                onChange={(value) => handleChange("ctaText", value)}
-                placeholder="Ej: Ver más, Comprar ahora"
+
+              <OpcionesAvanzadasSlide
+                abiertas={avanzadasAbiertas}
+                alAlternar={() => setAvanzadasAbiertas(!avanzadasAbiertas)}
+                formData={formData}
+                alCambiar={handleChange}
+                productos={productos}
+                categorias={categorias}
+                showText={showText}
+                alCambiarShowText={() => setShowText(!showText)}
+                hideButton={hideButton}
+                alCambiarHideButton={() => setHideButton(!hideButton)}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
-                className={cn(isOverLimit("ctaText") && "border-red-500/50 focus:border-red-500")}
+                textColor={textColor}
               />
-              {isOverLimit("ctaText") && <p className="text-xs text-red-400">Excede el límite de {LIMITS.ctaText} caracteres</p>}
+
+              {error && (
+                <div className="p-3 rounded-lg flex items-center gap-2 text-sm" style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}>
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="flex items-center justify-between text-sm font-medium" style={{ color: textColor + "CC" }}>
-              Descripción <span className={cn("font-mono", isOverLimit("description") ? "text-red-400" : "")} style={{ color: textColor + "80" }}>
-                {getCharCount("description")}/{LIMITS.description}
-              </span>
-            </label>
-            <Textarea
-              value={formData.description}
-              onChange={(value) => handleChange("description", value)}
-              placeholder="Descripción opcional"
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              rows={2}
-              className={cn(isOverLimit("description") && "border-red-500/50 focus:border-red-500")}
-            />
-            {isOverLimit("description") && <p className="text-xs text-red-400">Excede el límite de {LIMITS.description} caracteres</p>}
-          </div>
-
-          <LinkTypeSelector
-            linkType={formData.linkType}
-            url={formData.url}
-            onChange={handleChange}
-            products={productos}
-            categories={categorias}
-            primaryColor={primaryColor}
-            textColor={textColor}
-            secondaryColor={secondaryColor}
-          />
-
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: primaryColor + "30", backgroundColor: primaryColor + "08" }}>
-            <span className="text-sm font-medium" style={{ color: textColor + "CC" }}>Mostrar texto sobre la imagen</span>
-            <button
-              type="button"
-              onClick={() => setShowText(!showText)}
-              className="relative w-14 h-7 rounded-full transition-colors cursor-pointer"
-              style={{ backgroundColor: showText ? primaryColor : textColor + "40" }}
-            >
-              <div className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform flex items-center justify-center"
-                style={{ left: showText ? "calc(100% - 24px)" : "4px" }}>
-                {showText ? <Eye className="w-3 h-3" style={{ color: primaryColor }} /> : <EyeOff className="w-3 h-3" style={{ color: textColor + "80" }} />}
-              </div>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: primaryColor + "30", backgroundColor: primaryColor + "08" }}>
-            <div>
-              <span className="text-sm font-medium" style={{ color: textColor + "CC" }}>Ocultar botón</span>
-              <p className="text-xs" style={{ color: textColor + "80" }}>Muestra el slide sin botón de acción</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setHideButton(!hideButton)}
-              className="relative w-14 h-7 rounded-full transition-colors cursor-pointer"
-              style={{ backgroundColor: hideButton ? primaryColor : textColor + "40" }}
-            >
-              <div className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform flex items-center justify-center"
-                style={{ left: hideButton ? "calc(100% - 24px)" : "4px" }}>
-                {hideButton ? <EyeOff className="w-3 h-3" style={{ color: primaryColor }} /> : <Eye className="w-3 h-3" style={{ color: textColor + "80" }} />}
-              </div>
-            </button>
-          </div>
-
-          {error && (
-            <div className="p-3 rounded-lg flex items-center gap-2 text-sm" style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}>
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 backdrop-blur z-10 rounded-b-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
+          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 z-10 backdrop-blur rounded-b-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
               style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "08"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               Cancelar
@@ -375,7 +304,9 @@ export default function SlideEditor({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+              aria-busy={isSubmitting}
+              className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
               onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9"; }}
               onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1"; }}
             >
@@ -388,5 +319,5 @@ export default function SlideEditor({
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return createPortal(<ContextoCapas.Provider value={nivel + 1}>{modalContent}</ContextoCapas.Provider>, document.body);
 }
