@@ -2,11 +2,16 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
+
+const moduloActivo = () => moduloHabilitado("personalizadoEnabled");
+const ERROR_MODULO = "El módulo de tablas personalizadas está desactivado.";
 
 /* =========================================
    OBTENER TODAS LAS OPCIONES
 ========================================= */
 export async function getBoardAdminOptions() {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const [types, tails, fins, configs, materials, deliveryOptions] = await Promise.all([
       prisma.boardTypeOption.findMany({
@@ -25,7 +30,7 @@ export async function getBoardAdminOptions() {
     ]);
 
     return { success: true, data: { types, tails, fins, configs, materials, deliveryOptions } };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching admin board options:", error);
     return { success: false, error: "Error al cargar las opciones" };
   }
@@ -35,6 +40,7 @@ export async function getBoardAdminOptions() {
    TIPOS DE TABLA (Modelos)
 ========================================= */
 export async function createBoardType(data: { name: string; svgPath?: string; tailIds: string[]; finIds: string[]; configIds: string[] }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardTypeOption.create({
       data: {
@@ -48,13 +54,14 @@ export async function createBoardType(data: { name: string; svgPath?: string; ta
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: created };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al crear el modelo de tabla." };
   }
 }
 
 export async function updateBoardType(id: string, data: { name: string; svgPath?: string; active: boolean; tailIds: string[]; finIds: string[]; configIds: string[] }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardTypeOption.update({
       where: { id },
@@ -70,19 +77,20 @@ export async function updateBoardType(id: string, data: { name: string; svgPath?
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al actualizar el modelo de tabla." };
   }
 }
 
 export async function deleteBoardType(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardTypeOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return { success: false, error: "Error al eliminar el modelo de tabla." };
   }
@@ -92,16 +100,18 @@ export async function deleteBoardType(id: string) {
    COLAS (Tails)
 ========================================= */
 export async function createBoardTail(data: { name: string; svgPath?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardTailOption.create({ data: { name: data.name, svgPath: data.svgPath || null } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear la cola." };
   }
 }
 
 export async function updateBoardTail(id: string, data: { name: string; svgPath?: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardTailOption.update({
       where: { id },
@@ -110,18 +120,19 @@ export async function updateBoardTail(id: string, data: { name: string; svgPath?
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la cola." };
   }
 }
 
 export async function deleteBoardTail(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardTailOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la cola. (Quizás está en uso)" };
   }
 }
@@ -130,33 +141,36 @@ export async function deleteBoardTail(id: string) {
    QUILLAS (Fins)
 ========================================= */
 export async function createBoardFin(data: { name: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardFinOption.create({ data: { name: data.name } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear el tipo de quilla." };
   }
 }
 
 export async function updateBoardFin(id: string, data: { name: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardFinOption.update({ where: { id }, data: { name: data.name, active: data.active } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la quilla." };
   }
 }
 
 export async function deleteBoardFin(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardFinOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la quilla." };
   }
 }
@@ -165,33 +179,36 @@ export async function deleteBoardFin(id: string) {
    CONFIGS QUILLAS (Fin Configs)
 ========================================= */
 export async function createBoardFinConfig(data: { name: string; count: number }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardFinConfigOption.create({ data: { name: data.name, count: data.count } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear configuración de quilla." };
   }
 }
 
 export async function updateBoardFinConfig(id: string, data: { name: string; count: number; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardFinConfigOption.update({ where: { id }, data: { name: data.name, count: data.count, active: data.active } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar configuración de quilla." };
   }
 }
 
 export async function deleteBoardFinConfig(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardFinConfigOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar configuración." };
   }
 }
@@ -200,33 +217,36 @@ export async function deleteBoardFinConfig(id: string) {
    MATERIALES
 ========================================= */
 export async function createBoardMaterial(data: { name: string; description?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardMaterialOption.create({ data: { name: data.name, description: data.description || null } });
     revalidatePath("/admin/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear el material." };
   }
 }
 
 export async function updateBoardMaterial(id: string, data: { name: string; description?: string; active: boolean }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardMaterialOption.update({ where: { id }, data: { name: data.name, description: data.description || null, active: data.active } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar el material." };
   }
 }
 
 export async function deleteBoardMaterial(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardMaterialOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar el material." };
   }
 }
@@ -235,6 +255,7 @@ export async function deleteBoardMaterial(id: string) {
    OPCIONES DE ENTREGA
 ========================================= */
 export async function createDeliveryOption(data: { label: string; description?: string }) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const created = await prisma.boardDeliveryOption.create({
       data: { label: data.label, description: data.description || null },
@@ -242,7 +263,7 @@ export async function createDeliveryOption(data: { label: string; description?: 
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: created };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al crear la opción de entrega." };
   }
 }
@@ -251,6 +272,7 @@ export async function updateDeliveryOption(
   id: string,
   data: { label: string; description?: string; active: boolean }
 ) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     const updated = await prisma.boardDeliveryOption.update({
       where: { id },
@@ -259,18 +281,19 @@ export async function updateDeliveryOption(
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true, data: updated };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al actualizar la opción de entrega." };
   }
 }
 
 export async function deleteDeliveryOption(id: string) {
+  if (!(await moduloActivo())) return { success: false, error: ERROR_MODULO };
   try {
     await prisma.boardDeliveryOption.delete({ where: { id } });
     revalidatePath("/admin/personalizado");
     revalidatePath("/personalizado");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Error al eliminar la opción de entrega." };
   }
 }

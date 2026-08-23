@@ -13,7 +13,7 @@ export async function getGarmentsPaginated(
     active: true,
     ...(categoryId && { categoryId }),
     ...(subCategoryId && { subCategoryId }),
-    ...(search && { name: { contains: search, mode: 'insensitive' } }),
+    ...(search && { name: { contains: search } }),
   };
 
   const [garments, total] = await Promise.all([
@@ -51,11 +51,11 @@ export async function getGarmentById(id: string) {
   });
 }
 
-export async function createGarment(data: any) {
+export async function createGarment(data: Prisma.GarmentUncheckedCreateInput) {
   return prisma.garment.create({ data });
 }
 
-export async function updateGarment(id: string, data: any) {
+export async function updateGarment(id: string, data: Prisma.GarmentUpdateInput) {
   return prisma.garment.update({ where: { id }, data });
 }
 
@@ -80,9 +80,9 @@ export async function updateGarmentWithDetails(
       stock: number;
       sizeId?: string | null;
       colorId?: string | null;
-      attributes?: any;
+      attributes?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     }>;
-    images: string[]; // URLs finales de Cloudinary
+    images: Array<{ url: string; publicId?: string | null; order: number }>;
   }
 ) {
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
@@ -93,7 +93,7 @@ export async function updateGarmentWithDetails(
     data: {
       name,
       price,
-      maxPrice: (typeof maxPrice === 'number' ? maxPrice : null) as any,// Aseguramos que sea number o null
+      maxPrice: typeof maxPrice === "number" ? maxPrice : null,
       cost,
       description,
       categoryId,
@@ -102,52 +102,43 @@ export async function updateGarmentWithDetails(
     },
   });
 
-  // 2. Sincronizar variantes
-  const currentVariants = await prisma.garmentVariant.findMany({ where: { garmentId: id } });
-  const currentVariantIds = currentVariants.map((v) => v.id);
-  const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id!);
+  // 2. Sincronizar variantes (transaccional y paralelo)
+  await prisma.$transaction(async (tx) => {
+    const currentVariants = await tx.garmentVariant.findMany({ where: { garmentId: id } });
+    const currentVariantIds = currentVariants.map((v) => v.id);
+    const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id as string);
 
-  // Eliminar las que ya no están
-  const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
-  if (idsToDelete.length > 0) {
-    await prisma.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
-  }
-
-  // Actualizar existentes o crear nuevas
-  for (const v of variants) {
-    if (v.id) {
-      await prisma.garmentVariant.update({
-        where: { id: v.id },
-        data: {
-          sku: v.sku,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes || null,
-        },
-      });
-    } else {
-      await prisma.garmentVariant.create({
-        data: {
-          garmentId: id,
-          sku: v.sku,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes || null,
-        },
-      });
+    const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
+    if (idsToDelete.length > 0) {
+      await tx.garmentVariant.deleteMany({ where: { id: { in: idsToDelete } } });
     }
-  }
+
+    await Promise.all(
+      variants.map((v) => {
+        const data = {
+          sku: v.sku,
+          stock: Number(v.stock),
+          sizeId: v.sizeId || null,
+          colorId: v.colorId || null,
+          attributes: v.attributes ?? undefined,
+        };
+        if (v.id) {
+          return tx.garmentVariant.update({ where: { id: v.id }, data });
+        }
+        return tx.garmentVariant.create({ data: { garmentId: id, ...data } });
+      })
+    );
+  });
 
   // 3. Sincronizar imágenes
   await prisma.garmentImage.deleteMany({ where: { garmentId: id } });
   if (images.length > 0) {
     await prisma.garmentImage.createMany({
-      data: images.map((url, index) => ({
+      data: images.map(({ url, publicId, order }) => ({
         garmentId: id,
         srcImage: url,
-        order: index,
+        publicId: publicId ?? null,
+        order,
       })),
     });
   }

@@ -3,20 +3,14 @@ import NextAuth from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/zod";
 import { authConfig } from "./auth.config";
-import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma) as any,
-  session: { strategy: "jwt" },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    ...(authConfig.providers || []),
     Credentials({
       authorize: async (credentials) => {
         const { email, password } = await loginSchema.parseAsync(credentials);

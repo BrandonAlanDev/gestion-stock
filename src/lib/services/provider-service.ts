@@ -10,9 +10,13 @@ export async function getProviders() {
   });
 }
 
-export async function createProvider(data: any) {
+export async function createProvider(data: {
+  name: string;
+  details?: string | null;
+  contacts: { create: Array<{ contact: string; type: "EMAIL" | "PHONE" }> };
+}) {
   return prisma.$transaction(async (tx) => {
-    return tx.provider.create({ data });
+    return tx.provider.create({ data, include: { contacts: true } });
   });
 }
 

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { usePageConfig } from "../providers/PageConfigProvider";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface AuthProps {
     children: React.ReactNode;
@@ -20,12 +20,12 @@ export default function AuthLayout({ children }: AuthProps) {
       <div className="absolute inset-0 bg-black/50" />
 
       {/* Luces de neón de fondo (Efecto velocidad) */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[color-mix(in_srgb,var(--color-primario)_12%,transparent)] rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[color-mix(in_srgb,var(--color-primario)_6%,transparent)] rounded-full blur-[120px]" />
       
       {/* Líneas de carretera abstractas */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primario)] to-transparent" />
       </div>
 
       <motion.div 

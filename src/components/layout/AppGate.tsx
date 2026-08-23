@@ -1,13 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import CookieModal from "../legal/CookieModal";
-import PrivacyModal from "../legal/PrivacyModal";
-import TermsModal from "../legal/TermsModal";
+import { usePathname } from "next/navigation";
+import CookieModal from "@/components/legal/CookieModal";
+import PrivacyModal from "@/components/legal/PrivacyModal";
+import TermsModal from "@/components/legal/TermsModal";
+import PiePagina from "@/components/footer/PiePagina";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   // Evitamos errores de hidratación asegurándonos de que se renderice en el cliente
   useEffect(() => {
@@ -16,53 +19,46 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
 
   if (!mounted) return null;
 
+  const esRutaAdmin = pathname.startsWith("/admin");
+  const esRutaMantenimiento = pathname === "/mantenimiento";
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
-      {!isPrivacyOpen && !isTermsOpen && (
-        <CookieModal
-          onOpenPrivacy={() => setIsPrivacyOpen(true)}
-          onOpenTerms={() => setIsTermsOpen(true)}
-        />
+      {!esRutaMantenimiento && (
+        <>
+          {/* 1. Modal Principal de Consentimiento (solo aparece si no aceptó antes) */}
+          {!isPrivacyOpen && !isTermsOpen && (
+            <CookieModal
+              onOpenPrivacy={() => setIsPrivacyOpen(true)}
+              onOpenTerms={() => setIsTermsOpen(true)}
+            />
+          )}
+
+          {/* 2. Modales Secundarios (controlados manualmente) */}
+          <PrivacyModal
+            isOpen={isPrivacyOpen}
+            onClose={() => setIsPrivacyOpen(false)}
+          />
+
+          <TermsModal
+            isOpen={isTermsOpen}
+            onClose={() => setIsTermsOpen(false)}
+          />
+        </>
       )}
 
-      {/* 2. Modales Secundarios (controlados manualmente) */}
-      <PrivacyModal
-        isOpen={isPrivacyOpen}
-        onClose={() => setIsPrivacyOpen(false)}
-      />
-
-      <TermsModal
-        isOpen={isTermsOpen}
-        onClose={() => setIsTermsOpen(false)}
-      />
-
       {/* 3. Contenido de la aplicación */}
-      <main className="flex-grow">
+      <main className="flex flex-col flex-grow">
         {children}
       </main>
 
       {/* 4. Footer fijo al fondo para volver a leer los términos */}
-      <footer className="bg-black border-t border-gray-800 text-gray-500 py-6 text-center text-sm z-40">
-        <div className="flex justify-center items-center gap-6">
-          <button
-            onClick={() => setIsPrivacyOpen(true)}
-            className="hover:text-white transition"
-          >
-            Política de Privacidad
-          </button>
-          <span className="text-gray-700">|</span>
-          <button
-            onClick={() => setIsTermsOpen(true)}
-            className="hover:text-white transition"
-          >
-            Términos y Condiciones
-          </button>
-        </div>
-        <p className="mt-4 text-xs text-gray-600">
-          &copy; {new Date().getFullYear()} - Todos los derechos reservados.
-        </p>
-      </footer>
+      {!esRutaAdmin && !esRutaMantenimiento && (
+        <PiePagina
+          alAbrirPrivacidad={() => setIsPrivacyOpen(true)}
+          alAbrirTerminos={() => setIsTermsOpen(true)}
+        />
+      )}
     </div>
   );
 }
