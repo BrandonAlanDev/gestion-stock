@@ -2,18 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-
-/* ── Paleta (misma que ProductModal) ─────────────────────────────────
-   #ffffff   blanco — fondos principales
-   #f0fafa   cyan muy claro — fondos suaves
-   #e0f5f5   cyan claro — inputs, variantes
-   #b2dede   cyan borde
-   #4ab8b8   cyan acento
-   #0d5c63   verde marino — detalles, iconos
-   #083d42   verde marino oscuro — títulos
-   #0d2b2e   texto principal
-   #4a7c80   texto secundario
-─────────────────────────────────────────────────────────────────── */
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { getContrastColor } from "@/lib/utils";
 
 interface Color {
   id: string;
@@ -29,6 +19,13 @@ interface ColorDropdownProps {
 }
 
 export default function ColorDropdown({ colors, value, onChange }: ColorDropdownProps) {
+  const { pageConfig } = usePageConfig();
+  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
+  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
+  const textColor = getContrastColor(background);
+  const isDarkBg = textColor === "#ffffff";
+  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const mutedColor = textColor + "99";
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selected = colors.find((c) => c.id === value);
@@ -48,7 +45,7 @@ export default function ColorDropdown({ colors, value, onChange }: ColorDropdown
       <div
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between w-full cursor-pointer py-1 uppercase text-xs font-medium select-none"
-        style={{ color: selected ? "#0d2b2e" : "#4a7c80" }}
+        style={{ color: selected ? textColor : mutedColor }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && setOpen(!open)}
@@ -57,7 +54,7 @@ export default function ColorDropdown({ colors, value, onChange }: ColorDropdown
         <ChevronDown
           size={12}
           style={{
-            color: "#4a7c80",
+            color: mutedColor,
             transition: "transform 0.15s",
             transform: open ? "rotate(180deg)" : "none",
           }}
@@ -69,8 +66,8 @@ export default function ColorDropdown({ colors, value, onChange }: ColorDropdown
         <div
           className="absolute top-full left-0 z-[110] w-48 mt-2 overflow-hidden shadow-xl"
           style={{
-            background: "#ffffff",
-            border: "1px solid #b2dede",
+            background: background,
+            border: `1px solid ${overlayBorder}`,
             borderRadius: "12px",
           }}
         >
@@ -83,14 +80,14 @@ export default function ColorDropdown({ colors, value, onChange }: ColorDropdown
                   setOpen(false);
                 }}
                 className="px-4 py-2 text-[11px] cursor-pointer transition-colors"
-                style={{ color: "#0d2b2e" }}
+                style={{ color: textColor }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = "#e0f5f5";
-                  (e.currentTarget as HTMLDivElement).style.color = "#0d5c63";
+                  (e.currentTarget as HTMLDivElement).style.background = `${accent}1A`;
+                  (e.currentTarget as HTMLDivElement).style.color = accent;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.background = "transparent";
-                  (e.currentTarget as HTMLDivElement).style.color = "#0d2b2e";
+                  (e.currentTarget as HTMLDivElement).style.color = textColor;
                 }}
                 role="option"
                 aria-selected={c.id === value}

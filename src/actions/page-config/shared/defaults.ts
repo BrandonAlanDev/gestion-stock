@@ -5,6 +5,7 @@ export const DEFAULT_VALUES = {
 
   primaryColor: "#06b6d4",
   secondaryColor: "#ffffff",
+  bgColor: "#09090b",
 
   ecommerceEnabled: false,
   cartEnabled: false,
@@ -17,7 +18,7 @@ export const DEFAULT_VALUES = {
   currency: "ARS",
   language: "es",
 
-  carouselType: "HERO_SIMPLE",
-  carouselAutoplay: true,
-  carouselInterval: 4000,
+  carouselHeroLimit: 1,
+  carouselBannerLimit: 1,
+  carouselCardsLimit: 3,
 };

@@ -5,12 +5,25 @@ import { useCart } from "@/context/CartContext";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 
-export default function ProductAction({ product, size, color, esTabla = false }: any) {
+interface ProductoProductAction {
+  id?: string | number;
+  name: string;
+  price: string | number;
+  images?: { srcImage?: string }[] | null;
+}
+
+interface ProductActionProps {
+  product: ProductoProductAction;
+  size?: string | number | null;
+  color?: string | number | null;
+  esTabla?: boolean;
+}
+
+export default function ProductAction({ product, size, color, esTabla = false }: ProductActionProps) {
     const { addToCart } = useCart();
     const { pageConfig } = usePageConfig();
     const [showOrderForm, setShowOrderForm] = useState(false);
 
-    const primaryColor = pageConfig?.primaryColor || "#06b6d4";
     const WS_NUMBER = pageConfig?.whatsapp || "2235644043";
 
     const handleAction = () => {
@@ -48,8 +61,8 @@ export default function ProductAction({ product, size, color, esTabla = false }:
         <>
             <button 
                 onClick={handleAction} 
-                className="w-full text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition-all hover:opacity-90 flex items-center justify-center gap-2" 
-                style={{ backgroundColor: primaryColor }}
+                className="w-full py-4 rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition-all hover:opacity-90 flex items-center justify-center gap-2" 
+                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
                 {pageConfig?.cartEnabled ? (
                     <><ShoppingBag size={16} /> {esTabla ? "CONFIGURAR Y AGREGAR" : "AGREGAR AL CARRITO"}</>

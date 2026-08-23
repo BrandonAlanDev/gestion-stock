@@ -1,11 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--fuente-principal, 'Outfit'), ui-sans-serif, system-ui, sans-serif;
+}
+
+@custom-variant corto (@media (max-height: 720px));
+
+@utility scrollbar-oculta {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* =========================
    CSS VARIABLES BASE
 ========================= */
 
 :root {
+  /* Fallbacks del tema de marca (JS los sobreescribe con la config de la BD) */
+  --color-primario: #06b6d4;
+  --color-secundario: #ffffff;
+  --color-fondo-sitio: #09090b;
+  --texto-sobre-primario: #000000;
+  --texto-sobre-secundario: #000000;
+  --texto-sobre-fondo: #ffffff;
+  --superficie-fondo: #181a1a;
+  --superficie-imagen: #ffffff;
+
+  --fuente-principal: 'Outfit', sans-serif;
+  --fuente-secundaria: 'Playfair Display', serif;
+
   --background: 0 0% 100%;
   --foreground: 0 0% 8%;
 
@@ -121,17 +147,28 @@ html {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--fuente-principal, 'Outfit'), sans-serif;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
 }
 
 /* Headings */
 h1,
 h2,
 h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--fuente-secundaria, 'Playfair Display'), serif;
 }
 
 /* =========================
@@ -179,6 +216,36 @@ h3 {
   75% { transform: translateX(5px); }
 }
 
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-shimmer {
   animation: shimmer 1.5s infinite;
 }
@@ -192,6 +259,6 @@ h3 {
   width: 5px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2563eb;
+  background: var(--color-primario);
   border-radius: 10px;
 }

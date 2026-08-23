@@ -7,21 +7,11 @@ import {
   LayoutDashboard, Menu, X, User, Store, Package, LogOut, ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useCart } from "@/context/CartContext";
-import Searchbarfinder from "@/components/home/Searchbarfinder";
-
-function getContrastColor(hex: string) {
-  if (!hex) return "#000000";
-  hex = hex.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? "#000000" : "#ffffff";
-}
 
 const enlacesUsuario = [
-  { href: "/productos", label: "Catálogo", icon: Store },
   { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package },
 ];
 
@@ -40,15 +30,19 @@ export default function Header({
   const { isCartOpen, openCart, closeCart } = useCart();
   const [scrolled, setScrolled] = useState(false);
 
-  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
-  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
-  const textColor = getContrastColor(secondaryColor);
-  const primaryTextColor = getContrastColor(primaryColor);
-  const isDarkBg = textColor === "#ffffff";
+  const rawLogo = pageConfig?.pageConfig?.logo;
+  const rawStoreName = pageConfig?.pageConfig?.storeName;
+
+  const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
+  const storeName =
+    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Gestion OK";
+  const cartEnabled = pageConfig?.pageConfig?.cartEnabled === true;
 
   const isHomeTop = pathname === "/" && !scrolled && !isSidebarOpen && !isAdminRoute;
-  const currentTextColor = isHomeTop ? "#ffffff" : textColor;
-  const overlayColor = isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const currentTextColor = isHomeTop ? "#ffffff" : "var(--texto-sobre-fondo)";
+  const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
+  const overlayFondoMenu = "color-mix(in srgb, var(--color-fondo-sitio) 75%, transparent)";
+  const overlayEnlace = "color-mix(in srgb, var(--color-fondo-sitio) 5%, transparent)";
 
   const isAdmin = session?.user?.role === "ADMIN";
   const mostrarMenuHeader = !(isAdmin && isAdminRoute);
@@ -62,7 +56,11 @@ export default function Header({
   }, []);
 
   const handleCartClick = () => {
-    isCartOpen ? closeCart() : openCart();
+    if (isCartOpen) {
+      closeCart();
+    } else {
+      openCart();
+    }
   };
 
   const cerrarSesion = async () => {
@@ -73,23 +71,23 @@ export default function Header({
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out"
+      className={`fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
       style={{
-        backgroundColor: isHomeTop ? "transparent" : secondaryColor,
-        borderColor: isHomeTop ? "transparent" : overlayColor,
+        backgroundColor: isHomeTop ? "transparent" : "var(--superficie-fondo)",
+        borderColor: isHomeTop ? "transparent" : overlaySuave,
       }}
     >
       <div className="w-full max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          {pageConfig?.pageConfig?.logo ? (
-            <img src={pageConfig.pageConfig.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+          {logo ? (
+            <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
           ) : (
-            <div className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: primaryColor }}>
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
+            <div className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: "var(--color-primario)" }}>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />
             </div>
           )}
           <span className="text-sm font-black uppercase italic" style={{ color: currentTextColor }}>
-            {pageConfig?.pageConfig?.storeName || "Gestion OK"}
+            {storeName}
           </span>
         </Link>
         
@@ -103,7 +101,7 @@ export default function Header({
             <Link
               href="/login"
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
-              style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
               <User size={16} />
               <span className="hidden sm:inline">Iniciar Sesión</span>
@@ -114,17 +112,26 @@ export default function Header({
             <Link
               href="/admin/pageConfig"
               className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg"
-              style={{ backgroundColor: overlayColor, color: currentTextColor }}
+              style={{ backgroundColor: overlaySuave, color: currentTextColor }}
             >
               <LayoutDashboard size={14} />
               <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
 
-          {pageConfig?.pageConfig?.cartEnabled && (
+          <Link
+            href="/productos"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
+            style={{ backgroundColor: overlaySuave, color: currentTextColor }}
+          >
+            <Store size={16} />
+            <span className="hidden sm:inline">Catálogo</span>
+          </Link>
+
+          {cartEnabled && (
             <button
               onClick={handleCartClick}
-              className="p-2 rounded-xl transition-all hover:bg-black/5"
+              className="p-2 rounded-xl cursor-pointer transition-all hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
               style={{ color: currentTextColor }}
             >
               <ShoppingBag size={20} />
@@ -134,9 +141,9 @@ export default function Header({
           {mostrarBotonToggle && (
             <button
               onClick={onToggleSidebar}
-              className="p-2 rounded-xl"
+              className={`p-2 rounded-xl cursor-pointer ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
               style={{
-                backgroundColor: isSidebarOpen ? overlayColor : "transparent",
+                backgroundColor: isSidebarOpen ? overlaySuave : "transparent",
                 color: currentTextColor,
               }}
             >
@@ -153,25 +160,23 @@ export default function Header({
           }`}
           style={{
             maxHeight: isSidebarOpen ? "100vh" : "0px", 
-            backgroundColor: isDarkBg ? "rgba(0, 0, 0, 0.75)" : "rgba(255, 255, 255, 0.75)",
+            backgroundColor: overlayFondoMenu,
           }}
         >
           <div className="max-w-4xl mx-auto py-6 px-6 flex flex-col gap-4">
             <div className="md:hidden relative w-full z-[110] mx-auto">
               <Searchbarfinder isHomeTop={false} />
             </div>
-            
-            {/* Buscador en Mobile */}
 
             {session?.user && (
-              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlayColor }}>
+              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlaySuave }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
                     {session.user.name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold" style={{ color: textColor }}>{session.user.name}</span>
-                    <span className="text-[10px] opacity-60" style={{ color: textColor }}>{session.user.email}</span>
+                    <span className="text-xs font-bold" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.name}</span>
+                    <span className="text-[10px] opacity-60" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.email}</span>
                   </div>
                 </div>
                 <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
@@ -179,23 +184,25 @@ export default function Header({
                 </button>
               </div>
             )}
-            <div className="flex items-center justify-center gap-4">
-              {enlacesUsuario.map((link) => {
-                const Icono = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={onToggleSidebar}
-                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
-                    style={{ backgroundColor: isDarkBg ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", color: textColor }}
-                  >
-                    <Icono size={16} style={{ color: primaryColor }} />
-                    <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {pageConfig?.pageConfig?.planAhorroEnabled === true && (
+              <div className="flex items-center justify-center gap-4">
+                {enlacesUsuario.map((link) => {
+                  const Icono = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={onToggleSidebar}
+                      className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
+                      style={{ backgroundColor: overlayEnlace, color: "var(--texto-sobre-fondo)" }}
+                    >
+                      <Icono size={16} style={{ color: "var(--color-primario)" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

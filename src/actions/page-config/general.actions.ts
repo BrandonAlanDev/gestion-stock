@@ -1,8 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
-export async function getPageConfig() {
+export const getPageConfig = unstable_cache(
+  async () => {
   try {
     const pageConfig = await prisma.pageConfig.findUnique({
       where: { id: 1 },
@@ -14,6 +16,12 @@ export async function getPageConfig() {
         favicon: true,
         primaryColor: true,
         secondaryColor: true,
+        bgColor: true,
+        fontPrimary: true,
+        fontSecondary: true,
+        borderRadius: true,
+        shadowLevel: true,
+        density: true,
         ecommerceEnabled: true,
         cartEnabled: true,
         checkoutEnabled: true,
@@ -36,11 +44,24 @@ export async function getPageConfig() {
         currency: true,
         language: true,
         maintenanceMode: true,
+        arreglosEnabled: true,
+        escuelaEnabled: true,
+        personalizadoEnabled: true,
+        planAhorroEnabled: true,
+        footerAboutText: true,
+        footerCopyrightText: true,
+        footerShowSobre: true,
+        footerShowNavegacion: true,
+        footerShowContacto: true,
+        footerShowUbicacion: true,
+        footerShowRedes: true,
+        footerShowLegales: true,
         metaTitle: true,
         metaDescription: true,
         termsAndConditions: true,
         privacyPolicy: true,
         featuredLayout: true,
+        sectionOrder: true,
 
         // Mantenemos tus banners
         banners: {
@@ -49,7 +70,6 @@ export async function getPageConfig() {
           },
         },
 
-        // Agregamos la relación homegrid y sus grids hijos usando select
         homegrid: {
           select: {
             id: true,
@@ -66,6 +86,15 @@ export async function getPageConfig() {
             },
           },
         },
+
+        carousels: {
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            settings: true,
+          },
+        },
       },
     });
 
@@ -73,12 +102,14 @@ export async function getPageConfig() {
       ok: true,
       pageConfig,
     };
-  } catch (error:any) {
-    console.error("Error real:", error.message);
-    console.error(error);
+  } catch (error: unknown) {
+    console.error("Error real:", error instanceof Error ? error.message : error);
     return {
       ok: false,
       error: "Error configuración",
     };
   }
-}
+  },
+  ["page-config-completa"],
+  { revalidate: 3600, tags: ["page-config"] }
+);

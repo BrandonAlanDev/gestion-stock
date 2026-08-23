@@ -89,6 +89,8 @@ model Garment {
   images        GarmentImage[]
 
   @@index([categoryId])
+  @@index([categoryId, createdAt])
+  @@index([subCategoryId, createdAt])
   @@index([subCategoryId])
   @@index([supplierId])
 }
@@ -96,6 +98,7 @@ model Garment {
 model GarmentImage {
   id        String  @id @default(cuid())
   srcImage  String  @db.Text
+  publicId  String? @db.Text
   alt       String?
   order     Int     @default(0)
   garmentId String
@@ -190,6 +193,7 @@ model Movement {
   garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@index([variantId])
+  @@index([type, createdAt])
 }
 
 model PageConfig {
@@ -201,8 +205,9 @@ model PageConfig {
   slogan               String?
   logo                 String?                   @db.Text
   favicon              String?                   @db.Text
-  primaryColor         String?                   @default("#000000")
+  primaryColor         String?                   @default("#06b6d4")
   secondaryColor       String?                   @default("#FFFFFF")
+  bgColor              String?                   @default("#09090b")
   ecommerceEnabled     Boolean                   @default(true)
   cartEnabled          Boolean                   @default(true)
   checkoutEnabled      Boolean                   @default(true)
@@ -231,14 +236,27 @@ model PageConfig {
   privacyPolicy        String?                   @db.Text
   featuredLayout       PageConfig_featuredLayout @default(GRID)
   homegridId           String?
-  arreglosEnabled      Boolean                   @default(true)
-  escuelaEnabled       Boolean                   @default(true)
-  personalizadoEnabled Boolean                   @default(true)
+  arreglosEnabled      Boolean                   @default(false)
+  escuelaEnabled       Boolean                   @default(false)
+  personalizadoEnabled Boolean                   @default(false)
+  planAhorroEnabled    Boolean                   @default(false)
+  footerAboutText      String?                   @db.Text
+  footerCopyrightText  String?
+  footerShowSobre      Boolean                   @default(true)
+  footerShowNavegacion Boolean                   @default(true)
+  footerShowContacto   Boolean                   @default(true)
+  footerShowUbicacion  Boolean                   @default(true)
+  footerShowRedes      Boolean                   @default(true)
+  footerShowLegales    Boolean                   @default(true)
+  sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
+  fontPrimary          String                    @default("Outfit")
+  fontSecondary        String                    @default("Playfair Display")
+  borderRadius         String                    @default("redondeado")
+  shadowLevel          String                    @default("sutil")
+  density              String                    @default("comoda")
   banners              Banner[]
+  carousels            Carousel[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
-  carouselType         CarouselType              @default(HERO_SIMPLE)
-  carouselAutoplay     Boolean                   @default(true)
-  carouselInterval     Int                       @default(4000)
 }
 
 model Banner {
@@ -251,7 +269,6 @@ model Banner {
   subtitle     String?
   text         String?    @db.Text
   url          String?    @db.Text
-  active       Boolean    @default(true) // ← NUEVO
   pageConfigId Int
   pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
 
@@ -375,6 +392,7 @@ model CustomSection {
   page     CustomPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
   items    CustomSectionItem[]
 
+  @@index([pageId])
   @@map("CustomPageSections")
 }
 
@@ -390,6 +408,7 @@ model CustomSectionItem {
   config      Json?
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  @@index([sectionId])
   @@map("CustomPageItems")
 }
 
@@ -407,17 +426,37 @@ model Homegrid {
 }
 
 model Grid {
-  id         String       @id @default(cuid())
-  title      String
-  subtitle   String
-  image      String
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  homegridId String
-  linkType   GridLinkType @default(NONE)
-  linkValue  String?
-  order      Int          @default(0)
-  homegrid   Homegrid     @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+  id              String        @id @default(cuid())
+  title           String
+  subtitle        String
+  image           String
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  homegridId      String
+  linkType        GridLinkType  @default(NONE)
+  linkValue       String?
+  subtitleNeon    Boolean       @default(false)
+  subtitleDim     Boolean       @default(false)
+  linkStyle       LinkStyle     @default(IMAGE)
+  buttonVariant   ButtonVariant @default(DEFAULT)
+  buttonText      String?
+  buttonBgColor   String?
+  buttonTextColor String?
+  homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+
+  @@index([homegridId])
+}
+
+enum LinkStyle {
+  IMAGE
+  BUTTON
+}
+
+enum ButtonVariant {
+  DEFAULT
+  STRAIGHT
+  TRANSPARENT
 }
 
 enum GridLinkType {
@@ -456,8 +495,48 @@ enum PageConfig_featuredLayout {
 }
 
 enum CarouselType {
-  HERO_SIMPLE // solo imagen
-  HERO_TITULO // imagen + título
-  HERO_TEXTO // imagen + título + texto
-  HERO_LINK // imagen + título + texto + link
+  HERO // Carrusel fullscreen estilo Hero, con variante DEFAULT o SHOWCASE (ver settings.heroStyle)
+  BANNER // Franja horizontal rotativa (solo debajo del Hero)
+  CARDS // Grilla de tarjetas (nueva, paralela a FeaturedSection)
+}
+
+model Carousel {
+  id           String       @id @default(cuid())
+  type         CarouselType
+  title        String? // Título de la sección (solo para CARDS/BANNER)
+  active       Boolean      @default(true)
+  order        Int          @default(0) // Orden global en la home
+  pageConfigId Int
+  pageConfig   PageConfig   @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
+
+  settings Json? // Config específica por tipo (ver abajo)
+  slides   CarouselSlide[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageConfigId, order])
+}
+
+model CarouselSlide {
+  id         String   @id @default(cuid())
+  carouselId String
+  carousel   Carousel @relation(fields: [carouselId], references: [id], onDelete: Cascade)
+
+  order       Int
+  image       String? @db.Text
+  publicId    String? @db.Text
+  title       String?
+  subtitle    String?
+  description String? @db.Text
+  ctaText     String? // Texto del botón (NUEVO vs Banner actual)
+  url         String? @db.Text
+
+  // Config por slide (para Hero: layout "standard" | "split" | "minimal")
+  config Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([carouselId, order])
 }
