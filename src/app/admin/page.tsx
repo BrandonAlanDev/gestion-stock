@@ -2,8 +2,7 @@ import { getDashboardStats } from "@/actions/graficas.actions";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { getContrastColor } from "@/lib/utils";
 import dynamic from "next/dynamic";
-
-const ChartWrapper = dynamic(() => import("@/components/ui/ChartsWrapper"), { ssr: false });
+import ChartWrapper from "@/components/ui/ChartWrapperClient";
 
 export default async function AdminPage() {
   const stats = await getDashboardStats();
@@ -14,7 +13,7 @@ export default async function AdminPage() {
 
   return (
     <div
-      className="min-h-screen p-6 md:p-12 transition-colors duration-200"
+      className="min-h-screen p-6 md:p-12 transition-colors duration-200 overflow-scroll"
       style={{ backgroundColor: secondaryColor, color: textColor }}
     >
       <div className="w-full">
