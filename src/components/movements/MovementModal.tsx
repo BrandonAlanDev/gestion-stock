@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createMovement } from "@/actions/movements";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { History, X, ArrowUpCircle, ArrowDownCircle, DollarSign, Info } from "lucide-react";
+import { History, X, ArrowUpCircle, ArrowDownCircle, DollarSign, Info, ChevronDown } from "lucide-react";
 
 interface Props {
   garments: any[];
@@ -154,35 +154,42 @@ export default function MovementModal({ garments, onSuccess }: Props) {
                   >
                     Producto / Talle
                   </label>
-                  <select
-                    className="w-full rounded-xl p-3 text-xs border outline-none appearance-none cursor-pointer"
-                    style={{
-                      backgroundColor: inputBg,
-                      borderColor: overlayBorder,
-                      color: textColor,
-                    }}
-                    value={form.variantId}
-                    onChange={(e) => {
-                      const vId = e.target.value;
-                      const parent = garments.find((g) =>
-                        g.variants.some((v: any) => v.id === vId)
-                      );
-                      setForm({
-                        ...form,
-                        variantId: vId,
-                        priceAtTime: parent ? Number(parent.price) : 0,
-                      });
-                    }}
-                  >
-                    <option value="" style={{ backgroundColor: secondaryColor }}>Seleccionar...</option>
-                    {garments.map((g) =>
-                      g.variants.map((v: any) => (
-                        <option key={v.id} value={v.id} style={{ backgroundColor: secondaryColor }}>
-                          {g.name} - {v.size?.value || (v.attributes as any)?.customSize || "S/T"} (Stock: {v.stock})
-                        </option>
-                      ))
-                    )}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className="w-full rounded-xl p-3 pr-8 text-xs border outline-none appearance-none cursor-pointer"
+                      style={{
+                        backgroundColor: inputBg,
+                        borderColor: overlayBorder,
+                        color: textColor,
+                      }}
+                      value={form.variantId}
+                      onChange={(e) => {
+                        const vId = e.target.value;
+                        const parent = garments.find((g) =>
+                          g.variants.some((v: any) => v.id === vId)
+                        );
+                        setForm({
+                          ...form,
+                          variantId: vId,
+                          priceAtTime: parent ? Number(parent.price) : 0,
+                        });
+                      }}
+                    >
+                      <option value="" style={{ backgroundColor: secondaryColor }}>Seleccionar...</option>
+                      {garments.map((g) =>
+                        g.variants.map((v: any) => (
+                          <option key={v.id} value={v.id} style={{ backgroundColor: secondaryColor }}>
+                            {g.name} - {v.size?.value || (v.attributes as any)?.customSize || "S/T"} (Stock: {v.stock})
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-60"
+                      style={{ color: textColor }}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

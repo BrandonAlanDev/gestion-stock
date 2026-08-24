@@ -1,12 +1,21 @@
 import { getDashboardStats } from "@/actions/graficas.actions";
-import ChartWrapper from "@/components/ui/ChartsWrapper";
+import { getPageConfig } from "@/actions/page-config/general.actions";
+import { getContrastColor } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import ChartWrapper from "@/components/ui/ChartWrapperClient";
 
 export default async function AdminPage() {
   const stats = await getDashboardStats();
+  const { pageConfig } = await getPageConfig();
+
+  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
+  const textColor = getContrastColor(secondaryColor);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-6 md:p-12">
-      {/* Elimina el max-w-7xl si quieres que el contenido se estire más */}
+    <div
+      className="min-h-screen p-6 md:p-12 transition-colors duration-200 overflow-scroll"
+      style={{ backgroundColor: secondaryColor, color: textColor }}
+    >
       <div className="w-full">
         <ChartWrapper stats={stats} />
       </div>

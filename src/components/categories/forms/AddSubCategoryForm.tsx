@@ -9,6 +9,7 @@ import { toast } from "sonner";
 interface Props {
   categoryId: string;
   sizeTypes: any[];
+  onSuccess?: () => void;
 }
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
@@ -22,7 +23,7 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function AddSubCategoryForm({ categoryId, sizeTypes }: Props) {
+export default function AddSubCategoryForm({ categoryId, sizeTypes, onSuccess }: Props) {
   const pageConfig = usePageConfig();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -57,6 +58,7 @@ export default function AddSubCategoryForm({ categoryId, sizeTypes }: Props) {
       toast.success("Subcategoría vinculada");
       setName("");
       setSizeTypeId("");
+      onSuccess?.();
     }
   };
 
