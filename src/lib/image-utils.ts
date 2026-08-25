@@ -1,12 +1,19 @@
 export function compressImage(
   file: File,
-  maxWidth = 1200,
-  maxHeight = 1200,
-  quality = 0.8
+  maxWidth = 2500,
+  maxHeight = 2500,
+  quality = 0.95
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
+      // Si la imagen no supera el límite, se devuelve el original sin tocar (cero pérdida)
+      if (img.naturalWidth <= maxWidth && img.naturalHeight <= maxHeight) {
+        URL.revokeObjectURL(img.src);
+        resolve(file);
+        return;
+      }
+
       // Calcular nuevas dimensiones manteniendo la proporción
       let { width, height } = img;
       if (width > maxWidth || height > maxHeight) {
@@ -25,12 +32,14 @@ export function compressImage(
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        URL.revokeObjectURL(img.src);
         reject(new Error("No se pudo obtener el contexto del canvas"));
         return;
       }
       ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(img.src);
 
-      // Convertir a blob comprimido
+      // Convertir a blob comprimido en WebP (conserva transparencia)
       canvas.toBlob(
         (blob) => {
           if (!blob) {
@@ -39,12 +48,12 @@ export function compressImage(
           }
           // Crear un nuevo File con el blob comprimido
           const compressedFile = new File([blob], file.name, {
-            type: "image/jpeg", // JPEG comprime mejor que PNG para fotos
+            type: "image/webp",
             lastModified: Date.now(),
           });
           resolve(compressedFile);
         },
-        "image/jpeg",
+        "image/webp",
         quality
       );
     };
