@@ -46,5 +46,5 @@ export async function generarImagenRecortada(
     return canvas.toDataURL("image/png");
   }
 
-  return canvas.toDataURL("image/jpeg", 0.9);
+  return canvas.toDataURL("image/webp", 0.95);
 }

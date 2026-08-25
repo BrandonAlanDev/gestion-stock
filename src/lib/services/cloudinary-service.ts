@@ -27,9 +27,8 @@ export async function subirImagen(
   prefijoNombre?: string
 ): Promise<{ url: string; publicId: string }> {
   const opciones: UploadApiOptions = {
-    format: "webp",
     transformation: [
-      { width: 1200, height: 1200, crop: "limit", fetch_format: "auto", quality: "auto" },
+      { width: 2500, height: 2500, crop: "limit", quality: 90 },
     ],
   };
   if (prefijoNombre) {
