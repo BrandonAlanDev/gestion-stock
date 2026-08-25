@@ -82,10 +82,7 @@ export default function ImageUploader({
     }
     setUploading(true);
     try {
-      const base64 =
-        archivo.type === "image/png"
-          ? await fileToBase64(archivo)
-          : await fileToBase64(await compressImage(archivo, 1200, 1200, 0.8));
+      const base64 = await fileToBase64(await compressImage(archivo, 2500, 2500, 0.95));
       setImagenParaRecortar(base64);
       setIndiceEdicion(null);
       setEditorAbierto(true);

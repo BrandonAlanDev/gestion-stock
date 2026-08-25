@@ -39,7 +39,7 @@ export default function SubidaImagen({
   obligatoria = false,
   etiqueta = "Imagen",
   textoAyuda = "PNG, JPG, WebP",
-  anchoMaximoCompresion = 1200,
+  anchoMaximoCompresion = 2500,
   errorExterno,
   deshabilitada = false,
   variante = "boton",
@@ -87,17 +87,14 @@ export default function SubidaImagen({
     setProcesando(true);
     setError(null);
     try {
-      const esPng = archivo.type === "image/png";
-      const base64 = esPng
-        ? await fileToBase64(archivo)
-        : await fileToBase64(
-            await compressImage(
-              archivo,
-              anchoMaximoCompresion,
-              anchoMaximoCompresion,
-              0.8
-            )
-          );
+      const base64 = await fileToBase64(
+        await compressImage(
+          archivo,
+          anchoMaximoCompresion,
+          anchoMaximoCompresion,
+          0.95
+        )
+      );
       setImagenFuente(base64);
       abrirEditor();
     } catch (err: unknown) {

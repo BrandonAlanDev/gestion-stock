@@ -82,7 +82,7 @@ const ProductCard = ({ product }: Props) => {
           style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
-            src={obtenerUrlImagenOptimizada(images[currentImage], 600) || "/images/placeholder.avif"}
+            src={obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.avif"}
             alt={product.name}
             width={500}
             height={700}
