@@ -1,0 +1,59 @@
+{
+  "name": "gestion-stock",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && (prisma db push --accept-data-loss || echo 'Database unreachable, skipping push') && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "verificar:aislamiento": "ts-node --project tsconfig.scripts.json scripts/verificacion-aislamiento.ts",
+    "migrar:base-antigua": "ts-node --project tsconfig.scripts.json scripts/migracion-base-antigua/ejecutar-migracion.ts"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "verificar:aislamiento": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/verificacion-aislamiento.ts"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.11.1",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@prisma/adapter-mariadb": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@tanstack/react-query": "^5.100.14",
+    "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.26",
+    "lucide-react": "^0.562.0",
+    "next": "15.2.8",
+    "next-auth": "^5.0.0-beta.30",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-easy-crop": "^6.2.3",
+    "recharts": "^3.9.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.27",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.8",
+    "prisma": "^7.2.0",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}

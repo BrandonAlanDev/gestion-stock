@@ -1,0 +1,674 @@
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma"
+  relationMode = "prisma"
+}
+
+datasource db {
+  provider     = "mysql"
+  relationMode = "prisma"
+}
+
+enum TenantEstado {
+  ACTIVO
+  SUSPENDIDO
+  INACTIVO
+}
+
+model Tenant {
+  id        String       @id @default(cuid())
+  nombre    String
+  slug      String       @unique
+  dominio   String?      @unique
+  estado    TenantEstado @default(ACTIVO)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  accounts  account[]
+  users     user[]
+}
+
+model account {
+  id                String  @id @default(cuid())
+  tenantId          String
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  tenant            Tenant  @relation(fields: [tenantId], references: [id])
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider, providerAccountId])
+  @@index([userId])
+  @@index([tenantId, userId])
+}
+
+model user {
+  id            String    @id @default(cuid())
+  tenantId      String
+  name          String?
+  email         String
+  password      String?
+  role          user_role @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  emailVerified DateTime?
+  image         String?
+  telefono      String?
+  account       account[]
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  tenantId      String
+  name          String
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  subCategories SubCategory[]
+  garments      Garment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model SubCategory {
+  id         String    @id @default(cuid())
+  tenantId   String
+  name       String
+  active     Boolean   @default(true)
+  categoryId String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  sizeTypeId String?
+  category   Category  @relation(fields: [categoryId], references: [id])
+  sizeType   SizeType? @relation(fields: [sizeTypeId], references: [id])
+  garments   Garment[]
+
+  @@unique([name, categoryId])
+  @@index([categoryId])
+  @@index([sizeTypeId])
+  @@index([tenantId, active])
+  @@index([tenantId, categoryId])
+}
+
+model Garment {
+  id            String           @id @default(cuid())
+  tenantId      String
+  name          String
+  price         Decimal          @db.Decimal(10, 2)
+  description   String?          @db.Text
+  active        Boolean          @default(true)
+  categoryId    String
+  supplierId    String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  cost          Decimal          @db.Decimal(10, 2)
+  subCategoryId String?
+  maxPrice      Decimal?         @db.Decimal(10, 2)
+  category      Category         @relation(fields: [categoryId], references: [id])
+  subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
+  supplier      Provider?        @relation(fields: [supplierId], references: [id])
+  variants      GarmentVariant[]
+  images        GarmentImage[]
+
+  @@index([categoryId])
+  @@index([categoryId, createdAt])
+  @@index([subCategoryId, createdAt])
+  @@index([subCategoryId])
+  @@index([supplierId])
+  @@index([tenantId, active])
+  @@index([tenantId, categoryId])
+  @@index([tenantId, subCategoryId])
+  @@index([tenantId, createdAt])
+}
+
+model GarmentImage {
+  id        String  @id @default(cuid())
+  tenantId  String
+  srcImage  String  @db.Text
+  publicId  String? @db.Text
+  alt       String?
+  order     Int     @default(0)
+  garmentId String
+  garment   Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+
+  @@index([garmentId])
+  @@index([tenantId, garmentId])
+}
+
+model GarmentVariant {
+  id         String     @id @default(cuid())
+  tenantId   String
+  sku        String?
+  stock      Int        @default(0)
+  garmentId  String
+  sizeId     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  colorId    String?
+  attributes Json?
+  garment    Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  size       Size?      @relation(fields: [sizeId], references: [id])
+  color      Color?     @relation(fields: [colorId], references: [id])
+  movements  Movement[]
+
+  @@unique([garmentId, sizeId, colorId])
+  @@unique([tenantId, sku])
+  @@index([garmentId])
+  @@index([sizeId])
+  @@index([colorId])
+  @@index([tenantId, garmentId])
+}
+
+model SizeType {
+  id            String        @id @default(cuid())
+  tenantId      String
+  name          String
+  active        Boolean       @default(true)
+  sizes         Size[]
+  subCategories SubCategory[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model Size {
+  id         String           @id @default(cuid())
+  tenantId   String
+  active     Boolean          @default(true)
+  order      Int              @default(0)
+  sizeTypeId String
+  value      String
+  sizeType   SizeType         @relation(fields: [sizeTypeId], references: [id])
+  variants   GarmentVariant[]
+
+  @@unique([value, sizeTypeId])
+  @@index([sizeTypeId])
+  @@index([tenantId, active])
+  @@index([tenantId, sizeTypeId])
+}
+
+model Color {
+  id       String           @id @default(cuid())
+  tenantId String
+  name     String
+  hex      String?
+  active   Boolean          @default(true)
+  variants GarmentVariant[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model Provider {
+  id        String            @id @default(cuid())
+  tenantId  String
+  name      String
+  active    Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  details   String?
+  contacts  ContactProvider[]
+  garments  Garment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model ContactProvider {
+  id         String   @id @default(cuid())
+  tenantId   String
+  contact    String
+  type       String
+  idProvider String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  provider   Provider @relation(fields: [idProvider], references: [id], onDelete: Cascade)
+
+  @@unique([contact, idProvider])
+  @@index([idProvider])
+  @@index([tenantId, active])
+  @@index([tenantId, idProvider])
+}
+
+model Movement {
+  id             String         @id @default(cuid())
+  tenantId       String
+  type           MovementType
+  quantity       Int
+  priceAtTime    Decimal        @db.Decimal(10, 2)
+  note           String?
+  variantId      String
+  createdAt      DateTime       @default(now())
+  garmentVariant GarmentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([type, createdAt])
+  @@index([tenantId, variantId])
+  @@index([tenantId, createdAt])
+}
+
+model PageConfig {
+  id                   Int                       @id @default(autoincrement())
+  tenantId             String
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  storeName            String
+  description          String?                   @db.Text
+  slogan               String?
+  logo                 String?                   @db.Text
+  favicon              String?                   @db.Text
+  primaryColor         String?                   @default("#06b6d4")
+  secondaryColor       String?                   @default("#FFFFFF")
+  bgColor              String?                   @default("#09090b")
+  ecommerceEnabled     Boolean                   @default(true)
+  cartEnabled          Boolean                   @default(true)
+  checkoutEnabled      Boolean                   @default(true)
+  phone                String?
+  whatsapp             String?
+  email                String?
+  locationEnabled      Boolean                   @default(false)
+  address              String?
+  city                 String?
+  province             String?
+  country              String?
+  postalCode           String?
+  mapsUrl              String?                   @db.Text
+  instagram            String?                   @db.Text
+  facebook             String?                   @db.Text
+  tiktok               String?                   @db.Text
+  x                    String?                   @db.Text
+  youtube              String?                   @db.Text
+  linkedin             String?                   @db.Text
+  currency             String                    @default("ARS")
+  language             String                    @default("es")
+  maintenanceMode      Boolean                   @default(false)
+  metaTitle            String?
+  metaDescription      String?                   @db.Text
+  termsAndConditions   String?                   @db.Text
+  privacyPolicy        String?                   @db.Text
+  featuredLayout       PageConfig_featuredLayout @default(GRID)
+  homegridId           String?
+  arreglosEnabled      Boolean                   @default(false)
+  escuelaEnabled       Boolean                   @default(false)
+  personalizadoEnabled Boolean                   @default(false)
+  planAhorroEnabled    Boolean                   @default(false)
+  footerAboutText      String?                   @db.Text
+  footerCopyrightText  String?
+  footerShowSobre      Boolean                   @default(true)
+  footerShowNavegacion Boolean                   @default(true)
+  footerShowContacto   Boolean                   @default(true)
+  footerShowUbicacion  Boolean                   @default(true)
+  footerShowRedes      Boolean                   @default(true)
+  footerShowLegales    Boolean                   @default(true)
+  sectionOrder         String                    @default("[\"hero\",\"banner\",\"featured\",\"cards\",\"location\"]")
+  fontPrimary          String                    @default("Outfit")
+  fontSecondary        String                    @default("Playfair Display")
+  borderRadius         String                    @default("redondeado")
+  shadowLevel          String                    @default("sutil")
+  density              String                    @default("comoda")
+  banners              Banner[]
+  carousels            Carousel[]
+  homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
+
+  @@unique([tenantId])
+  @@index([homegridId])
+}
+
+model Banner {
+  id           Int        @id @default(autoincrement())
+  tenantId     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  order        Int
+  image        String?    @db.Text
+  title        String?
+  subtitle     String?
+  text         String?    @db.Text
+  url          String?    @db.Text
+  pageConfigId Int
+  pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([pageConfigId, order])
+  @@index([tenantId, pageConfigId])
+}
+
+model CustomBoard {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tipo           String
+  largo          String
+  ancho          String
+  espesor        String
+  volumen        String?
+  material       String
+  cola           String
+  killaTipo      String
+  killaCount     String
+  notas          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deliveryOption String?
+
+  @@index([tenantId])
+}
+
+model BoardTypeOption {
+  id          String                     @id @default(cuid())
+  tenantId    String
+  name        String
+  svgPath     String?                    @db.Text
+  active      Boolean                    @default(true)
+  typeTails   BoardTypeTailOption[]
+  typeFins    BoardTypeFinOption[]
+  typeConfigs BoardTypeFinConfigOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model BoardMaterialOption {
+  id          String  @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  active      Boolean @default(true)
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model BoardTailOption {
+  id        String                @id @default(cuid())
+  tenantId  String
+  name      String
+  svgPath   String?               @db.Text
+  active    Boolean               @default(true)
+  tailTypes BoardTypeTailOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model BoardFinOption {
+  id       String               @id @default(cuid())
+  tenantId String
+  name     String
+  active   Boolean              @default(true)
+  finTypes BoardTypeFinOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model BoardDeliveryOption {
+  id          String   @id @default(cuid())
+  tenantId    String
+  label       String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, label])
+  @@index([tenantId, active])
+}
+
+model BoardFinConfigOption {
+  id          String                     @id @default(cuid())
+  tenantId    String
+  name        String
+  count       Int
+  active      Boolean                    @default(true)
+  configTypes BoardTypeFinConfigOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
+model BoardTypeTailOption {
+  id          String          @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  tailId      String
+  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  tail        BoardTailOption @relation(fields: [tailId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, boardTypeId, tailId])
+  @@index([boardTypeId])
+  @@index([tailId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, tailId])
+}
+
+model BoardTypeFinOption {
+  id          String          @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  finId       String
+  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  fin         BoardFinOption  @relation(fields: [finId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, boardTypeId, finId])
+  @@index([boardTypeId])
+  @@index([finId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, finId])
+}
+
+model BoardTypeFinConfigOption {
+  id          String               @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  configId    String
+  boardType   BoardTypeOption      @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  config      BoardFinConfigOption @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, boardTypeId, configId])
+  @@index([boardTypeId])
+  @@index([configId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, configId])
+}
+
+model CustomPage {
+  id        String          @id @default(cuid())
+  tenantId  String
+  slug      String
+  title     String
+  subtitle  String?         @db.Text
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  sections  CustomSection[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, isActive])
+  @@map("CustomPages")
+}
+
+model CustomSection {
+  id       String              @id @default(cuid())
+  tenantId String
+  pageId   String
+  type     SectionType
+  title    String?
+  subtitle String?             @db.Text
+  order    Int                 @default(0)
+  config   Json?
+  page     CustomPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  items    CustomSectionItem[]
+
+  @@index([pageId])
+  @@index([tenantId, pageId])
+  @@map("CustomPageSections")
+}
+
+model CustomSectionItem {
+  id          String        @id @default(cuid())
+  tenantId    String
+  sectionId   String
+  title       String
+  description String?       @db.Text
+  image       String?
+  icon        String?
+  link        String?
+  order       Int           @default(0)
+  config      Json?
+  section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+  @@index([tenantId, sectionId])
+  @@map("CustomPageItems")
+}
+
+model Homegrid {
+  id          String       @id @default(cuid())
+  tenantId    String
+  title       String
+  subtitle    String
+  style       Int
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  columns     String       @default("md:grid-cols-2")
+  grids       Grid[]
+  pageConfigs PageConfig[]
+
+  @@index([tenantId, active])
+}
+
+model Grid {
+  id              String        @id @default(cuid())
+  tenantId        String
+  title           String
+  subtitle        String
+  image           String
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  homegridId      String
+  linkType        GridLinkType  @default(NONE)
+  linkValue       String?
+  subtitleNeon    Boolean       @default(false)
+  subtitleDim     Boolean       @default(false)
+  linkStyle       LinkStyle     @default(IMAGE)
+  buttonVariant   ButtonVariant @default(DEFAULT)
+  buttonText      String?
+  buttonBgColor   String?
+  buttonTextColor String?
+  homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
+
+  @@index([homegridId])
+  @@index([tenantId, homegridId])
+}
+
+enum LinkStyle {
+  IMAGE
+  BUTTON
+}
+
+enum ButtonVariant {
+  DEFAULT
+  STRAIGHT
+  TRANSPARENT
+}
+
+enum GridLinkType {
+  NONE
+  CATEGORY
+  PRODUCT
+  PAGE
+  EXTERNAL
+}
+
+enum user_role {
+  USER
+  ADMIN
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum SectionType {
+  HERO
+  TEXT
+  CARDS
+  FAQ
+  TIMELINE
+  CTA
+  GALLERY
+  FEATURES
+}
+
+enum PageConfig_featuredLayout {
+  GRID
+  COLLAGE
+  MINIMAL
+}
+
+enum CarouselType {
+  HERO // Carrusel fullscreen estilo Hero, con variante DEFAULT o SHOWCASE (ver settings.heroStyle)
+  BANNER // Franja horizontal rotativa (solo debajo del Hero)
+  CARDS // Grilla de tarjetas (nueva, paralela a FeaturedSection)
+}
+
+model Carousel {
+  id           String       @id @default(cuid())
+  tenantId     String
+  type         CarouselType
+  title        String? // Título de la sección (solo para CARDS/BANNER)
+  active       Boolean      @default(true)
+  order        Int          @default(0) // Orden global en la home
+  pageConfigId Int
+  pageConfig   PageConfig   @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
+
+  settings Json? // Config específica por tipo (ver abajo)
+  slides   CarouselSlide[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageConfigId, order])
+  @@index([tenantId, active])
+  @@index([tenantId, pageConfigId])
+}
+
+model CarouselSlide {
+  id         String   @id @default(cuid())
+  tenantId   String
+  carouselId String
+  carousel   Carousel @relation(fields: [carouselId], references: [id], onDelete: Cascade)
+
+  order       Int
+  image       String? @db.Text
+  publicId    String? @db.Text
+  title       String?
+  subtitle    String?
+  description String? @db.Text
+  ctaText     String? // Texto del botón (NUEVO vs Banner actual)
+  url         String? @db.Text
+
+  // Config por slide (para Hero: layout "standard" | "split" | "minimal")
+  config Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([carouselId, order])
+  @@index([tenantId, carouselId])
+}

@@ -1,0 +1,16 @@
+export const SLUGS_RESERVADOS = new Set([
+  "www",
+  "api",
+  "admin",
+  "app",
+  "logabyte",
+  "mail",
+  "ftp",
+  "cdn",
+  "assets",
+  "m",
+  "blog",
+  "shop",
+  "tienda",
+  "test",
+]);
