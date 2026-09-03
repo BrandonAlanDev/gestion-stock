@@ -1,7 +1,10 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
 import ProductsPage from "@/components/providers/products/views/ProductsPage";
+import type {
+  CategoriaCatalogo,
+  ProductoCatalogo,
+} from "@/types/productos/catalogo-publico";
 import { useCatalogGarments } from "@/hooks/useCatalogGarments";
 import { useCatalogCategories } from "@/hooks/useCatalogCategories";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -14,14 +17,13 @@ export default function CatalogoClient({
 }: {
   initialGarments?: {
     success: boolean;
-    data: unknown[];
+    data: ProductoCatalogo[];
     total: number;
     page: number;
     totalPages: number;
   };
-  initialCategories?: unknown[];
+  initialCategories?: CategoriaCatalogo[];
 }) {
-  const { addToCart } = useCart();
   const searchParams = useSearchParams();
   const router = useRouter();
   const limit = 20;
@@ -77,7 +79,6 @@ export default function CatalogoClient({
       <ProductsPage
         garments={garments}
         categories={categories}
-        addToCart={addToCart}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}

@@ -11,7 +11,14 @@ import { updateSocialsConfig } from "@/actions/page-config/socials.actions";
 import Input from "./shared/Input";
 
 interface Props {
-  config: any;
+  config?: {
+    instagram?: string | null;
+    facebook?: string | null;
+    tiktok?: string | null;
+    x?: string | null;
+    youtube?: string | null;
+    linkedin?: string | null;
+  };
   primaryColor?: string;
   secondaryColor?: string;
 }

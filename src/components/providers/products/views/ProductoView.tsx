@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Truck, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { ProductProps } from "../types";
-import WhatsAppOrderForm from "../forms/WhatsAppOrder";
 import ProductAction from "@/components/ui/ProductAction";
 
 const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
@@ -13,9 +12,8 @@ const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 export default function ProductoView({ product }: ProductProps) {
   const router = useRouter();
   
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [showOrderForm, setShowOrderForm] = useState(false);
 
   // 📐 Determinar si el producto pertenece a la categoría Tablas
   const esTabla = useMemo(() => {
@@ -44,16 +42,17 @@ export default function ProductoView({ product }: ProductProps) {
 
   // Procesar Talles
   const sizes = useMemo(() => {
-    const map = new Map();
-    product.variants?.forEach((variant: any) => {
+    const map = new Map<string, { id: string; name: string; stock: number }>();
+    product.variants.forEach((variant) => {
       if (variant.size) {
         const key = variant.size.id;
-        if (!map.has(key)) {
-          map.set(key, { id: variant.size.id, name: variant.size.value, stock: variant.stock });
+        const talleExistente = map.get(key);
+        if (talleExistente) {
+          talleExistente.stock += variant.stock;
         } else {
-          map.get(key).stock += variant.stock;
+          map.set(key, { id: variant.size.id, name: variant.size.value, stock: variant.stock });
         }
-      } else if (variant.attributes?.customSize) {
+      } else if (typeof variant.attributes?.customSize === "string") {
         const key = variant.id;
         map.set(key, { id: key, name: variant.attributes.customSize, stock: variant.stock });
       }
@@ -63,8 +62,8 @@ export default function ProductoView({ product }: ProductProps) {
 
   // Procesar Colores
   const colors = useMemo(() => {
-    const map = new Map();
-    product.variants?.forEach((variant: any) => {
+    const map = new Map<string, { id: string; name: string; hex: string | null }>();
+    product.variants.forEach((variant) => {
       if (!variant.color) return;
       const key = variant.color.id;
       if (!map.has(key)) {
@@ -98,7 +97,7 @@ export default function ProductoView({ product }: ProductProps) {
           <div className="flex flex-col-reverse md:flex-row gap-6">
             {productImages.length > 1 && (
               <div className="flex md:flex-col gap-3 flex-shrink-0">
-                {productImages.map((img: any) => (
+                {productImages.map((img) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
@@ -171,7 +170,7 @@ export default function ProductoView({ product }: ProductProps) {
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--texto-sobre-fondo)] opacity-60">Color</h3>
                 <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
-                  {colors.map((color: any) => (
+                  {colors.map((color) => (
                     <button
                       key={color.id}
                       onClick={() => setSelectedColor(color.name)}
@@ -197,7 +196,7 @@ export default function ProductoView({ product }: ProductProps) {
                   Medidas disponibles
                 </h3>
                 <div className="space-y-1">
-                  {sizes.map((size: any) => (
+                  {sizes.map((size) => (
                     <p key={size.id} className="text-sm text-[var(--texto-sobre-fondo)] opacity-70 font-light">
                       {size.name}
                     </p>

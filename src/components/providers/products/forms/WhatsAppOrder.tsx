@@ -11,12 +11,19 @@ const COLA_OPTIONS = ["Squash", "Round", "Pin", "Swallow", "Bat tail", "Moon tai
 const MATERIAL_OPTIONS = ["Poliéster", "Epoxi"];
 
 interface FormProps {
-  item: any;
+  item: ItemPedidoWhatsApp;
   onClose: () => void;
-  onSave: (itemId: string, specs: any) => void;
+  onSave: (itemId: string | number, specs: FormState) => void;
+}
+
+interface ItemPedidoWhatsApp {
+  id: string | number;
+  name: string;
+  specs?: Record<string, unknown>;
 }
 
 interface FormState {
+  [campo: string]: string;
   largo: string;
   ancho: string;
   espesor: string;
@@ -34,19 +41,28 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
   useBloqueoScroll(true);
   
   // Inicializamos el estado. Si item.specs existe, lo carga, si no, inicia vacío.
-  const [form, setForm] = useState<FormState>(item.specs || {
-    largo: "", ancho: "", espesor: "", volumen: "",
-    sistemaQuillas: "", tipoCola: "", material: "", colorDiseno: "", notasExtra: "",
+  const construirFormulario = (specs?: Record<string, unknown>): FormState => ({
+    largo: typeof specs?.largo === "string" ? specs.largo : "",
+    ancho: typeof specs?.ancho === "string" ? specs.ancho : "",
+    espesor: typeof specs?.espesor === "string" ? specs.espesor : "",
+    volumen: typeof specs?.volumen === "string" ? specs.volumen : "",
+    sistemaQuillas: typeof specs?.sistemaQuillas === "string" ? specs.sistemaQuillas : "",
+    tipoCola: typeof specs?.tipoCola === "string" ? specs.tipoCola : "",
+    material: typeof specs?.material === "string" ? specs.material : "",
+    colorDiseno: typeof specs?.colorDiseno === "string" ? specs.colorDiseno : "",
+    notasExtra: typeof specs?.notasExtra === "string" ? specs.notasExtra : "",
   });
+
+  const [form, setForm] = useState<FormState>(() => construirFormulario(item.specs));
 
   // Este useEffect asegura que si el item que llega cambia, el form se actualice.
   useEffect(() => {
     if (item.specs) {
-      setForm(item.specs);
+      setForm(construirFormulario(item.specs));
     }
   }, [item.specs]);
 
-  const set = (field: string, value: string) =>
+  const set = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const inputCls = "w-full border border-[var(--color-secundario)] bg-[var(--color-fondo-sitio)]/5 rounded-lg px-3 py-3 text-sm text-[var(--texto-sobre-secundario)] placeholder:text-[var(--texto-sobre-secundario)]/40 focus:border-[var(--color-primario)] focus:bg-[var(--color-fondo-sitio)]/10 outline-none transition-all";
@@ -90,8 +106,8 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
                     <label className="text-xs font-medium text-[var(--texto-sobre-secundario)] opacity-70">{label}</label>
                     <input
                       type="text"
-                      value={form[field as keyof typeof form]}
-                      onChange={(e) => set(field, e.target.value)}
+                      value={form[field as keyof FormState]}
+                      onChange={(e) => set(field as keyof FormState, e.target.value)}
                       placeholder={placeholder}
                       className={inputCls}
                     />

@@ -1,5 +1,5 @@
 "use client";
-import { registerAction } from "@/actions/auth-actions";
+import { registrarUsuario } from "@/actions/sesion/registrar-usuario";
 import GoogleButton from "@/components/auth/google-button";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { User, Mail, Lock, Rocket, Shirt } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [state, action, isPending] = useActionState(registerAction, { error: "", success: false });
+  const [state, action, isPending] = useActionState(registrarUsuario, { error: "", success: false });
   const {pageConfig} = usePageConfig();
   const [hover, setHover] = useState(false);
 
@@ -26,7 +27,7 @@ export default function RegisterPage() {
         <div className="text-center mb-6">
           <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${pageConfig?.logo ? '' : 'bg-[color-mix(in_srgb,var(--color-fondo-sitio)_80%,transparent)] border border-[color-mix(in_srgb,var(--color-primario)_20%,transparent)] '} mb-4`}>
               {typeof pageConfig?.logo === "string" && pageConfig.logo ? (
-                <img src={pageConfig.logo} alt="Logo" width={32} height={32} />
+                <Image src={pageConfig.logo} alt="Logo" width={32} height={32} unoptimized />
               ):(
                 <Shirt className="w-8 h-8 text-[var(--color-primario)]"
               />

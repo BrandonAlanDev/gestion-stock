@@ -8,6 +8,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { Mail, Lock, ChevronRight, Shirt } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function LoginPage() {
         <div className="text-center mb-6">
           <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${pageConfig?.logo ? '' : 'bg-[color-mix(in_srgb,var(--color-fondo-sitio)_80%,transparent)] border border-[color-mix(in_srgb,var(--color-primario)_20%,transparent)] '} mb-4`}>
             {typeof pageConfig?.logo === "string" && pageConfig.logo ? (
-              <img src={pageConfig.logo} alt="Logo" width={32} height={32} />
+              <Image src={pageConfig.logo} alt="Logo" width={32} height={32} unoptimized />
             ) : (
               <Shirt
                 className="w-8 h-8 text-[var(--color-primario)]"

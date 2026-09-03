@@ -16,6 +16,10 @@ import { toast } from "sonner";
 import SizeTypeModal from "@/components/admin/sizes/SizeTypeModal";
 import SizeModal from "@/components/admin/sizes/SizeModal";
 
+type TiposTalle = Awaited<ReturnType<typeof getSizeTypes>>;
+type TipoTalle = TiposTalle[number];
+type Talle = TipoTalle["sizes"][number];
+
 // --- UTILIDAD DE CONTRASTE ---
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
@@ -29,14 +33,14 @@ function getContrastColor(hexColor: string) {
 
 export default function SizesPage() {
   const { pageConfig } = usePageConfig();
-  const [sizeTypes, setSizeTypes] = useState<any[]>([]);
+  const [sizeTypes, setSizeTypes] = useState<TiposTalle>([]);
   const [newTypeName, setNewTypeName] = useState("");
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // Estados de modales
-  const [typeModal, setTypeModal] = useState<{ isOpen: boolean; data: any | null }>({ isOpen: false, data: null });
-  const [sizeModal, setSizeModal] = useState<{ isOpen: boolean; typeId: string; data: any | null }>({ isOpen: false, typeId: "", data: null });
+  const [typeModal, setTypeModal] = useState<{ isOpen: boolean; data: TipoTalle | null }>({ isOpen: false, data: null });
+  const [sizeModal, setSizeModal] = useState<{ isOpen: boolean; typeId: string; data: Talle | null }>({ isOpen: false, typeId: "", data: null });
 
   // INVERSIÓN: Fondo = secondary, Acento = primary
   const background = pageConfig?.secondaryColor || "#00b4d8";
@@ -187,8 +191,8 @@ export default function SizesPage() {
               {/* Talles del Grupo */}
               <div className="flex flex-wrap gap-2 min-h-[50px] items-center">
                 {type.sizes
-                  .sort((a: any, b: any) => a.order - b.order) // Ordenar por campo order
-                  .map((s: any) => (
+                  .sort((a, b) => a.order - b.order) // Ordenar por campo order
+                  .map((s) => (
                   <div key={s.id} className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-xl border border-white/5 group">
                     <span className="text-xs font-black">{s.value}</span>
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-2 gap-1 border-l border-white/10 pl-2">

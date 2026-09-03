@@ -1,10 +1,10 @@
 "use client";
-import { googleLoginAction } from "@/actions/auth-actions";
+import { iniciarSesionGoogle } from "@/actions/sesion/iniciar-sesion-google";
 import { useFormStatus } from "react-dom";
 
 export default function GoogleButton() {
   return (
-    <form action={googleLoginAction}>
+    <form action={iniciarSesionGoogle}>
       <SubmitButton />
     </form>
   );

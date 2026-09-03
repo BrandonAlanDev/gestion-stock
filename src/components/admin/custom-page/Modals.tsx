@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { X, Plus } from "lucide-react";
-import DeleteConfirmModal from "./DeleteConfirmModal";
-import ViewPageModal from "./ViewPageModal";
 import GeneralDataFields from "./page-builder/GeneralDataFields";
 import SectionEditorCard from "./page-builder/SectionEditorCard";
 import ModalFooter from "./page-builder/ModalFooter";
-
-export { DeleteConfirmModal, ViewPageModal };
+import type {
+  PaginaPersonalizada,
+  SeccionPaginaPersonalizada,
+  ValorCampoPaginaPersonalizada,
+} from "@/types/paginas-personalizadas";
+import type { Prisma } from "../../../../generated/prisma/client";
 
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
@@ -20,8 +22,58 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSaving, primaryColor, secondaryColor }: any) {
-  const [formData, setFormData] = useState<any>({
+interface ItemEntrada {
+  id?: string;
+  title: string;
+  description?: string | null;
+  image?: string | null;
+  icon?: string | null;
+  link?: string | null;
+  order?: number;
+  config?: unknown;
+}
+interface SeccionEntrada {
+  id?: string;
+  type: SeccionPaginaPersonalizada["type"];
+  title?: string | null;
+  subtitle?: string | null;
+  order?: number;
+  config?: unknown;
+  items?: ItemEntrada[];
+}
+interface PaginaEntrada {
+  id?: string;
+  title: string;
+  slug: string;
+  subtitle?: string | null;
+  isActive?: boolean;
+  sections?: SeccionEntrada[];
+}
+type DatosPaginaGuardado = Parameters<
+  typeof import("@/actions/custom-page-builder.actions")["updateCustomPageContent"]
+>[1] & { title: string; slug: string };
+
+interface PropiedadesConstructorPagina {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (pagina: DatosPaginaGuardado) => void;
+  initialData?: PaginaEntrada | null;
+  isSaving: boolean;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+function analizarConfiguracion(texto?: string): Prisma.InputJsonValue | undefined {
+  if (!texto) return undefined;
+  try {
+    return JSON.parse(texto) as Prisma.InputJsonValue;
+  } catch {
+    return undefined;
+  }
+}
+
+export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSaving, primaryColor, secondaryColor }: PropiedadesConstructorPagina) {
+  const [formData, setFormData] = useState<PaginaPersonalizada>({
     title: "", slug: "", subtitle: "", isActive: true, sections: []
   });
 
@@ -31,11 +83,13 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
     if (initialData && isOpen) {
       setFormData({
         ...initialData,
-        sections: initialData.sections?.map((s: any) => ({
+        sections: initialData.sections?.map((s) => ({
           ...s,
+          config: null,
           configStr: s.config ? JSON.stringify(s.config, null, 2) : "",
-          items: s.items?.map((i: any) => ({
+          items: s.items?.map((i) => ({
             ...i,
+            config: null,
             configStr: i.config ? JSON.stringify(i.config, null, 2) : ""
           })) || []
         })) || []
@@ -60,7 +114,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
     setFormData({ ...formData, sections: newSections });
   };
 
-  const updateSection = (index: number, field: string, value: any) => {
+  const updateSection = (index: number, field: string, value: ValorCampoPaginaPersonalizada) => {
     const newSections = [...formData.sections];
     newSections[index][field] = value;
     setFormData({ ...formData, sections: newSections });
@@ -78,7 +132,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
     setFormData({ ...formData, sections: newSections });
   };
 
-  const updateItem = (sIndex: number, iIndex: number, field: string, value: any) => {
+  const updateItem = (sIndex: number, iIndex: number, field: string, value: ValorCampoPaginaPersonalizada) => {
     const newSections = [...formData.sections];
     newSections[sIndex].items[iIndex][field] = value;
     setFormData({ ...formData, sections: newSections });
@@ -86,19 +140,30 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const processedData = {
-      ...formData,
-      sections: formData.sections.map((s: any, sIdx: number) => {
-        let parsedConfig = null;
-        try { if (s.configStr) parsedConfig = JSON.parse(s.configStr); } catch (e) { }
+    const processedData: DatosPaginaGuardado = {
+      title: formData.title,
+      slug: formData.slug,
+      subtitle: formData.subtitle ?? undefined,
+      isActive: formData.isActive,
+      sections: formData.sections.map((s, sIdx) => {
+        const parsedConfig = analizarConfiguracion(s.configStr);
         return {
-          ...s,
+          type: s.type,
+          title: s.title ?? undefined,
+          subtitle: s.subtitle ?? undefined,
           order: sIdx,
           config: parsedConfig,
-          items: s.items.map((i: any, iIdx: number) => {
-            let itemConfig = null;
-            try { if (i.configStr) itemConfig = JSON.parse(i.configStr); } catch (e) { }
-            return { ...i, order: iIdx, config: itemConfig };
+          items: s.items.map((i, iIdx) => {
+            const itemConfig = analizarConfiguracion(i.configStr);
+            return {
+              title: i.title,
+              description: i.description ?? undefined,
+              image: i.image ?? undefined,
+              icon: i.icon ?? undefined,
+              link: i.link ?? undefined,
+              order: iIdx,
+              config: itemConfig,
+            };
           })
         };
       })
@@ -165,7 +230,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
               </div>
 
               <div className="space-y-6">
-                {formData.sections.map((section: any, sIdx: number) => (
+                {formData.sections.map((section, sIdx) => (
                   <SectionEditorCard
                     key={sIdx}
                     section={section}

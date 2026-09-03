@@ -3,6 +3,7 @@
 import Link from "next/link";
 import ProductGrid from "@/components/providers/products/grid/ProductGrid";
 import { Package, Layers } from "lucide-react";
+import type { Garment } from "@/components/providers/products/grid/ProductGrid";
 
 interface SubCategory {
   id: string;
@@ -11,7 +12,7 @@ interface SubCategory {
 
 interface CategoryContentClientProps {
   subCategories: SubCategory[];
-  garments: any[];
+  garments: Garment[];
   selectedSubId: string; // "all" o el id de la subcategoría activa
   basePath: string; // ej: "/productos/tablas"
 }

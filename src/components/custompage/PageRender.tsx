@@ -6,34 +6,15 @@ import CardsSection from "./sections/CardsSection";
 import TimelineSection from "./sections/TimelineSection";
 import FaqSection from "./sections/FaqSection";
 import CtaSection from "./sections/CtaSection";
+import type {
+  ItemPaginaPersonalizada,
+  PaginaPersonalizada,
+  SeccionPaginaPersonalizada,
+} from "@/types/paginas-personalizadas";
 
-export interface CustomItem {
-  id: string;
-  title: string;
-  description?: string | null;
-  icon?: string | null;
-  image?: string | null;
-  link?: string | null;
-  order: number;
-  config?: any;
-}
-
-export interface CustomSection {
-  id: string;
-  type: "HERO" | "TEXT" | "CARDS" | "FAQ" | "TIMELINE" | "CTA" | "GALLERY" | "FEATURES";
-  title?: string | null;
-  subtitle?: string | null;
-  order: number;
-  config?: any;
-  items: CustomItem[];
-}
-
-export interface CustomPage {
-  slug: string;
-  title: string;
-  subtitle?: string | null;
-  sections: CustomSection[];
-}
+export type CustomItem = ItemPaginaPersonalizada;
+export type CustomSection = SeccionPaginaPersonalizada;
+export type CustomPage = PaginaPersonalizada;
 
 export default function PageRenderer({ page }: { page: CustomPage }) {
   return (

@@ -1,22 +1,22 @@
 "use server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { garmentSchema, type GarmentInput } from "@/lib/zod";
 import { revalidateTag } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import * as garmentService from "@/lib/services/garment-service";
 import { getCachedProducts, getCachedProductById, getCachedCategories } from "@/lib/cache";
-import {
-  obtenerCarpetaPrenda,
-  subirImagen,
-  eliminarImagenes,
-  moverImagen,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { obtenerCarpetaPrenda } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-prenda";
+import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
+import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
+import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
+import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import type { Prisma } from "@/../generated/prisma/client";
+import type { ProductoDetalleSerializado } from "@/types/productos/detalle-producto";
 
 export async function createGarment(data: GarmentInput) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+  const { tenantId } = await requiereAdmin();
 
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
@@ -27,7 +27,7 @@ export async function createGarment(data: GarmentInput) {
   const publicIdsSubidos: string[] = [];
 
   try {
-    const garment = await garmentService.createGarment({
+    const garment = await garmentService.createGarment(tenantId, {
       name,
       price,
       maxPrice: maxPrice || null,
@@ -36,11 +36,20 @@ export async function createGarment(data: GarmentInput) {
       categoryId,
       subCategoryId: subCategoryId || null,
       supplierId: supplierId || null,
-      variants: { create: variants.map((v) => ({ sku: v.sku || null, stock: Number(v.stock), sizeId: v.sizeId || null, colorId: v.colorId || null, attributes: v.attributes || null })) },
+      variants: {
+        create: variants.map((v) => ({
+          tenantId,
+          sku: v.sku || null,
+          stock: Number(v.stock),
+          sizeId: v.sizeId || null,
+          colorId: v.colorId || null,
+          attributes: v.attributes ? (v.attributes as Prisma.InputJsonValue) : undefined,
+        })),
+      },
     });
     garmentId = garment.id;
 
-    const carpeta = obtenerCarpetaPrenda(categoryId, garment.id);
+    const carpeta = obtenerCarpetaPrenda(tenantId, categoryId, garment.id);
     const imagenesFinales: Array<{ url: string; publicId: string | null }> = [];
     let contadorImagenes = 0;
 
@@ -59,6 +68,7 @@ export async function createGarment(data: GarmentInput) {
       await prisma.garmentImage.createMany({
         data: imagenesFinales.map((imagen, indice) => ({
           garmentId: garment.id,
+          tenantId,
           srcImage: imagen.url,
           publicId: imagen.publicId,
           order: indice,
@@ -66,17 +76,17 @@ export async function createGarment(data: GarmentInput) {
       });
     }
 
-    revalidateTag("products");
+    revalidateTag(`tenant:${tenantId}:products`);
     return { success: true, data: serializeData(garment) };
   } catch (error: unknown) {
     console.error("❌ Error en createGarment:", error);
     if ((error as { code?: string })?.code === "P2002") {
       return { error: "El SKU ingresado ya pertenece a otra variante." };
     }
-    await eliminarImagenes(publicIdsSubidos);
+    await eliminarImagenes(publicIdsSubidos, tenantId);
     if (garmentId) {
       try {
-        await garmentService.deleteGarment(garmentId);
+        await garmentService.deleteGarment(tenantId, garmentId);
       } catch {
         console.error("No se pudo eliminar el producto tras un error de imágenes.");
       }
@@ -93,13 +103,15 @@ export async function getGarments(
   subCategoryId?: string
 ) {
   try {
-    const { garments, total } = await getCachedProducts(page, limit, categoryId, search, subCategoryId);
+    const { id: tenantId } = await requiereTenantActivo();
+    const resultado = await getCachedProducts(tenantId, page, limit, categoryId, search, subCategoryId);
+    const { garments, total } = resultado;
     return {
       success: true,
       data: serializeData(garments),
       total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      page: resultado.page,
+      totalPages: Math.ceil(total / resultado.limit),
     };
   } catch (error: unknown) {
     console.error("Error en getGarments:", error);
@@ -114,10 +126,11 @@ export async function getGarmentsByNames(
   search?: string,
   subcategoria?: string
 ) {
+  const { id: tenantId } = await requiereTenantActivo();
   let categoryId: string | undefined;
   let subCategoryId: string | undefined;
   if (categoria || subcategoria) {
-    const cats = await getCachedCategories();
+    const cats = await getCachedCategories(tenantId);
     if (categoria) {
       const decoded = decodeURIComponent(categoria).trim().toLowerCase();
       categoryId = cats.find(
@@ -137,28 +150,28 @@ export async function getGarmentsByNames(
 }
 
 export async function getGarmentById(id: string) {
-  const cachedFn = getCachedProductById(id);
+  const { id: tenantId } = await requiereTenantActivo();
+  const cachedFn = getCachedProductById(tenantId, id);
   const garment = await cachedFn();
-  return serializeData(garment);
+  return serializeData(garment) as unknown as ProductoDetalleSerializado | null;
 }
 
 export async function updateGarment(id: string, data: GarmentInput) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+  const { tenantId } = await requiereAdmin();
 
   const parsed = garmentSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.format() };
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
 
-  const existing = await prisma.garment.findUnique({
-    where: { id },
-    include: { images: true },
+  const existing = await prisma.garment.findFirst({
+    where: { id, tenantId },
+    include: { images: { where: { tenantId } } },
   });
   if (!existing) return { error: "El producto no existe." };
 
   const cambioCategoria = categoryId !== existing.categoryId;
-  const carpetaNueva = obtenerCarpetaPrenda(categoryId, id);
+  const carpetaNueva = obtenerCarpetaPrenda(tenantId, categoryId, id);
   const paresMovidos: Array<{ viejo: string; nuevo: string }> = [];
   const publicIdsSubidos: string[] = [];
   const finalImages: Array<{ url: string; publicId?: string | null; order: number }> = [];
@@ -179,7 +192,7 @@ export async function updateGarment(id: string, data: GarmentInput) {
         if (existente) {
           const publicIdExistente = existente.publicId ?? obtenerPublicIdDesdeUrl(existente.srcImage);
           if (cambioCategoria && publicIdExistente) {
-            const movida = await moverImagen(publicIdExistente, carpetaNueva);
+            const movida = await moverImagen(publicIdExistente, carpetaNueva, tenantId);
             paresMovidos.push({ viejo: publicIdExistente, nuevo: movida.publicId });
             finalImages.push({ url: movida.url, publicId: movida.publicId, order: finalImages.length });
             urlsFinales.add(movida.url);
@@ -194,7 +207,7 @@ export async function updateGarment(id: string, data: GarmentInput) {
       }
     }
 
-    const updatedGarment = await garmentService.updateGarmentWithDetails(id, {
+    const updatedGarment = await garmentService.updateGarmentWithDetails(tenantId, id, {
       name,
       price,
       maxPrice: maxPrice || null,
@@ -209,11 +222,12 @@ export async function updateGarment(id: string, data: GarmentInput) {
 
     const imagenesARemover = existing.images.filter((imagenExistente) => !urlsFinales.has(imagenExistente.srcImage));
     const resultados = await eliminarImagenes(
-      imagenesARemover.map((imagenExistente) => imagenExistente.publicId ?? obtenerPublicIdDesdeUrl(imagenExistente.srcImage))
+      imagenesARemover.map((imagenExistente) => imagenExistente.publicId ?? obtenerPublicIdDesdeUrl(imagenExistente.srcImage)),
+      tenantId
     );
 
-    revalidateTag("products");
-    revalidateTag(`product-${id}`);
+    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`tenant:${tenantId}:product:${id}`);
 
     if (resultados.some((resultado) => resultado === false)) {
       return { success: true, warning: "La información se actualizó, pero una imagen no pudo eliminarse correctamente." };
@@ -224,12 +238,12 @@ export async function updateGarment(id: string, data: GarmentInput) {
     console.error("Error:", error);
     for (const par of paresMovidos) {
       try {
-        await moverImagen(par.nuevo, obtenerCarpetaPrenda(existing.categoryId, id));
+        await moverImagen(par.nuevo, obtenerCarpetaPrenda(tenantId, existing.categoryId, id), tenantId);
       } catch {
         console.error("No se pudo revertir el movimiento de la imagen.");
       }
     }
-    await eliminarImagenes(publicIdsSubidos);
+    await eliminarImagenes(publicIdsSubidos, tenantId);
     if ((error as { code?: string })?.code === "P2002") {
       return { error: "El SKU ya existe." };
     }
@@ -238,25 +252,24 @@ export async function updateGarment(id: string, data: GarmentInput) {
 }
 
 export async function deleteGarment(id: string) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("No autorizado");
+  const { tenantId } = await requiereAdmin();
 
   try {
-    const existingGarment = await prisma.garment.findUnique({
-      where: { id },
-      include: { images: true },
+    const existingGarment = await prisma.garment.findFirst({
+      where: { id, tenantId },
+      include: { images: { where: { tenantId } } },
     });
     if (!existingGarment) return { error: "El producto no existe o ya fue eliminado." };
 
-    await garmentService.deleteGarment(id);
+    await garmentService.deleteGarment(tenantId, id);
 
     const publicIds = existingGarment.images.map(
       (imagen) => imagen.publicId ?? obtenerPublicIdDesdeUrl(imagen.srcImage)
     );
-    await eliminarImagenes(publicIds);
+    await eliminarImagenes(publicIds, tenantId);
 
-    revalidateTag("products");
-    revalidateTag(`product-${id}`);
+    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`tenant:${tenantId}:product:${id}`);
     return { success: true };
   } catch (error: unknown) {
     console.error("DELETE_GARMENT_ERROR:", error);

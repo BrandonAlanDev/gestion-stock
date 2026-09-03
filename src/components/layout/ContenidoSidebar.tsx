@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import {
   Package, Tags, Truck, Ruler, LogOut, User, History,
   Store, LayoutDashboard, Settings, Image as ImageIcon,
@@ -23,6 +24,7 @@ export default function ContenidoSidebar({
 }: ContenidoSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const tenantId = useTenantId();
   const pageConfig = usePageConfig();
   const config = pageConfig?.pageConfig;
 
@@ -35,7 +37,8 @@ export default function ContenidoSidebar({
 
   const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const sesionDelTenant = session?.user?.tenantId === tenantId ? session : null;
+  const isAdmin = sesionDelTenant?.user?.role === "ADMIN";
 
   const userLinks = [
     { href: "/", label: "Ir a la Tienda", icon: Store },
@@ -102,19 +105,19 @@ export default function ContenidoSidebar({
         </span>
       </Link>
 
-      {session?.user && (
+      {sesionDelTenant?.user && (
         <div className={`group relative flex items-center py-2 rounded-xl transition-all select-none ${colapsado ? "gap-0 px-0" : "gap-3 px-1.5"}`}>
           <div className="relative shrink-0 w-10 h-10">
-            {session.user.image ? (
+            {sesionDelTenant.user.image ? (
               <img
-                src={session.user.image}
-                alt={session.user.name ?? "Usuario"}
+                src={sesionDelTenant.user.image}
+                alt={sesionDelTenant.user.name ?? "Usuario"}
                 className="w-10 h-10 rounded-full object-cover"
                 draggable={false}
               />
             ) : (
               <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
-                {session.user.name?.[0]?.toUpperCase()}
+                {sesionDelTenant.user.name?.[0]?.toUpperCase()}
               </div>
             )}
             <button
@@ -127,8 +130,8 @@ export default function ContenidoSidebar({
             </button>
           </div>
           <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-full opacity-100"}`}>
-            <span className="text-xs font-bold truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.name}</span>
-            <span className="text-[10px] opacity-60 truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.email}</span>
+            <span className="text-xs font-bold truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionDelTenant.user.name}</span>
+            <span className="text-[10px] opacity-60 truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionDelTenant.user.email}</span>
           </div>
           <button
             onClick={onToggleColapsado}
@@ -220,7 +223,7 @@ export default function ContenidoSidebar({
       )}
 
       <div className="mt-auto pt-6 border-t" style={{ borderColor: overlaySuave }}>
-        {session ? (
+        {sesionDelTenant ? (
           <button
             onClick={handleLogout}
             title="Cerrar Sesión"

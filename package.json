@@ -7,10 +7,13 @@
     "build": "prisma generate && (prisma db push --accept-data-loss || echo 'Database unreachable, skipping push') && next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "verificar:aislamiento": "ts-node --project tsconfig.scripts.json scripts/verificacion-aislamiento.ts",
+    "migrar:base-antigua": "ts-node --project tsconfig.scripts.json scripts/migracion-base-antigua/ejecutar-migracion.ts"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "verificar:aislamiento": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/verificacion-aislamiento.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

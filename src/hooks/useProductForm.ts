@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createGarment, updateGarment } from "@/actions/garments";
 import type { PendingImage } from "@/components/providers/products/forms/ImageUploader";
+import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
 
 interface Variant {
   id?: string;
@@ -18,8 +19,8 @@ interface VarianteGarment {
   sizeId?: string | null;
   colorId?: string | null;
   stock?: number;
-  sku?: string;
-  attributes?: { customSize?: string } | null;
+  sku?: string | null;
+  attributes?: unknown;
 }
 
 interface ImagenGarment {
@@ -30,9 +31,9 @@ interface ImagenGarment {
 interface GarmentFormulario {
   id: string;
   name?: string;
-  price?: number | string;
-  cost?: number | string;
-  maxPrice?: number | string | null;
+  price?: number | string | { toString(): string };
+  cost?: number | string | { toString(): string };
+  maxPrice?: number | string | { toString(): string } | null;
   description?: string | null;
   categoryId?: string;
   subCategoryId?: string | null;
@@ -104,7 +105,7 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
         colorId: v.colorId || "",
         stock: v.stock ?? 0,
         sku: v.sku || "",
-        attributes: v.attributes || { customSize: "" },
+        attributes: { customSize: obtenerTallaPersonalizada(v.attributes) || "" },
       })) || [],
       images: garment.images?.map((img) => ({
         url: img.srcImage,

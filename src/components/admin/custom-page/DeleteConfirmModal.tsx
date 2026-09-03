@@ -12,7 +12,17 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName, isDeleting, primaryColor, secondaryColor }: any) {
+interface PropiedadesConfirmacionEliminacion {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  itemName?: string;
+  isDeleting: boolean;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName, isDeleting, primaryColor, secondaryColor }: PropiedadesConfirmacionEliminacion) {
   if (!isOpen) return null;
 
   const textContrast = getContrastColor(secondaryColor);

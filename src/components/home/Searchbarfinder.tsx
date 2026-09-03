@@ -6,10 +6,12 @@ import Image from 'next/image';
 import { Search, Image as ImageIcon, FileText, LayoutGrid, Layers, X } from 'lucide-react';
 import { getGlobalSearchIndex, type SearchItem } from '@/actions/search';
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
+  const tenantId = useTenantId();
   const { pageConfig: rawConfig } = usePageConfig();
-  const config = (rawConfig?.pageConfig ?? rawConfig) as Record<string, unknown>;
+  const config = rawConfig as unknown as Record<string, unknown>;
 
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState<SearchItem[]>([]);
@@ -35,19 +37,31 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
 
   useEffect(() => {
     async function loadIndex() {
-      const cached = sessionStorage.getItem('searchIndexCache');
-      if (cached) {
-        setIndex(JSON.parse(cached));
-        return;
+      const claveCache = `searchIndexCache:${tenantId ?? "sin-tenant"}`;
+      try {
+        const cached = sessionStorage.getItem(claveCache);
+        if (cached) {
+          const datos: unknown = JSON.parse(cached);
+          if (Array.isArray(datos)) {
+            setIndex(datos as SearchItem[]);
+            return;
+          }
+        }
+      } catch {
+        sessionStorage.removeItem(claveCache);
       }
+
       setIsLoading(true);
-      const data = await getGlobalSearchIndex();
-      setIndex(data);
-      sessionStorage.setItem('searchIndexCache', JSON.stringify(data));
-      setIsLoading(false);
+      try {
+        const data = await getGlobalSearchIndex();
+        setIndex(data);
+        sessionStorage.setItem(claveCache, JSON.stringify(data));
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadIndex();
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

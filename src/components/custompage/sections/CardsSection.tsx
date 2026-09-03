@@ -16,7 +16,7 @@ export default function CardsSection({ section }: { section: CustomSection }) {
       {section.title && (
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between pb-4 gap-4">
           <div>
-            {section.subtitle && <span className="text-[10px] font-black tracking-[0.3em] block mb-2" style={{ color: "var(--texto-sobre-fondo)", opacity: 0.7 }}>// {section.subtitle}</span>}
+            {section.subtitle && <span className="text-[10px] font-black tracking-[0.3em] block mb-2" style={{ color: "var(--texto-sobre-fondo)", opacity: 0.7 }}>{"// "}{section.subtitle}</span>}
             <h2 className="text-3xl font-black tracking-tighter italic" style={{ color: "var(--texto-sobre-fondo)" }}>{section.title}</h2>
           </div>
         </div>

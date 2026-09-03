@@ -1,15 +1,10 @@
 "use server";
 
-import { auth } from "@/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateSectionOrder(sections: unknown) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return { error: "No autorizado" };
-  }
-
   if (!Array.isArray(sections) || sections.length === 0) {
     return { error: "Debe proporcionar un array de secciones" };
   }
@@ -19,12 +14,13 @@ export async function updateSectionOrder(sections: unknown) {
   }
 
   try {
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     await prisma.pageConfig.update({
-      where: { id: 1 },
+      where: { id: pageConfig.id },
       data: { sectionOrder: JSON.stringify(sections) },
     });
 
-    revalidateTag("page-config");
+    revalidateTag(`page-config:${contexto.tenantId}`);
     revalidatePath("/");
     return { success: true };
   } catch (error: unknown) {

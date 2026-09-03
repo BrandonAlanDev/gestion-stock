@@ -1,10 +1,8 @@
 import type { z } from "zod";
 import { carouselWizardSlideSchema } from "@/lib/zod";
-import {
-  obtenerCarpetaCarrusel,
-  subirImagen,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { obtenerCarpetaCarrusel } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-carrusel";
+import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
+import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { resolverEnlaceGuardado } from "@/helpers/resolverEnlaceGuardado";
 import type { SlideConfig } from "@/types/carousel";
 
@@ -24,12 +22,13 @@ export interface SlideProcesado {
 
 export async function procesarSlide(
   slide: SlideDelWizard,
+  tenantId: string,
   carouselId: string
 ): Promise<SlideProcesado> {
   let imageUrl = slide.image;
   let publicId: string | null | undefined;
   if (imageUrl.startsWith("data:image")) {
-    const subida = await subirImagen(imageUrl, obtenerCarpetaCarrusel(carouselId));
+    const subida = await subirImagen(imageUrl, obtenerCarpetaCarrusel(tenantId, carouselId));
     imageUrl = subida.url;
     publicId = subida.publicId;
   } else {

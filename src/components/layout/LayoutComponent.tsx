@@ -8,10 +8,13 @@ import SidebarMovil from "@/components/layout/SidebarMovil";
 import SessionWrapper from "@/components/providers/SessionWrapper";
 import { Toaster } from "sonner";
 import CartSidebar from "@/components/cart/CartSidebar";
-import { CartProvider, useCart } from "@/context/CartContext";
+import { CartProvider } from "@/contextos/carrito/proveedor-carrito";
+import { useCart } from "@/contextos/carrito/use-carrito";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { isCartOpen, closeCart } = useCart();
+  const tenantId = useTenantId();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [colapsado, setColapsado] = useState(false);
   const pathname = usePathname();
@@ -21,13 +24,19 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const esRutaMantenimiento = pathname === "/mantenimiento";
 
   useEffect(() => {
-    const guardado = window.localStorage.getItem("sidebar-colapsado");
+    const guardado = window.localStorage.getItem(
+      `sidebar-colapsado:${tenantId ?? "sin-tenant"}`
+    );
     if (guardado === "1") setColapsado(true);
-  }, []);
+    if (guardado === "0" || guardado === null) setColapsado(false);
+  }, [tenantId]);
 
   useEffect(() => {
-    window.localStorage.setItem("sidebar-colapsado", colapsado ? "1" : "0");
-  }, [colapsado]);
+    window.localStorage.setItem(
+      `sidebar-colapsado:${tenantId ?? "sin-tenant"}`,
+      colapsado ? "1" : "0"
+    );
+  }, [colapsado, tenantId]);
 
   return (
     <div

@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma";
 import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export type CustomBoardInput = {
   tipo: string;
@@ -18,13 +20,15 @@ export type CustomBoardInput = {
 };
 
 export async function createCustomBoard(data: CustomBoardInput) {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
+  const { id: tenantId } = await requiereTenantActivo();
+  const habilitado = await moduloHabilitado(tenantId, "personalizadoEnabled");
   if (!habilitado) {
     return { error: "El módulo de tablas personalizadas está desactivado." };
   }
   try {
     const newBoard = await prisma.customBoard.create({
       data: {
+        tenantId,
         tipo: data.tipo,
         largo: data.largo,
         ancho: data.ancho,
@@ -47,12 +51,14 @@ export async function createCustomBoard(data: CustomBoardInput) {
 }
 
 export async function getCustomBoards() {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
+  const { tenantId } = await requiereAdmin();
+  const habilitado = await moduloHabilitado(tenantId, "personalizadoEnabled");
   if (!habilitado) {
     return [];
   }
   try {
     const boards = await prisma.customBoard.findMany({
+      where: { tenantId },
       orderBy: {
         createdAt: "desc",
       },

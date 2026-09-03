@@ -1,15 +1,12 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, ArrowRight } from "lucide-react";
-import { useCart, type CartItem } from "@/context/CartContext";
+import { useCart } from "@/contextos/carrito/use-carrito";
+import type { ItemCarrito } from "@/contextos/carrito/tipos-carrito";
 import { useState, useMemo, useEffect } from "react";
-import CartItemRow from "@/context/CartItemRow";
+import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
-
-interface ItemCarrito extends CartItem {
-  esTabla?: boolean;
-}
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -17,10 +14,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, updateCartItemSpecs } = useCart() as {
-    cartItems: ItemCarrito[];
-    updateCartItemSpecs: (uid: string, newSpecs: Record<string, unknown>) => void;
-  };
+  const { cartItems, updateCartItemSpecs } = useCart();
   const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
 
   useBloqueoScroll(isOpen);
@@ -99,7 +93,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
             <div className="flex-1 overflow-y-auto space-y-3">
               {cartItems.map((item) => (
-                <CartItemRow
+                <FilaItemCarrito
                   key={`${item.id}-${JSON.stringify(item.specs)}`}
                   item={item}
                   onEdit={() => setEditingItem(item)}
@@ -129,7 +123,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           item={editingItem}
           onClose={() => setEditingItem(null)}
           onSave={(id, specs) => {
-            updateCartItemSpecs(id, specs);
+            updateCartItemSpecs(String(id), specs);
             setEditingItem(null);
           }}
         />

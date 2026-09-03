@@ -17,11 +17,6 @@ export default function ProveedorColoresAdmin({
     HEX_VALIDO.test(pageConfig.primaryColor)
       ? pageConfig.primaryColor
       : "#06b6d4";
-  const secundario =
-    typeof pageConfig.secondaryColor === "string" &&
-    HEX_VALIDO.test(pageConfig.secondaryColor)
-      ? pageConfig.secondaryColor
-      : "#FFFFFF";
   const fondo =
     typeof pageConfig.bgColor === "string" && HEX_VALIDO.test(pageConfig.bgColor)
       ? pageConfig.bgColor

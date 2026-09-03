@@ -1,8 +1,8 @@
-import { getPageConfig } from "@/actions/page-config/general.actions";
 import NotFoundClient from "@/components/not-found/NotFoundClient";
+import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
 
 export default async function PaginaNoEncontrada() {
-  const { pageConfig } = await getPageConfig();
+  const { pageConfig } = await obtenerConfiguracionPaginaSolicitud();
 
   const config = (pageConfig || {}) as Record<string, unknown>;
 

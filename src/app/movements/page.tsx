@@ -1,5 +1,12 @@
-import { getMovements } from "@/actions/movements";
+import { getMovements } from "@/actions/movimientos/obtener-movimientos";
 import { ArrowUpCircle, ArrowDownCircle, Calendar, Package } from "lucide-react";
+
+type Movimiento = Awaited<ReturnType<typeof getMovements>>["movements"][number];
+
+function obtenerTallePersonalizado(atributos: unknown): string | null {
+  if (typeof atributos !== "object" || atributos === null || !("customSize" in atributos)) return null;
+  return typeof atributos.customSize === "string" ? atributos.customSize : null;
+}
 
 export default async function MovementsPage() {
   const { movements } = await getMovements(1, 100);
@@ -29,7 +36,7 @@ export default async function MovementsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)]">
-            {movements.map((m: any) => (
+            {movements.map((m: Movimiento) => (
               <tr key={m.id} className="hover:bg-[color-mix(in_srgb,var(--color-primario)_6%,transparent)] transition-all text-sm">
                 {/* FECHA */}
                 <td className="px-8 py-5">
@@ -46,7 +53,7 @@ export default async function MovementsPage() {
                       {m.garmentVariant.garment.name}
                     </span>
                     <span className="text-[10px] text-[var(--texto-sobre-fondo)]/60 font-black uppercase">
-                      Talle: {m.garmentVariant.size?.value || (m.garmentVariant.attributes as any)?.customSize || "S/T"}
+                      Talle: {m.garmentVariant.size?.value || obtenerTallePersonalizado(m.garmentVariant.attributes) || "S/T"}
                     </span>
                   </div>
                 </td>

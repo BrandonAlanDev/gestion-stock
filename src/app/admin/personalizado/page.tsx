@@ -3,6 +3,7 @@ import { Wrench, Layers, Waves, FileText, Settings2, Clock } from "lucide-react"
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getContrastColor } from "@/lib/utils";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 import BoardTypesList from "@/components/admin-personalizado/BoardTypesList";
 import ManageTailModal from "@/components/admin-personalizado/ManageTailModal";
@@ -15,8 +16,8 @@ import type { DatosPersonalizado } from "@/types/personalizado";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPersonalizadoPage() {
-  // Obtenemos la configuración directamente en el servidor
-  const config = await prisma.pageConfig.findFirst();
+  const { tenantId } = await requiereAdmin();
+  const config = await prisma.pageConfig.findUnique({ where: { tenantId } });
 
   // Validación de seguridad: si está desactivado o sin config, redirigimos inmediatamente
   if (!config?.personalizadoEnabled) {

@@ -1,26 +1,18 @@
-"use server";
+import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_VALUES } from "./defaults";
+import { DEFAULT_VALUES } from "@/actions/page-config/shared/defaults";
 
-export async function getOrCreatePageConfig() {
-  let pageConfig =
-    await prisma.pageConfig.findUnique({
-      where: { id: 1 },
-    });
-
-  if (!pageConfig) {
-    pageConfig =
-      await prisma.pageConfig.create({
-        data: {
-          id: 1,
-          storeName: DEFAULT_VALUES.storeName,
-          primaryColor: DEFAULT_VALUES.primaryColor,
-          secondaryColor: DEFAULT_VALUES.secondaryColor,
-          bgColor: DEFAULT_VALUES.bgColor,
-        },
-      });
-  }
-
-  return pageConfig;
+export async function getOrCreatePageConfig(tenantId: string) {
+  return prisma.pageConfig.upsert({
+    where: { tenantId },
+    update: {},
+    create: {
+      tenantId,
+      storeName: DEFAULT_VALUES.storeName,
+      primaryColor: DEFAULT_VALUES.primaryColor,
+      secondaryColor: DEFAULT_VALUES.secondaryColor,
+      bgColor: DEFAULT_VALUES.bgColor,
+    },
+  });
 }

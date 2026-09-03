@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import {
-  getProviders,
-  createProvider,
-  updateProvider,
-  deleteProvider,
-} from "@/actions/providers";
+import { getProviders } from "@/actions/proveedores/obtener-proveedores";
+import { createProvider } from "@/actions/proveedores/crear-proveedor";
+import { updateProvider } from "@/actions/proveedores/actualizar-proveedor";
 import { toast } from "sonner";
 import { Truck, Layers, Plus } from "lucide-react";
+
+type Proveedor = Awaited<ReturnType<typeof getProviders>>[number];
 
 // --- UTILIDAD DE CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -25,7 +23,7 @@ function getContrastColor(hexColor: string) {
 
 function ProvidersContent() {
   const { pageConfig } = usePageConfig();
-  const [providers, setProviders] = useState<any[]>([]);
+  const [providers, setProviders] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
 

@@ -1,6 +1,8 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateEcommerceConfig(
   data: {
@@ -11,9 +13,10 @@ export async function updateEcommerceConfig(
   }
 ) {
   try {
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const ecommerce =
       await prisma.pageConfig.update({
-        where: { id: 1 },
+        where: { id: pageConfig.id },
 
         data: {
           ecommerceEnabled:
@@ -29,7 +32,7 @@ export async function updateEcommerceConfig(
         },
       });
 
-    revalidateTag("page-config");
+    revalidateTag(`page-config:${contexto.tenantId}`);
 
     return { ok: true, ecommerce };
   } catch {
@@ -39,9 +42,10 @@ export async function updateEcommerceConfig(
 
 export async function getEcommerceConfig() {
   try {
+    const { id: tenantId } = await requiereTenantActivo();
     const ecommerce =
-      await prisma.pageConfig.findUnique({
-        where: { id: 1 },
+      await prisma.pageConfig.findFirst({
+        where: { tenantId },
 
         select: {
           ecommerceEnabled: true,

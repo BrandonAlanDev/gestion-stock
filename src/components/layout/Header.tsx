@@ -9,7 +9,8 @@ import {
 import { useEffect, useState } from "react";
 import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/contextos/carrito/use-carrito";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 const enlacesUsuario = [
   { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package },
@@ -26,6 +27,7 @@ export default function Header({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const tenantId = useTenantId();
   const pageConfig = usePageConfig();
   const { isCartOpen, openCart, closeCart } = useCart();
   const [scrolled, setScrolled] = useState(false);
@@ -44,7 +46,8 @@ export default function Header({
   const overlayFondoMenu = "color-mix(in srgb, var(--color-fondo-sitio) 75%, transparent)";
   const overlayEnlace = "color-mix(in srgb, var(--color-fondo-sitio) 5%, transparent)";
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const sesionDelTenant = session?.user?.tenantId === tenantId ? session : null;
+  const isAdmin = sesionDelTenant?.user?.role === "ADMIN";
   const mostrarMenuHeader = !(isAdmin && isAdminRoute);
   const mostrarBotonToggle = (isAdmin && isAdminRoute) || mostrarMenuHeader;
 
@@ -97,7 +100,7 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          {!session && (
+          {!sesionDelTenant && (
             <Link
               href="/login"
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
@@ -168,15 +171,15 @@ export default function Header({
               <Searchbarfinder isHomeTop={false} />
             </div>
 
-            {session?.user && (
+            {sesionDelTenant?.user && (
               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlaySuave }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
-                    {session.user.name?.[0]?.toUpperCase()}
+                    {sesionDelTenant.user.name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.name}</span>
-                    <span className="text-[10px] opacity-60" style={{ color: "var(--texto-sobre-fondo)" }}>{session.user.email}</span>
+                    <span className="text-xs font-bold" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionDelTenant.user.name}</span>
+                    <span className="text-[10px] opacity-60" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionDelTenant.user.email}</span>
                   </div>
                 </div>
                 <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">

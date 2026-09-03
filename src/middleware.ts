@@ -1,7 +1,5 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
-import { consultarMantenimientoActivo } from "@/lib/mantenimiento/consultar-mantenimiento";
-import { consultarModulosActivos } from "@/lib/modulos/consultar-modulos";
 import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
@@ -25,14 +23,6 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/sizes",
 ]);
 
-const RUTAS_MODULOS: Record<string, "escuelaEnabled" | "arreglosEnabled" | "personalizadoEnabled" | "planAhorroEnabled"> = {
-  "/escuela": "escuelaEnabled",
-  "/arreglos": "arreglosEnabled",
-  "/personalizado": "personalizadoEnabled",
-  "/admin/personalizado": "personalizadoEnabled",
-  "/plan-de-ahorro": "planAhorroEnabled",
-};
-
 export default auth(async (req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
@@ -46,22 +36,7 @@ export default auth(async (req) => {
     nextUrl.pathname.startsWith(route)
   );
 
-  const RUTAS_NO_PUBLICAS = ["/login", "/register", "/admin", "/dashboard", "/provider", "/sizes", "/movements", "/mantenimiento"];
-  const esRutaPublica = (
-    !nextUrl.pathname.startsWith("/api") &&
-    !RUTAS_NO_PUBLICAS.some((ruta) => nextUrl.pathname === ruta || nextUrl.pathname.startsWith(`${ruta}/`))
-  );
-
   if (isApiAuthRoute) return NextResponse.next();
-
-  const rutaNormalizada = nextUrl.pathname.replace(/\/+$/, "") || "/";
-  const claveModulo = RUTAS_MODULOS[rutaNormalizada];
-  if (claveModulo) {
-    const modulos = await consultarModulosActivos(nextUrl.origin);
-    if (!modulos[claveModulo]) {
-      return NextResponse.redirect(new URL("/404", nextUrl));
-    }
-  }
 
   if (isAdminRoute && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
     return NextResponse.redirect(new URL("/404", nextUrl));
@@ -97,13 +72,6 @@ export default auth(async (req) => {
       callbackUrl += nextUrl.search;
     }
     return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, nextUrl));
-  }
-
-  if (esRutaPublica && userRole !== "ADMIN") {
-    const mantenimientoActivo = await consultarMantenimientoActivo(nextUrl.origin);
-    if (mantenimientoActivo) {
-      return NextResponse.redirect(new URL("/mantenimiento", nextUrl));
-    }
   }
 
   return NextResponse.next();

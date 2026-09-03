@@ -15,7 +15,7 @@ interface PiePaginaProps {
 
 export default function PiePagina({ alAbrirPrivacidad, alAbrirTerminos }: PiePaginaProps) {
   const { pageConfig } = usePageConfig();
-  const config = (pageConfig?.pageConfig ?? pageConfig) as Record<string, unknown>;
+  const config = pageConfig as unknown as Record<string, unknown>;
 
   const texto = (campo: string): string | null => {
     const valor = config?.[campo];

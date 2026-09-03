@@ -1,6 +1,8 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateSocialsConfig(
   data: {
@@ -13,14 +15,15 @@ export async function updateSocialsConfig(
   }
 ) {
   try {
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const socials =
       await prisma.pageConfig.update({
-        where: { id: 1 },
+        where: { id: pageConfig.id },
 
         data,
       });
 
-    revalidateTag("page-config");
+    revalidateTag(`page-config:${contexto.tenantId}`);
 
     return { ok: true, socials };
   } catch {
@@ -30,9 +33,10 @@ export async function updateSocialsConfig(
 
 export async function getSocialsConfig() {
   try {
+    const { id: tenantId } = await requiereTenantActivo();
     const socials =
-      await prisma.pageConfig.findUnique({
-        where: { id: 1 },
+      await prisma.pageConfig.findFirst({
+        where: { tenantId },
 
         select: {
           instagram: true,

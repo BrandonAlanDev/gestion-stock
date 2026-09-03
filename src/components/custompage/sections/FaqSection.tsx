@@ -10,7 +10,7 @@ export default function FaqSection({ section }: { section: CustomSection }) {
     <section className="w-full px-4 md:px-12 lg:px-16 py-16 border-t" style={{ borderColor: "var(--color-primario)" }}>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4">
-          <span className="text-[10px] font-black tracking-[0.3em]" style={{ color: "var(--color-primario)" }}>// DESPEJÁ TUS DUDAS</span>
+          <span className="text-[10px] font-black tracking-[0.3em]" style={{ color: "var(--color-primario)" }}>{"// "}DESPEJÁ TUS DUDAS</span>
           <h2 className="text-3xl font-black tracking-tighter italic mb-4" style={{ color: "var(--texto-sobre-fondo)" }}>{section.title || "PREGUNTAS FRECUENTES"}</h2>
           {section.subtitle && (
             <p className="normal-case text-xs font-medium tracking-normal leading-relaxed" style={{ color: "var(--texto-sobre-fondo)", opacity: 0.7 }}>
@@ -27,7 +27,7 @@ export default function FaqSection({ section }: { section: CustomSection }) {
               style={{ background: "var(--color-secundario)", borderColor: "color-mix(in srgb, var(--color-primario) 30%, transparent)", borderRadius: "16px" }}
             >
               <button
-                onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id ?? null)}
                 className="w-full p-5 flex items-center justify-between text-left font-black text-xs tracking-wide transition-colors cursor-pointer"
                 style={{ color: "var(--texto-sobre-secundario)" }}
               >

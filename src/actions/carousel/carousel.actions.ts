@@ -1,29 +1,31 @@
 "use server";
 
-import { auth } from "@/auth";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import {
   carouselReorderSchema,
   carouselWizardSchema,
 } from "@/lib/zod";
-import * as carouselService from "@/lib/services/carousel-service";
-import {
-  obtenerCarpetaCarrusel,
-  subirImagen,
-  eliminarImagenes,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { actualizarCarrusel } from "@/lib/services/carruseles/actualizar-carrusel";
+import { contarCarruselesActivos } from "@/lib/services/carruseles/contar-carruseles-activos";
+import { crearCarrusel as crearCarruselPersistido } from "@/lib/services/carruseles/crear-carrusel";
+import { eliminarCarrusel as eliminarCarruselPersistido } from "@/lib/services/carruseles/eliminar-carrusel";
+import { obtenerCarruselPorId } from "@/lib/services/carruseles/obtener-carrusel-por-id";
+import { obtenerCarruseles as obtenerCarruselesPersistidos } from "@/lib/services/carruseles/obtener-carruseles";
+import { obtenerLimitesCarrusel } from "@/lib/services/carruseles/obtener-limites-carrusel";
+import { obtenerOrdenMaximo } from "@/lib/services/carruseles/obtener-orden-maximo";
+import { reordenarCarruseles as reordenarCarruselesPersistidos } from "@/lib/services/carruseles/reordenar-carruseles";
+import { obtenerCarpetaCarrusel } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-carrusel";
+import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
+import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
+import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../generated/prisma/client";
 import { procesarSlide } from "./procesar-slide";
 import type { CarouselSettings, SlideConfig } from "@/types/carousel";
-
-async function requireAdmin(): Promise<boolean> {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") return false;
-  return true;
-}
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
 function migrateSettings(data: unknown): unknown {
   if (typeof data !== "object" || data === null) return data;
@@ -49,20 +51,20 @@ function migrateSettings(data: unknown): unknown {
 
 export async function createCarousel(data: unknown) {
   try {
-    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const { tenantId } = await requiereAdmin();
     const parsed = carouselWizardSchema.safeParse(migrateSettings(data));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-    const limits = await carouselService.getCarouselLimits();
-    const counts = await carouselService.countActiveCarouselsByType();
+    const limits = await obtenerLimitesCarrusel();
+    const counts = await contarCarruselesActivos(tenantId);
     if ((counts[parsed.data.type] || 0) >= limits[parsed.data.type]) {
       return { error: `Límite alcanzado: máx ${limits[parsed.data.type]} carrusel(es) ${parsed.data.type} activos` };
     }
 
-    const maxOrderResult = await carouselService.getMaxOrder();
+    const maxOrderResult = await obtenerOrdenMaximo(tenantId);
     const nextOrder = (maxOrderResult ?? -1) + 1;
 
-    const carousel = await carouselService.createCarousel({
+    const carousel = await crearCarruselPersistido(tenantId, {
       type: parsed.data.type,
       title: parsed.data.title,
       active: true,
@@ -75,7 +77,7 @@ export async function createCarousel(data: unknown) {
     try {
       const slidesProcesados = [];
       for (let index = 0; index < parsed.data.slides.length; index++) {
-        const procesado = await procesarSlide(parsed.data.slides[index], carousel.id);
+        const procesado = await procesarSlide(parsed.data.slides[index], tenantId, carousel.id);
         if (
           parsed.data.slides[index].image.startsWith("data:image") &&
           procesado.publicId
@@ -87,6 +89,7 @@ export async function createCarousel(data: unknown) {
 
       await prisma.carouselSlide.createMany({
         data: slidesProcesados.map((slide) => ({
+          tenantId,
           carouselId: carousel.id,
           image: slide.image,
           publicId: slide.publicId,
@@ -100,12 +103,12 @@ export async function createCarousel(data: unknown) {
         })),
       });
     } catch (error) {
-      await eliminarImagenes(subidas);
-      await carouselService.deleteCarousel(carousel.id);
+      await eliminarImagenes(subidas, tenantId);
+      await eliminarCarruselPersistido(tenantId, carousel.id);
       throw error;
     }
 
-    revalidateTag("carousels");
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -118,7 +121,7 @@ export async function createCarousel(data: unknown) {
 
 export async function updateCarousel(data: unknown) {
   try {
-    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const { tenantId } = await requiereAdmin();
 
     const parsed = carouselWizardSchema.safeParse(migrateSettings(data));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -126,7 +129,7 @@ export async function updateCarousel(data: unknown) {
     const { id, ...wizardData } = parsed.data;
     if (!id) return { error: "ID de carrusel no proporcionado" };
 
-    const existing = await carouselService.getCarouselById(id);
+    const existing = await obtenerCarruselPorId(tenantId, id);
     if (!existing) return { error: "Carrusel no encontrado" };
 
     const publicIdPorImagen = new Map<string, string | null>();
@@ -138,7 +141,7 @@ export async function updateCarousel(data: unknown) {
     const finalSlides = [];
     for (let index = 0; index < wizardData.slides.length; index++) {
       const slideDelWizard = wizardData.slides[index];
-      const procesado = await procesarSlide(slideDelWizard, id);
+      const procesado = await procesarSlide(slideDelWizard, tenantId, id);
       if (slideDelWizard.image.startsWith("data:image") && procesado.publicId) {
         subidasNuevas.push(procesado.publicId);
       }
@@ -151,7 +154,7 @@ export async function updateCarousel(data: unknown) {
 
     let carousel;
     try {
-      carousel = await carouselService.updateCarousel({
+      carousel = await actualizarCarrusel(tenantId, {
         id,
         type: wizardData.type,
         title: wizardData.title,
@@ -160,7 +163,7 @@ export async function updateCarousel(data: unknown) {
         slides: finalSlides,
       });
     } catch (error) {
-      await eliminarImagenes(subidasNuevas);
+      await eliminarImagenes(subidasNuevas, tenantId);
       throw error;
     }
 
@@ -171,10 +174,10 @@ export async function updateCarousel(data: unknown) {
       .map((s) => s.publicId ?? obtenerPublicIdDesdeUrl(s.image ?? ""))
       .filter((p): p is string => !!p && !publicIdsFinales.has(p));
     if (publicIdsViejos.length > 0) {
-      await eliminarImagenes(publicIdsViejos);
+      await eliminarImagenes(publicIdsViejos, tenantId);
     }
 
-    revalidateTag("carousels");
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -186,34 +189,34 @@ export async function updateCarousel(data: unknown) {
 }
 
 export async function deleteCarousel(id: string) {
-  if (!(await requireAdmin())) return { error: "No autorizado" };
   try {
-    const carousel = await carouselService.getCarouselById(id);
+    const { tenantId } = await requiereAdmin();
+    const carousel = await obtenerCarruselPorId(tenantId, id);
     if (!carousel) return { error: "Carrusel no encontrado" };
 
-    await carouselService.deleteCarousel(id);
+    await eliminarCarruselPersistido(tenantId, id);
 
     const publicIds = (carousel.slides ?? []).map((slide) =>
       slide.publicId ?? obtenerPublicIdDesdeUrl(slide.image ?? "")
     );
-    await eliminarImagenes(publicIds);
+    await eliminarImagenes(publicIds, tenantId);
 
-    const pageConfig = await prisma.pageConfig.findUnique({ where: { id: 1 } });
+    const pageConfig = await getOrCreatePageConfig(tenantId);
     if (pageConfig?.sectionOrder) {
       try {
         const sections = JSON.parse(pageConfig.sectionOrder) as string[];
         const filtered = sections.filter((s) => s !== `carousel_${id}`);
         if (filtered.length !== sections.length) {
           await prisma.pageConfig.update({
-            where: { id: 1 },
+            where: { id: pageConfig.id },
             data: { sectionOrder: JSON.stringify(filtered) },
           });
         }
       } catch { }
     }
 
-    revalidateTag("carousels");
-    revalidateTag("page-config");
+    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`page-config:${tenantId}`);
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -223,13 +226,13 @@ export async function deleteCarousel(id: string) {
 }
 
 export async function reorderCarousels(data: unknown) {
-  if (!(await requireAdmin())) return { error: "No autorizado" };
   const parsed = carouselReorderSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    await carouselService.reorderCarousels(parsed.data.carouselIds);
-    revalidateTag("carousels");
+    const { tenantId } = await requiereAdmin();
+    await reordenarCarruselesPersistidos(tenantId, parsed.data.carouselIds);
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true };
   } catch (error) {
     console.error("Error reordering carousels:", error);
@@ -239,7 +242,8 @@ export async function reorderCarousels(data: unknown) {
 
 export async function getCarousels(type?: "HERO" | "BANNER" | "CARDS") {
   try {
-    const carousels = await carouselService.getCarousels(type, true);
+    const { id: tenantId } = await requiereTenantActivo();
+    const carousels = await obtenerCarruselesPersistidos(tenantId, type, true);
     return { success: true, data: serializeData(carousels) };
   } catch (error) {
     console.error("Error fetching carousels:", error);
@@ -249,7 +253,8 @@ export async function getCarousels(type?: "HERO" | "BANNER" | "CARDS") {
 
 export async function getAllCarousels() {
   try {
-    const carousels = await carouselService.getCarousels(undefined, false);
+    const { tenantId } = await requiereAdmin();
+    const carousels = await obtenerCarruselesPersistidos(tenantId, undefined, false);
     return { success: true, data: serializeData(carousels) };
   } catch (error) {
     console.error("Error al obtener todos los carruseles:", error);
@@ -259,10 +264,10 @@ export async function getAllCarousels() {
 
 export async function updateCarouselActive(id: string, active: boolean) {
   try {
-    if (!(await requireAdmin())) return { error: "No autorizado" };
-    const carousel = await carouselService.updateCarousel({ id, active });
-    revalidateTag("carousels");
-    revalidateTag("page-config");
+    const { tenantId } = await requiereAdmin();
+    const carousel = await actualizarCarrusel(tenantId, { id, active });
+    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`page-config:${tenantId}`);
     revalidatePath("/");
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
@@ -273,21 +278,21 @@ export async function updateCarouselActive(id: string, active: boolean) {
 
 export async function duplicateCarousel(id: string) {
   try {
-    if (!(await requireAdmin())) return { error: "No autorizado" };
+    const { tenantId } = await requiereAdmin();
 
-    const original = await carouselService.getCarouselById(id);
+    const original = await obtenerCarruselPorId(tenantId, id);
     if (!original) return { error: "Carrusel no encontrado" };
 
-    const limits = await carouselService.getCarouselLimits();
-    const counts = await carouselService.countActiveCarouselsByType();
+    const limits = await obtenerLimitesCarrusel();
+    const counts = await contarCarruselesActivos(tenantId);
     if ((counts[original.type] || 0) >= limits[original.type]) {
       return { error: `Límite alcanzado: máx ${limits[original.type]} carrusel(es) ${original.type} activos` };
     }
 
-    const maxOrderResult = await carouselService.getMaxOrder();
+    const maxOrderResult = await obtenerOrdenMaximo(tenantId);
     const nextOrder = (maxOrderResult ?? -1) + 1;
 
-    const copia = await carouselService.createCarousel({
+    const copia = await crearCarruselPersistido(tenantId, {
       type: original.type,
       title: `${original.title ?? "Carrusel"} (copia)`,
       active: original.active,
@@ -305,7 +310,7 @@ export async function duplicateCarousel(id: string) {
         let image = slideOriginal.image ?? "";
         let publicId: string | null | undefined;
         if (slideOriginal.publicId || obtenerPublicIdDesdeUrl(image)) {
-          const subida = await subirImagen(image, obtenerCarpetaCarrusel(copia.id));
+          const subida = await subirImagen(image, obtenerCarpetaCarrusel(tenantId, copia.id));
           image = subida.url;
           publicId = subida.publicId;
           subidas.push(subida.publicId);
@@ -325,6 +330,7 @@ export async function duplicateCarousel(id: string) {
 
       await prisma.carouselSlide.createMany({
         data: slides.map((slide) => ({
+          tenantId,
           carouselId: copia.id,
           image: slide.image,
           publicId: slide.publicId,
@@ -338,12 +344,12 @@ export async function duplicateCarousel(id: string) {
         })),
       });
     } catch (error) {
-      await eliminarImagenes(subidas);
-      await carouselService.deleteCarousel(copia.id);
+      await eliminarImagenes(subidas, tenantId);
+      await eliminarCarruselPersistido(tenantId, copia.id);
       throw error;
     }
 
-    revalidateTag("carousels");
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(copia) };
   } catch (error) {
     console.error("Error al duplicar carrusel:", error);

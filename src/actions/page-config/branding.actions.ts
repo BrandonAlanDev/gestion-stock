@@ -2,10 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, unstable_cache } from "next/cache";
-import {
-  eliminarImagenes,
-  obtenerPublicIdDesdeUrl,
-} from "@/lib/services/cloudinary-service";
+import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
+import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
 type BrandingInput = {
   storeName?: string;
@@ -26,7 +27,7 @@ type BrandingInput = {
 
 export async function updateBrandingConfig(data: BrandingInput) {
   try {
-    const pageConfig = await prisma.pageConfig.findFirst();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
 
     const logoAnterior = pageConfig?.logo ?? null;
     const faviconAnterior = pageConfig?.favicon ?? null;
@@ -70,7 +71,7 @@ export async function updateBrandingConfig(data: BrandingInput) {
           data: payload,
         })
       : await prisma.pageConfig.create({
-          data: payload,
+          data: { ...payload, tenantId: contexto.tenantId },
         });
 
     const publicIdsAEliminar: Array<string | null | undefined> = [];
@@ -85,10 +86,10 @@ export async function updateBrandingConfig(data: BrandingInput) {
       if (publicIdFavicon) publicIdsAEliminar.push(publicIdFavicon);
     }
 
-    await eliminarImagenes(publicIdsAEliminar);
+    await eliminarImagenes(publicIdsAEliminar, contexto.tenantId);
 
-    revalidateTag("page-config");
-    revalidateTag("branding-config");
+    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`branding-config:${contexto.tenantId}`);
 
     return {
       ok: true,
@@ -104,10 +105,12 @@ export async function updateBrandingConfig(data: BrandingInput) {
   }
 }
 
-export const getBrandingConfig = unstable_cache(
+async function obtenerBrandingCacheado(tenantId: string) {
+ return unstable_cache(
   async () => {
     try {
       const branding = await prisma.pageConfig.findFirst({
+        where: { tenantId },
         select: {
           storeName: true,
           slogan: true,
@@ -148,9 +151,16 @@ export const getBrandingConfig = unstable_cache(
       };
     }
   },
-  ["branding-config"],
+  [`branding-config:${tenantId}`],
   {
     revalidate: 3600,
-    tags: ["branding-config"],
+    tags: [`branding-config:${tenantId}`],
   },
-);
+)();
+}
+
+export async function getBrandingConfig() {
+  const { id: tenantId } = await requiereTenantActivo();
+  await getOrCreatePageConfig(tenantId);
+  return obtenerBrandingCacheado(tenantId);
+}

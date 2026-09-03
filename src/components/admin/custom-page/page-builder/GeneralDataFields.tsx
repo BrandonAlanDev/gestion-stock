@@ -1,5 +1,7 @@
 "use client";
 
+import type { PaginaPersonalizada, ValorCampoPaginaPersonalizada } from "@/types/paginas-personalizadas";
+
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
   const hex = hexColor.replace("#", "");
@@ -16,14 +18,14 @@ export default function GeneralDataFields({
   primaryColor,
   secondaryColor,
 }: {
-  formData: any;
-  onChange: (data: any) => void;
+  formData: PaginaPersonalizada;
+  onChange: (data: PaginaPersonalizada) => void;
   primaryColor: string;
   secondaryColor: string;
 }) {
   const textContrast = getContrastColor(secondaryColor);
 
-  const update = (field: string, value: any) => onChange({ ...formData, [field]: value });
+  const update = (field: string, value: ValorCampoPaginaPersonalizada) => onChange({ ...formData, [field]: value });
 
   return (
     <div

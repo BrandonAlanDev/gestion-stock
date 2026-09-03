@@ -3,6 +3,7 @@
 
 // Ajusta el import de Prisma según dónde tengas tu cliente instanciado
 import prisma from '@/lib/prisma'
+import { requiereTenantActivo } from '@/lib/tenants/requiere-tenant-activo'
 
 export type SearchItem = {
   id: string;
@@ -13,16 +14,18 @@ export type SearchItem = {
 }
 
 export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
+  const { id: tenantId } = await requiereTenantActivo();
   try {
     const searchIndex: SearchItem[] = [];
 
     const [garments, categories, subCategories, customPages] = await Promise.all([
       prisma.garment.findMany({
-        where: { active: true },
+        where: { tenantId, active: true },
         select: {
           id: true,
           name: true,
           images: {
+            where: { tenantId },
             orderBy: { order: 'asc' },
             take: 1,
             select: { srcImage: true }
@@ -30,11 +33,11 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
         }
       }),
       prisma.category.findMany({
-        where: { active: true },
+        where: { tenantId, active: true },
         select: { id: true, name: true }
       }),
       prisma.subCategory.findMany({
-        where: { active: true },
+        where: { tenantId, active: true },
         include: {
           category: {
             select: { name: true }
@@ -42,7 +45,7 @@ export async function getGlobalSearchIndex(): Promise<SearchItem[]> {
         }
       }),
       prisma.customPage.findMany({
-        where: { isActive: true },
+        where: { tenantId, isActive: true },
         select: { id: true, title: true, slug: true }
       }),
     ]);

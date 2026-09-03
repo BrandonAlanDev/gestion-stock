@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getMovements } from "@/actions/movements";
-import { ArrowUpCircle, ArrowDownCircle, Calendar, Package } from "lucide-react";
+import { getMovements } from "@/actions/movimientos/obtener-movimientos";
+
+type Movimiento = Awaited<ReturnType<typeof getMovements>>["movements"][number];
 
 function getContrastColor(hexColor: string) {
   const r = parseInt(hexColor.slice(1, 3), 16) || 0;
@@ -14,7 +15,7 @@ function getContrastColor(hexColor: string) {
 
 export default function MovementsPage() {
   const { pageConfig } = usePageConfig();
-  const [movements, setMovements] = useState<any[]>([]);
+  const [movements, setMovements] = useState<Movimiento[]>([]);
   const [loading, setLoading] = useState(true);
 
   const background = pageConfig?.secondaryColor || "#00b4d8";

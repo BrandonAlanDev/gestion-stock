@@ -9,13 +9,20 @@ import { useProductForm } from "@/hooks/useProductForm";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import VariantRow from "@/components/providers/products/forms/VariantRow";
 import ImageUploader from "@/components/providers/products/forms/ImageUploader";
+import type {
+  CategoriaAdministracion,
+  ColorAdministracion,
+  ProductoAdministracion,
+  ProveedorAdministracion,
+  TipoTallaAdministracion,
+} from "@/types/productos/administracion-productos";
 
 interface Props {
-  categories: any[];
-  sizes: any[];
-  providers: any[];
-  colors: any[];
-  garment?: any;
+  categories: CategoriaAdministracion[];
+  sizes: TipoTallaAdministracion[];
+  providers: ProveedorAdministracion[];
+  colors: ColorAdministracion[];
+  garment?: ProductoAdministracion;
   onSuccess?: () => void;
 }
 
@@ -35,7 +42,8 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [fullGarment, setFullGarment] = useState<any>(null);
+  const [fullGarment, setFullGarment] = useState<ProductoAdministracion | null>(null);
+  const garmentId = garment?.id;
 
   // Variables dinámicas de color
   const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
@@ -69,12 +77,12 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   };
 
   useEffect(() => {
-    if (garment) {
-      getGarmentById(garment.id).then(data => {
+    if (garmentId) {
+      getGarmentById(garmentId).then(data => {
         if (data) setFullGarment(data);
       });
     }
-  }, [garment?.id]);
+  }, [garmentId]);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -113,10 +121,10 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
         resetForm();
       }
       setIsOpen(false);
-    } catch (error) {
+    } catch {
       toast.error("Ocurrió un error");
     } finally {
-      loading && setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -191,7 +199,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
                 required
               >
                 <option value="" style={{ backgroundColor: secondaryColor }}>Subcategoría...</option>
-                {availableSubCategories.map((sc: any) => (
+                {availableSubCategories.map((sc) => (
                   <option key={sc.id} value={sc.id} style={{ backgroundColor: secondaryColor }}>{sc.name}</option>
                 ))}
               </select>

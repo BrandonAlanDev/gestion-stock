@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 interface Props {
   categoryId: string;
-  sizeTypes: any[];
+  sizeTypes: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
 }
 

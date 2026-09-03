@@ -1,17 +1,15 @@
 import "./globals.css";
-import { cache } from "react";
 import { auth } from "@/auth";
 import type { Metadata } from "next";
-import AppGate from "@/components/layout/AppGate";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryProvider from "@/providers/QueryProvider";
-import RouteLoader from "@/components/layout/RouteLoader";
-import LayoutComponent from "@/components/layout/LayoutComponent";
-import { getPageConfig } from "@/actions/page-config/general.actions";
-import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
+import { ProveedorConfiguracionPagina } from "@/components/providers/ProveedorConfiguracionPagina";
 import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
 import FuentesGoogle from "@/components/apariencia/FuentesGoogle";
+import { TenantProvider } from "@/contextos/tenants/proveedor-tenant";
 import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
+import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
+import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,12 +21,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const getCachedPageConfig = cache(async () => {
-  return await getPageConfig();
-});
-
 export async function generateMetadata(): Promise<Metadata> {
-  const { pageConfig } = await getCachedPageConfig();
+  const { pageConfig } = await obtenerConfiguracionPaginaSolicitud();
 
   return {
     title:
@@ -90,36 +84,40 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   await auth();
-  const pageConfig = await getCachedPageConfig();
+  const [tenant, configuracion] = await Promise.all([
+    obtenerTenantPublico(),
+    obtenerConfiguracionPaginaSolicitud(),
+  ]);
+  const pageConfig = configuracion.pageConfig;
 
   return (
     <html
       lang="es"
       className="dark"
       style={obtenerVariablesTema(
-        (pageConfig?.pageConfig ?? {}) as Record<string, unknown>
+        (pageConfig ?? {}) as Record<string, unknown>
       ) as React.CSSProperties}
     >
       <body
         style={{ backgroundColor: "var(--color-fondo-sitio)" }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden text-[var(--texto-sobre-fondo)]`}
       >
-        <QueryProvider>
-          <PageConfigProvider pageConfig={pageConfig}>
-            <FuentesGoogle
-              pageConfig={
-                (pageConfig?.pageConfig ?? {}) as Record<string, unknown>
-              }
-            />
-            <EstilosApariencia />
-            <LayoutComponent>
-              <AppGate>
-                <RouteLoader />
-                {children}
-              </AppGate>
-            </LayoutComponent>
-          </PageConfigProvider>
-        </QueryProvider>
+        <TenantProvider tenantId={tenant?.id ?? null}>
+          <QueryProvider>
+            <ProveedorConfiguracionPagina
+              pageConfig={{
+                ok: configuracion.ok,
+                pageConfig: pageConfig ?? {},
+              }}
+            >
+              <FuentesGoogle
+                pageConfig={(pageConfig ?? {}) as Record<string, unknown>}
+              />
+              <EstilosApariencia />
+              {children}
+            </ProveedorConfiguracionPagina>
+          </QueryProvider>
+        </TenantProvider>
       </body>
     </html>
   );

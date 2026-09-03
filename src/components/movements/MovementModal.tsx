@@ -1,14 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { createMovement } from "@/actions/movements";
+import { createMovement } from "@/actions/movimientos/crear-movimiento";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { History, X, ArrowUpCircle, ArrowDownCircle, DollarSign, Info, ChevronDown } from "lucide-react";
+import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
 
 interface Props {
-  garments: any[];
+  garments: ProductoMovimiento[];
   onSuccess?: () => void;
+}
+
+interface VarianteMovimiento {
+  id: string;
+  stock: number;
+  size?: { value?: string | null } | null;
+  attributes?: unknown;
+}
+
+interface ProductoMovimiento {
+  name: string;
+  price: string | number | { toString(): string };
+  variants: VarianteMovimiento[];
 }
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
@@ -166,7 +180,7 @@ export default function MovementModal({ garments, onSuccess }: Props) {
                       onChange={(e) => {
                         const vId = e.target.value;
                         const parent = garments.find((g) =>
-                          g.variants.some((v: any) => v.id === vId)
+                          g.variants.some((v) => v.id === vId)
                         );
                         setForm({
                           ...form,
@@ -177,9 +191,9 @@ export default function MovementModal({ garments, onSuccess }: Props) {
                     >
                       <option value="" style={{ backgroundColor: secondaryColor }}>Seleccionar...</option>
                       {garments.map((g) =>
-                        g.variants.map((v: any) => (
+                        g.variants.map((v) => (
                           <option key={v.id} value={v.id} style={{ backgroundColor: secondaryColor }}>
-                            {g.name} - {v.size?.value || (v.attributes as any)?.customSize || "S/T"} (Stock: {v.stock})
+                            {g.name} - {v.size?.value || obtenerTallaPersonalizada(v.attributes) || "S/T"} (Stock: {v.stock})
                           </option>
                         ))
                       )}

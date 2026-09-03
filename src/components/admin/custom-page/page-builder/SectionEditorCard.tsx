@@ -1,6 +1,10 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import type {
+  SeccionPaginaPersonalizada,
+  ValorCampoPaginaPersonalizada,
+} from "@/types/paginas-personalizadas";
 
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
@@ -25,11 +29,11 @@ export default function SectionEditorCard({
   primaryColor,
   secondaryColor,
 }: {
-  section: any;
+  section: SeccionPaginaPersonalizada;
   sIdx: number;
-  onChangeSection: (index: number, field: string, value: any) => void;
+  onChangeSection: (index: number, field: string, value: ValorCampoPaginaPersonalizada) => void;
   onRemoveSection: (index: number) => void;
-  onChangeItem: (sIndex: number, iIndex: number, field: string, value: any) => void;
+  onChangeItem: (sIndex: number, iIndex: number, field: string, value: ValorCampoPaginaPersonalizada) => void;
   onAddItem: (sIndex: number) => void;
   onRemoveItem: (sIndex: number, iIndex: number) => void;
   primaryColor: string;
@@ -116,7 +120,7 @@ export default function SectionEditorCard({
           </div>
 
           <div className="space-y-3">
-            {section.items.map((item: any, iIdx: number) => (
+            {section.items.map((item, iIdx) => (
               <div
                 key={iIdx}
                 className="p-4 rounded-xl border flex gap-4"

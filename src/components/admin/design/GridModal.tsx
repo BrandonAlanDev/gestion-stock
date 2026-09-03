@@ -40,9 +40,8 @@ export default function GridModal({
 }: Props) {
   const { nivel, zIndice } = useCapa();
   const { pageConfig } = usePageConfig();
-  const configNido = (pageConfig?.pageConfig ?? pageConfig) as Record<string, unknown> | undefined;
-  const primaryColor = primaryProp || (configNido?.primaryColor as string) || "#06b6d4";
-  const secondaryColor = secondaryProp || (configNido?.secondaryColor as string) || "#ffffff";
+  const primaryColor = primaryProp || pageConfig.primaryColor || "#06b6d4";
+  const secondaryColor = secondaryProp || pageConfig.secondaryColor || "#ffffff";
   const textColor = getContrastColor(secondaryColor);
 
   const [formData, setFormData] = useState<DatosTarjeta>(FORMULARIO_VACIO);

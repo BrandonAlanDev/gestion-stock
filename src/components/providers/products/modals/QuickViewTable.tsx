@@ -8,6 +8,15 @@ import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { deleteGarment } from "@/actions/garments";
 import { toast } from "sonner";
+import type {
+  CategoriaAdministracion,
+  ColorAdministracion,
+  ProductoAdministracion,
+  ProveedorAdministracion,
+  TipoTallaAdministracion,
+  VarianteAdministracion,
+} from "@/types/productos/administracion-productos";
+import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -21,18 +30,17 @@ function getContrastColor(hexColor: string) {
 }
 
 export default function QuickViewTable({ garments, categories, sizeTypes, providers, colors, onProductsChanged }: {
-  garments: any[];
-  categories: any[];
-  sizeTypes: any[];
-  providers: any[];
-  colors: any[];
+  garments: ProductoAdministracion[];
+  categories: CategoriaAdministracion[];
+  sizeTypes: TipoTallaAdministracion[];
+  providers: ProveedorAdministracion[];
+  colors: ColorAdministracion[];
   onProductsChanged?: () => void;
 }) {
   const pageConfig = usePageConfig();
-  const [editingGarment, setEditingGarment] = useState<any | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
+  const [editingGarment, setEditingGarment] = useState<ProductoAdministracion | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ProveedorAdministracion | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Variables dinámicas de color
   const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
@@ -53,14 +61,12 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    setDeleting(true);
     const res = await deleteGarment(deleteTarget.id);
     if (res.error) {
       toast.error(res.error);
     } else {
       toast.success("Producto eliminado correctamente");
     }
-    setDeleting(false);
     setDeleteTarget(null);
   };
 
@@ -95,8 +101,8 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
           </thead>
 
           <tbody>
-            {garments?.map((item: any) => {
-              const totalStock = item.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
+            {garments?.map((item) => {
+              const totalStock = item.variants?.reduce((acc, v) => acc + (v.stock ?? 0), 0) || 0;
               return (
                 <tr
                   key={item.id}
@@ -123,14 +129,14 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   {/* Variantes */}
                   <td className="px-8 py-5">
                     <div className="flex flex-wrap gap-2">
-                      {item.variants?.map((v: any) => (
+                      {item.variants?.map((v: VarianteAdministracion) => (
                         <div
                           key={v.id}
                           className="flex items-center gap-1.5 px-2 py-1 rounded-lg border"
                           style={{ backgroundColor: badgeBg, borderColor: overlayBorder }}
                         >
                           <span className="text-[9px] font-black uppercase" style={{ color: textColor }}>
-                            {v.size?.value || (v.attributes as any)?.customSize || "S/T"}
+                            {v.size?.value || obtenerTallaPersonalizada(v.attributes) || "S/T"}
                           </span>
                           {v.color && (
                             <div
@@ -187,7 +193,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   <td className="px-8 py-5">
                     {item.supplier ? (
                       <button
-                        onClick={() => setSelectedProvider(item.supplier)}
+                        onClick={() => item.supplier && setSelectedProvider(item.supplier)}
                         className="text-[11px] font-black uppercase italic tracking-tight transition-all hover:underline underline-offset-4 cursor-pointer"
                         style={{ color: primaryColor }}
                       >
@@ -212,7 +218,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                         <Edit3 size={16} />
                       </button>
                       <button
-                        onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
+                        onClick={() => setDeleteTarget({ id: item.id, name: item.name || "Producto" })}
                         className="transition-colors cursor-pointer opacity-40 hover:opacity-100"
                         style={{ color: textColor }}
                         onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#ef4444")}

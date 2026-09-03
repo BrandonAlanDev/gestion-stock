@@ -16,7 +16,13 @@ import Input from "./shared/Input";
 import SwitchCard from "./shared/SwitchCard";
 
 interface Props {
-  config: any;
+  config?: {
+    locationEnabled?: boolean | null;
+    address?: string | null;
+    city?: string | null;
+    province?: string | null;
+    country?: string | null;
+  };
   primaryColor?: string;
   secondaryColor?: string;
 }
@@ -58,7 +64,7 @@ export default function LocationSection({
 
   const handleChange = (
     key: string,
-    value: any
+    value: string | boolean
   ) => {
     setForm((prev) => ({
       ...prev,

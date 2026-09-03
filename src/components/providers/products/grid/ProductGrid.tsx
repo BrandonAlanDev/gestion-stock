@@ -9,10 +9,10 @@ type Color = { id: string; name: string; hex: string | null; active?: boolean };
 type Size = { id: string; value: string; order: number; active?: boolean; sizeTypeId?: string };
 type Variant = { id: string; stock: number; sku: string | null; size: Size | null; color: Color | null };
 type Image = { id: string; srcImage: string; alt: string | null; order: number; garmentId?: string };
-type Garment = {
+export type Garment = {
   id: string;
   name: string;
-  price: any;
+  price: string | number | { toString(): string };
   description: string | null;
   subCategory: { id?: string; name: string; active?: boolean; categoryId?: string } | null;
   images: Image[];

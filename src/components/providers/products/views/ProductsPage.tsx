@@ -6,11 +6,11 @@ import { ChevronDown, Filter, SlidersHorizontal, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Pagination from "@/components/ui/pagination";
 import ProductCard from "../cards/ProductCard";
+import type { CategoriaCatalogo, ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
 interface Props {
-  garments: any[];
-  categories: any[];
-  addToCart: (product: any) => void;
+  garments: ProductoCatalogo[];
+  categories: CategoriaCatalogo[];
   currentPage: number;
   totalPages: number;
   onPageChange?: (page: number) => void;
@@ -20,7 +20,6 @@ interface Props {
 const ProductsPage = ({
   garments = [],
   categories = [],
-  addToCart,
   currentPage,
   totalPages,
   onPageChange,
@@ -45,7 +44,7 @@ const ProductsPage = ({
     }
     const decoded = decodeURIComponent(categoriaParam).trim().toLowerCase();
     const found = categories.find(
-      (cat: any) => cat.name.trim().toLowerCase() === decoded
+      (cat) => cat.name.trim().toLowerCase() === decoded
     );
     if (found) {
       setSelectedCat(found.name);
@@ -62,11 +61,11 @@ const ProductsPage = ({
     }
     const decoded = decodeURIComponent(subcategoriaParam).trim().toLowerCase();
     const cat = categories.find(
-      (c: any) => c.name.trim().toLowerCase() === decodeURIComponent(categoriaParam || "").trim().toLowerCase()
+      (c) => c.name.trim().toLowerCase() === decodeURIComponent(categoriaParam || "").trim().toLowerCase()
     );
     if (cat) {
       const subExists = cat.subCategories?.some(
-        (sub: any) => sub.name.trim().toLowerCase() === decoded
+        (sub) => sub.name.trim().toLowerCase() === decoded
       );
       if (subExists) {
         setSelectedSub(decoded);
@@ -80,7 +79,8 @@ const ProductsPage = ({
 
   const processedProducts = useMemo(() => {
     return [...garments].sort((a, b) => {
-      let valA: any, valB: any;
+      let valA: number | string;
+      let valB: number | string;
       switch (sortConfig.key) {
         case "price":
           valA = Number(a.price); valB = Number(b.price); break;
@@ -88,11 +88,12 @@ const ProductsPage = ({
           valA = a.name; valB = b.name; break;
         case "date":
         default:
-          valA = new Date(a.createdAt); valB = new Date(b.createdAt); break;
+          valA = new Date(a.createdAt).getTime(); valB = new Date(b.createdAt).getTime(); break;
       }
-      return sortConfig.order === "asc"
-        ? valA > valB ? 1 : -1
-        : valA < valB ? 1 : -1;
+      const comparacion = typeof valA === "number" && typeof valB === "number"
+        ? valA - valB
+        : String(valA).localeCompare(String(valB), "es");
+      return sortConfig.order === "asc" ? comparacion : -comparacion;
     });
   }, [garments, sortConfig]);
 
@@ -164,7 +165,7 @@ const ProductsPage = ({
                 Todos los productos
               </button>
 
-              {categories.map((cat: any) => {
+              {categories.map((cat) => {
                 const isOpen = openCategoryId === cat.id;
                 const isCurrentCatSelected = selectedCat === cat.name;
 
@@ -205,7 +206,7 @@ const ProductsPage = ({
                           >
                             • Todo {cat.name}
                           </button>
-                          {cat.subCategories.map((sub: any) => {
+                          {cat.subCategories.map((sub) => {
                             const isSubActive = isCurrentCatSelected && selectedSub === sub.name.toLowerCase();
                             return (
                               <button
@@ -233,8 +234,8 @@ const ProductsPage = ({
           <div className="flex-1">
             {processedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {processedProducts.map((product: any) => (
-                  <ProductCard key={product.id} product={product} addToCart={addToCart} />
+                {processedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (

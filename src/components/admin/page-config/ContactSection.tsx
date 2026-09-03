@@ -8,7 +8,11 @@ import { updateContactConfig } from "@/actions/page-config/contact.actions";
 import Input from "./shared/Input";
 
 interface Props {
-  config: any;
+  config?: {
+    phone?: string | null;
+    whatsapp?: string | null;
+    email?: string | null;
+  };
   primaryColor?: string;
   secondaryColor?: string;
 }

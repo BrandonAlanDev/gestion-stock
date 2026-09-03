@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import {
-  subirImagen,
-  obtenerCarpetaIdentidad,
-} from "@/lib/services/cloudinary-service";
+import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
+import { obtenerCarpetaIdentidad } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-identidad";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      );
-    }
+    const { tenantId } = await requiereAdmin();
 
     const formData = await req.formData();
 
@@ -32,7 +24,7 @@ export async function POST(req: Request) {
 
     const resultado = await subirImagen(
       dataUri,
-      obtenerCarpetaIdentidad()
+      obtenerCarpetaIdentidad(tenantId)
     );
 
     return NextResponse.json({

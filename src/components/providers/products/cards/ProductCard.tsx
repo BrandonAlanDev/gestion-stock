@@ -6,9 +6,16 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
+interface ProductoTarjeta {
+  id: string;
+  name: string;
+  createdAt: string | Date;
+  images?: Array<{ srcImage: string }>;
+  variants?: Array<{ stock: number }>;
+}
+
 interface Props {
-  product: any;
-  addToCart?: (product: any) => void;
+  product: ProductoTarjeta;
 }
 
 const ProductCard = ({ product }: Props) => {
@@ -16,13 +23,14 @@ const ProductCard = ({ product }: Props) => {
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
 
-  const images = useMemo(
-    () =>
-      product.images?.length > 1
-        ? product.images.slice(1).map((img: any) => img.srcImage)
-        : product.images?.map((img: any) => img.srcImage) || [],
-    [product.images]
-  );
+  const images = useMemo(() => {
+    const imagenesProducto = product.images ?? [];
+    return (
+      imagenesProducto.length > 1
+        ? imagenesProducto.slice(1).map((img) => img.srcImage)
+        : imagenesProducto.map((img) => img.srcImage)
+    );
+  }, [product.images]);
 
   useEffect(() => {
     if (!isHovering || images.length <= 1) {
@@ -41,7 +49,7 @@ const ProductCard = ({ product }: Props) => {
   }, [isHovering, images]);
 
   const totalStock =
-    product.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
+    product.variants?.reduce((acc, v) => acc + v.stock, 0) || 0;
 
   const isNew =
     new Date(product.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 14);

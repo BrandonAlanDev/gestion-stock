@@ -1,25 +1,25 @@
 "use client";
 import { useState } from "react";
 import { ShoppingBag, MessageCircle } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "@/contextos/carrito/use-carrito";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 
-interface ProductoProductAction {
-  id?: string | number;
+interface ProductoAccionProducto {
+  id: string;
   name: string;
   price: string | number;
   images?: { srcImage?: string }[] | null;
 }
 
-interface ProductActionProps {
-  product: ProductoProductAction;
+interface PropiedadesAccionProducto {
+  product: ProductoAccionProducto;
   size?: string | number | null;
   color?: string | number | null;
   esTabla?: boolean;
 }
 
-export default function ProductAction({ product, size, color, esTabla = false }: ProductActionProps) {
+export default function ProductAction({ product, size, color, esTabla = false }: PropiedadesAccionProducto) {
     const { addToCart } = useCart();
     const { pageConfig } = usePageConfig();
     const [showOrderForm, setShowOrderForm] = useState(false);

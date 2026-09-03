@@ -3,14 +3,22 @@
 import { revalidateTag } from "next/cache";
 import { getCachedCategories } from "@/lib/cache";
 import * as categoryService from "@/lib/services/category-service";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
-// Lectura cacheada
-export const getCategories = getCachedCategories;
+function revalidarCategorias(tenantId: string): void {
+  revalidateTag(`tenant:${tenantId}:categories`);
+}
+
+export async function getCategories() {
+  const { tenantId } = await requiereAdmin();
+  return getCachedCategories(tenantId);
+}
 
 export async function createCategory(formData: { name: string; description?: string }) {
   try {
-    const newCategory = await categoryService.createCategory(formData.name);
-    revalidateTag("categories");
+    const { tenantId } = await requiereAdmin();
+    const newCategory = await categoryService.createCategory(tenantId, formData.name);
+    revalidarCategorias(tenantId);
     return { success: true, data: newCategory };
   } catch (error) {
     console.error("Error al crear categoría:", error);
@@ -20,8 +28,9 @@ export async function createCategory(formData: { name: string; description?: str
 
 export async function updateCategory(id: string, data: { name: string; description?: string }) {
   try {
-    const updated = await categoryService.updateCategory(id, data);
-    revalidateTag("categories");
+    const { tenantId } = await requiereAdmin();
+    const updated = await categoryService.updateCategory(tenantId, id, data);
+    revalidarCategorias(tenantId);
     return { success: true, data: updated };
   } catch (error) {
     console.error("Error al actualizar categoría:", error);
@@ -31,12 +40,13 @@ export async function updateCategory(id: string, data: { name: string; descripti
 
 export async function deleteCategory(id: string) {
   try {
-    const subCatsCount = await categoryService.getSubCategoriesCount(id);
+    const { tenantId } = await requiereAdmin();
+    const subCatsCount = await categoryService.getSubCategoriesCount(tenantId, id);
     if (subCatsCount > 0) {
       return { error: `No se puede eliminar. Tenés ${subCatsCount} subcategorías vinculadas.` };
     }
-    await categoryService.deleteCategory(id);
-    revalidateTag("categories");
+    await categoryService.deleteCategory(tenantId, id);
+    revalidarCategorias(tenantId);
     return { success: true };
   } catch (error) {
     console.error("Error al borrar categoría:", error);
@@ -46,24 +56,26 @@ export async function deleteCategory(id: string) {
 
 export async function createSubCategory(data: { name: string; categoryId: string; sizeTypeId: string | null }) {
   try {
+    const { tenantId } = await requiereAdmin();
     if (!data.name || !data.categoryId) return { error: "El nombre y la categoría madre son obligatorios." };
-    const newSub = await categoryService.createSubCategory(data);
-    revalidateTag("categories");
+    const newSub = await categoryService.createSubCategory(tenantId, data);
+    revalidarCategorias(tenantId);
     return { success: true, data: newSub };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en createSubCategoryAction:", error);
-    if (error.code === "P2002") return { error: "Ya existe una subcategoría con ese nombre en este grupo." };
+    if ((error as { code?: string }).code === "P2002") return { error: "Ya existe una subcategoría con ese nombre en este grupo." };
     return { error: "No se pudo crear la subcategoría." };
   }
 }
 
 export async function deleteSubCategory(id: string) {
   try {
+    const { tenantId } = await requiereAdmin();
     if (!id) return { error: "ID de subcategoría no provisto." };
-    const garmentsCount = await categoryService.getGarmentCountBySubCategory(id);
+    const garmentsCount = await categoryService.getGarmentCountBySubCategory(tenantId, id);
     if (garmentsCount > 0) return { error: `No se puede eliminar. Hay ${garmentsCount} producto(s) asignado(s).` };
-    await categoryService.deleteSubCategory(id);
-    revalidateTag("categories");
+    await categoryService.deleteSubCategory(tenantId, id);
+    revalidarCategorias(tenantId);
     return { success: true };
   } catch (error) {
     console.error("Error en deleteSubCategoryAction:", error);

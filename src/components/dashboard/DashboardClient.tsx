@@ -13,6 +13,7 @@ import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
 import ProductModal from "@/components/providers/products/modals/ProductModal";
 import QuickViewTable from "@/components/providers/products/modals/QuickViewTable";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -27,6 +28,7 @@ function getContrastColor(hexColor: string) {
 
 export default function DashboardClient() {
   const queryClient = useQueryClient();
+  const tenantId = useTenantId();
   const pageConfig = usePageConfig();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -39,7 +41,6 @@ export default function DashboardClient() {
 
   // Cálculos de legibilidad
   const textColor = getContrastColor(secondaryColor);
-  const primaryTextColor = getContrastColor(primaryColor);
   const isDarkBg = textColor === "#ffffff";
 
   // Overlays basados en el contraste
@@ -68,7 +69,9 @@ export default function DashboardClient() {
   };
 
   const invalidateProducts = () => {
-    queryClient.invalidateQueries({ queryKey: ["garments"] });
+    queryClient.invalidateQueries({
+      queryKey: ["tenant", tenantId, "garments"],
+    });
   };
 
   return (

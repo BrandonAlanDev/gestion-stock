@@ -18,7 +18,7 @@ import type { SlideFormData } from "./SlideEditor";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";
-import type { CarouselWizardData, SlideWizardData, CarouselType, CarouselSettings } from "@/types/carousel";
+import type { CarouselWizardData, SlideWizardData, CarouselType } from "@/types/carousel";
 
 interface CarouselWizardProps {
   isOpen: boolean;
@@ -66,23 +66,23 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
     if (!isOpen) return;
 
     if (initialData) {
-      const data = initialData as Record<string, unknown>;
-      const slidesData = (data.slides as Array<Record<string, unknown>>) || [];
+      const data = initialData;
+      const slidesData = data.slides || [];
       setWizardData({
-        id: data.id as string,
-        type: data.type as CarouselType,
-        title: (data.title as string) || "",
-        settings: (data.settings as CarouselSettings) || {},
+        id: data.id,
+        type: data.type,
+        title: data.title || "",
+        settings: data.settings || {},
         slides: slidesData.map((s, i) => ({
-          id: s.id as string,
-          image: (s.image as string) || "",
-          title: (s.title as string) || "",
-          subtitle: (s.subtitle as string) || "",
-          description: (s.description as string) || "",
-          ctaText: (s.ctaText as string) || "",
-          url: (s.url as string) || "",
-          linkType: (s.linkType as string) || ((s.config as Record<string, unknown> | undefined)?.linkType as string) || "NONE",
-          order: (s.order as number) ?? i,
+          id: s.id,
+          image: s.image || "",
+          title: s.title || "",
+          subtitle: s.subtitle || "",
+          description: s.description || "",
+          ctaText: s.ctaText || "",
+          url: s.url || "",
+          linkType: s.linkType || (typeof s.config?.linkType === "string" ? s.config.linkType : "NONE"),
+          order: s.order ?? i,
           isNew: false,
         })),
       });

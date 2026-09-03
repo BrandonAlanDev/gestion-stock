@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { flagsPaginaSchema } from "@/lib/zod";
+import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updatePageFlags(data: unknown) {
   try {
@@ -11,12 +12,13 @@ export async function updatePageFlags(data: unknown) {
       return { ok: false, error: parsed.error.issues[0].message };
     }
 
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const config = await prisma.pageConfig.update({
-      where: { id: 1 },
+      where: { id: pageConfig.id },
       data: { ...parsed.data },
     });
 
-    revalidateTag("page-config");
+    revalidateTag(`page-config:${contexto.tenantId}`);
     revalidatePath("/");
     return { ok: true, config };
   } catch {

@@ -2,10 +2,18 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getGarmentById } from "@/actions/garments";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
-export function useProductDetail(id: string, initialData?: any) {
+type ResultadoDetalleProducto = Awaited<ReturnType<typeof getGarmentById>>;
+
+export function useProductDetail(
+  id: string,
+  initialData?: ResultadoDetalleProducto
+) {
+  const tenantId = useTenantId();
+
   return useQuery({
-    queryKey: ["productDetail", id],
+    queryKey: ["tenant", tenantId, "productDetail", id],
     queryFn: async () => {
       const product = await getGarmentById(id);
       if (!product || !product.active) {
@@ -14,7 +22,8 @@ export function useProductDetail(id: string, initialData?: any) {
       return product;
     },
     initialData,
-    staleTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   });
 }

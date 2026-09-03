@@ -6,6 +6,8 @@ import HeroLayout from "./layouts/hero/HeroLayout";
 import BannerLayout from "./layouts/banner/BannerLayout";
 import CardsLayout from "./layouts/cards/CardsLayout";
 import ShowcaseLayout from "./layouts/hero/ShowcaseLayout";
+import { useTenantId } from "@/hooks/tenants/use-tenant-id";
+import type { CarouselSettings } from "@/types/carousel";
 
 interface CarouselSlide {
   id: string;
@@ -15,7 +17,7 @@ interface CarouselSlide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: { hideText?: boolean };
+  config?: Record<string, unknown> & { hideText?: boolean };
 }
 
 interface Carousel {
@@ -24,16 +26,12 @@ interface Carousel {
   title?: string;
   active: boolean;
   order: number;
-  settings?: {
-    heroStyle?: "DEFAULT" | "SHOWCASE";
-    slideLayout?: string;
-    height?: number;
-    [key: string]: unknown;
-  };
+  settings?: CarouselSettings;
   slides: CarouselSlide[];
 }
 
 export default function AllCarousels({ storeName }: { storeName?: string }) {
+  const tenantId = useTenantId();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -41,7 +39,7 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
   }, []);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["carousels", "all"],
+    queryKey: ["tenant", tenantId, "carousels", "all"],
     queryFn: async () => {
       const res = await fetch("/api/carousels");
       if (!res.ok) throw new Error("Error al cargar carruseles");
@@ -49,6 +47,7 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
       return (json.data || []) as Carousel[];
     },
     staleTime: 60_000,
+    gcTime: 10 * 60_000,
     enabled: mounted,
   });
 
@@ -78,22 +77,26 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
     <div className={"carousel-container space-y-0" + (firstIsHero ? "" : " mt-16")}>
       {carousels.map((carousel) => {
         const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
+        const carruselNormalizado = {
+          ...carousel,
+          settings: carousel.settings ?? {},
+        };
         switch (carousel.type) {
           case "HERO":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carruselNormalizado} />;
             }
-            return <HeroLayout key={carousel.id} carousel={carousel} />;
+            return <HeroLayout key={carousel.id} carousel={carruselNormalizado} />;
           case "BANNER":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carruselNormalizado} />;
             }
-            return <BannerLayout key={carousel.id} carousel={carousel} />;
+            return <BannerLayout key={carousel.id} carousel={carruselNormalizado} />;
           case "CARDS":
             if (isShowcase) {
-              return <ShowcaseLayout key={carousel.id} carousel={carousel} />;
+              return <ShowcaseLayout key={carousel.id} carousel={carruselNormalizado} />;
             }
-            return <CardsLayout key={carousel.id} carousel={carousel} storeName={storeName} />;
+            return <CardsLayout key={carousel.id} carousel={carruselNormalizado} storeName={storeName} />;
           default:
             return null;
         }

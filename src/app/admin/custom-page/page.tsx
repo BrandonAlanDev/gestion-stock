@@ -11,7 +11,9 @@ import {
 import { updateCustomPageContent } from "@/actions/custom-page-builder.actions";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { DeleteConfirmModal, ViewPageModal, PageBuilderModal } from "@/components/admin/custom-page/Modals";
+import { PageBuilderModal } from "@/components/admin/custom-page/Modals";
+import DeleteConfirmModal from "@/components/admin/custom-page/DeleteConfirmModal";
+import ViewPageModal from "@/components/admin/custom-page/ViewPageModal";
 
 type PaginaCustomizada = Awaited<ReturnType<typeof getCustomPages>>[number];
 type DatosPagina = Parameters<typeof updateCustomPageContent>[1] & {

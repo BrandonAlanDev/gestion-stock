@@ -1,35 +1,12 @@
 "use client";
 
+import { useContext } from "react";
 import {
-  createContext,
-  useContext,
-} from "react";
+  ContextoConfiguracionPaginaReact,
+  type ContextoConfiguracionPagina,
+} from "@/contextos/configuracion-pagina/contexto-configuracion-pagina";
 
-interface PageConfigContextType {
-  ok: boolean;
-  pageConfig: Record<string, unknown>;
-}
-
-const PageConfigContext =
-  createContext<PageConfigContextType | null>(null);
-
-export function PageConfigProvider({
-  children,
-  pageConfig,
-}: {
-  children: React.ReactNode;
-  pageConfig: PageConfigContextType;
-}) {
-  return (
-    <PageConfigContext.Provider
-      value={pageConfig}
-    >
-      {children}
-    </PageConfigContext.Provider>
-  );
-}
-
-export function usePageConfig(): PageConfigContextType {
-  const ctx = useContext(PageConfigContext);
+export function usePageConfig(): ContextoConfiguracionPagina {
+  const ctx = useContext(ContextoConfiguracionPaginaReact);
   return ctx ?? { ok: false, pageConfig: {} };
 }

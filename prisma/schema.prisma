@@ -9,8 +9,27 @@ datasource db {
   relationMode = "prisma"
 }
 
+enum TenantEstado {
+  ACTIVO
+  SUSPENDIDO
+  INACTIVO
+}
+
+model Tenant {
+  id        String       @id @default(cuid())
+  nombre    String
+  slug      String       @unique
+  dominio   String?      @unique
+  estado    TenantEstado @default(ACTIVO)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  accounts  account[]
+  users     user[]
+}
+
 model account {
   id                String  @id @default(cuid())
+  tenantId          String
   userId            String
   type              String
   provider          String
@@ -22,16 +41,19 @@ model account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  tenant            Tenant  @relation(fields: [tenantId], references: [id])
   user              user    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([tenantId, provider, providerAccountId])
   @@index([userId])
+  @@index([tenantId, userId])
 }
 
 model user {
   id            String    @id @default(cuid())
+  tenantId      String
   name          String?
-  email         String    @unique(map: "User_email_key")
+  email         String
   password      String?
   role          user_role @default(USER)
   createdAt     DateTime  @default(now())
@@ -40,20 +62,29 @@ model user {
   image         String?
   telefono      String?
   account       account[]
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
 }
 
 model Category {
   id            String        @id @default(cuid())
-  name          String        @unique
+  tenantId      String
+  name          String
   active        Boolean       @default(true)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   subCategories SubCategory[]
   garments      Garment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model SubCategory {
   id         String    @id @default(cuid())
+  tenantId   String
   name       String
   active     Boolean   @default(true)
   categoryId String
@@ -67,10 +98,13 @@ model SubCategory {
   @@unique([name, categoryId])
   @@index([categoryId])
   @@index([sizeTypeId])
+  @@index([tenantId, active])
+  @@index([tenantId, categoryId])
 }
 
 model Garment {
   id            String           @id @default(cuid())
+  tenantId      String
   name          String
   price         Decimal          @db.Decimal(10, 2)
   description   String?          @db.Text
@@ -93,10 +127,15 @@ model Garment {
   @@index([subCategoryId, createdAt])
   @@index([subCategoryId])
   @@index([supplierId])
+  @@index([tenantId, active])
+  @@index([tenantId, categoryId])
+  @@index([tenantId, subCategoryId])
+  @@index([tenantId, createdAt])
 }
 
 model GarmentImage {
   id        String  @id @default(cuid())
+  tenantId  String
   srcImage  String  @db.Text
   publicId  String? @db.Text
   alt       String?
@@ -105,11 +144,13 @@ model GarmentImage {
   garment   Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
 
   @@index([garmentId])
+  @@index([tenantId, garmentId])
 }
 
 model GarmentVariant {
   id         String     @id @default(cuid())
-  sku        String?    @unique
+  tenantId   String
+  sku        String?
   stock      Int        @default(0)
   garmentId  String
   sizeId     String?
@@ -123,21 +164,28 @@ model GarmentVariant {
   movements  Movement[]
 
   @@unique([garmentId, sizeId, colorId])
+  @@unique([tenantId, sku])
   @@index([garmentId])
   @@index([sizeId])
   @@index([colorId])
+  @@index([tenantId, garmentId])
 }
 
 model SizeType {
   id            String        @id @default(cuid())
-  name          String        @unique
+  tenantId      String
+  name          String
   active        Boolean       @default(true)
   sizes         Size[]
   subCategories SubCategory[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model Size {
   id         String           @id @default(cuid())
+  tenantId   String
   active     Boolean          @default(true)
   order      Int              @default(0)
   sizeTypeId String
@@ -147,29 +195,40 @@ model Size {
 
   @@unique([value, sizeTypeId])
   @@index([sizeTypeId])
+  @@index([tenantId, active])
+  @@index([tenantId, sizeTypeId])
 }
 
 model Color {
   id       String           @id @default(cuid())
-  name     String           @unique
+  tenantId String
+  name     String
   hex      String?
   active   Boolean          @default(true)
   variants GarmentVariant[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model Provider {
   id        String            @id @default(cuid())
-  name      String            @unique
+  tenantId  String
+  name      String
   active    Boolean           @default(true)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   details   String?
   contacts  ContactProvider[]
   garments  Garment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model ContactProvider {
   id         String   @id @default(cuid())
+  tenantId   String
   contact    String
   type       String
   idProvider String
@@ -180,10 +239,13 @@ model ContactProvider {
 
   @@unique([contact, idProvider])
   @@index([idProvider])
+  @@index([tenantId, active])
+  @@index([tenantId, idProvider])
 }
 
 model Movement {
   id             String         @id @default(cuid())
+  tenantId       String
   type           MovementType
   quantity       Int
   priceAtTime    Decimal        @db.Decimal(10, 2)
@@ -194,10 +256,13 @@ model Movement {
 
   @@index([variantId])
   @@index([type, createdAt])
+  @@index([tenantId, variantId])
+  @@index([tenantId, createdAt])
 }
 
 model PageConfig {
-  id                   Int                       @id @default(1)
+  id                   Int                       @id @default(autoincrement())
+  tenantId             String
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
   storeName            String
@@ -257,10 +322,14 @@ model PageConfig {
   banners              Banner[]
   carousels            Carousel[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
+
+  @@unique([tenantId])
+  @@index([homegridId])
 }
 
 model Banner {
   id           Int        @id @default(autoincrement())
+  tenantId     String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   order        Int
@@ -273,10 +342,12 @@ model Banner {
   pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
 
   @@unique([pageConfigId, order])
+  @@index([tenantId, pageConfigId])
 }
 
 model CustomBoard {
   id             String   @id @default(cuid())
+  tenantId       String
   tipo           String
   largo          String
   ancho          String
@@ -290,87 +361,132 @@ model CustomBoard {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deliveryOption String?
+
+  @@index([tenantId])
 }
 
 model BoardTypeOption {
-  id             String                 @id @default(cuid())
-  name           String                 @unique
-  svgPath        String?                @db.Text
-  active         Boolean                @default(true)
-  allowedTails   BoardTailOption[]
-  allowedFins    BoardFinOption[]
-  allowedConfigs BoardFinConfigOption[]
+  id          String                     @id @default(cuid())
+  tenantId    String
+  name        String
+  svgPath     String?                    @db.Text
+  active      Boolean                    @default(true)
+  typeTails   BoardTypeTailOption[]
+  typeFins    BoardTypeFinOption[]
+  typeConfigs BoardTypeFinConfigOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model BoardMaterialOption {
   id          String  @id @default(cuid())
-  name        String  @unique
+  tenantId    String
+  name        String
   description String?
   active      Boolean @default(true)
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model BoardTailOption {
-  id         String            @id @default(cuid())
-  name       String            @unique
-  svgPath    String?           @db.Text
-  active     Boolean           @default(true)
-  boardTypes BoardTypeOption[]
+  id        String                @id @default(cuid())
+  tenantId  String
+  name      String
+  svgPath   String?               @db.Text
+  active    Boolean               @default(true)
+  tailTypes BoardTypeTailOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model BoardFinOption {
-  id         String            @id @default(cuid())
-  name       String            @unique
-  active     Boolean           @default(true)
-  boardTypes BoardTypeOption[]
+  id       String               @id @default(cuid())
+  tenantId String
+  name     String
+  active   Boolean              @default(true)
+  finTypes BoardTypeFinOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model BoardDeliveryOption {
   id          String   @id @default(cuid())
-  label       String   @unique
+  tenantId    String
+  label       String
   description String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, label])
+  @@index([tenantId, active])
 }
 
 model BoardFinConfigOption {
-  id         String            @id @default(cuid())
-  name       String            @unique
-  count      Int
-  active     Boolean           @default(true)
-  boardTypes BoardTypeOption[]
+  id          String                     @id @default(cuid())
+  tenantId    String
+  name        String
+  count       Int
+  active      Boolean                    @default(true)
+  configTypes BoardTypeFinConfigOption[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
-model BoardFinConfigOptionToBoardTypeOption {
-  A String
-  B String
+model BoardTypeTailOption {
+  id          String          @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  tailId      String
+  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  tail        BoardTailOption @relation(fields: [tailId], references: [id], onDelete: Cascade)
 
-  @@unique([A, B], map: "_BoardFinConfigOptionToBoardTypeOption_AB_unique")
-  @@index([B], map: "_BoardFinConfigOptionToBoardTypeOption_B_index")
-  @@map("_BoardFinConfigOptionToBoardTypeOption")
+  @@unique([tenantId, boardTypeId, tailId])
+  @@index([boardTypeId])
+  @@index([tailId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, tailId])
 }
 
-model BoardFinOptionToBoardTypeOption {
-  A String
-  B String
+model BoardTypeFinOption {
+  id          String          @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  finId       String
+  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  fin         BoardFinOption  @relation(fields: [finId], references: [id], onDelete: Cascade)
 
-  @@unique([A, B], map: "_BoardFinOptionToBoardTypeOption_AB_unique")
-  @@index([B], map: "_BoardFinOptionToBoardTypeOption_B_index")
-  @@map("_BoardFinOptionToBoardTypeOption")
+  @@unique([tenantId, boardTypeId, finId])
+  @@index([boardTypeId])
+  @@index([finId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, finId])
 }
 
-model BoardTailOptionToBoardTypeOption {
-  A String
-  B String
+model BoardTypeFinConfigOption {
+  id          String               @id @default(cuid())
+  tenantId    String
+  boardTypeId String
+  configId    String
+  boardType   BoardTypeOption      @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
+  config      BoardFinConfigOption @relation(fields: [configId], references: [id], onDelete: Cascade)
 
-  @@unique([A, B], map: "_BoardTailOptionToBoardTypeOption_AB_unique")
-  @@index([B], map: "_BoardTailOptionToBoardTypeOption_B_index")
-  @@map("_BoardTailOptionToBoardTypeOption")
+  @@unique([tenantId, boardTypeId, configId])
+  @@index([boardTypeId])
+  @@index([configId])
+  @@index([tenantId, boardTypeId])
+  @@index([tenantId, configId])
 }
 
 model CustomPage {
   id        String          @id @default(cuid())
-  slug      String          @unique
+  tenantId  String
+  slug      String
   title     String
   subtitle  String?         @db.Text
   isActive  Boolean         @default(true)
@@ -378,11 +494,14 @@ model CustomPage {
   updatedAt DateTime        @updatedAt
   sections  CustomSection[]
 
+  @@unique([tenantId, slug])
+  @@index([tenantId, isActive])
   @@map("CustomPages")
 }
 
 model CustomSection {
   id       String              @id @default(cuid())
+  tenantId String
   pageId   String
   type     SectionType
   title    String?
@@ -393,11 +512,13 @@ model CustomSection {
   items    CustomSectionItem[]
 
   @@index([pageId])
+  @@index([tenantId, pageId])
   @@map("CustomPageSections")
 }
 
 model CustomSectionItem {
   id          String        @id @default(cuid())
+  tenantId    String
   sectionId   String
   title       String
   description String?       @db.Text
@@ -409,11 +530,13 @@ model CustomSectionItem {
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@index([sectionId])
+  @@index([tenantId, sectionId])
   @@map("CustomPageItems")
 }
 
 model Homegrid {
   id          String       @id @default(cuid())
+  tenantId    String
   title       String
   subtitle    String
   style       Int
@@ -423,10 +546,13 @@ model Homegrid {
   columns     String       @default("md:grid-cols-2")
   grids       Grid[]
   pageConfigs PageConfig[]
+
+  @@index([tenantId, active])
 }
 
 model Grid {
   id              String        @id @default(cuid())
+  tenantId        String
   title           String
   subtitle        String
   image           String
@@ -446,6 +572,7 @@ model Grid {
   homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
 
   @@index([homegridId])
+  @@index([tenantId, homegridId])
 }
 
 enum LinkStyle {
@@ -502,6 +629,7 @@ enum CarouselType {
 
 model Carousel {
   id           String       @id @default(cuid())
+  tenantId     String
   type         CarouselType
   title        String? // Título de la sección (solo para CARDS/BANNER)
   active       Boolean      @default(true)
@@ -516,10 +644,13 @@ model Carousel {
   updatedAt DateTime @updatedAt
 
   @@unique([pageConfigId, order])
+  @@index([tenantId, active])
+  @@index([tenantId, pageConfigId])
 }
 
 model CarouselSlide {
   id         String   @id @default(cuid())
+  tenantId   String
   carouselId String
   carousel   Carousel @relation(fields: [carouselId], references: [id], onDelete: Cascade)
 
@@ -539,4 +670,5 @@ model CarouselSlide {
   updatedAt DateTime @updatedAt
 
   @@unique([carouselId, order])
+  @@index([tenantId, carouselId])
 }

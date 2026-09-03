@@ -2,12 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
-export const getPageConfig = unstable_cache(
-  async () => {
+async function obtenerPageConfigCacheada(tenantId: string) {
+  return unstable_cache(
+    async () => {
   try {
-    const pageConfig = await prisma.pageConfig.findUnique({
-      where: { id: 1 },
+    const pageConfig = await prisma.pageConfig.findFirst({
+      where: { tenantId },
       select: {
         storeName: true,
         slogan: true,
@@ -109,7 +112,14 @@ export const getPageConfig = unstable_cache(
       error: "Error configuración",
     };
   }
-  },
-  ["page-config-completa"],
-  { revalidate: 3600, tags: ["page-config"] }
-);
+    },
+    [`page-config-completa:${tenantId}`],
+    { revalidate: 3600, tags: [`page-config:${tenantId}`] }
+  )();
+}
+
+export async function getPageConfig() {
+  const { id: tenantId } = await requiereTenantActivo();
+  await getOrCreatePageConfig(tenantId);
+  return obtenerPageConfigCacheada(tenantId);
+}

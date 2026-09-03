@@ -2,29 +2,42 @@
 
 import prisma from "@/lib/prisma";
 import { moduloHabilitado } from "@/lib/modulos/modulo-habilitado";
+import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function getBoardOptions() {
-  const habilitado = await moduloHabilitado("personalizadoEnabled");
+  const { id: tenantId } = await requiereTenantActivo();
+  const habilitado = await moduloHabilitado(tenantId, "personalizadoEnabled");
   if (!habilitado) {
     return { types: [], materials: [], deliveryOptions: [], whatsapp: null };
   }
   try {
     const [types, materials, deliveryOptions, pageConfig] = await Promise.all([
       prisma.boardTypeOption.findMany({
-        where: { active: true },
+        where: { active: true, tenantId },
         orderBy: { name: "asc" },
         include: {
-          allowedTails:   { orderBy: { name: "asc" } },
-          allowedFins:    { orderBy: { name: "asc" } },
-          allowedConfigs: { orderBy: { name: "asc" } }
+          typeTails: { where: { tenantId }, include: { tail: true } },
+          typeFins: { where: { tenantId }, include: { fin: true } },
+          typeConfigs: { where: { tenantId }, include: { config: true } },
         }
       }),
-      prisma.boardMaterialOption.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-      prisma.boardDeliveryOption.findMany({ where: { active: true }, orderBy: { createdAt: "asc" } }),
-      prisma.pageConfig.findUnique({ where: { id: 1 }, select: { whatsapp: true } }),
+      prisma.boardMaterialOption.findMany({ where: { active: true, tenantId }, orderBy: { name: "asc" } }),
+      prisma.boardDeliveryOption.findMany({ where: { active: true, tenantId }, orderBy: { createdAt: "asc" } }),
+      prisma.pageConfig.findFirst({ where: { tenantId }, select: { whatsapp: true } }),
     ]);
 
-    return { types, materials, deliveryOptions, whatsapp: pageConfig?.whatsapp ?? null };
+    return {
+      types: types.map(({ typeTails, typeFins, typeConfigs, ...tipo }) => ({
+        ...tipo,
+        allowedTails: typeTails.map((enlace) => enlace.tail).sort((a, b) => a.name.localeCompare(b.name)),
+        allowedFins: typeFins.map((enlace) => enlace.fin).sort((a, b) => a.name.localeCompare(b.name)),
+        allowedConfigs: typeConfigs.map((enlace) => enlace.config).sort((a, b) => a.count - b.count),
+      })),
+      materials,
+      deliveryOptions,
+      whatsapp: pageConfig?.whatsapp ?? null,
+    };
   } catch (error) {
     console.error("Error fetching board options:", error);
     return { types: [], materials: [], deliveryOptions: [], whatsapp: null };
@@ -167,10 +180,12 @@ const LEGACY_TAILS = {
 
 export async function seedBoardOptions() {
   try {
+    const contexto = await requiereAdmin();
+    const tenantObjetivo = contexto.tenantId;
     // Verificamos que TODOS los tipos existan y tengan relaciones conectadas
     const totalExpected = BOARD_DATA.length;
     const typesWithRelations = await prisma.boardTypeOption.count({
-      where: { allowedTails: { some: {} } }
+      where: { tenantId: tenantObjetivo, typeTails: { some: { tenantId: tenantObjetivo } } }
     });
     if (typesWithRelations >= totalExpected) {
       return { success: true, message: "Ya existen datos con relaciones válidas." };
@@ -182,9 +197,9 @@ export async function seedBoardOptions() {
       { name: "Poliéster", description: "clásica y flexible" },
     ]) {
       await prisma.boardMaterialOption.upsert({
-        where: { name: mat.name },
+        where: { tenantId_name: { tenantId: tenantObjetivo, name: mat.name } },
         update: { description: mat.description },
-        create: mat,
+        create: { ...mat, tenantId: tenantObjetivo },
       });
     }
 
@@ -204,9 +219,9 @@ export async function seedBoardOptions() {
     for (const tail of Array.from(allTails)) {
       const svgPath = Object.entries(LEGACY_TAILS).find(([k]) => tail.toLowerCase().includes(k.toLowerCase()))?.[1] || LEGACY_TAILS["Pin tail"];
       const t = await prisma.boardTailOption.upsert({
-        where: { name: tail },
+        where: { tenantId_name: { tenantId: tenantObjetivo, name: tail } },
         update: { svgPath },
-        create: { name: tail, svgPath }
+        create: { tenantId: tenantObjetivo, name: tail, svgPath }
       });
       dbTails.push(t);
     }
@@ -215,9 +230,9 @@ export async function seedBoardOptions() {
     const dbConfigs = [];
     for (const conf of Array.from(allConfigs)) {
       const c = await prisma.boardFinConfigOption.upsert({
-        where: { name: conf },
+        where: { tenantId_name: { tenantId: tenantObjetivo, name: conf } },
         update: { count: CONFIG_COUNTS[conf] || 3 },
-        create: { name: conf, count: CONFIG_COUNTS[conf] || 3 }
+        create: { tenantId: tenantObjetivo, name: conf, count: CONFIG_COUNTS[conf] || 3 }
       });
       dbConfigs.push(c);
     }
@@ -226,9 +241,9 @@ export async function seedBoardOptions() {
     const dbSys = [];
     for (const sys of Array.from(allSystems)) {
       const s = await prisma.boardFinOption.upsert({
-        where: { name: sys },
+        where: { tenantId_name: { tenantId: tenantObjetivo, name: sys } },
         update: {},
-        create: { name: sys }
+        create: { tenantId: tenantObjetivo, name: sys }
       });
       dbSys.push(s);
     }
@@ -240,19 +255,20 @@ export async function seedBoardOptions() {
       const matchingSystems = dbSys.filter(s => b.systems.includes(s.name));
 
       await prisma.boardTypeOption.upsert({
-        where: { name: b.name },
+        where: { tenantId_name: { tenantId: tenantObjetivo, name: b.name } },
         update: {
           svgPath: b.svgPath,
-          allowedTails:   { set: matchingTails.map(t => ({ id: t.id })) },
-          allowedConfigs: { set: matchingConfigs.map(c => ({ id: c.id })) },
-          allowedFins:    { set: matchingSystems.map(s => ({ id: s.id })) }
+          typeTails: { deleteMany: {}, create: matchingTails.map((tail) => ({ tenantId: tenantObjetivo, tailId: tail.id })) },
+          typeConfigs: { deleteMany: {}, create: matchingConfigs.map((config) => ({ tenantId: tenantObjetivo, configId: config.id })) },
+          typeFins: { deleteMany: {}, create: matchingSystems.map((fin) => ({ tenantId: tenantObjetivo, finId: fin.id })) }
         },
         create: {
+          tenantId: tenantObjetivo,
           name: b.name,
           svgPath: b.svgPath,
-          allowedTails:   { connect: matchingTails.map(t => ({ id: t.id })) },
-          allowedConfigs: { connect: matchingConfigs.map(c => ({ id: c.id })) },
-          allowedFins:    { connect: matchingSystems.map(s => ({ id: s.id })) }
+          typeTails: { create: matchingTails.map((tail) => ({ tenantId: tenantObjetivo, tailId: tail.id })) },
+          typeConfigs: { create: matchingConfigs.map((config) => ({ tenantId: tenantObjetivo, configId: config.id })) },
+          typeFins: { create: matchingSystems.map((fin) => ({ tenantId: tenantObjetivo, finId: fin.id })) }
         }
       });
     }

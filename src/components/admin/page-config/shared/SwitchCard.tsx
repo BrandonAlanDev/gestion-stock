@@ -23,7 +23,9 @@ export default function SwitchCard({
   checked,
   onChange,
 }: Props) {
-    const pageConfig = usePageConfig();
+  const { pageConfig } = usePageConfig();
+  const colorPrimario = pageConfig.primaryColor || "#06b6d4";
+  const colorSecundario = pageConfig.secondaryColor || "#ffffff";
   return (
     <button
       type="button"
@@ -35,13 +37,13 @@ export default function SwitchCard({
 
       `}
       style={checked ? {
-        color: getContrastColor(pageConfig?.pageConfig?.primaryColor),
-        backgroundColor: pageConfig?.pageConfig?.primaryColor.concat("44"),
-        borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor)
+        color: getContrastColor(colorPrimario),
+        backgroundColor: colorPrimario.concat("44"),
+        borderColor: getContrastColor(colorPrimario)
       } : {
         color: "#222222",
         backgroundColor: "#33333333",
-        borderColor: getContrastColor(pageConfig?.pageConfig?.secondaryColor)
+        borderColor: getContrastColor(colorSecundario)
       }}
     >
       <div className="flex flex-col h-full justify-between">
@@ -54,13 +56,13 @@ export default function SwitchCard({
             w-14 h-8 rounded-full p-1 transition-all
           `}
           style={checked ? {
-            color: getContrastColor(pageConfig?.pageConfig?.primaryColor),
-            backgroundColor: pageConfig?.pageConfig?.primaryColor,
-            borderColor: getContrastColor(pageConfig?.pageConfig?.primaryColor)
+            color: getContrastColor(colorPrimario),
+            backgroundColor: colorPrimario,
+            borderColor: getContrastColor(colorPrimario)
           } : {
             color: "#222222",
             backgroundColor: "#33333333",
-            borderColor: getContrastColor(pageConfig?.pageConfig?.secondaryColor)
+            borderColor: getContrastColor(colorSecundario)
           }}
         >
           <div

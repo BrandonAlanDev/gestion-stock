@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import type { PaginaVistaPersonalizada } from "@/types/paginas-personalizadas";
 
 function getContrastColor(hexColor: string) {
   if (!hexColor) return "#000000";
@@ -12,7 +13,15 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function ViewPageModal({ isOpen, onClose, page, primaryColor, secondaryColor }: any) {
+interface PropiedadesVistaPagina {
+  isOpen: boolean;
+  onClose: () => void;
+  page: PaginaVistaPersonalizada | null;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+export default function ViewPageModal({ isOpen, onClose, page, primaryColor, secondaryColor }: PropiedadesVistaPagina) {
   if (!isOpen || !page) return null;
 
   const textContrast = getContrastColor(secondaryColor);
@@ -54,7 +63,7 @@ export default function ViewPageModal({ isOpen, onClose, page, primaryColor, sec
             </div>
           )}
 
-          {page.sections?.map((section: any, sIdx: number) => (
+          {page.sections?.map((section, sIdx) => (
             <div
               key={section.id || sIdx}
               className="border rounded-2xl p-5 shadow-sm"
@@ -73,7 +82,7 @@ export default function ViewPageModal({ isOpen, onClose, page, primaryColor, sec
 
               {section.items && section.items.length > 0 && (
                 <div className="mt-4 space-y-3 pl-4 border-l-2" style={{ borderColor: primaryColor }}>
-                  {section.items.map((item: any, iIdx: number) => (
+                  {section.items.map((item, iIdx) => (
                     <div
                       key={item.id || iIdx}
                       className="p-3 rounded-xl border"
