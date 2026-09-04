@@ -24,6 +24,8 @@ interface Props {
   colors: ColorAdministracion[];
   garment?: ProductoAdministracion;
   onSuccess?: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
@@ -37,9 +39,16 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function ProductModal({ categories, sizes, providers, colors, garment, onSuccess }: Props) {
+export default function ProductModal({ categories, sizes, providers, colors, garment, onSuccess, open, onClose }: Props) {
   const pageConfig = usePageConfig();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? !!open : internalOpen;
+
+  const closeModal = () => {
+    if (isControlled) onClose?.();
+    else setInternalOpen(false);
+  };
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [fullGarment, setFullGarment] = useState<ProductoAdministracion | null>(null);
@@ -120,7 +129,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
       if (!isEdit) {
         resetForm();
       }
-      setIsOpen(false);
+      closeModal();
     } catch {
       toast.error("Ocurrió un error");
     } finally {
@@ -161,7 +170,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             </h2>
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={closeModal}
               className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
               style={{ color: textColor }}
             >
@@ -322,9 +331,9 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
       document.body
     );
 
-  const trigger = isEdit ? (
+  const trigger = isEdit && !isControlled ? (
     <button
-      onClick={() => setIsOpen(true)}
+      onClick={() => setInternalOpen(true)}
       className="text-[10px] font-bold uppercase transition-colors cursor-pointer opacity-50 hover:opacity-100"
       style={{ color: textColor }}
       onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = primaryColor)}
@@ -332,9 +341,9 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     >
       Editar
     </button>
-  ) : (
+  ) : !isEdit ? (
     <button
-      onClick={() => setIsOpen(true)}
+      onClick={() => setInternalOpen(true)}
       className="font-bold uppercase px-4 py-2 transition-all shadow-md cursor-pointer"
       style={{
         backgroundColor: primaryColor,
@@ -348,7 +357,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     >
       + Nuevo Producto
     </button>
-  );
+  ) : null;
 
   return (
     <>

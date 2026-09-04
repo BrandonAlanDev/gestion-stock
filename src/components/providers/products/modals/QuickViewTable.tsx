@@ -243,8 +243,9 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
           sizes={sizeTypes}
           providers={providers}
           colors={colors || []}
+          open={!!editingGarment}
+          onClose={() => setEditingGarment(null)}
           onSuccess={() => {
-            setEditingGarment(null);
             onProductsChanged?.();
           }}
         />
