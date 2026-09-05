@@ -21,7 +21,6 @@ import { useFiltrosProductos } from "@/hooks/use-filtros-productos";
 import { useProductosAdmin } from "@/hooks/use-productos-admin";
 import { useProviders } from "@/hooks/useProviders";
 import { useSizeTypes } from "@/hooks/useSizeTypes";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import { deleteGarment } from "@/actions/garments";
 import { actualizarVisibilidadProducto } from "@/actions/productos";
@@ -47,7 +46,6 @@ function adaptarProducto(producto: ProductoAdminRow): ProductoAdministracion {
 }
 
 export default function ProductsPage() {
-  const paleta = useAdminPaleta();
   const queryClient = useQueryClient();
   const tenantId = useTenantId();
   const { filtros, actualizar, limpiar } = useFiltrosProductos();
@@ -115,7 +113,7 @@ export default function ProductsPage() {
   const proveedoresSeguros: ProveedorAdministracion[] = proveedores ?? [];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+    <div className="p-4 text-[var(--admin-texto)] sm:p-6 lg:p-8">
       <ProductsHeader onAgregar={abrirCrear} />
 
       <div className="mt-6 space-y-4">
@@ -154,8 +152,7 @@ export default function ProductsPage() {
           <ProductsTableSkeleton filas={6} />
         ) : isError ? (
           <div
-            className="rounded-xl border py-16 text-center text-sm"
-            style={{ borderColor: paleta.borde, color: paleta.textoSuave }}
+            className="rounded-xl border border-[var(--admin-borde)] py-16 text-center text-sm text-[var(--admin-texto-suave)]"
           >
             No se pudieron cargar los productos.
           </div>

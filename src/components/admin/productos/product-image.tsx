@@ -1,7 +1,6 @@
 "use client";
 
 import { Image as ImageIcon } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
 
 interface ProductImageProps {
   src: string | null;
@@ -10,8 +9,6 @@ interface ProductImageProps {
 }
 
 export default function ProductImage({ src, alt, tamano = 44 }: ProductImageProps) {
-  const paleta = useAdminPaleta();
-
   if (src) {
     return (
       <img
@@ -19,18 +16,17 @@ export default function ProductImage({ src, alt, tamano = 44 }: ProductImageProp
         alt={alt}
         width={tamano}
         height={tamano}
-        className="rounded-xl object-cover shrink-0"
-        style={{ border: `1px solid ${paleta.borde}` }}
+        className="shrink-0 rounded-xl border border-[var(--admin-borde)] object-cover"
       />
     );
   }
 
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-xl"
-      style={{ width: tamano, height: tamano, backgroundColor: paleta.fondoSuave }}
+      className="flex shrink-0 items-center justify-center rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)]"
+      style={{ width: tamano, height: tamano }}
     >
-      <ImageIcon size={16} style={{ color: paleta.textoSuave }} />
+      <ImageIcon size={16} className="text-[var(--admin-texto-suave)]" />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import ProductMobileRow from "./product-mobile-row";
 import ProductRow from "./product-row";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
+import { CLASE_SUPERFICIE } from "@/lib/productos/estilos";
 import type { ProductoAdminRow } from "@/lib/productos/tipos";
 
 interface ProductsTableProps {
@@ -20,8 +20,6 @@ export default function ProductsTable({
   onEliminar,
   onNavegar,
 }: ProductsTableProps) {
-  const paleta = useAdminPaleta();
-
   const manejarEditar = (producto: ProductoAdminRow) => () => onEditar(producto);
   const manejarVisibilidad = (producto: ProductoAdminRow) => () => onCambiarVisibilidad(producto);
   const manejarEliminar = (producto: ProductoAdminRow) => () => onEliminar(producto);
@@ -29,16 +27,10 @@ export default function ProductsTable({
 
   return (
     <>
-      <div
-        className="hidden overflow-hidden rounded-xl border md:block"
-        style={{ borderColor: paleta.borde }}
-      >
+      <div className={`${CLASE_SUPERFICIE} hidden overflow-hidden md:block`}>
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr
-              className="border-b text-xs uppercase tracking-wide"
-              style={{ borderColor: paleta.borde, color: paleta.textoSuave }}
-            >
+            <tr className="border-b border-[var(--admin-borde)] text-xs uppercase tracking-wide text-[var(--admin-texto-suave)]">
               <th className="px-4 py-3 font-medium">Producto</th>
               <th className="px-4 py-3 font-medium">Categoría</th>
               <th className="px-4 py-3 font-medium">Precio</th>
@@ -62,7 +54,7 @@ export default function ProductsTable({
         </table>
       </div>
 
-      <div className="overflow-hidden rounded-xl border md:hidden" style={{ borderColor: paleta.borde }}>
+      <div className={`${CLASE_SUPERFICIE} overflow-hidden md:hidden`}>
         {productos.map((producto) => (
           <ProductMobileRow
             key={producto.id}

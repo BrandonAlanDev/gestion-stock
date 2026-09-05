@@ -1,7 +1,6 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
 import type { FiltrosProductos } from "@/lib/productos/query-params";
 import type {
   CategoriaAdministracion,
@@ -34,8 +33,6 @@ export default function ProductsActiveFilters({
   actualizar,
   limpiar,
 }: ProductsActiveFiltersProps) {
-  const paleta = useAdminPaleta();
-
   const chips: Array<{ clave: string; etiqueta: string; limpiar: () => void }> = [];
 
   if (filtros.busqueda) {
@@ -93,16 +90,14 @@ export default function ProductsActiveFilters({
       {chips.map((chip) => (
         <span
           key={chip.clave}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
-          style={{ borderColor: paleta.borde, backgroundColor: paleta.fondoSuave, color: paleta.texto }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-3 py-1 text-xs font-medium text-[var(--admin-texto)]"
         >
           {chip.etiqueta}
           <button
             type="button"
             aria-label={`Quitar filtro ${chip.etiqueta}`}
             onClick={chip.limpiar}
-            className="cursor-pointer transition-colors"
-            style={{ color: paleta.textoSuave }}
+            className="cursor-pointer text-[var(--admin-texto-suave)] transition hover:text-[var(--admin-texto)]"
           >
             <X size={13} />
           </button>
@@ -111,8 +106,7 @@ export default function ProductsActiveFilters({
       <button
         type="button"
         onClick={limpiar}
-        className="cursor-pointer text-xs font-medium underline underline-offset-2 transition-colors"
-        style={{ color: paleta.primario }}
+        className="cursor-pointer text-xs font-medium text-[var(--admin-primario)] underline-offset-2 transition hover:underline"
       >
         Limpiar filtros
       </button>

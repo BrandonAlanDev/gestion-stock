@@ -2,8 +2,7 @@
 
 import { X } from "lucide-react";
 import ColorDropdown from "@/components/ui/color-dropdown";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { colorOpcion } from "@/lib/productos/estilos";
 
 interface Size {
   id: string;
@@ -33,6 +32,9 @@ interface VariantRowProps {
   onUpdateCustomSize: (index: number, value: string) => void;
 }
 
+const CLASE_CAMPO =
+  "w-full rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-2 py-1.5 text-xs text-[var(--admin-texto)] focus:border-[var(--admin-primario)] focus:outline-none";
+
 export default function VariantRow({
   variant,
   index,
@@ -42,43 +44,25 @@ export default function VariantRow({
   onUpdate,
   onUpdateCustomSize,
 }: VariantRowProps) {
-  const { pageConfig } = usePageConfig();
-  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor(background);
-  const accentTextColor = getContrastColor(accent);
-  const isDarkBg = textColor === "#ffffff";
-  const inputBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-  const mutedColor = textColor + "99";
-
   return (
-    <div
-      className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-12 sm:items-center"
-      style={{
-        background: inputBg,
-        border: `1px solid ${overlayBorder}`,
-        borderRadius: "16px",
-      }}
-    >
+    <div className="grid grid-cols-1 gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-3 sm:grid-cols-12 sm:items-center">
       {/* Talle */}
       <div className="col-span-1 flex flex-col gap-1 sm:col-span-3">
         <select
-          className="w-full text-xs font-medium outline-none"
-          style={{ background: "transparent", color: textColor, border: "none" }}
+          className={CLASE_CAMPO}
           value={variant.sizeId}
           onChange={(e) => onUpdate(index, "sizeId", e.target.value)}
           required
         >
-          <option value="" style={{ background: inputBg, color: mutedColor }}>
+          <option value="" style={colorOpcion()}>
             Talle...
           </option>
           {availableSizes.map((s) => (
-            <option key={s.id} value={s.id} style={{ background: background, color: textColor }}>
+            <option key={s.id} value={s.id} style={colorOpcion()}>
               {String(s.value)}
             </option>
           ))}
-          <option value="CUSTOM" style={{ background: accent, color: accentTextColor, fontWeight: 700 }}>
+          <option value="CUSTOM" style={{ backgroundColor: "var(--admin-primario)", color: "var(--admin-primario-texto)", fontWeight: 700 }}>
             Personalizado...
           </option>
         </select>
@@ -86,16 +70,7 @@ export default function VariantRow({
           <input
             type="text"
             placeholder="Medida (ej: 5'8 x 20 x 2)"
-            style={{
-              background: `${accent}1A`,
-              border: `1px solid ${overlayBorder}`,
-              borderRadius: "6px",
-              padding: "4px 8px",
-              fontSize: "10px",
-              color: textColor,
-              outline: "none",
-              marginTop: "4px",
-            }}
+            className="mt-1 w-full rounded-md border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-2 py-1 text-[10px] text-[var(--admin-texto)] focus:border-[var(--admin-primario)] focus:outline-none"
             value={variant.attributes?.customSize || ""}
             onChange={(e) => onUpdateCustomSize(index, e.target.value)}
             required
@@ -104,7 +79,7 @@ export default function VariantRow({
       </div>
 
       {/* Color */}
-      <div className="col-span-1 pl-0 sm:col-span-3 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
+      <div className="col-span-1 border-l border-[var(--admin-borde)] pl-0 sm:col-span-3 sm:pl-3">
         <ColorDropdown
           colors={colors}
           value={variant.colorId}
@@ -113,12 +88,11 @@ export default function VariantRow({
       </div>
 
       {/* Stock */}
-      <div className="col-span-1 pl-0 sm:col-span-2 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
+      <div className="col-span-1 border-l border-[var(--admin-borde)] pl-0 sm:col-span-2 sm:pl-3">
         <input
           type="number"
           placeholder="Stock"
-          className="w-full text-xs outline-none"
-          style={{ background: "transparent", color: textColor, border: "none" }}
+          className={CLASE_CAMPO}
           value={variant.stock}
           onChange={(e) => onUpdate(index, "stock", parseInt(e.target.value) || 0)}
           required
@@ -126,24 +100,22 @@ export default function VariantRow({
       </div>
 
       {/* SKU */}
-      <div className="col-span-1 pl-0 sm:col-span-3 sm:pl-3" style={{ borderLeft: `1px solid ${overlayBorder}` }}>
+      <div className="col-span-1 border-l border-[var(--admin-borde)] pl-0 sm:col-span-3 sm:pl-3">
         <input
           placeholder="SKU"
-          className="w-full text-[10px] outline-none uppercase font-mono"
-          style={{ background: "transparent", color: mutedColor, border: "none" }}
+          className={`${CLASE_CAMPO} font-mono uppercase text-[var(--admin-texto-suave)]`}
           value={variant.sku}
           onChange={(e) => onUpdate(index, "sku", e.target.value)}
         />
       </div>
 
       {/* Eliminar */}
-      <div className="col-span-1 flex justify-start sm:justify-end sm:col-span-1">
+      <div className="col-span-1 flex justify-start sm:col-span-1 sm:justify-end">
         <button
           type="button"
+          aria-label="Eliminar variante"
           onClick={() => onRemove(index)}
-          style={{ color: overlayBorder }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#ef4444")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = overlayBorder)}
+          className="cursor-pointer rounded-md p-1 text-[var(--admin-texto-suave)] transition hover:text-red-400"
         >
           <X size={14} />
         </button>

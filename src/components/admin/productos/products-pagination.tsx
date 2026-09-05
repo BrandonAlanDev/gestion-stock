@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
 
 interface ProductsPaginationProps {
   pagina: number;
@@ -40,17 +39,18 @@ export default function ProductsPagination({
   limite,
   alCambiarPagina,
 }: ProductsPaginationProps) {
-  const paleta = useAdminPaleta();
-
   if (totalPaginas <= 1) return null;
 
   const desde = (pagina - 1) * limite + 1;
   const hasta = Math.min(pagina * limite, total);
   const paginas = construirPaginas(pagina, totalPaginas);
 
+  const claseBoton =
+    "cursor-pointer rounded-lg border border-[var(--admin-borde)] h-9 min-w-9 px-2 text-sm font-medium transition hover:bg-[var(--admin-fondo-hover)] disabled:cursor-not-allowed disabled:opacity-40";
+
   return (
-    <div className="flex flex-col items-center justify-between gap-4 border-t py-4 sm:flex-row" style={{ borderColor: paleta.borde }}>
-      <p className="text-sm" style={{ color: paleta.textoSuave }}>
+    <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--admin-borde)] py-4 sm:flex-row">
+      <p className="text-sm text-[var(--admin-texto-suave)]">
         Mostrando {desde} a {hasta} de {total} productos
       </p>
 
@@ -60,8 +60,7 @@ export default function ProductsPagination({
           aria-label="Página anterior"
           disabled={pagina <= 1}
           onClick={() => alCambiarPagina(pagina - 1)}
-          className="cursor-pointer rounded-lg h-9 min-w-9 px-2 text-sm font-medium transition-colors disabled:opacity-40"
-          style={{ border: `1px solid ${paleta.borde}`, color: paleta.texto }}
+          className={`${claseBoton} text-[var(--admin-texto)]`}
         >
           <ChevronLeft size={16} />
         </button>
@@ -69,7 +68,7 @@ export default function ProductsPagination({
         {paginas.map((item, indice) => {
           if (item === "…") {
             return (
-              <span key={`elipsis-${indice}`} className="px-2 text-sm" style={{ color: paleta.textoSuave }}>
+              <span key={`elipsis-${indice}`} className="px-2 text-sm text-[var(--admin-texto-suave)]">
                 …
               </span>
             );
@@ -83,12 +82,11 @@ export default function ProductsPagination({
               aria-label={`Página ${item}`}
               aria-current={activa ? "page" : undefined}
               onClick={() => alCambiarPagina(item)}
-              className="cursor-pointer rounded-lg h-9 min-w-9 px-2 text-sm font-medium transition-colors disabled:opacity-40"
-              style={{
-                border: `1px solid ${paleta.borde}`,
-                backgroundColor: activa ? paleta.primario : "transparent",
-                color: activa ? paleta.sobrePrimario : paleta.texto,
-              }}
+              className={`${claseBoton} ${
+                activa
+                  ? "border-transparent bg-[var(--admin-primario)] text-[var(--admin-primario-texto)] hover:bg-[var(--admin-primario)]"
+                  : "text-[var(--admin-texto)]"
+              }`}
             >
               {item}
             </button>
@@ -100,8 +98,7 @@ export default function ProductsPagination({
           aria-label="Página siguiente"
           disabled={pagina >= totalPaginas}
           onClick={() => alCambiarPagina(pagina + 1)}
-          className="cursor-pointer rounded-lg h-9 min-w-9 px-2 text-sm font-medium transition-colors disabled:opacity-40"
-          style={{ border: `1px solid ${paleta.borde}`, color: paleta.texto }}
+          className={`${claseBoton} text-[var(--admin-texto)]`}
         >
           <ChevronRight size={16} />
         </button>

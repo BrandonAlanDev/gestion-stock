@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import { X, Package, Edit3 } from "lucide-react";
 import { getGarmentById } from "@/actions/garments";
 import { useProductForm } from "@/hooks/useProductForm";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import VariantRow from "@/components/providers/products/forms/VariantRow";
 import ImageUploader from "@/components/providers/products/forms/ImageUploader";
+import { CLASE_BOTON_PRIMARIO, CLASE_INPUT, colorOpcion } from "@/lib/productos/estilos";
 import type {
   CategoriaAdministracion,
   ColorAdministracion,
@@ -28,19 +28,9 @@ interface Props {
   onClose?: () => void;
 }
 
-// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
+const CLASE_SELECT_MODAL = `${CLASE_INPUT} cursor-pointer`;
 
 export default function ProductModal({ categories, sizes, providers, colors, garment, onSuccess, open, onClose }: Props) {
-  const pageConfig = usePageConfig();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? !!open : internalOpen;
@@ -54,46 +44,17 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   const [fullGarment, setFullGarment] = useState<ProductoAdministracion | null>(null);
   const garmentId = garment?.id;
 
-  // Variables dinámicas de color
-  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000000";
-  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
-
-  // Cálculos de legibilidad y contraste
-  const textColor = getContrastColor(secondaryColor);
-  const primaryTextColor = getContrastColor(primaryColor);
-  const isDarkBg = textColor === "#ffffff";
-
-  // Diseños de componentes basados en opacidad y contrastes dinámicos
-  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
-  const inputBg = isDarkBg ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.02)";
-  const backdropBg = isDarkBg ? "rgba(0, 0, 0, 0.7)" : "rgba(15, 23, 42, 0.5)";
-
-  // Configuración de estilos dinámicos de inputs y selectores
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    backgroundColor: inputBg,
-    border: `1px solid ${overlayBorder}`,
-    borderRadius: "12px",
-    padding: "12px",
-    fontSize: "14px",
-    color: textColor,
-    outline: "none",
-  };
-
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: "pointer",
-  };
-
   useEffect(() => {
     if (garmentId) {
-      getGarmentById(garmentId).then(data => {
+      getGarmentById(garmentId).then((data) => {
         if (data) setFullGarment(data);
       });
     }
   }, [garmentId]);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     formData,
@@ -143,107 +104,100 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
     isOpen &&
     createPortal(
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto"
-        style={{ backgroundColor: backdropBg, backdropFilter: "blur(6px)" }}
+        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
       >
-        <div
-          className="w-full max-w-4xl my-auto shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
-          style={{ backgroundColor: secondaryColor, border: `1px solid ${overlayBorder}`, borderRadius: "24px" }}
-        >
+        <div className="relative my-auto w-full max-w-4xl rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] shadow-2xl">
           {/* Header */}
-          <div
-            className="p-6 flex justify-between items-center sticky top-0 z-10"
-            style={{
-              borderBottom: `1px solid ${overlayBorder}`,
-              backgroundColor: secondaryColor,
-              borderRadius: "24px 24px 0 0",
-            }}
-          >
-            <h2
-              className="text-xl font-black uppercase italic flex items-center gap-2"
-              style={{ color: textColor }}
-            >
-              {isEdit
-                ? <Edit3 size={20} style={{ color: primaryColor }} />
-                : <Package size={20} style={{ color: primaryColor }} />}
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-6">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-[var(--admin-texto)]">
+              {isEdit ? (
+                <Edit3 size={20} className="text-[var(--admin-primario)]" />
+              ) : (
+                <Package size={20} className="text-[var(--admin-primario)]" />
+              )}
               {isEdit ? "Editar Producto" : "Nuevo Producto"}
             </h2>
             <button
               type="button"
               onClick={closeModal}
-              className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
-              style={{ color: textColor }}
+              aria-label="Cerrar"
+              className="cursor-pointer rounded-md p-2 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
             >
               <X size={24} />
             </button>
           </div>
 
-          <form onSubmit={onSubmit} className="p-6 space-y-6">
-
+          <form onSubmit={onSubmit} className="space-y-6 p-6">
             {/* Fila 1: Nombre, Categoría, Subcategoría */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <input
                 placeholder="Nombre"
-                style={inputStyle}
+                className={CLASE_INPUT}
                 value={formData.name}
                 onChange={(e) => setField("name", e.target.value)}
                 required
               />
               <select
-                style={selectStyle}
+                className={CLASE_SELECT_MODAL}
                 value={formData.categoryId}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 required
               >
-                <option value="" style={{ backgroundColor: secondaryColor }}>Categoría...</option>
+                <option value="" style={colorOpcion()}>Categoría...</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id} style={{ backgroundColor: secondaryColor }}>{c.name}</option>
+                  <option key={c.id} value={c.id} style={colorOpcion()}>{c.name}</option>
                 ))}
               </select>
               <select
-                style={{ ...selectStyle, opacity: !formData.categoryId ? 0.4 : 1 }}
+                className={`${CLASE_SELECT_MODAL} ${!formData.categoryId ? "opacity-40" : ""}`}
                 value={formData.subCategoryId}
                 onChange={(e) => handleSubCategoryChange(e.target.value)}
                 disabled={!formData.categoryId}
                 required
               >
-                <option value="" style={{ backgroundColor: secondaryColor }}>Subcategoría...</option>
+                <option value="" style={colorOpcion()}>Subcategoría...</option>
                 {availableSubCategories.map((sc) => (
-                  <option key={sc.id} value={sc.id} style={{ backgroundColor: secondaryColor }}>{sc.name}</option>
+                  <option key={sc.id} value={sc.id} style={colorOpcion()}>{sc.name}</option>
                 ))}
               </select>
             </div>
 
             {/* Fila 2: Precio base, Precio techo (maxPrice), Costo, Proveedor */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <input
-                type="number" step="0.01" placeholder="Precio venta (Base)"
-                style={{ ...inputStyle, color: primaryColor, fontWeight: 700 }}
+                type="number"
+                step="0.01"
+                placeholder="Precio venta (Base)"
+                className={`${CLASE_INPUT} font-semibold text-[var(--admin-primario)]`}
                 value={formData.price}
                 onChange={(e) => setField("price", e.target.value)}
                 required
               />
               <input
-                type="number" step="0.01" placeholder="Precio techo (Opcional)"
-                style={{ ...inputStyle, color: "#ef4444", fontWeight: 700 }}
+                type="number"
+                step="0.01"
+                placeholder="Precio techo (Opcional)"
+                className={CLASE_INPUT}
                 value={formData.maxPrice || ""}
                 onChange={(e) => setField("maxPrice", e.target.value)}
               />
               <input
-                type="number" step="0.01" placeholder="Precio costo"
-                style={{ ...inputStyle, opacity: 0.6, fontWeight: 700 }}
+                type="number"
+                step="0.01"
+                placeholder="Precio costo"
+                className={CLASE_INPUT}
                 value={formData.cost}
                 onChange={(e) => setField("cost", e.target.value)}
                 required
               />
               <select
-                style={selectStyle}
+                className={CLASE_SELECT_MODAL}
                 value={formData.supplierId}
                 onChange={(e) => setField("supplierId", e.target.value)}
               >
-                <option value="" style={{ backgroundColor: secondaryColor }}>Proveedor...</option>
+                <option value="" style={colorOpcion()}>Proveedor...</option>
                 {providers.map((p) => (
-                  <option key={p.id} value={p.id} style={{ backgroundColor: secondaryColor }}>{p.name}</option>
+                  <option key={p.id} value={p.id} style={colorOpcion()}>{p.name}</option>
                 ))}
               </select>
             </div>
@@ -251,33 +205,26 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             {/* Descripción */}
             <textarea
               placeholder="Descripción..."
-              style={{ ...inputStyle, height: "96px", resize: "none" }}
+              className={`${CLASE_INPUT} h-24 resize-none`}
               value={formData.description}
               onChange={(e) => setField("description", e.target.value)}
             />
 
             {/* Variantes */}
             <div className="space-y-4">
-              <div
-                className="flex justify-between pb-2"
-                style={{ borderBottom: `1px solid ${overlayBorder}` }}
-              >
-                <span
-                  className="text-[10px] font-black uppercase tracking-widest opacity-50"
-                  style={{ color: textColor }}
-                >
+              <div className="flex items-center justify-between border-b border-[var(--admin-borde)] pb-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--admin-texto-suave)]">
                   Variantes
                 </span>
                 <button
                   type="button"
                   disabled={!formData.subCategoryId}
                   onClick={addVariant}
-                  className="text-[10px] font-bold uppercase transition-opacity"
-                  style={{ 
-                    color: formData.subCategoryId ? primaryColor : textColor, 
-                    opacity: formData.subCategoryId ? 1 : 0.3,
-                    cursor: formData.subCategoryId ? "pointer" : "not-allowed" 
-                  }}
+                  className={`flex items-center gap-1 text-[10px] font-bold uppercase transition ${
+                    formData.subCategoryId
+                      ? "cursor-pointer text-[var(--admin-primario)] hover:underline"
+                      : "cursor-not-allowed text-[var(--admin-texto-suave)] opacity-40"
+                  }`}
                 >
                   + Agregar Variante
                 </button>
@@ -312,16 +259,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 font-black uppercase tracking-wider text-sm transition-all shadow-md cursor-pointer"
-              style={{
-                backgroundColor: loading ? overlayBorder : primaryColor,
-                color: primaryTextColor,
-                borderRadius: "16px",
-                border: "none",
-                opacity: loading ? 0.6 : 1
-              }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.9)"; }}
-              onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = "none"; }}
+              className={`${CLASE_BOTON_PRIMARIO} w-full cursor-pointer`}
             >
               {loading ? "Procesando..." : isEdit ? "Guardar Cambios" : "Crear Producto"}
             </button>
@@ -334,27 +272,17 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
   const trigger = isEdit && !isControlled ? (
     <button
       onClick={() => setInternalOpen(true)}
-      className="text-[10px] font-bold uppercase transition-colors cursor-pointer opacity-50 hover:opacity-100"
-      style={{ color: textColor }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = primaryColor)}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = textColor)}
+      className="flex cursor-pointer items-center gap-1 text-xs font-semibold uppercase text-[var(--admin-primario)] hover:underline"
     >
+      <Edit3 size={14} />
       Editar
     </button>
   ) : !isEdit ? (
     <button
       onClick={() => setInternalOpen(true)}
-      className="font-bold uppercase px-4 py-2 transition-all shadow-md cursor-pointer"
-      style={{
-        backgroundColor: primaryColor,
-        color: primaryTextColor,
-        borderRadius: "10px",
-        fontSize: "13px",
-        border: "none",
-      }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.9)")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = "none")}
+      className={CLASE_BOTON_PRIMARIO}
     >
+      <Package size={16} />
       + Nuevo Producto
     </button>
   ) : null;

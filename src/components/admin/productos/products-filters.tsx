@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
+import { CLASE_BOTON_OUTLINE, CLASE_SELECT, colorOpcion } from "@/lib/productos/estilos";
 import type { FiltrosProductos } from "@/lib/productos/query-params";
 import type {
   CategoriaAdministracion,
@@ -22,20 +22,10 @@ export default function ProductsFilters({
   filtros,
   actualizar,
 }: ProductsFiltersProps) {
-  const paleta = useAdminPaleta();
   const [masAbierto, setMasAbierto] = useState(false);
 
   const categoriaSeleccionada = categorias.find((c) => c.id === filtros.categoriaId);
   const subcategorias = categoriaSeleccionada?.subCategories ?? [];
-
-  const estiloSelect: React.CSSProperties = {
-    backgroundColor: paleta.fondo,
-    border: `1px solid ${paleta.borde}`,
-    color: paleta.texto,
-  };
-
-  const claseSelect =
-    "appearance-none cursor-pointer rounded-xl py-2 pl-3 pr-8 text-sm font-medium outline-none disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <>
@@ -46,26 +36,20 @@ export default function ProductsFilters({
           onChange={(e) =>
             actualizar({ categoriaId: e.target.value, subcategoriaId: "", pagina: 1 })
           }
-          className={claseSelect}
-          style={estiloSelect}
+          className={CLASE_SELECT}
         >
-          <option value="" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="" style={colorOpcion()}>
             Todas las categorías
           </option>
           {categorias.map((categoria) => (
-            <option
-              key={categoria.id}
-              value={categoria.id}
-              style={{ backgroundColor: paleta.fondo, color: paleta.texto }}
-            >
+            <option key={categoria.id} value={categoria.id} style={colorOpcion()}>
               {categoria.name}
             </option>
           ))}
         </select>
         <ChevronDown
           size={16}
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-          style={{ color: paleta.texto }}
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
         />
       </div>
 
@@ -75,26 +59,20 @@ export default function ProductsFilters({
           disabled={!filtros.categoriaId}
           value={filtros.subcategoriaId}
           onChange={(e) => actualizar({ subcategoriaId: e.target.value, pagina: 1 })}
-          className={claseSelect}
-          style={estiloSelect}
+          className={CLASE_SELECT}
         >
-          <option value="" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="" style={colorOpcion()}>
             Todas las subcategorías
           </option>
           {subcategorias.map((subcategoria) => (
-            <option
-              key={subcategoria.id}
-              value={subcategoria.id}
-              style={{ backgroundColor: paleta.fondo, color: paleta.texto }}
-            >
+            <option key={subcategoria.id} value={subcategoria.id} style={colorOpcion()}>
               {subcategoria.name}
             </option>
           ))}
         </select>
         <ChevronDown
           size={16}
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-          style={{ color: paleta.texto }}
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
         />
       </div>
 
@@ -105,66 +83,57 @@ export default function ProductsFilters({
           onChange={(e) =>
             actualizar({ stock: e.target.value as FiltrosProductos["stock"], pagina: 1 })
           }
-          className={claseSelect}
-          style={estiloSelect}
+          className={CLASE_SELECT}
         >
-          <option value="" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="" style={colorOpcion()}>
             Todo el stock
           </option>
-          <option value="en-stock" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="en-stock" style={colorOpcion()}>
             Con stock
           </option>
-          <option value="bajo-stock" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="bajo-stock" style={colorOpcion()}>
             Stock bajo
           </option>
-          <option value="sin-stock" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option value="sin-stock" style={colorOpcion()}>
             Sin stock
           </option>
         </select>
         <ChevronDown
           size={16}
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-          style={{ color: paleta.texto }}
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
         />
       </div>
 
       <button
         type="button"
         onClick={() => setMasAbierto((abierto) => !abierto)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-        style={{ border: `1px solid ${paleta.borde}`, color: paleta.texto }}
+        className={CLASE_BOTON_OUTLINE}
       >
         <SlidersHorizontal size={15} />
         Más filtros
       </button>
 
       {masAbierto && (
-        <div className="flex w-full flex-wrap items-center gap-2 border-t pt-3" style={{ borderColor: paleta.borde }}>
+        <div className="flex w-full flex-wrap items-center gap-2 border-t border-[var(--admin-borde)] pt-3">
           <div className="relative">
             <select
               aria-label="Filtrar por proveedor"
               value={filtros.proveedorId}
               onChange={(e) => actualizar({ proveedorId: e.target.value, pagina: 1 })}
-              className={claseSelect}
-              style={estiloSelect}
+              className={CLASE_SELECT}
             >
-              <option value="" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+              <option value="" style={colorOpcion()}>
                 Todos los proveedores
               </option>
               {proveedores.map((proveedor) => (
-                <option
-                  key={proveedor.id}
-                  value={proveedor.id}
-                  style={{ backgroundColor: paleta.fondo, color: paleta.texto }}
-                >
+                <option key={proveedor.id} value={proveedor.id} style={colorOpcion()}>
                   {proveedor.name}
                 </option>
               ))}
             </select>
             <ChevronDown
               size={16}
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-              style={{ color: paleta.texto }}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
             />
           </div>
 
@@ -175,23 +144,21 @@ export default function ProductsFilters({
               onChange={(e) =>
                 actualizar({ estado: e.target.value as FiltrosProductos["estado"], pagina: 1 })
               }
-              className={claseSelect}
-              style={estiloSelect}
+              className={CLASE_SELECT}
             >
-              <option value="" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+              <option value="" style={colorOpcion()}>
                 Todos los estados
               </option>
-              <option value="activo" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+              <option value="activo" style={colorOpcion()}>
                 Activo
               </option>
-              <option value="oculto" style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+              <option value="oculto" style={colorOpcion()}>
                 Oculto
               </option>
             </select>
             <ChevronDown
               size={16}
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-              style={{ color: paleta.texto }}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
             />
           </div>
         </div>

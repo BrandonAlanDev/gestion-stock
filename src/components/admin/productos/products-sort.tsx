@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
+import { CLASE_SELECT, colorOpcion } from "@/lib/productos/estilos";
 import type { OrdenProducto } from "@/lib/productos/tipos";
 
 interface ProductsSortProps {
@@ -21,31 +21,23 @@ const OPCIONES: Array<{ valor: OrdenProducto; etiqueta: string }> = [
 ];
 
 export default function ProductsSort({ valor, alCambiar }: ProductsSortProps) {
-  const paleta = useAdminPaleta();
-
   return (
     <div className="relative inline-flex items-center">
       <select
         aria-label="Ordenar por"
         value={valor}
         onChange={(e) => alCambiar(e.target.value as OrdenProducto)}
-        className="appearance-none cursor-pointer rounded-xl py-2 pl-3 pr-8 text-sm font-medium outline-none"
-        style={{
-          backgroundColor: paleta.fondo,
-          border: `1px solid ${paleta.borde}`,
-          color: paleta.texto,
-        }}
+        className={CLASE_SELECT}
       >
         {OPCIONES.map((opcion) => (
-          <option key={opcion.valor} value={opcion.valor} style={{ backgroundColor: paleta.fondo, color: paleta.texto }}>
+          <option key={opcion.valor} value={opcion.valor} style={colorOpcion()}>
             {opcion.etiqueta}
           </option>
         ))}
       </select>
       <ChevronDown
         size={16}
-        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-        style={{ color: paleta.texto }}
+        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-texto-suave)]"
       />
     </div>
   );

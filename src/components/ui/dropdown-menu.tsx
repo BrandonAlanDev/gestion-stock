@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
+import { cn } from "@/lib/utils";
 
 export interface ItemMenu {
   etiqueta: string;
@@ -21,7 +21,6 @@ export default function DropdownMenu({
   items: ItemMenu[];
   ariaLabel?: string;
 }) {
-  const paleta = useAdminPaleta();
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef<HTMLSpanElement>(null);
 
@@ -55,8 +54,7 @@ export default function DropdownMenu({
 
       {abierto && (
         <div
-          className="absolute right-0 z-40 mt-2 min-w-48 overflow-hidden rounded-xl border py-1 shadow-lg"
-          style={{ backgroundColor: paleta.fondo, borderColor: paleta.borde }}
+          className="absolute right-0 z-40 mt-2 min-w-48 overflow-hidden rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] py-1 shadow-lg"
         >
           {items.map((item, indice) => (
             <button
@@ -69,15 +67,10 @@ export default function DropdownMenu({
                 setAbierto(false);
                 item.onSeleccionar();
               }}
-              onMouseEnter={(e) => {
-                if (item.deshabilitado) return;
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = paleta.fondoHover;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-              }}
-              className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ color: item.peligroso ? "#ef4444" : paleta.texto }}
+              className={cn(
+                "flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[var(--admin-fondo-hover)]",
+                item.peligroso ? "text-red-400" : "text-[var(--admin-texto)]"
+              )}
             >
               {item.icono && <item.icono size={15} />}
               {item.etiqueta}

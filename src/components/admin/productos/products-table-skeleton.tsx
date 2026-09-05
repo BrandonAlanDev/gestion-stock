@@ -1,22 +1,18 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
 
 interface ProductsTableSkeletonProps {
   filas?: number;
 }
 
 export default function ProductsTableSkeleton({ filas = 6 }: ProductsTableSkeletonProps) {
-  const paleta = useAdminPaleta();
-
   return (
     <div>
       {Array.from({ length: filas }).map((_, indice) => (
         <div
           key={indice}
-          className="flex items-center gap-4 py-4"
-          style={{ borderBottom: `1px solid ${paleta.borde}` }}
+          className="flex items-center gap-4 border-b border-[var(--admin-borde)] py-4 last:border-b-0"
         >
           <Skeleton className="h-11 w-11 rounded-xl" />
           <div className="flex-1">

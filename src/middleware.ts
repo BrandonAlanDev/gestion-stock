@@ -19,6 +19,7 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/movements",
   "/admin/pageConfig",
   "/admin/personalizado",
+  "/admin/productos",
   "/admin/provider",
   "/admin/sizes",
 ]);

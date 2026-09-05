@@ -3,7 +3,7 @@
 import { Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DropdownMenu, { type ItemMenu } from "@/components/ui/dropdown-menu";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useAdminPaleta } from "@/hooks/use-admin-paleta";
+import { CLASE_BOTON_ICONO } from "@/lib/productos/estilos";
 import type { ProductoAdminRow } from "@/lib/productos/tipos";
 
 interface ProductActionsProps {
@@ -19,8 +19,6 @@ export default function ProductActions({
   onCambiarVisibilidad,
   onEliminar,
 }: ProductActionsProps) {
-  const paleta = useAdminPaleta();
-
   const items: ItemMenu[] = [
     { etiqueta: "Editar", icono: Pencil, onSeleccionar: onEditar },
     {
@@ -41,10 +39,7 @@ export default function ProductActions({
             e.stopPropagation();
             onEditar();
           }}
-          className="cursor-pointer rounded-lg p-2 transition-colors"
-          style={{ color: paleta.texto }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = paleta.fondoHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          className={`${CLASE_BOTON_ICONO} cursor-pointer`}
         >
           <Pencil size={16} />
         </button>
@@ -53,14 +48,7 @@ export default function ProductActions({
       <DropdownMenu
         ariaLabel="Más acciones"
         trigger={
-          <button
-            type="button"
-            aria-label="Más acciones"
-            className="cursor-pointer rounded-lg p-2 transition-colors"
-            style={{ color: paleta.texto }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = paleta.fondoHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-          >
+          <button type="button" aria-label="Más acciones" className={`${CLASE_BOTON_ICONO} cursor-pointer`}>
             <MoreHorizontal size={16} />
           </button>
         }
