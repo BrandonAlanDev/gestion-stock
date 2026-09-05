@@ -46,7 +46,7 @@ export default function ContenidoSidebar({
 
   const adminLinks = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/dashboard", label: "Productos", icon: Package },
+    { href: "/admin/productos", label: "Productos", icon: Package },
     { href: "/admin/categories", label: "Categorías", icon: Tags },
     { href: "/admin/provider", label: "Proveedores", icon: Truck },
     { href: "/admin/sizes", label: "Talles", icon: Ruler },

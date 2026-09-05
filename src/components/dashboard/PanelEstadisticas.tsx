@@ -1,0 +1,23 @@
+import ChartWrapper from "@/components/ui/ChartWrapperClient";
+import { getDashboardStats } from "@/actions/estadisticas/obtener-estadisticas-dashboard";
+import { getPageConfig } from "@/actions/page-config/general.actions";
+import { getContrastColor } from "@/lib/utils";
+
+export default async function PanelEstadisticas() {
+  const stats = await getDashboardStats();
+  const { pageConfig } = await getPageConfig();
+
+  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
+  const textColor = getContrastColor(secondaryColor);
+
+  return (
+    <div
+      className="min-h-screen p-6 md:p-12 transition-colors duration-200 overflow-scroll"
+      style={{ backgroundColor: secondaryColor, color: textColor }}
+    >
+      <div className="w-full">
+        <ChartWrapper stats={stats} />
+      </div>
+    </div>
+  );
+}
