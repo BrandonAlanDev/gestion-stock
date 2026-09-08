@@ -13,7 +13,11 @@ export async function obtenerMovimientos(
       where: { tenantId },
       include: {
         garmentVariant: {
-          include: { garment: true, size: true },
+          include: {
+            garment: true,
+            size: true,
+            optionValues: { include: { optionValue: { include: { option: true } } } },
+          },
         },
       },
       orderBy: { createdAt: "desc" },

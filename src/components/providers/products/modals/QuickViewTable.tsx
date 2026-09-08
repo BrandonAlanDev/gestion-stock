@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Trash2, Edit3 } from "lucide-react";
-import ProductModal from "./ProductModal";
+import FormularioProducto from "@/components/admin/productos/formulario/FormularioProducto";
 import ProviderModal from "./ProviderModal";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
@@ -10,13 +10,12 @@ import { deleteGarment } from "@/actions/garments";
 import { toast } from "sonner";
 import type {
   CategoriaAdministracion,
-  ColorAdministracion,
   ProductoAdministracion,
   ProveedorAdministracion,
-  TipoTallaAdministracion,
   VarianteAdministracion,
 } from "@/types/productos/administracion-productos";
 import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
+import { nombreCombinacion } from "@/lib/productos/nombre-combinacion";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -29,12 +28,9 @@ function getContrastColor(hexColor: string) {
   return yiq >= 128 ? "#000000" : "#ffffff";
 }
 
-export default function QuickViewTable({ garments, categories, sizeTypes, providers, colors, onProductsChanged }: {
+export default function QuickViewTable({ garments, categories, onProductsChanged }: {
   garments: ProductoAdministracion[];
   categories: CategoriaAdministracion[];
-  sizeTypes: TipoTallaAdministracion[];
-  providers: ProveedorAdministracion[];
-  colors: ColorAdministracion[];
   onProductsChanged?: () => void;
 }) {
   const pageConfig = usePageConfig();
@@ -87,9 +83,9 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                 letterSpacing: "0.3em",
               }}
             >
-              <th className="px-8 py-6 opacity-40">Ref. SKU</th>
+              <th className="px-8 py-6 opacity-40">Código</th>
               <th className="px-8 py-6" style={{ color: textColor }}>Producto</th>
-              <th className="px-8 py-6 opacity-60">Talle / Variantes</th>
+              <th className="px-8 py-6 opacity-60">Variantes</th>
               <th className="px-8 py-6 text-right" style={{ color: primaryColor }}>Precio Venta</th>
               <th className="px-8 py-6 text-right" style={{ color: primaryColor }}>Precio Máximo</th>
               <th className="px-8 py-6 text-right opacity-60">Stock Total</th>
@@ -111,7 +107,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = rowHoverBg)}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
-                  {/* SKU */}
+                  {/* Código */}
                   <td className="px-8 py-5 font-mono text-[10px] opacity-50" style={{ color: textColor }}>
                     {item.variants?.[0]?.sku || "---"}
                   </td>
@@ -136,18 +132,8 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
                           style={{ backgroundColor: badgeBg, borderColor: overlayBorder }}
                         >
                           <span className="text-[9px] font-black uppercase" style={{ color: textColor }}>
-                            {v.size?.value || obtenerTallaPersonalizada(v.attributes) || "S/T"}
+                            {nombreCombinacion(v.optionValues) || v.size?.value || v.color?.name || obtenerTallaPersonalizada(v.attributes) || "S/T"}
                           </span>
-                          {v.color && (
-                            <div
-                              className="flex items-center gap-1 pl-1.5 ml-0.5 border-l"
-                              style={{ borderColor: overlayBorder }}
-                            >
-                              <span className="text-[8px] font-bold uppercase tracking-tighter opacity-60" style={{ color: textColor }}>
-                                {v.color.name}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -237,12 +223,9 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
 
       {/* ── MODAL PRODUCTO (uno solo, on-demand) ── */}
       {editingGarment && (
-        <ProductModal
-          garment={editingGarment}
-          categories={categories}
-          sizes={sizeTypes}
-          providers={providers}
-          colors={colors || []}
+        <FormularioProducto
+          categorias={categories}
+          productoSemilla={editingGarment}
           open={!!editingGarment}
           onClose={() => setEditingGarment(null)}
           onSuccess={() => {

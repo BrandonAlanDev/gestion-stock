@@ -2,18 +2,25 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Package, Tag, Layers, Palette, ShoppingBag } from "lucide-react";
+import { X, Package, Tag, ShoppingBag } from "lucide-react";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
+import { construirModeloVisual, varianteCompleta, precioDeVariante } from "@/lib/productos/opciones-visuales";
 
-type Color = { id: string; name: string; hex: string | null; active?: boolean };
-type Size = { id: string; value: string; order: number; active?: boolean; sizeTypeId?: string };
-type Variant = { id: string; stock: number; sku: string | null; size: Size | null; color: Color | null };
+type Variant = {
+  id: string;
+  stock: number;
+  sku: string | null;
+  priceOverride?: number | string | { toString(): string } | null;
+  optionValues?: Array<{ optionValue: { value: string; option: { name: string } } }>;
+};
 type Image = { id: string; srcImage: string; alt: string | null; order: number; garmentId?: string };
 export type Garment = {
   id: string;
   name: string;
   price: string | number | { toString(): string };
+  maxPrice?: string | number | { toString(): string } | null;
   description: string | null;
+  opciones?: Array<{ name: string; values?: Array<{ id?: string; value: string }> }>;
   subCategory: { id?: string; name: string; active?: boolean; categoryId?: string } | null;
   images: Image[];
   variants: Variant[];
@@ -27,6 +34,8 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
   const price = parseFloat(String(garment.price)).toLocaleString("es-AR", {
     style: "currency", currency: "ARS", minimumFractionDigits: 0,
   });
+  const modelo = construirModeloVisual(garment);
+  const primerosValores = modelo.grupos.slice(0, 2).flatMap((g) => g.values.slice(0, 2));
 
   return (
     <motion.div
@@ -87,14 +96,18 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
         </h3>
         <div className="flex items-center justify-between">
           <span className="text-lg font-black text-[var(--color-primario)]">{price}</span>
-          <div className="flex gap-1">
-            {/* Puntos de colores disponibles */}
-            {Array.from(new Set(garment.variants.filter(v => v.color).map(v => v.color!.hex || "var(--color-secundario)")))
-              .slice(0, 4)
-              .map((hex, i) => (
-                <div key={i} className="w-3 h-3 rounded-full border border-[var(--color-secundario)]" style={{ backgroundColor: hex }} />
+          {primerosValores.length > 0 && (
+            <div className="flex gap-1">
+              {primerosValores.map((valor, i) => (
+                <span
+                  key={`${valor.value}-${i}`}
+                  className="px-2 py-0.5 rounded-full bg-[var(--color-fondo-sitio)]/5 border border-[var(--color-secundario)] text-[10px] font-bold text-[var(--texto-sobre-secundario)] opacity-70"
+                >
+                  {valor.value}
+                </span>
               ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -104,27 +117,17 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
 // ─── PRODUCT MODAL ────────────────────────────────────────────────────────────
 function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => void }) {
   const [selectedImg, setSelectedImg] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [seleccion, setSeleccion] = useState<Record<string, string>>({});
 
-  const sizes = Array.from(new Map(
-    garment.variants
-      .filter(v => v.size)
-      .map(v => [v.size!.value, v.size!])
-  ).values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-  const colors = Array.from(new Map(
-    garment.variants.filter(v => v.color).map(v => [v.color!.id, v.color!])
-  ).values());
-
+  const modelo = construirModeloVisual(garment);
   const totalStock = garment.variants.reduce((a, v) => a + v.stock, 0);
+  const varianteElegida = varianteCompleta(modelo, seleccion);
+  const generalPrice = Number(garment.price ?? 0);
+  const precioMostrado = varianteElegida ? precioDeVariante(generalPrice, varianteElegida) : generalPrice;
+  const precioAnterior = garment.maxPrice != null ? Number(garment.maxPrice) : null;
+  const hayPrecioAnterior = precioAnterior != null && precioAnterior > precioMostrado;
 
-  const selectedVariant = garment.variants.find(v =>
-    (!selectedSize || v.size?.value === selectedSize) &&
-    (!selectedColor || v.color?.id === selectedColor)
-  );
-
-  const price = parseFloat(String(garment.price)).toLocaleString("es-AR", {
+  const price = precioMostrado.toLocaleString("es-AR", {
     style: "currency", currency: "ARS", minimumFractionDigits: 0,
   });
 
@@ -210,7 +213,14 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                 </button>
               </div>
 
-              <span className="text-3xl font-black text-[var(--color-primario)]">{price}</span>
+              <span className="text-3xl font-black text-[var(--color-primario)]">
+                {hayPrecioAnterior && (
+                  <span className="mr-2 text-lg text-[var(--texto-sobre-secundario)] opacity-40 line-through">
+                    {precioAnterior!.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 })}
+                  </span>
+                )}
+                {price}
+              </span>
 
               {/* Stock */}
               <div className="flex items-center gap-2">
@@ -222,69 +232,49 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
 
               {/* Descripción */}
               {garment.description && (
-                <p className="text-sm text-[var(--texto-sobre-secundario)] opacity-70 leading-relaxed">{garment.description}</p>
+                <p className="text-sm text-[var(--texto-sobre-secundario)] opacity-70 leading-relaxed whitespace-pre-line">{garment.description}</p>
               )}
 
-              {/* Talles */}
-              {sizes.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 flex items-center gap-1.5">
-                    <Layers size={11} /> Talle
+              {modelo.grupos.map((grupo) => (
+                <div key={grupo.name} className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60">
+                    {grupo.name}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {sizes.map(s => {
-                      const hasStock = garment.variants.some(v => v.size?.value === s.value && v.stock > 0);
+                    {grupo.values.map((valor) => {
+                      const activo = seleccion[grupo.name] === valor.value;
                       return (
                         <button
-                          key={s.value}
-                          onClick={() => setSelectedSize(selectedSize === s.value ? null : s.value)}
-                          disabled={!hasStock}
+                          key={valor.value}
+                          onClick={() =>
+                            setSeleccion((prev) => ({
+                              ...prev,
+                              [grupo.name]: prev[grupo.name] === valor.value ? "" : valor.value,
+                            }))
+                          }
                           className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
-                            selectedSize === s.value
+                            activo
                               ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] border-[var(--color-primario)]"
-                              : hasStock
-                              ? "bg-[var(--color-fondo-sitio)]/5 text-[var(--texto-sobre-secundario)] border-[var(--color-secundario)] hover:opacity-90"
-                              : "bg-[var(--color-fondo-sitio)]/5 text-[var(--texto-sobre-secundario)]/40 border-[var(--color-secundario)] cursor-not-allowed line-through"
+                              : "bg-[var(--color-fondo-sitio)]/5 text-[var(--texto-sobre-secundario)] border-[var(--color-secundario)] hover:opacity-90"
                           }`}
                         >
-                          {s.value}
+                          {valor.value}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              )}
-
-              {/* Colores */}
-              {colors.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--texto-sobre-secundario)] opacity-60 flex items-center gap-1.5">
-                    <Palette size={11} />
-                    Color {selectedColor && <span className="normal-case font-semibold text-[var(--texto-sobre-secundario)] opacity-70 tracking-normal">— {colors.find(c => c.id === selectedColor)?.name}</span>}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {colors.map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => setSelectedColor(selectedColor === c.id ? null : c.id)}
-                        title={c.name}
-                        className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === c.id ? "border-slate-900 scale-110 shadow-md" : "border-transparent hover:border-slate-300"}`}
-                        style={{ backgroundColor: c.hex ?? "var(--color-secundario)" }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+              ))}
 
               {/* Stock variante seleccionada */}
-              {selectedVariant && (
+              {varianteElegida && (
                 <div className="flex items-center gap-2 p-3 bg-[var(--color-fondo-sitio)]/5 rounded-xl border border-[var(--color-secundario)] text-xs text-[var(--texto-sobre-secundario)]">
                   <Tag size={12} />
-                  {selectedVariant.stock > 0
-                    ? `${selectedVariant.stock} unidades en esta variante`
+                  {varianteElegida.stock > 0
+                    ? `${varianteElegida.stock} unidades en esta variante`
                     : "Sin stock en esta combinación"}
-                  {selectedVariant.sku && (
-                    <span className="ml-auto font-mono opacity-60">SKU: {selectedVariant.sku}</span>
+                  {varianteElegida.sku && (
+                    <span className="ml-auto font-mono opacity-60">Código: {varianteElegida.sku}</span>
                   )}
                 </div>
               )}

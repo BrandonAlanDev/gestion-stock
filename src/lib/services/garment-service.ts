@@ -1,18 +1,29 @@
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@/../generated/prisma/client";
+import { Prisma } from "@/../generated/prisma/client";
+import type { DatosGuardarProducto, ParOpcionValor } from "@/types/productos/opciones-producto";
+import { sincronizarOpciones } from "@/lib/services/garment-options-service";
+import { claveOpcionValor } from "@/lib/productos/normalizar-opciones";
 
-async function validarReferenciasVariantes(
-  tenantId: string,
-  variantes: Array<{ sizeId?: string | null; colorId?: string | null }>
+type Tx = Prisma.TransactionClient;
+
+const INCLUDE_VARIANTE = {
+  size: true,
+  color: true,
+  optionValues: { include: { optionValue: { include: { option: true } } } },
+} satisfies Prisma.GarmentVariantInclude;
+
+async function crearVinculosVariante(
+  tx: Tx,
+  varianteId: string,
+  resolver: Map<string, string>,
+  opcionValores: ParOpcionValor[]
 ): Promise<void> {
-  const talles = [...new Set(variantes.map((variante) => variante.sizeId).filter((id): id is string => Boolean(id)))];
-  const colores = [...new Set(variantes.map((variante) => variante.colorId).filter((id): id is string => Boolean(id)))];
-  const [cantidadTalles, cantidadColores] = await Promise.all([
-    prisma.size.count({ where: { tenantId, id: { in: talles } } }),
-    prisma.color.count({ where: { tenantId, id: { in: colores } } }),
-  ]);
-  if (cantidadTalles !== talles.length) throw new Error("Talle no encontrado");
-  if (cantidadColores !== colores.length) throw new Error("Color no encontrado");
+  const datos = opcionValores
+    .map((par) => ({ variantId: varianteId, optionValueId: resolver.get(claveOpcionValor(par)) }))
+    .filter((d): d is { variantId: string; optionValueId: string } => Boolean(d.optionValueId));
+  if (datos.length > 0) {
+    await tx.garmentVariantOptionValue.createMany({ data: datos, skipDuplicates: true });
+  }
 }
 
 export async function getGarmentsPaginated(
@@ -40,13 +51,10 @@ export async function getGarmentsPaginated(
       where,
       include: {
         images: { where: { tenantId }, orderBy: { order: "asc" } },
-        variants: {
-          where: { tenantId },
-          include: { size: true, color: true },
-          take: 5,
-        },
+        variants: { where: { tenantId }, include: INCLUDE_VARIANTE, take: 5 },
         subCategory: true,
         category: true,
+        opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
       },
       skip,
       take: limiteSeguro,
@@ -64,40 +72,63 @@ export async function getGarmentById(tenantId: string, id: string) {
     include: {
       category: true,
       subCategory: true,
-      variants: { where: { tenantId }, include: { size: true, color: true } },
+      variants: { where: { tenantId }, include: INCLUDE_VARIANTE },
       supplier: { include: { contacts: { where: { tenantId, active: true } } } },
       images: { where: { tenantId }, orderBy: { order: "asc" } },
+      opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
     },
   });
 }
 
-export async function createGarment(
-  tenantId: string,
-  data: Omit<Prisma.GarmentUncheckedCreateInput, "tenantId">
-) {
-  const categoria = await prisma.category.findFirst({ where: { id: data.categoryId, tenantId }, select: { id: true } });
+export async function createGarment(tenantId: string, datos: DatosGuardarProducto) {
+  const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId, tenantId }, select: { id: true } });
   if (!categoria) throw new Error("Categoría no encontrada");
-  if (data.subCategoryId) {
-    const subcategoria = await prisma.subCategory.findFirst({ where: { id: data.subCategoryId, categoryId: data.categoryId, tenantId }, select: { id: true } });
+  if (datos.subCategoryId) {
+    const subcategoria = await prisma.subCategory.findFirst({ where: { id: datos.subCategoryId, categoryId: datos.categoryId, tenantId }, select: { id: true } });
     if (!subcategoria) throw new Error("Subcategoría no encontrada");
   }
-  if (data.supplierId) {
-    const proveedor = await prisma.provider.findFirst({ where: { id: data.supplierId, tenantId }, select: { id: true } });
+  if (datos.supplierId) {
+    const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId, tenantId }, select: { id: true } });
     if (!proveedor) throw new Error("Proveedor no encontrado");
   }
-  const variantes = data.variants && "create" in data.variants && Array.isArray(data.variants.create)
-    ? data.variants.create.map((variante) => ({ ...variante, tenantId }))
-    : undefined;
-  if (variantes) {
-    await validarReferenciasVariantes(
-      tenantId,
-      variantes.map((variante) => ({
-        sizeId: "sizeId" in variante ? variante.sizeId : undefined,
-        colorId: "colorId" in variante ? variante.colorId : undefined,
-      }))
-    );
-  }
-  return prisma.garment.create({ data: { ...data, tenantId, ...(variantes ? { variants: { create: variantes } } : {}) } });
+
+  const id = await prisma.$transaction(
+    async (tx) => {
+      const creado = await tx.garment.create({
+        data: {
+          tenantId,
+          name: datos.name,
+          price: datos.price,
+          maxPrice: datos.maxPrice,
+          cost: datos.cost,
+          description: datos.description || null,
+          categoryId: datos.categoryId,
+          subCategoryId: datos.subCategoryId || null,
+          supplierId: datos.supplierId || null,
+          controlaStock: datos.controlaStock,
+          active: datos.activo,
+          etiquetas: datos.etiquetas.length ? (datos.etiquetas as Prisma.InputJsonValue) : Prisma.DbNull,
+        },
+      });
+      const resolver = await sincronizarOpciones(tx, tenantId, creado.id, datos.opciones);
+      for (const variante of datos.variants) {
+        const creadaVariante = await tx.garmentVariant.create({
+          data: {
+            tenantId,
+            garmentId: creado.id,
+            stock: variante.stock,
+            sku: variante.sku || null,
+            priceOverride: variante.priceOverride,
+          },
+        });
+        await crearVinculosVariante(tx, creadaVariante.id, resolver, variante.opcionValores);
+      }
+      return creado.id;
+    },
+    { timeout: 60000, maxWait: 60000 }
+  );
+
+  return prisma.garment.findUniqueOrThrow({ where: { id } });
 }
 
 export async function deleteGarment(tenantId: string, id: string) {
@@ -109,89 +140,82 @@ export async function deleteGarment(tenantId: string, id: string) {
 export async function updateGarmentWithDetails(
   tenantId: string,
   id: string,
-  data: {
-    name: string;
-    price: number;
-    maxPrice?: number | null;
-    cost: number;
-    description?: string;
-    categoryId: string;
-    subCategoryId?: string | null;
-    supplierId?: string | null;
-    variants: Array<{
-      id?: string;
-      sku?: string;
-      stock: number;
-      sizeId?: string | null;
-      colorId?: string | null;
-      attributes?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
-    }>;
-    images: Array<{ url: string; publicId?: string | null; order: number }>;
-  }
+  datos: DatosGuardarProducto
 ) {
-  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = data;
-
-  // 1. Actualizar datos básicos
-  const producto = await prisma.garment.findFirst({ where: { id, tenantId }, select: { id: true } });
+  const producto = await prisma.garment.findFirst({ where: { id, tenantId }, select: { id: true, cost: true } });
   if (!producto) throw new Error("Producto no encontrado");
-  const categoria = await prisma.category.findFirst({ where: { id: categoryId, tenantId }, select: { id: true } });
+  const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId, tenantId }, select: { id: true } });
   if (!categoria) throw new Error("Categoría no encontrada");
-  if (subCategoryId) {
-    const subcategoria = await prisma.subCategory.findFirst({ where: { id: subCategoryId, categoryId, tenantId }, select: { id: true } });
+  if (datos.subCategoryId) {
+    const subcategoria = await prisma.subCategory.findFirst({ where: { id: datos.subCategoryId, categoryId: datos.categoryId, tenantId }, select: { id: true } });
     if (!subcategoria) throw new Error("Subcategoría no encontrada");
   }
-  if (supplierId) {
-    const proveedor = await prisma.provider.findFirst({ where: { id: supplierId, tenantId }, select: { id: true } });
+  if (datos.supplierId) {
+    const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId, tenantId }, select: { id: true } });
     if (!proveedor) throw new Error("Proveedor no encontrado");
   }
-  await validarReferenciasVariantes(tenantId, variants);
-  await prisma.garment.updateMany({
-    where: { id, tenantId },
-    data: {
-      name,
-      price,
-      maxPrice: typeof maxPrice === "number" ? maxPrice : null,
-      cost,
-      description,
-      categoryId,
-      subCategoryId: subCategoryId || null,
-      supplierId: supplierId || null,
-    },
-  });
 
-  // 2. Sincronizar variantes (transaccional y paralelo)
-  await prisma.$transaction(async (tx) => {
-    const currentVariants = await tx.garmentVariant.findMany({ where: { tenantId, garmentId: id } });
-    const currentVariantIds = currentVariants.map((v) => v.id);
-    const incomingVariantIds = variants.filter((v) => v.id).map((v) => v.id as string);
+  const cost = typeof datos.cost === "number" && !Number.isNaN(datos.cost) ? datos.cost : producto.cost;
 
-    const idsToDelete = currentVariantIds.filter((vid) => !incomingVariantIds.includes(vid));
-    if (idsToDelete.length > 0) {
-      await tx.garmentVariant.deleteMany({ where: { tenantId, id: { in: idsToDelete } } });
-    }
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.garment.updateMany({
+        where: { id, tenantId },
+        data: {
+          name: datos.name,
+          price: datos.price,
+          maxPrice: datos.maxPrice,
+          cost,
+          description: datos.description ?? "",
+          categoryId: datos.categoryId,
+          subCategoryId: datos.subCategoryId || null,
+          supplierId: datos.supplierId || null,
+          controlaStock: datos.controlaStock,
+          active: datos.activo,
+          etiquetas: datos.etiquetas.length ? (datos.etiquetas as Prisma.InputJsonValue) : Prisma.DbNull,
+        },
+      });
 
-    await Promise.all(
-      variants.map((v) => {
+      const resolver = await sincronizarOpciones(tx, tenantId, id, datos.opciones);
+
+      const variantesActuales = await tx.garmentVariant.findMany({ where: { tenantId, garmentId: id } });
+      const idsEntrantes = datos.variants.filter((v) => v.id).map((v) => v.id as string);
+      const idsAEliminar = variantesActuales.filter((v) => !idsEntrantes.includes(v.id)).map((v) => v.id);
+      if (idsAEliminar.length > 0) {
+        await tx.garmentVariant.deleteMany({ where: { tenantId, id: { in: idsAEliminar } } });
+      }
+
+      for (const variante of datos.variants) {
         const data = {
-          sku: v.sku,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes ?? undefined,
+          stock: variante.stock,
+          sku: variante.sku || null,
+          priceOverride: variante.priceOverride,
         };
-        if (v.id) {
-          return tx.garmentVariant.updateMany({ where: { id: v.id, tenantId, garmentId: id }, data });
+        if (variante.id) {
+          await tx.garmentVariant.updateMany({ where: { id: variante.id, tenantId, garmentId: id }, data });
+          await tx.garmentVariantOptionValue.deleteMany({ where: { variantId: variante.id } });
+          await crearVinculosVariante(tx, variante.id, resolver, variante.opcionValores);
+        } else {
+          const creadaVariante = await tx.garmentVariant.create({
+            data: {
+              tenantId,
+              garmentId: id,
+              stock: variante.stock,
+              sku: variante.sku || null,
+              priceOverride: variante.priceOverride,
+            },
+          });
+          await crearVinculosVariante(tx, creadaVariante.id, resolver, variante.opcionValores);
         }
-        return tx.garmentVariant.create({ data: { tenantId, garmentId: id, ...data } });
-      })
-    );
-  });
+      }
+    },
+    { timeout: 60000, maxWait: 60000 }
+  );
 
-  // 3. Sincronizar imágenes
   await prisma.garmentImage.deleteMany({ where: { tenantId, garmentId: id } });
-  if (images.length > 0) {
+  if (datos.images.length > 0) {
     await prisma.garmentImage.createMany({
-      data: images.map(({ url, publicId, order }) => ({
+      data: datos.images.map(({ url, publicId, order }) => ({
         garmentId: id,
         tenantId,
         srcImage: url,
@@ -201,6 +225,5 @@ export async function updateGarmentWithDetails(
     });
   }
 
-  // Retornar el producto actualizado (opcional)
   return prisma.garment.findFirst({ where: { id, tenantId } });
 }

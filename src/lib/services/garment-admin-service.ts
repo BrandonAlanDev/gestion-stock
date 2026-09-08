@@ -5,6 +5,7 @@ import type {
   FiltroStock,
   OrdenProducto,
   ProductoAdminRow,
+  VarianteAdminResumen,
 } from "@/lib/productos/tipos";
 
 export const UMBRAL_STOCK_BAJO = 5;
@@ -168,26 +169,62 @@ export async function obtenerProductosAdmin(
     }
   }
 
-  const filas: ProductoAdminRow[] = filasCrudas.map((fila) => ({
-    id: fila.id,
-    nombre: fila.nombre,
-    precio: Number(fila.precio),
-    precioMaximo: fila.precioMaximo == null ? null : Number(fila.precioMaximo),
-    activo: Boolean(fila.activo),
-    stockTotal: Number(fila.stockTotal ?? 0),
-    cantidadVariantes: Number(fila.cantidadVariantes ?? 0),
-    imagenPrincipal: imagenPorId.get(fila.id) ?? null,
-    categoria: fila.categoriaNombre
-      ? { id: fila.categoriaId, nombre: fila.categoriaNombre }
-      : null,
-    subcategoria: fila.subcategoriaNombre
-      ? { id: fila.subcategoriaId ?? "", nombre: fila.subcategoriaNombre }
-      : null,
-    proveedor: fila.proveedorNombre
-      ? { id: fila.proveedorId ?? "", nombre: fila.proveedorNombre }
-      : null,
-    creadoEn: fila.creadoEn instanceof Date ? fila.creadoEn.toISOString() : String(fila.creadoEn),
-  }));
+  const variantesPorProducto = new Map<string, VarianteAdminResumen[]>();
+  if (ids.length > 0) {
+    const variantes = await prisma.garmentVariant.findMany({
+      where: { garmentId: { in: ids }, tenantId },
+      include: {
+        optionValues: {
+          include: {
+            optionValue: { include: { option: true } },
+          },
+        },
+      },
+    });
+    for (const variante of variantes) {
+      const opcionValores = variante.optionValues.map((ov) => ({
+        opcion: ov.optionValue.option.name,
+        valor: ov.optionValue.value,
+      }));
+      const resumen: VarianteAdminResumen = {
+        id: variante.id,
+        nombre: opcionValores.map((ov) => ov.valor).join(" / "),
+        stock: Number(variante.stock),
+        sku: variante.sku ?? null,
+        precioOverride: variante.priceOverride == null ? null : Number(variante.priceOverride),
+        opcionValores,
+      };
+      const actuales = variantesPorProducto.get(variante.garmentId) ?? [];
+      actuales.push(resumen);
+      variantesPorProducto.set(variante.garmentId, actuales);
+    }
+  }
+
+  const filas: ProductoAdminRow[] = filasCrudas.map((fila) => {
+    const variantes = variantesPorProducto.get(fila.id) ?? [];
+    return {
+      id: fila.id,
+      nombre: fila.nombre,
+      precio: Number(fila.precio),
+      precioMaximo: fila.precioMaximo == null ? null : Number(fila.precioMaximo),
+      activo: Boolean(fila.activo),
+      stockTotal: Number(fila.stockTotal ?? 0),
+      cantidadVariantes: Number(fila.cantidadVariantes ?? 0),
+      imagenPrincipal: imagenPorId.get(fila.id) ?? null,
+      categoria: fila.categoriaNombre
+        ? { id: fila.categoriaId, nombre: fila.categoriaNombre }
+        : null,
+      subcategoria: fila.subcategoriaNombre
+        ? { id: fila.subcategoriaId ?? "", nombre: fila.subcategoriaNombre }
+        : null,
+      proveedor: fila.proveedorNombre
+        ? { id: fila.proveedorId ?? "", nombre: fila.proveedorNombre }
+        : null,
+      creadoEn: fila.creadoEn instanceof Date ? fila.creadoEn.toISOString() : String(fila.creadoEn),
+      esConVariantes: variantes.some((v) => v.opcionValores.length > 0),
+      variantes,
+    };
+  });
 
   return {
     filas,

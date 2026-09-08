@@ -76,10 +76,15 @@ export async function getCategoryWithProducts(tenantId: string, categoryName: st
           images: { where: { tenantId }, orderBy: { order: "asc" } },
           variants: {
             where: { tenantId },
-            include: { size: true, color: true },
+            include: {
+              size: true,
+              color: true,
+              optionValues: { include: { optionValue: { include: { option: true } } } },
+            },
             orderBy: { size: { order: "asc" } },
           },
           subCategory: true,
+          opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
         },
       },
       _count: { select: { garments: { where: { active: true } } } },

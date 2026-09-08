@@ -31,6 +31,15 @@ export interface ProveedorResumen {
   nombre: string;
 }
 
+export interface VarianteAdminResumen {
+  id: string;
+  nombre: string;
+  stock: number;
+  sku: string | null;
+  precioOverride: number | null;
+  opcionValores: Array<{ opcion: string; valor: string }>;
+}
+
 export interface ProductoAdminRow {
   id: string;
   nombre: string;
@@ -44,6 +53,8 @@ export interface ProductoAdminRow {
   subcategoria: SubcategoriaResumen | null;
   proveedor: ProveedorResumen | null;
   creadoEn: string;
+  esConVariantes?: boolean;
+  variantes?: VarianteAdminResumen[];
 }
 
 export interface RespuestaProductosAdmin {

@@ -1,9 +1,38 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getContrastColor } from "@/lib/utils";
 
 const HEX_VALIDO = /^#[0-9a-fA-F]{6}$/;
+
+interface VariablesAdmin {
+  primario: string;
+  primarioTexto: string;
+  primarioSuave: string;
+  fondo: string;
+  fondoOpaco: string;
+  fondoSuave: string;
+  fondoHover: string;
+  borde: string;
+  texto: string;
+  textoSuave: string;
+}
+
+function construirVariablesAdmin(variables: VariablesAdmin): Record<string, string> {
+  return {
+    "--admin-primario": variables.primario,
+    "--admin-primario-texto": variables.primarioTexto,
+    "--admin-primario-suave": variables.primarioSuave,
+    "--admin-fondo": variables.fondo,
+    "--admin-fondo-opaco": variables.fondoOpaco,
+    "--admin-fondo-suave": variables.fondoSuave,
+    "--admin-fondo-hover": variables.fondoHover,
+    "--admin-borde": variables.borde,
+    "--admin-texto": variables.texto,
+    "--admin-texto-suave": variables.textoSuave,
+  };
+}
 
 export default function ProveedorColoresAdmin({
   children,
@@ -31,6 +60,25 @@ export default function ProveedorColoresAdmin({
   const fondoOpaco = fondo + "E6";
   const primarioSuave = primario + "26";
 
+  useEffect(() => {
+    const raiz = document.documentElement;
+    const variables: VariablesAdmin = {
+      primario,
+      primarioTexto,
+      primarioSuave,
+      fondo,
+      fondoOpaco,
+      fondoSuave,
+      fondoHover,
+      borde,
+      texto,
+      textoSuave,
+    };
+    Object.entries(construirVariablesAdmin(variables)).forEach(([clave, valor]) => {
+      raiz.style.setProperty(clave, valor);
+    });
+  }, [primario, primarioTexto, primarioSuave, fondo, fondoOpaco, fondoSuave, fondoHover, borde, texto, textoSuave]);
+
   return (
     <div
       className="min-h-screen w-full"
@@ -38,16 +86,18 @@ export default function ProveedorColoresAdmin({
         {
           backgroundColor: fondo,
           color: texto,
-          "--admin-primario": primario,
-          "--admin-primario-texto": primarioTexto,
-          "--admin-primario-suave": primarioSuave,
-          "--admin-fondo": fondo,
-          "--admin-fondo-opaco": fondoOpaco,
-          "--admin-fondo-suave": fondoSuave,
-          "--admin-fondo-hover": fondoHover,
-          "--admin-borde": borde,
-          "--admin-texto": texto,
-          "--admin-texto-suave": textoSuave,
+          ...construirVariablesAdmin({
+            primario,
+            primarioTexto,
+            primarioSuave,
+            fondo,
+            fondoOpaco,
+            fondoSuave,
+            fondoHover,
+            borde,
+            texto,
+            textoSuave,
+          }),
         } as React.CSSProperties
       }
     >

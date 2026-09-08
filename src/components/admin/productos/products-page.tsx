@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
-import ProductModal from "@/components/providers/products/modals/ProductModal";
+import FormularioProducto from "@/components/admin/productos/formulario/FormularioProducto";
 import ProductsActiveFilters from "./products-active-filters";
 import ProductsEmptyState from "./products-empty-state";
 import ProductsFilters from "./products-filters";
@@ -16,11 +16,9 @@ import ProductsTable from "./products-table";
 import ProductsTableSkeleton from "./products-table-skeleton";
 import ProductsToolbar from "./products-toolbar";
 import { useCategories } from "@/hooks/useCategories";
-import { useColors } from "@/hooks/useColors";
 import { useFiltrosProductos } from "@/hooks/use-filtros-productos";
 import { useProductosAdmin } from "@/hooks/use-productos-admin";
 import { useProviders } from "@/hooks/useProviders";
-import { useSizeTypes } from "@/hooks/useSizeTypes";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import { deleteGarment } from "@/actions/garments";
 import { actualizarVisibilidadProducto } from "@/actions/productos";
@@ -52,8 +50,6 @@ export default function ProductsPage() {
   const { data, isPending, isError } = useProductosAdmin(filtros);
   const { data: categorias } = useCategories();
   const { data: proveedores } = useProviders();
-  const { data: talles } = useSizeTypes();
-  const { data: colores } = useColors();
 
   const [crearAbierto, setCrearAbierto] = useState(false);
   const [edicion, setEdicion] = useState<ProductoAdminRow | null>(null);
@@ -186,15 +182,12 @@ export default function ProductsPage() {
       )}
 
       {(crearAbierto || edicion) && (
-        <ProductModal
-          categories={categoriasSeguras}
-          sizes={talles ?? []}
-          providers={proveedoresSeguros}
-          colors={colores ?? []}
+        <FormularioProducto
+          categorias={categoriasSeguras}
           open={true}
           onClose={cerrarModal}
           onSuccess={invalidar}
-          garment={edicion ? adaptarProducto(edicion) : undefined}
+          productoSemilla={edicion ? adaptarProducto(edicion) : undefined}
         />
       )}
 

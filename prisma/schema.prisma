@@ -116,11 +116,14 @@ model Garment {
   cost          Decimal          @db.Decimal(10, 2)
   subCategoryId String?
   maxPrice      Decimal?         @db.Decimal(10, 2)
+  etiquetas     Json?
+  controlaStock Boolean          @default(true)
   category      Category         @relation(fields: [categoryId], references: [id])
   subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
   supplier      Provider?        @relation(fields: [supplierId], references: [id])
   variants      GarmentVariant[]
   images        GarmentImage[]
+  opciones      GarmentOption[]
 
   @@index([categoryId])
   @@index([categoryId, createdAt])
@@ -148,27 +151,66 @@ model GarmentImage {
 }
 
 model GarmentVariant {
-  id         String     @id @default(cuid())
-  tenantId   String
-  sku        String?
-  stock      Int        @default(0)
-  garmentId  String
-  sizeId     String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  colorId    String?
-  attributes Json?
-  garment    Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
-  size       Size?      @relation(fields: [sizeId], references: [id])
-  color      Color?     @relation(fields: [colorId], references: [id])
-  movements  Movement[]
+  id            String                      @id @default(cuid())
+  tenantId      String
+  sku           String?
+  stock         Int                         @default(0)
+  garmentId     String
+  sizeId        String?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  colorId       String?
+  attributes    Json?
+  priceOverride Decimal?                    @db.Decimal(10, 2)
+  garment       Garment                     @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  size          Size?                       @relation(fields: [sizeId], references: [id])
+  color         Color?                      @relation(fields: [colorId], references: [id])
+  movements     Movement[]
+  optionValues  GarmentVariantOptionValue[]
 
-  @@unique([garmentId, sizeId, colorId])
   @@unique([tenantId, sku])
   @@index([garmentId])
   @@index([sizeId])
   @@index([colorId])
   @@index([tenantId, garmentId])
+}
+
+model GarmentOption {
+  id        String                @id @default(cuid())
+  tenantId  String
+  garmentId String
+  name      String
+  position  Int                   @default(0)
+  garment   Garment               @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  values    GarmentOptionValue[]
+
+  @@unique([garmentId, name])
+  @@index([garmentId])
+  @@index([tenantId, garmentId])
+}
+
+model GarmentOptionValue {
+  id            String                      @id @default(cuid())
+  tenantId      String
+  optionId      String
+  value         String
+  position      Int                         @default(0)
+  option        GarmentOption               @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  variantValues GarmentVariantOptionValue[]
+
+  @@unique([optionId, value])
+  @@index([optionId])
+  @@index([tenantId, optionId])
+}
+
+model GarmentVariantOptionValue {
+  variantId     String
+  optionValueId String
+  variant       GarmentVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValue   GarmentOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
+  @@index([optionValueId])
 }
 
 model SizeType {

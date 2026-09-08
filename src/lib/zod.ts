@@ -15,36 +15,118 @@ export const registerSchema = loginSchema.extend({
   telefono: z.string().optional(),
 });
 
-export const garmentSchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio"),
-  price: z.coerce.number().positive(),
-  maxPrice: z.coerce.number().positive().optional().nullable(),
-  cost: z.coerce.number().positive(),
-  description: z.string().optional(),
-  categoryId: z.string().min(1, "La categoría es obligatoria"),
+export const garmentSchema = z
+  .object({
+    name: z.string().min(1, "El nombre es obligatorio"),
+    price: z.coerce.number().positive(),
+    maxPrice: z.coerce.number().positive().optional().nullable(),
+    cost: z.coerce.number().positive().optional(),
+    description: z.string().optional().nullable(),
+    categoryId: z.string().min(1, "La categoría es obligatoria"),
 
-  subCategoryId: z.string().optional().nullable(),
+    subCategoryId: z.string().optional().nullable(),
 
-  supplierId: z.string().optional().nullable(),
-  images: z
-    .array(
-      z.string().refine(
-        (v) => v.startsWith("data:image") || v.startsWith("http"),
-        { message: "Cada imagen debe ser un archivo nuevo o una URL válida" }
+    supplierId: z.string().optional().nullable(),
+    controlaStock: z.boolean().optional().default(true),
+    activo: z.boolean().optional().default(true),
+    etiquetas: z.array(z.string().min(1)).optional().default([]),
+    opciones: z
+      .array(
+        z.object({
+          name: z.string().min(1, "El nombre de la opción es obligatorio"),
+          values: z.array(z.string().min(1)).min(1, "Agregá al menos un valor"),
+        })
       )
-    )
-    .optional(),
-  variants: z.array(
-    z.object({
-      id: z.string().optional(), // Por si editas
-      sizeId: z.string().optional().nullable(),
-      colorId: z.string().optional().nullable(),
-      sku: z.string().optional(),
-      stock: z.coerce.number().int().nonnegative(),
-      attributes: z.any().optional().nullable(),
-    })
-  ),
-});
+      .optional()
+      .default([]),
+    images: z
+      .array(
+        z.string().refine(
+          (v) => v.startsWith("data:image") || v.startsWith("http"),
+          { message: "Cada imagen debe ser un archivo nuevo o una URL válida" }
+        )
+      )
+      .optional(),
+    variants: z.array(
+      z.object({
+        id: z.string().optional(),
+        opcionValores: z
+          .array(z.object({ opcion: z.string(), valor: z.string() }))
+          .default([]),
+        priceOverride: z.coerce.number().positive().optional().nullable(),
+        sku: z.string().optional().nullable(),
+        stock: z.coerce.number().int().nonnegative(),
+        sizeId: z.string().optional().nullable(),
+        colorId: z.string().optional().nullable(),
+        attributes: z.any().optional().nullable(),
+      })
+    ),
+  })
+  .superRefine((datos, ctx) => {
+    const opciones = datos.opciones;
+    const nombresOpciones = opciones.map((o) => o.name.trim().toLowerCase());
+
+    opciones.forEach((opcion, i) => {
+      const nombre = nombresOpciones[i];
+      if (nombresOpciones.indexOf(nombre) !== i) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["opciones", i, "name"],
+          message: "No puede haber dos opciones con el mismo nombre",
+        });
+      }
+
+      const valores = opcion.values.map((v) => v.trim());
+      if (valores.some((v) => v === "")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["opciones", i, "values"],
+          message: "Los valores de la opción no pueden estar vacíos",
+        });
+      }
+      const valoresNorm = valores.map((v) => v.toLowerCase());
+      valoresNorm.forEach((valorNorm, j) => {
+        if (valoresNorm.indexOf(valorNorm) !== j) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["opciones", i, "values", j],
+            message: "No puede haber dos valores iguales en una misma opción",
+          });
+        }
+      });
+    });
+
+    const clavesVariantes = new Set<string>();
+    const nombresOpcionesValidas = new Set(nombresOpciones);
+
+    datos.variants.forEach((variante, i) => {
+      const pares = [...(variante.opcionValores ?? [])]
+        .map((par) => `${par.opcion.trim().toLowerCase()}::${par.valor.trim().toLowerCase()}`)
+        .sort();
+      const clave = pares.join("|");
+
+      if (pares.length > 0 && clavesVariantes.has(clave)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["variants", i, "opcionValores"],
+          message: "No puede haber dos variantes con la misma combinación de opciones",
+        });
+      }
+      clavesVariantes.add(clave);
+
+      if (opciones.length > 0) {
+        (variante.opcionValores ?? []).forEach((par, j) => {
+          if (!nombresOpcionesValidas.has(par.opcion.trim().toLowerCase())) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["variants", i, "opcionValores", j, "opcion"],
+              message: "La opción indicada no existe en el producto",
+            });
+          }
+        });
+      }
+    });
+  });
 
 
 // Tipos para TypeScript
