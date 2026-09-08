@@ -26,7 +26,6 @@ export default function ContenidoSidebar({
   const { data: session } = useSession();
   const tenantId = useTenantId();
   const pageConfig = usePageConfig();
-  const config = pageConfig?.pageConfig;
 
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
@@ -52,12 +51,6 @@ export default function ContenidoSidebar({
     { href: "/admin/sizes", label: "Talles", icon: Ruler },
     { href: "/admin/movements", label: "Historial", icon: History },
     { href: "/admin/design", label: "Diseño", icon: ImageIcon },
-    {
-      href: "/admin/personalizado",
-      label: "Personalizado",
-      icon: Settings,
-      enabled: config ? Boolean(config.personalizadoEnabled) : false
-    },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
 
@@ -190,9 +183,7 @@ export default function ContenidoSidebar({
             </span>
             <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
           </div>
-          {adminLinks
-            .filter((link) => link.enabled !== false)
-            .map((link) => {
+          {adminLinks.map((link) => {
               const active = pathname === link.href;
               const Icon = link.icon;
               return (

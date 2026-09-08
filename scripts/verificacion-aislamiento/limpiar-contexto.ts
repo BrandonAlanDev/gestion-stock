@@ -24,16 +24,6 @@ export async function limpiarContexto(contexto: ContextoVerificacion): Promise<v
   await cliente.customSectionItem.deleteMany({ where: filtro });
   await cliente.customSection.deleteMany({ where: filtro });
   await cliente.customPage.deleteMany({ where: filtro });
-  await cliente.boardTypeTailOption.deleteMany({ where: filtro });
-  await cliente.boardTypeFinOption.deleteMany({ where: filtro });
-  await cliente.boardTypeFinConfigOption.deleteMany({ where: filtro });
-  await cliente.boardTypeOption.deleteMany({ where: filtro });
-  await cliente.boardTailOption.deleteMany({ where: filtro });
-  await cliente.boardFinOption.deleteMany({ where: filtro });
-  await cliente.boardFinConfigOption.deleteMany({ where: filtro });
-  await cliente.boardMaterialOption.deleteMany({ where: filtro });
-  await cliente.boardDeliveryOption.deleteMany({ where: filtro });
-  await cliente.customBoard.deleteMany({ where: filtro });
   await cliente.category.deleteMany({ where: filtro });
   await cliente.account.deleteMany({ where: filtro });
   await cliente.user.deleteMany({ where: filtro });

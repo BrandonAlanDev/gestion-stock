@@ -5,13 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Image as ImageIcon, FileText, LayoutGrid, Layers, X } from 'lucide-react';
 import { getGlobalSearchIndex, type SearchItem } from '@/actions/search';
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   const tenantId = useTenantId();
-  const { pageConfig: rawConfig } = usePageConfig();
-  const config = rawConfig as unknown as Record<string, unknown>;
 
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState<SearchItem[]>([]);
@@ -81,19 +78,12 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
       { id: 'catalogo', type: 'page', title: 'Catálogo de Productos', url: '/productos' },
     ];
 
-    if (config?.escuelaEnabled === true) {
-      staticLinks.push({ id: 'escuela', type: 'page', title: 'Escuela de Surf', url: '/escuela' });
-    }
-    if (config?.personalizadoEnabled === true) {
-      staticLinks.push({ id: 'personalizado', type: 'page', title: 'Trabajos Personalizados', url: '/personalizado' });
-    }
-
     const combined = [...staticLinks, ...index];
     
     return combined
       .filter(item => item.title.toLowerCase().includes(searchStr))
       .slice(0, 8);
-  }, [query, index, config]);
+  }, [query, index]);
 
   const getIconForType = (type: string) => {
     const iconProps = { className: "w-5 h-5", style: { color: "var(--texto-sobre-secundario)" } };

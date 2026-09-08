@@ -4,17 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
-  LayoutDashboard, Menu, X, User, Store, Package, LogOut, ShoppingBag,
+  LayoutDashboard, Menu, X, User, Store, LogOut, ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
-
-const enlacesUsuario = [
-  { href: "/plan-de-ahorro", label: "Plan Ahorro", icon: Package },
-];
 
 export default function Header({
   isSidebarOpen,
@@ -44,7 +40,6 @@ export default function Header({
   const currentTextColor = isHomeTop ? "#ffffff" : "var(--texto-sobre-fondo)";
   const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
   const overlayFondoMenu = "color-mix(in srgb, var(--color-fondo-sitio) 75%, transparent)";
-  const overlayEnlace = "color-mix(in srgb, var(--color-fondo-sitio) 5%, transparent)";
 
   const sesionDelTenant = session?.user?.tenantId === tenantId ? session : null;
   const isAdmin = sesionDelTenant?.user?.role === "ADMIN";
@@ -185,25 +180,6 @@ export default function Header({
                 <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
                   <LogOut size={14} /> Salir
                 </button>
-              </div>
-            )}
-            {pageConfig?.pageConfig?.planAhorroEnabled === true && (
-              <div className="flex items-center justify-center gap-4">
-                {enlacesUsuario.map((link) => {
-                  const Icono = link.icon;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={onToggleSidebar}
-                      className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all hover:scale-[1.01] backdrop-blur-sm"
-                      style={{ backgroundColor: overlayEnlace, color: "var(--texto-sobre-fondo)" }}
-                    >
-                      <Icono size={16} style={{ color: "var(--color-primario)" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider">{link.label}</span>
-                    </Link>
-                  );
-                })}
               </div>
             )}
           </div>

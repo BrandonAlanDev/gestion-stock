@@ -2,7 +2,6 @@
 
 import SeccionLegal from "@/components/admin/diseno/ajustes/SeccionLegal";
 import SeccionMantenimiento from "@/components/admin/diseno/ajustes/SeccionMantenimiento";
-import SeccionPaginasSitio from "@/components/admin/diseno/ajustes/SeccionPaginasSitio";
 import SeccionRegional from "@/components/admin/diseno/ajustes/SeccionRegional";
 import SeccionSeo from "@/components/admin/diseno/ajustes/SeccionSeo";
 import SeccionTiendaOnline from "@/components/admin/diseno/ajustes/SeccionTiendaOnline";
@@ -55,10 +54,6 @@ export default function DrawersConfiguracion({
     currency: config.currency,
     language: config.language,
     maintenanceMode: config.maintenanceMode,
-    arreglosEnabled: config.arreglosEnabled,
-    escuelaEnabled: config.escuelaEnabled,
-    personalizadoEnabled: config.personalizadoEnabled,
-    planAhorroEnabled: config.planAhorroEnabled,
     termsAndConditions: config.termsAndConditions ?? null,
     privacyPolicy: config.privacyPolicy ?? null,
   });
@@ -173,15 +168,6 @@ export default function DrawersConfiguracion({
         descripcion="Título y descripción para buscadores"
       >
         <SeccionSeo config={aConfigAjustes()} />
-      </DrawerSeccion>
-
-      <DrawerSeccion
-        abierto={drawerAbierto === "paginas-sitio"}
-        alCerrar={alCerrar}
-        titulo="Páginas del sitio"
-        descripcion="Mostrá u ocultá secciones especiales"
-      >
-        <SeccionPaginasSitio config={aConfigAjustes()} />
       </DrawerSeccion>
 
       <DrawerSeccion

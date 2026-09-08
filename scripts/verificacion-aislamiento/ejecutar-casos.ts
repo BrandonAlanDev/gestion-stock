@@ -126,15 +126,7 @@ export async function ejecutarCasos(contexto: ContextoVerificacion): Promise<Res
     afirmar(cuentas.every((cuenta) => cuenta.tenantId === cuenta.user.tenantId), "Existe Account A vinculada con User B");
     afirmar(!await cliente.account.findFirst({ where: { tenantId: tenantA, providerAccountId: "google-no-asociado" } }), "Cuenta Google no asociada apareció vinculada");
   });
-  await caso("14. Puentes M:N", async () => {
-    const tipo = await cliente.boardTypeOption.create({ data: { tenantId: tenantA, name: "Tipo prueba" } });
-    const cola = await cliente.boardTailOption.create({ data: { tenantId: tenantA, name: "Cola prueba" } });
-    await cliente.boardTypeTailOption.create({ data: { tenantId: tenantA, boardTypeId: tipo.id, tailId: cola.id } });
-    const puentes = await cliente.boardTypeTailOption.findMany({ where: { tenantId: tenantA }, include: { boardType: true, tail: true } });
-    afirmar(puentes.length === 1, "El conteo de puentes M:N es incorrecto");
-    afirmar(puentes.every((puente) => puente.tenantId === puente.boardType.tenantId && puente.tenantId === puente.tail.tenantId), "Hay pares M:N huérfanos o cruzados");
-  });
-  await caso("15. Proveedores exige ADMIN", async () => {
+  await caso("14. Proveedores exige ADMIN", async () => {
     const codigo = await leerCodigo("src", "actions", "proveedores", "obtener-proveedores.ts");
     afirmar(codigo.includes("requiereAdmin()"), "getProviders no exige una sesión ADMIN");
     afirmar(!codigo.includes("requiereTenantActivo()"), "getProviders acepta un usuario público");

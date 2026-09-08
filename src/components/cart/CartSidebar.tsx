@@ -2,10 +2,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "@/contextos/carrito/use-carrito";
-import type { ItemCarrito } from "@/contextos/carrito/tipos-carrito";
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
-import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface CartSidebarProps {
@@ -14,8 +12,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, updateCartItemSpecs } = useCart();
-  const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
+  const { cartItems } = useCart();
 
   useBloqueoScroll(isOpen);
 
@@ -24,17 +21,13 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingItem) {
-          setEditingItem(null);
-          return;
-        }
         onClose();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingItem, isOpen, onClose]);
+  }, [isOpen, onClose]);
 
   const subtotal = useMemo(() =>
     cartItems.reduce((acc: number, item) => acc + (Number(item.price) * item.qty), 0),
@@ -46,13 +39,6 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     cartItems.forEach((item) => {
       message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
-
-      // Si el producto tiene especificaciones (specs), las agregamos al mensaje
-      if (item.esTabla && item.specs) {
-        Object.entries(item.specs).forEach(([key, value]) => {
-          if (value) message += `   - ${key}: ${value}\n`;
-        });
-      }
       message += "\n";
     });
 
@@ -94,9 +80,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex-1 overflow-y-auto space-y-3">
               {cartItems.map((item) => (
                 <FilaItemCarrito
-                  key={`${item.id}-${JSON.stringify(item.specs)}`}
+                  key={`${item.id}-${item.uid}`}
                   item={item}
-                  onEdit={() => setEditingItem(item)}
                 />
               ))}
             </div>
@@ -117,17 +102,6 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {editingItem && (
-        <WhatsAppOrderForm
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onSave={(id, specs) => {
-            updateCartItemSpecs(String(id), specs);
-            setEditingItem(null);
-          }}
-        />
-      )}
     </>
   );
 }

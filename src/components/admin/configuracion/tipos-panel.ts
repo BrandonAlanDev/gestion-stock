@@ -9,6 +9,5 @@ export type ClaveDrawer =
   | "mantenimiento"
   | "avanzado"
   | "seo"
-  | "paginas-sitio"
   | "legal"
   | "footer";

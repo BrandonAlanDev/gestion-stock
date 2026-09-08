@@ -7,10 +7,6 @@ export interface ConfigAjustes {
   currency: string;
   language: string;
   maintenanceMode: boolean;
-  arreglosEnabled: boolean;
-  escuelaEnabled: boolean;
-  personalizadoEnabled: boolean;
-  planAhorroEnabled: boolean;
   termsAndConditions: string | null;
   privacyPolicy: string | null;
 }

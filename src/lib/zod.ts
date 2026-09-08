@@ -244,10 +244,6 @@ export const carouselWizardSchema = z.object({
 });
 
 export const flagsPaginaSchema = z.object({
-  arreglosEnabled: z.boolean().optional(),
-  escuelaEnabled: z.boolean().optional(),
-  personalizadoEnabled: z.boolean().optional(),
-  planAhorroEnabled: z.boolean().optional(),
   maintenanceMode: z.boolean().optional(),
 });
 
