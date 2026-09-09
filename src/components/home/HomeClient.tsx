@@ -7,7 +7,7 @@ import BannerLayout from "@/components/carousel/layouts/banner/BannerLayout";
 import CardsLayout from "@/components/carousel/layouts/cards/CardsLayout";
 import ShowcaseLayout from "@/components/carousel/layouts/hero/ShowcaseLayout";
 import AllCarousels from "@/components/carousel/AllCarousels";
-import ProductLayout from "@/components/providers/products/layouts/ProductLayout";
+import FeaturedSection from "@/components/home/FeaturedSection";
 import LocationCard from "@/components/ui/LocationCard";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getSectionMt } from "@/lib/section-mt";
@@ -37,6 +37,18 @@ interface CarouselData {
     [key: string]: unknown;
   };
   slides: CarouselSlide[];
+}
+
+interface HomegridRender {
+  id?: string;
+  title?: string | null;
+  subtitle?: string | null;
+  style?: string;
+  columns?: number | null;
+  active?: boolean;
+  featuredLayout?: string | null;
+  grids?: Array<Record<string, unknown>>;
+  [k: string]: unknown;
 }
 
 interface HomeClientProps {
@@ -82,6 +94,8 @@ function renderCarousel(carousel: CarouselData, storeName?: string) {
   }
 }
 
+const PREFIJO_DESTACADA = "featured_";
+
 export default function HomeClient({ pageConfig }: HomeClientProps) {
   const tenantId = useTenantId();
   const { pageConfig: contextConfig } = usePageConfig();
@@ -91,6 +105,12 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
 
   const sectionOrder = parseSectionOrder(config?.sectionOrder);
   const hasCustomOrder = sectionOrder.length > 0;
+
+  const homegridPorId = useMemo(() => {
+    const homegrids =
+      (config?.homegrids as Array<Record<string, unknown>> | undefined) || [];
+    return new Map(homegrids.map((h) => [String(h.id), h as HomegridRender]));
+  }, [config]);
 
   const carousels = (config?.carousels as CarouselData[]) || [];
   const heroSettings = carousels.find(c => c.type === "HERO")?.settings as Record<string, unknown> | undefined;
@@ -130,6 +150,10 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
       if (c.settings?.heroStyle === "SHOWCASE") return "showcase";
       return (c.settings?.slideLayout as string) || "default";
     }
+    if (section.startsWith(PREFIJO_DESTACADA)) {
+      const hg = homegridPorId.get(section.slice(PREFIJO_DESTACADA.length));
+      return (hg?.featuredLayout as string | undefined) || "GRID";
+    }
     switch (section) {
       case "hero":
         if (heroSettings?.heroStyle === "SHOWCASE") return "showcase";
@@ -149,6 +173,12 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
       const carousel = carouselMap.get(id);
       if (!carousel) return null;
       return renderCarousel(carousel, config?.storeName as string);
+    }
+
+    if (section.startsWith(PREFIJO_DESTACADA)) {
+      const hg = homegridPorId.get(section.slice(PREFIJO_DESTACADA.length));
+      if (!hg || hg.active === false) return null;
+      return <FeaturedSection key={section} homegrid={hg} />;
     }
 
     switch (section) {
@@ -171,11 +201,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
           </section>
         );
       case "featured":
-        return (
-          <section key="featured">
-            <ProductLayout />
-          </section>
-        );
+        return <FeaturedSection key="featured" homegrid={config?.homegrid as HomegridRender | undefined} />;
       case "cards":
         return (
           <section key="cards" className="carousel-container">
@@ -224,9 +250,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
         <>
           <AllCarousels storeName={config?.storeName as string} />
 
-          <section className={getSectionMt("featured", getSubtype("featured")) > 0 ? `mt-${getSectionMt("featured", getSubtype("featured"))}` : ''}>
-            <ProductLayout />
-          </section>
+          <FeaturedSection homegrid={config?.homegrid as HomegridRender | undefined} />
 
           {showLocation && (
             <section

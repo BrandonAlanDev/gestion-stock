@@ -440,12 +440,13 @@ model Homegrid {
   title       String
   subtitle    String
   style       Int
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  columns     String       @default("md:grid-cols-2")
-  grids       Grid[]
-  pageConfigs PageConfig[]
+  active           Boolean                        @default(true)
+  featuredLayout   PageConfig_featuredLayout      @default(GRID)
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+  columns          String                         @default("md:grid-cols-2")
+  grids            Grid[]
+  pageConfigs      PageConfig[]
 
   @@index([tenantId, active])
 }

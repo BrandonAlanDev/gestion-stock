@@ -39,6 +39,7 @@ import SeccionPaginaDinamica from "./SeccionPaginaDinamica";
 import type { PaginaDinamicaEstructura } from "./tipos-estructura";
 
 const PREFIJO_CARRUSEL = "carousel_";
+const PREFIJO_DESTACADA = "featured_";
 
 const ETIQUETAS_TIPO: Record<Carousel["type"], string> = {
   HERO: "Portada principal",
@@ -75,6 +76,11 @@ export default function EditorEstructura({
     [carousels]
   );
 
+  const homegridPorId = useMemo(
+    () => new Map(config.homegrids.map((h) => [h.id, h])),
+    [config.homegrids]
+  );
+
   useEffect(() => {
     let activo = true;
     const cargar = async () => {
@@ -84,7 +90,7 @@ export default function EditorEstructura({
         if (res.success && res.data) {
           const datos = res.data as Carousel[];
           setCarousels(datos);
-          setFilas(normalizarSecciones(datos, config.sectionOrder));
+          setFilas(normalizarSecciones(datos, config.sectionOrder, config.homegrids));
         } else {
           toast.error(res.error);
         }
@@ -98,7 +104,7 @@ export default function EditorEstructura({
     return () => {
       activo = false;
     };
-  }, [config.sectionOrder]);
+  }, [config.sectionOrder, config.homegrids]);
 
   const handleDragEnd = async (evento: DragEndEvent) => {
     const { active, over } = evento;
@@ -121,6 +127,24 @@ export default function EditorEstructura({
   };
 
   const resolverFila = (id: string) => {
+    if (id.startsWith(PREFIJO_DESTACADA)) {
+      const hg = homegridPorId.get(id.slice(PREFIJO_DESTACADA.length));
+      if (!hg) return null;
+      const cantidad = hg.grids.length;
+      return (
+        <FilaSeccion
+          key={id}
+          id={id}
+          icono={Grid2X2}
+          titulo={hg.title?.trim() ? hg.title : "Sección destacada"}
+          detalle={cantidad ? `${cantidad} tarjetas` : "Sin configurar"}
+          varianteBadge={cantidad ? "activo" : "sin-configurar"}
+          textoBadge={cantidad ? "Visible" : "Sin configurar"}
+          alEditar={() => router.push("/admin/design/contenido")}
+        />
+      );
+    }
+
     if (id === "featured") {
       const cantidad = config.homegrid?.grids.length ?? 0;
       return (

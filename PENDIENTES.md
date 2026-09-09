@@ -1507,3 +1507,158 @@ REGLAS ANTES DE BORRAR CADA ARCHIVO: ejecutar un grep del nombre del archivo/exp
 | MEDIO | React | `CartContext.tsx:58` | Value sin memo | Bloque 8 |
 | MEDIO | Prisma | schema | Índices faltantes | Bloque 9 |
 | BAJO | Código | ~2.900 líneas muertas | Limpieza | Bloque 11 |
+
+---
+
+# BLOQUE 12 — Sección destacada: título opcional y múltiples instancias
+
+> **Contexto**: hoy `/admin/design/contenido` trata a "Sección destacada" como una sección ÚNICA y global del Home (id fijo `"featured"` en `sectionOrder`, una sola `Homegrid` por página vía `pageConfig.homegridId`, layout global en `PageConfig.featuredLayout` y título cuasi-obligatorio con defaults `"Home Destacado"` / `"CATALOGO Y SERVICIOS"`). Objetivo: convertirla en un **bloque reutilizable y múltiple**, permitiendo combinar libremente Banner + varias Secciones destacadas + Categorías + Categorías/Ubicación en el Home, cada una independiente (crear, editar, ocultar, mostrar, duplicar, eliminar, ordenar) y con **título opcional** (sin defaults ni espacios vacíos).
+
+> **Decisiones aprobadas**: (1) **Reutilizar el modelo `Homegrid`** como instancia de Sección destacada. (2) **Mantener retrocompatibilidad** con la instancia única existente.
+
+> **Reglas del proyecto (AGENTS.md) que aplican**: código/comentarios/UI en español; una función exportada por archivo (EXCEPTO archivos CRUD de actions, tipo serpiente); archivos ≤400 líneas; imports con `@/`; prohibido `any`; los archivos nuevos van en su carpeta de dominio. No romper secciones existentes ni el contenido configurado.
+
+---
+
+## 12.0 DIAGNÓSTICO (por qué es única y con título obligatorio)
+
+| Causa | Ubicación |
+|---|---|
+| Id fijo `"featured"` en `sectionOrder` (una sola instancia) | `src/components/admin/diseno/contenido/normalizarSecciones.ts:28`, `src/components/admin/diseno/contenido/use-gestor-contenido.ts:155`, `src/components/admin/diseno/contenido/GestorContenido.tsx:105`, `src/components/home/HomeClient.tsx:137,173` |
+| Botón "Sección destacada" se DESHABILITA si ya existe | `src/components/admin/diseno/contenido/MenuAgregarSeccion.tsx:18,75-78` |
+| `pageConfig.homegridId` → sola `Homegrid`; `getPageConfig` selecciona UN único `homegrid` | `prisma/schema.prisma:345,362`, `src/actions/page-config/general.actions.ts:72` |
+| Título: `updateHomeGrids` fuerza `title \|\| "Home Destacado"` al crear; `HomeSectionsDesign` pre-llena "Home Destacado" | `src/actions/page-config/home.actions.ts:81,104`, `src/components/admin/design/HomeSectionsDesign.tsx:144,170` |
+| Home renderiza UN único `<ProductLayout/>` con título fijo (fallback `"CATALOGO Y SERVICIOS"`) en `<h2>` | `src/components/home/HomeClient.tsx:176`, `src/components/home/FeaturedSection.jsx:35` |
+
+---
+
+## 12.1 MODELO DE DATOS
+
+**`prisma/schema.prisma`** — modelo `Homegrid`:
+
+```prisma
+model Homegrid {
+  id            String       @id @default(cuid())
+  tenantId      String
+  title         String
+  subtitle      String
+  style         Int
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  columns       String       @default("md:grid-cols-2")
++  featuredLayout PageConfig_featuredLayout @default(GRID)   // NUEVA columna: layout por instancia
+  grids         Grid[]
+  pageConfigs   PageConfig[]
+
+  @@index([tenantId, active])
+}
+```
+
+**Notas**:
+- `Homegrid.title` se mantiene como `String` (obligatorio a nivel BD), pero la UI puede guardar `""` (vacío). No se agrega valor por defecto.
+- La columna `PageConfig.featuredLayout` y `PageConfig.homegridId` quedan como **retrocompat** (la instancia única existente sigue funcionando); el layout de las nuevas instancias vive en `Homegrid.featuredLayout`.
+
+**Migración** — nuevo archivo `prisma/migrations/<timestamp>_secciones_destacadas_multiple/migration.sql`:
+
+```sql
+ALTER TABLE `Homegrid` ADD COLUMN `featuredLayout` ENUM('GRID','COLLAGE','MINIMAL') NOT NULL DEFAULT 'GRID';
+```
+
+> La build (`npm run build`) ejecuta `prisma generate && prisma db push --accept-data-loss`, así que el cliente se regenera. Si el entorno usa migraciones, aplicar la nueva migración.
+
+---
+
+## 12.2 ACCIONES SERVER
+
+**Nuevo archivo** `src/actions/page-config/secciones-destacadas.actions.ts` (multi-función permitida por ser CRUD/serpiente) con:
+
+- `crearSeccionDestacada()` → crea `Homegrid` (`tenantId`, `title: ""`, `featuredLayout: "GRID"`, `active: true`) e inserta `featured_<id>` en `sectionOrder` ANTES de la sección `location` (si existe, si no al final). Revalida tag `page-config:<tenantId>` y `revalidatePath("/")`. Retorna `{ ok, homegridId }`.
+- `actualizarSeccionDestacada(homegridId, grids, title, featuredLayout)` → valida que la `Homegrid` pertenezca a la tienda activa; actualiza `Homegrid.title` tal cual (puede ser vacío, SIN default), `Homegrid.featuredLayout` (si viene), y reemplaza sus `Grid`s. Reutiliza la lógica de subida/limpieza Cloudinary (`obtenerCarpetaGrids`, `subirImagen`, `eliminarImagenes`, `obtenerPublicIdDesdeUrl`) y el `obtenerCarpetaGrids(contexto.tenantId, homegridId)`. NO depende de `pageConfig.homegridId`. Retorna `{ ok, homegridId }`.
+- `alternarVisibilidadSeccionDestacada(homegridId)` → toggle `Homegrid.active`. Retorna `{ ok, activo }`.
+- `duplicarSeccionDestacada(homegridId)` → clona `Homegrid` (title + " (copia)" o igual, `active: true`, mismo layout) + clona sus `Grid`s, agrega `featured_<nuevoId>` al `sectionOrder`. Retorna `{ ok, homegridId }`.
+- `eliminarSeccionDestacada(homegridId)` → borra la `Homegrid` (cascade Grids), limpia imágenes Cloudinary de sus grids, y quita `featured_<id>` del `sectionOrder`. Retorna `{ ok }`.
+
+**Refactor** `src/actions/page-config/home.actions.ts`:
+- `updateHomeGrids(homegridId, grids, title)`: dejar de usar `pageConfig.homegridId` como restricción única; SIEMPRE requiere `homegridId` (una instancia concreta); guardar `title` tal cual (quitar `title || "Home Destacado"`). Queda como función retrocompat que `HomeSectionsDesign` dejará de usar (se reemplaza por `actualizarSeccionDestacada`).
+- `updateSectionVisibility({ featuredLayout })`: se deja para retrocompat (layout global). Las nuevas instancias usan su propio layout.
+
+---
+
+## 12.3 ADMIN `/admin/design/contenido`
+
+1. `src/components/admin/diseno/contenido/tipos-contenido.ts`:
+   - `HomegridContenido` suma `active: boolean` y `featuredLayout: string | null`.
+   - `ConfigContenido` suma `homegrids: HomegridContenido[]` (array). Se conservan `homegrid` y `featuredLayout` para retrocompat.
+
+2. `src/app/admin/design/contenido/page.tsx` y `src/app/admin/design/estructura/page.tsx`:
+   - Poblar `homegrids` con TODAS las `Homegrid` de la tienda (id, title, active, featuredLayout, grids) además del `homegrid`/`featuredLayout` actuales. La data sale de `getPageConfig()` de `general.actions.ts` (ver 12.4).
+
+3. `src/components/admin/diseno/contenido/normalizarSecciones.ts`:
+   - Constante de prefijo `featured_` para ids de secciones (`featured_<homegridId>`), análoga a `carousel_`.
+   - `normalizarSecciones(carousels, rawOrder, homegrids?)`: migrar un `"featured"` suelto → `featured_<homegridId>` (la actual) para retrocompat; insertar las instancias activas ausentes (en la posición de `featured`, antes de `location`); mantener el orden guardado.
+
+4. `src/components/admin/diseno/contenido/use-gestor-contenido.ts`:
+   - Reemplazar `toggleSeccionFija("featured")` por `agregarSeccionDestacada()` (crea instancia y agrega `featured_<id>` al orden).
+   - Agregar handlers por instancia: `editarSeccionDestacada(homegridId)`, `duplicarDestacada(homegridId)`, `alternarVisibilidadDestacada(homegridId)`, `eliminarDestacada(homegridId)`.
+   - `filas` contempla `featured_<id>`.
+
+5. `src/components/admin/diseno/contenido/GestorContenido.tsx`:
+   - `resolverFila("featured_<id>")`: buscar la instancia en `config.homegrids`; mostrar título real (o "Sección destacada" si vacío) y `${n} tarjetas` / "Sin configurar"; acciones: editar, duplicar, ocultar/mostrar, eliminar (igual que con carruseles). El `alEditar` abre `DrawerSeccionDestacada` con `homegridId`.
+   - Secciones ocultas: listar las instancias con `active === false` en el bloque "Secciones ocultas".
+
+6. `src/components/admin/diseno/contenido/MenuAgregarSeccion.tsx`:
+   - Quitar el flag `deshabilitado` de "Sección destacada" (siempre disponible; cada clic crea una nueva instancia). Quitar `destacadaAgregada` del componente (o dejarlo sin uso en la firma).
+
+7. `src/components/admin/diseno/contenido/DrawerSeccionDestacada.tsx`:
+   - Aceptar `homegridId: string | null`; resolver la instancia en `config.homegrids` y pasarla a `HomeSectionsDesign` como `homegrid` (instancia) + `featuredLayout` de esa instancia.
+
+8. `src/components/admin/design/HomeSectionsDesign.tsx`:
+   - Cambiar props: en vez de `config.homegrid` (único) usar una instancia específica `{ id, title, grids }` + su `featuredLayout`. Inicializar el título con `homegrid?.title ?? ""` (SIN default). Al guardar llamar a `actualizarSeccionDestacada(id, grids, title, layout)` (nueva action), sin forzar título.
+
+9. `src/components/admin/diseno/estructura/EditorEstructura.tsx`, `src/components/admin/diseno/BloqueContenido.tsx` y `src/components/admin/diseno/ResumenDiseno.tsx`:
+   - Contemplar `featured_<id>` en `resolverFila`; `BloqueContenido`/`ResumenDiseno` muestran el TOTAL de tarjetas sumando todas las instancias (o el número de instancias) en lugar de `homegrid?.grids.length`.
+
+---
+
+## 12.4 HOME PÚBLICO
+
+1. `src/actions/page-config/general.actions.ts`:
+   - Además del `homegrid` (único, retrocompat), devolver `homegrids`: todas las `Homegrid` de la tienda con `id`, `title`, `active`, `featuredLayout`, `columns` y sus `grids` ordenados. Exponerlo en el objeto `pageConfig`.
+
+2. `src/components/home/HomeClient.tsx`:
+   - Para un id `featured_<id>`: buscar la instancia en la lista `homegrids`; si `active`, renderizar `<FeaturedSection homegrid={instancia} />`. `getSubtype("featured_<id>")` devuelve el `featuredLayout` de esa instancia. Si la instancia no está activa, no renderizarla.
+   - Para el `"featured"` suelto (retrocompat): resolver a la `homegrid` única (`config.homegrid`).
+   - Sacar el `case "featured": return <ProductLayout />` global y reemplazarlo por el render de instancia.
+
+3. `src/components/home/FeaturedSection.jsx`:
+   - Aceptar la instancia por props (`{ homegrid }`): `const layout = homegrid?.featuredLayout?.toLowerCase() || "grid"`; `const categories = (homegrid?.grids || []).map(mapGridToCard)`.
+   - Renderizar el `<h2>` SOLO si `homegrid?.title` no está vacío (sin fallback "CATALOGO Y SERVICIOS"). `return null` si no hay grids (una instancia recién creada no aparece hasta configurarse).
+
+4. `src/components/providers/products/layouts/ProductLayout.jsx`:
+   - Pasa a ser opcional/retrocompat; si se sigue usando, aceptar la instancia por prop y delegar a `FeaturedSection`. La fuente de verdad para las instancias es `HomeClient`.
+
+---
+
+## 12.5 VERIFICACIÓN (checklist del usuario)
+
+- [ ] Crear Sección destacada SIN título → guarda y persiste correctamente (sin default "Home Destacado").
+- [ ] Verla en el Home → aparece SIN bloque de título (sin espacio vacío).
+- [ ] Crear una 2ª Sección destacada → ambas coexisten.
+- [ ] Crear una 3ª → también coexisten (3 instancias independientes).
+- [ ] Editar una → NO modifica las demás.
+- [ ] Cambiar el orden → se respeta en el Home (DnD).
+- [ ] Ocultar una → se oculta SOLO esa instancia (bloque "Secciones ocultas").
+- [ ] Volver a mostrarla → vuelve a aparecer correctamente.
+- [ ] Eliminar una → NO afecta las demás.
+- [ ] Duplicar una → crea una copia independiente.
+- [ ] Home con mix Banner + destacada con título + destacada sin título + Categorías + otra destacada → orden respetado.
+
+## 12.6 COMANDOS DE VERIFICACIÓN
+
+```
+npm run lint
+npm run build   (regenera cliente Prisma + db push)
+```
+
+**Flujo de trabajo (según AGENTS.md)**: subagentes en paralelo — (A) modelo+acciones, (B) UI admin contenido, (C) home público — y luego un agente VERIFICADOR global que revise TODO lo producido, detecte violaciones de reglas (idioma, ≤400 líneas, una export, imports `@/`, sin `any`) y las repare. Su aprobación cierra el bloque.

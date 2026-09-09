@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Homegrid` ADD COLUMN `featuredLayout` ENUM('GRID', 'COLLAGE', 'MINIMAL') NOT NULL DEFAULT 'GRID';
