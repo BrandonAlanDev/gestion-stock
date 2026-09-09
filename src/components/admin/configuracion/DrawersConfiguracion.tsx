@@ -14,20 +14,24 @@ import LocationSection from "@/components/admin/page-config/LocationSection";
 import SocialsSection from "@/components/admin/page-config/SocialsSection";
 import DrawerSeccion from "./DrawerSeccion";
 import PanelAvanzado from "./PanelAvanzado";
+import SeccionMercadoPago from "./SeccionMercadoPago";
 import SeccionWhatsApp from "./SeccionWhatsApp";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
+import type { EstadoConexionMP } from "@/types/mercadopago";
 
 interface DrawersConfiguracionProps {
   config: ConfigCompleta;
   drawerAbierto: ClaveDrawer | null;
   alCerrar: () => void;
+  estadoMercadoPago: EstadoConexionMP;
 }
 
 export default function DrawersConfiguracion({
   config,
   drawerAbierto,
   alCerrar,
+  estadoMercadoPago,
 }: DrawersConfiguracionProps) {
   const aConfigApariencia = (): ConfigApariencia => ({
     storeName: config.storeName,
@@ -150,6 +154,15 @@ export default function DrawersConfiguracion({
         descripcion="Recibí pedidos por WhatsApp"
       >
         <SeccionWhatsApp config={config} />
+      </DrawerSeccion>
+
+      <DrawerSeccion
+        abierto={drawerAbierto === "mercadopago"}
+        alCerrar={alCerrar}
+        titulo="Mercado Pago"
+        descripcion="Conectá tu cuenta para cobrar online"
+      >
+        <SeccionMercadoPago estadoInicial={estadoMercadoPago} />
       </DrawerSeccion>
 
       <DrawerSeccion

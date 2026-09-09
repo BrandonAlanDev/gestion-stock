@@ -16,15 +16,17 @@ enum TenantEstado {
 }
 
 model Tenant {
-  id        String       @id @default(cuid())
-  nombre    String
-  slug      String       @unique
-  dominio   String?      @unique
-  estado    TenantEstado @default(ACTIVO)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  accounts  account[]
-  users     user[]
+  id               String              @id @default(cuid())
+  nombre           String
+  slug             String              @unique
+  dominio          String?             @unique
+  estado           TenantEstado        @default(ACTIVO)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  accounts         account[]
+  users            user[]
+  cuentaMercadoPago CuentaMercadoPago?
+  pedidos          Pedido[]
 }
 
 model account {
@@ -63,6 +65,7 @@ model user {
   telefono      String?
   account       account[]
   tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  pedidos       Pedido[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -572,4 +575,80 @@ model CarouselSlide {
 
   @@unique([carouselId, order])
   @@index([tenantId, carouselId])
+}
+
+/* ============================================================================
+   Mercado Pago + Pedidos
+   ============================================================================ */
+
+model CuentaMercadoPago {
+  id                    String   @id @default(cuid())
+  tenantId              String   @unique
+  accessToken           String   @db.Text
+  refreshToken          String?  @db.Text
+  publicKey             String?
+  mpUserId              String?
+  scope                 String?  @db.Text
+  liveMode              Boolean  @default(false)
+  conectado             Boolean  @default(true)
+  expiraEn              DateTime?
+  nombreNegocio         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Pedido {
+  id             String           @id @default(cuid())
+  tenantId       String
+  userId         String
+  estado         PedidoEstado     @default(PENDIENTE)
+  estadoPago     PedidoEstadoPago @default(PENDIENTE)
+  total          Decimal          @db.Decimal(10, 2)
+  moneda         String           @default("ARS")
+  nombreCliente  String?
+  emailCliente   String?
+  mpPreferenceId String?
+  mpPaymentId    String?
+  metodoPago     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  user           user             @relation(fields: [userId], references: [id])
+  items          PedidoItem[]
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+}
+
+model PedidoItem {
+  id             String   @id @default(cuid())
+  pedidoId       String
+  tenantId       String
+  garmentId      String
+  variantId      String
+  nombre         String
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  cantidad       Int
+  subtotal       Decimal  @db.Decimal(10, 2)
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+  @@index([tenantId])
+}
+
+enum PedidoEstado {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+}
+
+enum PedidoEstadoPago {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  CANCELADO
+  EN_ACREDITACION
 }

@@ -1,10 +1,16 @@
 "use client";
+
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, ShoppingBag, ArrowRight, Loader2, MessageCircle } from "lucide-react";
 import { useCart } from "@/contextos/carrito/use-carrito";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { toast } from "sonner";
 import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
+import { crearPedidoPago } from "@/actions/pago/crear-pedido-pago";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -13,6 +19,10 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { cartItems } = useCart();
+  const router = useRouter();
+  const { status } = useSession();
+  const { pageConfig } = usePageConfig();
+  const [pendiente, startTransicion] = useTransition();
 
   useBloqueoScroll(isOpen);
 
@@ -34,6 +44,35 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     [cartItems]
   );
 
+  const handleMercadoPagoCheckout = () => {
+    if (status !== "authenticated") {
+      router.push(`/login?callbackUrl=${encodeURIComponent("/")}`);
+      return;
+    }
+
+    const items = cartItems
+      .filter((item) => item.variantId)
+      .map((item) => ({
+        productId: item.id,
+        variantId: item.variantId as string | number,
+        cantidad: item.qty,
+      }));
+
+    if (!items.length) {
+      toast.error("El carrito está vacío");
+      return;
+    }
+
+    startTransicion(async () => {
+      const resultado = await crearPedidoPago(items);
+      if (!resultado.ok) {
+        toast.error(resultado.error);
+        return;
+      }
+      window.location.href = resultado.checkoutUrl;
+    });
+  };
+
   const handleWhatsAppCheckout = () => {
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
@@ -44,8 +83,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     message += `*TOTAL: $${subtotal.toLocaleString()}*`;
 
-    const phone = "2235644043";
-    //const phone = pageConfig?.whatsapp || "2235644043";
+    const phone = (
+      typeof pageConfig?.whatsapp === "string" ? pageConfig.whatsapp : "2235644043"
+    ).replace(/[^\d]/g, "");
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -86,16 +126,31 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               ))}
             </div>
 
-            <div className="border-t pt-4 mt-4" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
-              <div className="flex justify-between font-bold mb-4">
+            <div className="border-t pt-4 mt-4 space-y-3" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
+              <div className="flex justify-between font-bold mb-2">
                 <span>Total</span> <span>${subtotal.toLocaleString()}</span>
               </div>
               <button
-                onClick={handleWhatsAppCheckout}
-                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                onClick={handleMercadoPagoCheckout}
+                disabled={pendiente || cartItems.length === 0}
+                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
-                Finalizar Pedido <ArrowRight size={16} />
+                {pendiente ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                Pagar con Mercado Pago
+              </button>
+              <button
+                onClick={handleWhatsAppCheckout}
+                disabled={cartItems.length === 0}
+                className="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--texto-sobre-secundario) 8%, transparent)",
+                  color: "var(--texto-sobre-secundario)",
+                  border: "1px solid color-mix(in srgb, var(--texto-sobre-secundario) 20%, transparent)",
+                }}
+              >
+                <MessageCircle size={16} />
+                Pedir por WhatsApp
               </button>
             </div>
           </motion.div>

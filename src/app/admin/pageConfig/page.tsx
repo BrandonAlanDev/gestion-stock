@@ -1,10 +1,12 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
+import { obtenerEstadoConexionMP } from "@/actions/mercadopago/estado-conexion";
 import PanelConfiguracion from "@/components/admin/configuracion/PanelConfiguracion";
 import type { ConfigCompleta } from "@/components/admin/configuracion/tipos-configuracion";
 
 export default async function PageConfigPage() {
   const resultado = await getPageConfig();
   const pageConfig = resultado.ok ? resultado.pageConfig : null;
+  const estadoMercadoPago = await obtenerEstadoConexionMP();
 
   const config: ConfigCompleta | null = pageConfig
     ? {
@@ -64,5 +66,5 @@ export default async function PageConfigPage() {
       }
     : null;
 
-  return <PanelConfiguracion config={config} />;
+  return <PanelConfiguracion config={config} estadoMercadoPago={estadoMercadoPago} />;
 }
