@@ -1,16 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, ArrowRight, Loader2, MessageCircle } from "lucide-react";
+import { X, ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
 import { useCart } from "@/contextos/carrito/use-carrito";
-import { useMemo, useEffect, useTransition } from "react";
+import { useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { toast } from "sonner";
 import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
-import { crearPedidoPago } from "@/actions/pago/crear-pedido-pago";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -22,7 +20,6 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const router = useRouter();
   const { status } = useSession();
   const { pageConfig } = usePageConfig();
-  const [pendiente, startTransicion] = useTransition();
 
   useBloqueoScroll(isOpen);
 
@@ -44,33 +41,13 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     [cartItems]
   );
 
-  const handleMercadoPagoCheckout = () => {
+  const handleIrAlCheckout = () => {
     if (status !== "authenticated") {
-      router.push(`/login?callbackUrl=${encodeURIComponent("/")}`);
+      router.push(`/login?callbackUrl=${encodeURIComponent("/checkout")}`);
       return;
     }
-
-    const items = cartItems
-      .filter((item) => item.variantId)
-      .map((item) => ({
-        productId: item.id,
-        variantId: item.variantId as string | number,
-        cantidad: item.qty,
-      }));
-
-    if (!items.length) {
-      toast.error("El carrito está vacío");
-      return;
-    }
-
-    startTransicion(async () => {
-      const resultado = await crearPedidoPago(items);
-      if (!resultado.ok) {
-        toast.error(resultado.error);
-        return;
-      }
-      window.location.href = resultado.checkoutUrl;
-    });
+    onClose();
+    router.push("/checkout");
   };
 
   const handleWhatsAppCheckout = () => {
@@ -131,13 +108,13 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 <span>Total</span> <span>${subtotal.toLocaleString()}</span>
               </div>
               <button
-                onClick={handleMercadoPagoCheckout}
-                disabled={pendiente || cartItems.length === 0}
+                onClick={handleIrAlCheckout}
+                disabled={cartItems.length === 0}
                 className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
-                {pendiente ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                Pagar con Mercado Pago
+                <ArrowRight size={16} />
+                Continuar al checkout
               </button>
               <button
                 onClick={handleWhatsAppCheckout}

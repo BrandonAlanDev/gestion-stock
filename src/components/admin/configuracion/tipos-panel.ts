@@ -7,6 +7,7 @@ export type ClaveDrawer =
   | "tienda"
   | "whatsapp"
   | "mercadopago"
+  | "pagos"
   | "mantenimiento"
   | "avanzado"
   | "seo"

@@ -27,6 +27,8 @@ model Tenant {
   users            user[]
   cuentaMercadoPago CuentaMercadoPago?
   pedidos          Pedido[]
+  metodosPago      MetodoPago[]
+  payments         Payment[]
 }
 
 model account {
@@ -618,6 +620,7 @@ model Pedido {
   tenant         Tenant           @relation(fields: [tenantId], references: [id])
   user           user             @relation(fields: [userId], references: [id])
   items          PedidoItem[]
+  payments       Payment[]
 
   @@index([tenantId, createdAt])
   @@index([userId])
@@ -651,4 +654,40 @@ enum PedidoEstadoPago {
   RECHAZADO
   CANCELADO
   EN_ACREDITACION
+}
+
+model MetodoPago {
+  id        String   @id @default(cuid())
+  tenantId  String
+  metodo    String // Identificador: "mercadopago" | "transferencia" | ...
+  activo    Boolean  @default(false)
+  config    Json? // Configuración propia del método (ej. instrucciones de transferencia)
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, metodo])
+  @@index([tenantId, activo])
+}
+
+model Payment {
+  id         String           @id @default(cuid())
+  tenantId   String
+  pedidoId   String
+  proveedor  String // "mercadopago" | "transferencia" | ...
+  metodo     String
+  externalId String? // ID externo en la pasarela (mpPaymentId, etc.)
+  estado     PedidoEstadoPago @default(PENDIENTE)
+  monto      Decimal          @db.Decimal(10, 2)
+  moneda     String           @default("ARS")
+  metadata   Json?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  pedido     Pedido           @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+  @@index([tenantId])
+  @@index([tenantId, proveedor])
 }

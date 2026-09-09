@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { intercambiarCodigoPorToken } from "@/lib/mercadopago/intercambiar-codigo";
-import { guardarCuentaMP } from "@/lib/mercadopago/guardar-cuenta";
+import { proveedorMercadoPago } from "@/lib/pagos/proveedores/mercadopago/mercadopago-proveedor";
 
 /** Secreto para verificar la firma del state. Debe ser idéntico al usado en start. */
 function obtenerSecretoFirma(tenantId: string): string {
@@ -70,8 +69,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const tokens = await intercambiarCodigoPorToken(codigo, codeVerifier);
-    await guardarCuentaMP(contexto.tenantId, tokens, { conectado: true });
+    await proveedorMercadoPago.manejarCallback(
+      contexto.tenantId,
+      codigo,
+      codeVerifier,
+    );
 
     url.searchParams.set("mp_success", "1");
     const respuesta = NextResponse.redirect(url);

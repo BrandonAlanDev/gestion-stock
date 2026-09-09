@@ -16,6 +16,7 @@ import DrawerSeccion from "./DrawerSeccion";
 import PanelAvanzado from "./PanelAvanzado";
 import SeccionMercadoPago from "./SeccionMercadoPago";
 import SeccionWhatsApp from "./SeccionWhatsApp";
+import SeccionMetodosPago from "@/components/admin/pagos/SeccionMetodosPago";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
 import type { EstadoConexionMP } from "@/types/mercadopago";
@@ -163,6 +164,15 @@ export default function DrawersConfiguracion({
         descripcion="Conectá tu cuenta para cobrar online"
       >
         <SeccionMercadoPago estadoInicial={estadoMercadoPago} />
+      </DrawerSeccion>
+
+      <DrawerSeccion
+        abierto={drawerAbierto === "pagos"}
+        alCerrar={alCerrar}
+        titulo="Métodos de pago"
+        descripcion="Configurá cómo tus clientes pueden pagar sus compras."
+      >
+        <SeccionMetodosPago />
       </DrawerSeccion>
 
       <DrawerSeccion

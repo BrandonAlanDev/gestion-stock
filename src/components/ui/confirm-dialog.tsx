@@ -10,9 +10,16 @@ interface ConfirmDialogProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  textoConfirmar?: string;
 }
 
-export default function ConfirmDialog({ title, message, onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  textoConfirmar,
+}: ConfirmDialogProps) {
   useBloqueoScroll(true);
 
   const { pageConfig } = usePageConfig();
@@ -61,7 +68,7 @@ export default function ConfirmDialog({ title, message, onConfirm, onCancel }: C
             className="px-4 py-2 rounded-lg text-sm font-bold uppercase text-white cursor-pointer"
             style={{ background: "#ef4444" }}
           >
-            Eliminar
+            {textoConfirmar ?? "Eliminar"}
           </button>
         </div>
       </div>

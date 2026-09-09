@@ -42,6 +42,8 @@ import GrupoConfiguracion from "./GrupoConfiguracion";
 import ItemConfiguracion from "./ItemConfiguracion";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
+import { obtenerMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
+import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
 import type { EstadoConexionMP } from "@/types/mercadopago";
 
 const gruposNav = [
@@ -70,8 +72,20 @@ export default function PanelConfiguracion({
   estadoMercadoPago: EstadoConexionMP;
 }) {
   const [drawerAbierto, setDrawerAbierto] = useState<ClaveDrawer | null>(null);
+  const [metodosPago, setMetodosPago] = useState<MetodoPagoAdmin[] | null>(null);
   const router = useRouter();
   const parametrosBusqueda = useSearchParams();
+
+  useEffect(() => {
+    let activo = true;
+    void obtenerMetodosPago().then((resultado) => {
+      if (!activo) return;
+      setMetodosPago(resultado.ok ? resultado.metodos : null);
+    });
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (parametrosBusqueda.get("mp_success")) {
@@ -247,7 +261,20 @@ export default function PanelConfiguracion({
               textoBadge={config.ecommerceEnabled ? "Activada" : "Desactivada"}
               alClick={() => setDrawerAbierto("tienda")}
             />
-            <ItemConfiguracion icono={CreditCard} titulo="Métodos de pago" proximamente />
+            <ItemConfiguracion
+              icono={CreditCard}
+              titulo="Métodos de pago"
+              descripcion="Tarjetas, transferencia y otros medios"
+              varianteBadge={(metodosPago?.some((metodo) => metodo.activo) ?? false) ? "activo" : "sin-configurar"}
+              textoBadge={
+                metodosPago
+                  ? metodosPago.some((metodo) => metodo.activo)
+                    ? "Activados"
+                    : "Sin activar"
+                  : "Cargando..."
+              }
+              alClick={() => setDrawerAbierto("pagos")}
+            />
             <ItemConfiguracion icono={Truck} titulo="Envíos" proximamente />
             <ItemConfiguracion icono={Percent} titulo="Impuestos" proximamente />
             <ItemConfiguracion icono={ClipboardList} titulo="Pedidos" proximamente />

@@ -1,11 +1,10 @@
 "use server";
 
 import "server-only";
-import { Payment } from "mercadopago";
 import { prisma } from "@/lib/prisma";
 import { obtenerContextoTenant } from "@/lib/tenants/obtener-contexto-tenant";
-import { obtenerClienteMP } from "@/lib/mercadopago/obtener-cliente";
-import { confirmarPedidoPorPago } from "@/lib/pedidos/confirmar-pedido-por-pago";
+import { obtenerProveedor } from "@/lib/pagos/registro";
+import { aplicarWebhookPago } from "@/lib/pagos/aplicar-webhook-pago";
 
 export type ResultadoConfirmarPago =
   | { ok: true; pedido: PedidoConfirmado }
@@ -40,7 +39,11 @@ async function mapaPedido(pedidoId: string): Promise<PedidoConfirmado | null> {
   };
 }
 
-/** Confirma el pago de un pedido verificándolo contra la API de Mercado Pago. */
+/**
+ * Confirma el pago de un pedido verificándolo contra la pasarela. Unicamente la
+ * URL de éxito dispara esta verificación; la confirmación real la garantiza el
+ * webhook. Si no llega el ID del pago, se devuelve el estado actual del pedido.
+ */
 export async function confirmarPago(
   pedidoId: string,
   paymentId?: string,
@@ -49,44 +52,46 @@ export async function confirmarPago(
     if (!pedidoId) return { ok: false, error: "ID de pedido inválido" };
 
     const contexto = await obtenerContextoTenant();
-    if (!contexto?.usuarioId) return { ok: false, error: "Iniciá sesión para confirmar tu pago" };
+    if (!contexto?.usuarioId) {
+      return { ok: false, error: "Iniciá sesión para confirmar tu pago" };
+    }
 
     const pedido = await prisma.pedido.findUnique({
       where: { id: pedidoId },
-      select: { id: true, tenantId: true, userId: true, estado: true },
+      select: { id: true, tenantId: true, userId: true, estado: true, metodoPago: true },
     });
     if (!pedido) return { ok: false, error: "Pedido no encontrado" };
-    if (pedido.tenantId !== contexto.tenantId) return { ok: false, error: "No autorizado" };
-
-    if (pedido.estado === "CONFIRMADO") {
-      const yaConfirmado = await mapaPedido(pedidoId);
-      return yaConfirmado ? { ok: true, pedido: yaConfirmado } : { ok: false, error: "Pedido no encontrado" };
+    if (pedido.tenantId !== contexto.tenantId) {
+      return { ok: false, error: "No autorizado" };
     }
 
-    if (!paymentId) return { ok: false, error: "Falta el ID del pago" };
+    if (paymentId && pedido.estado === "PENDIENTE") {
+      const proveedor = obtenerProveedor(
+        pedido.metodoPago === "transferencia" ? "transferencia" : "mercadopago",
+      );
+      const estado = await proveedor.obtenerEstadoPago(contexto.tenantId, {
+        externalId: paymentId,
+      });
 
-    const mp = await obtenerClienteMP(contexto.tenantId);
-    const payment = new Payment(mp);
-    const datosPago = await payment.get({ id: paymentId });
-
-    const resultado = await confirmarPedidoPorPago({
-      pedidoId,
-      tenantId: contexto.tenantId,
-      estadoPago: String(datosPago.status ?? ""),
-      referencia: String(datosPago.external_reference ?? ""),
-      montoPago: Number(datosPago.transaction_amount ?? 0),
-      paymentId: String(datosPago.id),
-    });
-
-    if (!resultado.ok) return { ok: false, error: resultado.error ?? "No se pudo confirmar el pago" };
+      await aplicarWebhookPago(contexto.tenantId, {
+        externalId: estado.externalId,
+        pedidoId: estado.referencia ?? pedidoId,
+        estadoExterno: estado.estadoExterno,
+        montoPago: estado.montoPago,
+      });
+    }
 
     const confirmado = await mapaPedido(pedidoId);
-    return confirmado ? { ok: true, pedido: confirmado } : { ok: false, error: "Pedido no encontrado" };
+    if (!confirmado) return { ok: false, error: "Pedido no encontrado" };
+    return { ok: true, pedido: confirmado };
   } catch (error) {
     console.error(
       "Error confirmando pago:",
       error instanceof Error ? error.message : String(error),
     );
-    return { ok: false, error: "No se pudo confirmar el pago. Intentá de nuevo." };
+    return {
+      ok: false,
+      error: "No se pudo confirmar el pago. Intentá de nuevo.",
+    };
   }
 }
