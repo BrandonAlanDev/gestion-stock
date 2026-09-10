@@ -182,7 +182,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                       style={styles.input}
                       value={formData.name}
                       onChange={e => setFormData({ name: e.target.value })}
-                      placeholder="Ej: Wetsuits, Tablas, Accesorios"
+                      placeholder="Ej: Ropa, Accesorios, Calzado"
                       required
                       onFocus={e => (e.currentTarget.style.borderColor = accent)}
                       onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}

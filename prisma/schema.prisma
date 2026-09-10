@@ -23,8 +23,12 @@ model Tenant {
   estado    TenantEstado @default(ACTIVO)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  accounts  account[]
-  users     user[]
+  accounts          account[]
+  users             user[]
+  cuentaMercadoPago CuentaMercadoPago?
+  pedidos           Pedido[]
+  metodosPago       MetodoPago[]
+  payments          Payment[]
 }
 
 model account {
@@ -63,6 +67,7 @@ model user {
   telefono      String?
   account       account[]
   tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  pedidos       Pedido[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -116,11 +121,14 @@ model Garment {
   cost          Decimal          @db.Decimal(10, 2)
   subCategoryId String?
   maxPrice      Decimal?         @db.Decimal(10, 2)
+  etiquetas     Json?
+  controlaStock Boolean          @default(true)
   category      Category         @relation(fields: [categoryId], references: [id])
   subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
   supplier      Provider?        @relation(fields: [supplierId], references: [id])
   variants      GarmentVariant[]
   images        GarmentImage[]
+  opciones      GarmentOption[]
 
   @@index([categoryId])
   @@index([categoryId, createdAt])
@@ -148,27 +156,66 @@ model GarmentImage {
 }
 
 model GarmentVariant {
-  id         String     @id @default(cuid())
-  tenantId   String
-  sku        String?
-  stock      Int        @default(0)
-  garmentId  String
-  sizeId     String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  colorId    String?
-  attributes Json?
-  garment    Garment    @relation(fields: [garmentId], references: [id], onDelete: Cascade)
-  size       Size?      @relation(fields: [sizeId], references: [id])
-  color      Color?     @relation(fields: [colorId], references: [id])
-  movements  Movement[]
+  id            String                      @id @default(cuid())
+  tenantId      String
+  sku           String?
+  stock         Int                         @default(0)
+  garmentId     String
+  sizeId        String?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  colorId       String?
+  attributes    Json?
+  priceOverride Decimal?                    @db.Decimal(10, 2)
+  garment       Garment                     @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  size          Size?                       @relation(fields: [sizeId], references: [id])
+  color         Color?                      @relation(fields: [colorId], references: [id])
+  movements     Movement[]
+  optionValues  GarmentVariantOptionValue[]
 
-  @@unique([garmentId, sizeId, colorId])
   @@unique([tenantId, sku])
   @@index([garmentId])
   @@index([sizeId])
   @@index([colorId])
   @@index([tenantId, garmentId])
+}
+
+model GarmentOption {
+  id        String                @id @default(cuid())
+  tenantId  String
+  garmentId String
+  name      String
+  position  Int                   @default(0)
+  garment   Garment               @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+  values    GarmentOptionValue[]
+
+  @@unique([garmentId, name])
+  @@index([garmentId])
+  @@index([tenantId, garmentId])
+}
+
+model GarmentOptionValue {
+  id            String                      @id @default(cuid())
+  tenantId      String
+  optionId      String
+  value         String
+  position      Int                         @default(0)
+  option        GarmentOption               @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  variantValues GarmentVariantOptionValue[]
+
+  @@unique([optionId, value])
+  @@index([optionId])
+  @@index([tenantId, optionId])
+}
+
+model GarmentVariantOptionValue {
+  variantId     String
+  optionValueId String
+  variant       GarmentVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValue   GarmentOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
+  @@index([optionValueId])
 }
 
 model SizeType {
@@ -301,10 +348,6 @@ model PageConfig {
   privacyPolicy        String?                   @db.Text
   featuredLayout       PageConfig_featuredLayout @default(GRID)
   homegridId           String?
-  arreglosEnabled      Boolean                   @default(false)
-  escuelaEnabled       Boolean                   @default(false)
-  personalizadoEnabled Boolean                   @default(false)
-  planAhorroEnabled    Boolean                   @default(false)
   footerAboutText      String?                   @db.Text
   footerCopyrightText  String?
   footerShowSobre      Boolean                   @default(true)
@@ -343,144 +386,6 @@ model Banner {
 
   @@unique([pageConfigId, order])
   @@index([tenantId, pageConfigId])
-}
-
-model CustomBoard {
-  id             String   @id @default(cuid())
-  tenantId       String
-  tipo           String
-  largo          String
-  ancho          String
-  espesor        String
-  volumen        String?
-  material       String
-  cola           String
-  killaTipo      String
-  killaCount     String
-  notas          String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  deliveryOption String?
-
-  @@index([tenantId])
-}
-
-model BoardTypeOption {
-  id          String                     @id @default(cuid())
-  tenantId    String
-  name        String
-  svgPath     String?                    @db.Text
-  active      Boolean                    @default(true)
-  typeTails   BoardTypeTailOption[]
-  typeFins    BoardTypeFinOption[]
-  typeConfigs BoardTypeFinConfigOption[]
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
-}
-
-model BoardMaterialOption {
-  id          String  @id @default(cuid())
-  tenantId    String
-  name        String
-  description String?
-  active      Boolean @default(true)
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
-}
-
-model BoardTailOption {
-  id        String                @id @default(cuid())
-  tenantId  String
-  name      String
-  svgPath   String?               @db.Text
-  active    Boolean               @default(true)
-  tailTypes BoardTypeTailOption[]
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
-}
-
-model BoardFinOption {
-  id       String               @id @default(cuid())
-  tenantId String
-  name     String
-  active   Boolean              @default(true)
-  finTypes BoardTypeFinOption[]
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
-}
-
-model BoardDeliveryOption {
-  id          String   @id @default(cuid())
-  tenantId    String
-  label       String
-  description String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([tenantId, label])
-  @@index([tenantId, active])
-}
-
-model BoardFinConfigOption {
-  id          String                     @id @default(cuid())
-  tenantId    String
-  name        String
-  count       Int
-  active      Boolean                    @default(true)
-  configTypes BoardTypeFinConfigOption[]
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
-}
-
-model BoardTypeTailOption {
-  id          String          @id @default(cuid())
-  tenantId    String
-  boardTypeId String
-  tailId      String
-  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
-  tail        BoardTailOption @relation(fields: [tailId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, boardTypeId, tailId])
-  @@index([boardTypeId])
-  @@index([tailId])
-  @@index([tenantId, boardTypeId])
-  @@index([tenantId, tailId])
-}
-
-model BoardTypeFinOption {
-  id          String          @id @default(cuid())
-  tenantId    String
-  boardTypeId String
-  finId       String
-  boardType   BoardTypeOption @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
-  fin         BoardFinOption  @relation(fields: [finId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, boardTypeId, finId])
-  @@index([boardTypeId])
-  @@index([finId])
-  @@index([tenantId, boardTypeId])
-  @@index([tenantId, finId])
-}
-
-model BoardTypeFinConfigOption {
-  id          String               @id @default(cuid())
-  tenantId    String
-  boardTypeId String
-  configId    String
-  boardType   BoardTypeOption      @relation(fields: [boardTypeId], references: [id], onDelete: Cascade)
-  config      BoardFinConfigOption @relation(fields: [configId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, boardTypeId, configId])
-  @@index([boardTypeId])
-  @@index([configId])
-  @@index([tenantId, boardTypeId])
-  @@index([tenantId, configId])
 }
 
 model CustomPage {
@@ -540,12 +445,13 @@ model Homegrid {
   title       String
   subtitle    String
   style       Int
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  columns     String       @default("md:grid-cols-2")
-  grids       Grid[]
-  pageConfigs PageConfig[]
+  active           Boolean                        @default(true)
+  featuredLayout   PageConfig_featuredLayout      @default(GRID)
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+  columns          String                         @default("md:grid-cols-2")
+  grids            Grid[]
+  pageConfigs      PageConfig[]
 
   @@index([tenantId, active])
 }
@@ -671,4 +577,113 @@ model CarouselSlide {
 
   @@unique([carouselId, order])
   @@index([tenantId, carouselId])
+}
+
+model CuentaMercadoPago {
+  id           String    @id @default(cuid())
+  tenantId     String    @unique
+  accessToken  String    @db.Text
+  refreshToken String?   @db.Text
+  publicKey    String?
+  mpUserId     String?
+  scope        String?   @db.Text
+  liveMode     Boolean   @default(false)
+  conectado    Boolean   @default(true)
+  expiraEn     DateTime?
+  nombreNegocio String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Pedido {
+  id             String           @id @default(cuid())
+  tenantId       String
+  userId         String
+  estado         PedidoEstado     @default(PENDIENTE)
+  estadoPago     PedidoEstadoPago @default(PENDIENTE)
+  total          Decimal          @db.Decimal(10, 2)
+  moneda         String           @default("ARS")
+  nombreCliente  String?
+  emailCliente   String?
+  mpPreferenceId String?
+  mpPaymentId    String?
+  metodoPago     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  user           user             @relation(fields: [userId], references: [id])
+  items          PedidoItem[]
+  payments       Payment[]
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+}
+
+model PedidoItem {
+  id             String   @id @default(cuid())
+  pedidoId       String
+  tenantId       String
+  garmentId      String
+  variantId      String
+  nombre         String
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  cantidad       Int
+  subtotal       Decimal  @db.Decimal(10, 2)
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+  @@index([tenantId])
+}
+
+enum PedidoEstado {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+}
+
+enum PedidoEstadoPago {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  CANCELADO
+  EN_ACREDITACION
+}
+
+model MetodoPago {
+  id        String   @id @default(cuid())
+  tenantId  String
+  metodo    String // Identificador: "mercadopago" | "transferencia" | ...
+  activo    Boolean  @default(false)
+  config    Json? // Configuración propia del método (ej. instrucciones de transferencia)
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, metodo])
+  @@index([tenantId, activo])
+}
+
+model Payment {
+  id         String           @id @default(cuid())
+  tenantId   String
+  pedidoId   String
+  proveedor  String // "mercadopago" | "transferencia" | ...
+  metodo     String
+  externalId String? // ID externo en la pasarela (mpPaymentId, etc.)
+  estado     PedidoEstadoPago @default(PENDIENTE)
+  monto      Decimal          @db.Decimal(10, 2)
+  moneda     String           @default("ARS")
+  metadata   Json?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  pedido     Pedido           @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+  @@index([tenantId])
+  @@index([tenantId, proveedor])
 }

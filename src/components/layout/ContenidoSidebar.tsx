@@ -32,7 +32,7 @@ export default function ContenidoSidebar({
 
   const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
   const storeName =
-    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "VALEN";
+    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Mi Tienda";
 
   const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
 

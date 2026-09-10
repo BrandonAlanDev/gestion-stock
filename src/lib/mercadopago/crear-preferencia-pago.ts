@@ -2,10 +2,10 @@ import "server-only";
 
 import { Preference } from "mercadopago";
 import { prisma } from "@/lib/prisma";
-import { construirPreferenciaPago } from "./construir-preferencia";
-import { obtenerClienteMP } from "./obtener-cliente";
-import { obtenerTokenAccesoMP } from "./obtener-token-acceso";
-import { obtenerUrlCheckout } from "./url-checkout";
+import { construirPreferenciaPago } from "@/lib/mercadopago/construir-preferencia";
+import { obtenerCredencialesMP } from "@/lib/mercadopago/obtener-credenciales";
+import { obtenerUrlCheckout } from "@/lib/mercadopago/url-checkout";
+import { validarUrlBase } from "@/lib/mercadopago/validar-url-base";
 
 export type ResultadoCrearPreferencia = {
   preferenceId: string;
@@ -27,12 +27,20 @@ export async function crearPreferenciaPago(
     include: { items: true },
   });
 
-  if (!pedido || pedido.tenantId !== tenantId) {
-    throw new Error("Pedido no encontrado");
+  if (!pedido) {
+    throw new Error(`Pedido ${pedidoId} no encontrado`);
+  }
+  if (pedido.tenantId !== tenantId) {
+    throw new Error("El pedido no pertenece al comercio indicado");
+  }
+  if (pedido.items.length === 0) {
+    throw new Error("El pedido no tiene ítems para cobrar");
   }
 
-  const mp = await obtenerClienteMP(tenantId);
-  const preference = new Preference(mp);
+  validarUrlBase(baseUrl);
+
+  const { cliente, tokenAcceso } = await obtenerCredencialesMP(tenantId);
+  const preference = new Preference(cliente);
 
   const cuerpo = construirPreferenciaPago(
     {
@@ -53,15 +61,14 @@ export async function crearPreferenciaPago(
 
   const respuesta = await preference.create({ body: cuerpo });
   if (!respuesta.id) {
-    throw new Error("No se pudo crear la preferencia de pago");
+    throw new Error("Mercado Pago no devolvió un identificador de preferencia");
   }
 
   await prisma.pedido.update({
-    where: { id: pedidoId },
+    where: { id: pedido.id },
     data: { mpPreferenceId: respuesta.id },
   });
 
-  const tokenAcceso = await obtenerTokenAccesoMP(tenantId);
   const checkout = obtenerUrlCheckout(respuesta, tokenAcceso);
 
   return {

@@ -60,7 +60,7 @@ export default function CardsLayout({ carousel, storeName }: CardsLayoutProps) {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b-2 pb-6" style={{ borderColor: "var(--color-primario)" }}>
         <div>
           <span className="text-[10px] font-black tracking-[0.4em] text-[var(--texto-sobre-fondo)] opacity-60 uppercase block mb-1">
-            {storeName || "NEW SURF BOARD"}
+            {storeName || "Tienda"}
           </span>
           <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-fondo)] tracking-tighter uppercase italic leading-none">
             {title}

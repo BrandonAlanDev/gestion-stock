@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { clientePrisma } from "./multitenencia/cliente-prisma";
+import { clientePrisma } from "./verificacion-aislamiento/cliente-prisma";
 import { crearContexto } from "./verificacion-aislamiento/crear-contexto";
 import { ejecutarCasos } from "./verificacion-aislamiento/ejecutar-casos";
 import { limpiarContexto } from "./verificacion-aislamiento/limpiar-contexto";

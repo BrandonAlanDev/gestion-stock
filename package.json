@@ -7,12 +7,9 @@
     "build": "prisma generate && (prisma db push --accept-data-loss || echo 'Database unreachable, skipping push') && next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
-    "verificar:aislamiento": "ts-node --project tsconfig.scripts.json scripts/verificacion-aislamiento.ts",
-    "migrar:base-antigua": "ts-node --project tsconfig.scripts.json scripts/migracion-base-antigua/ejecutar-migracion.ts"
+    "verificar:aislamiento": "ts-node --project tsconfig.scripts.json scripts/verificacion-aislamiento.ts"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
     "verificar:aislamiento": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/verificacion-aislamiento.ts"
   },
   "dependencies": {
@@ -33,12 +30,14 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
+    "mercadopago": "^3.6.1",
     "next": "15.2.8",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-easy-crop": "^6.2.3",
     "recharts": "^3.9.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"

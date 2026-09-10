@@ -6,7 +6,7 @@ import { crearPreferenciaPago } from "@/lib/mercadopago/crear-preferencia-pago";
 import { eliminarCuentaMP } from "@/lib/mercadopago/eliminar-cuenta";
 import { guardarCuentaMP } from "@/lib/mercadopago/guardar-cuenta";
 import { intercambiarCodigoPorToken } from "@/lib/mercadopago/intercambiar-codigo";
-import { obtenerClienteMP } from "@/lib/mercadopago/obtener-cliente";
+import { obtenerCredencialesMP } from "@/lib/mercadopago/obtener-credenciales";
 import { obtenerCuentaMP } from "@/lib/mercadopago/obtener-cuenta";
 import { obtenerNombreCuentaMP } from "@/lib/mercadopago/obtener-nombre-cuenta";
 import type {
@@ -85,8 +85,8 @@ export const proveedorMercadoPago: PaymentProvider = {
     tenantId: string,
     datos: DatosEstadoPago,
   ): Promise<ResultadoEstadoPago> {
-    const mp = await obtenerClienteMP(tenantId);
-    const payment = new Payment(mp);
+    const { cliente } = await obtenerCredencialesMP(tenantId);
+    const payment = new Payment(cliente);
     const pago = await payment.get({ id: datos.externalId });
 
     return {

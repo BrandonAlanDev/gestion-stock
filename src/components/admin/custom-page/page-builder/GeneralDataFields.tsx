@@ -54,7 +54,7 @@ export default function GeneralDataFields({
             value={formData.title}
             onChange={(e) => update("title", e.target.value)}
             className="w-full p-3 rounded-xl border outline-none transition-colors focus:opacity-90"
-            placeholder="Ej: Plan de Ahorro"
+            placeholder="Ej: Sobre nosotros"
             style={{ backgroundColor: secondaryColor, color: textContrast, borderColor: `${primaryColor}30` }}
           />
         </div>
@@ -66,7 +66,7 @@ export default function GeneralDataFields({
             value={formData.slug}
             onChange={(e) => update("slug", e.target.value)}
             className="w-full p-3 rounded-xl border outline-none transition-colors focus:opacity-90"
-            placeholder="Ej: ahorro"
+            placeholder="Ej: sobre-nosotros"
             style={{ backgroundColor: secondaryColor, color: textContrast, borderColor: `${primaryColor}30` }}
           />
         </div>

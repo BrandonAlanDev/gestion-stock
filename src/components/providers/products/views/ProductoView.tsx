@@ -13,13 +13,13 @@ export default function ProductoView({ product }: ProductProps) {
 
   const productImages = useMemo(() => product.images ?? [], [product.images]);
 
-  const [selectedImage, setSelectedImage] = useState(productImages[0]?.srcImage || "/images/placeholder.avif");
+  const [selectedImage, setSelectedImage] = useState(productImages[0]?.srcImage || "/images/placeholder.svg");
 
   useEffect(() => {
     if (productImages[0]?.srcImage) {
       setSelectedImage(productImages[0].srcImage);
     } else {
-      setSelectedImage("/images/placeholder.avif");
+      setSelectedImage("/images/placeholder.svg");
     }
   }, [productImages]);
 
