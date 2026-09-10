@@ -1,11 +1,13 @@
 "use client";
+
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
 import { useCart } from "@/contextos/carrito/use-carrito";
-import type { ItemCarrito } from "@/contextos/carrito/tipos-carrito";
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
-import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
 interface CartSidebarProps {
@@ -14,8 +16,10 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, updateCartItemSpecs } = useCart();
-  const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
+  const { cartItems } = useCart();
+  const router = useRouter();
+  const { status } = useSession();
+  const { pageConfig } = usePageConfig();
 
   useBloqueoScroll(isOpen);
 
@@ -24,42 +28,41 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingItem) {
-          setEditingItem(null);
-          return;
-        }
         onClose();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingItem, isOpen, onClose]);
+  }, [isOpen, onClose]);
 
   const subtotal = useMemo(() =>
     cartItems.reduce((acc: number, item) => acc + (Number(item.price) * item.qty), 0),
     [cartItems]
   );
 
+  const handleIrAlCheckout = () => {
+    if (status !== "authenticated") {
+      router.push(`/login?callbackUrl=${encodeURIComponent("/checkout")}`);
+      return;
+    }
+    onClose();
+    router.push("/checkout");
+  };
+
   const handleWhatsAppCheckout = () => {
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
     cartItems.forEach((item) => {
       message += `• *${item.name}* (x${item.qty}) - $${(Number(item.price) * item.qty).toLocaleString()}\n`;
-
-      // Si el producto tiene especificaciones (specs), las agregamos al mensaje
-      if (item.esTabla && item.specs) {
-        Object.entries(item.specs).forEach(([key, value]) => {
-          if (value) message += `   - ${key}: ${value}\n`;
-        });
-      }
       message += "\n";
     });
 
     message += `*TOTAL: $${subtotal.toLocaleString()}*`;
 
-    const phone = "2235644043";
-    //const phone = pageConfig?.whatsapp || "2235644043";
+    const phone = (
+      typeof pageConfig?.whatsapp === "string" ? pageConfig.whatsapp : "2235644043"
+    ).replace(/[^\d]/g, "");
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -94,40 +97,43 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex-1 overflow-y-auto space-y-3">
               {cartItems.map((item) => (
                 <FilaItemCarrito
-                  key={`${item.id}-${JSON.stringify(item.specs)}`}
+                  key={`${item.id}-${item.uid}`}
                   item={item}
-                  onEdit={() => setEditingItem(item)}
                 />
               ))}
             </div>
 
-            <div className="border-t pt-4 mt-4" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
-              <div className="flex justify-between font-bold mb-4">
+            <div className="border-t pt-4 mt-4 space-y-3" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
+              <div className="flex justify-between font-bold mb-2">
                 <span>Total</span> <span>${subtotal.toLocaleString()}</span>
               </div>
               <button
-                onClick={handleWhatsAppCheckout}
-                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                onClick={handleIrAlCheckout}
+                disabled={cartItems.length === 0}
+                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
-                Finalizar Pedido <ArrowRight size={16} />
+                <ArrowRight size={16} />
+                Continuar al checkout
+              </button>
+              <button
+                onClick={handleWhatsAppCheckout}
+                disabled={cartItems.length === 0}
+                className="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--texto-sobre-secundario) 8%, transparent)",
+                  color: "var(--texto-sobre-secundario)",
+                  border: "1px solid color-mix(in srgb, var(--texto-sobre-secundario) 20%, transparent)",
+                }}
+              >
+                <MessageCircle size={16} />
+                Pedir por WhatsApp
               </button>
             </div>
           </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {editingItem && (
-        <WhatsAppOrderForm
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onSave={(id, specs) => {
-            updateCartItemSpecs(String(id), specs);
-            setEditingItem(null);
-          }}
-        />
-      )}
     </>
   );
 }

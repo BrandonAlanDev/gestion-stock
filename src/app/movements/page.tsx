@@ -1,5 +1,6 @@
 import { getMovements } from "@/actions/movimientos/obtener-movimientos";
 import { ArrowUpCircle, ArrowDownCircle, Calendar, Package } from "lucide-react";
+import { nombreCombinacion } from "@/lib/productos/nombre-combinacion";
 
 type Movimiento = Awaited<ReturnType<typeof getMovements>>["movements"][number];
 
@@ -53,7 +54,7 @@ export default async function MovementsPage() {
                       {m.garmentVariant.garment.name}
                     </span>
                     <span className="text-[10px] text-[var(--texto-sobre-fondo)]/60 font-black uppercase">
-                      Talle: {m.garmentVariant.size?.value || obtenerTallePersonalizado(m.garmentVariant.attributes) || "S/T"}
+                      {nombreCombinacion(m.garmentVariant.optionValues) || m.garmentVariant.size?.value || obtenerTallePersonalizado(m.garmentVariant.attributes) || "S/T"}
                     </span>
                   </div>
                 </td>

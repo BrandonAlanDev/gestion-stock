@@ -4,14 +4,11 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGarments } from "@/hooks/useGarments";
 import { useCategories } from "@/hooks/useCategories";
-import { useSizeTypes } from "@/hooks/useSizeTypes";
-import { useProviders } from "@/hooks/useProviders";
-import { useColors } from "@/hooks/useColors";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import Search from "@/components/search/Search";
 import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
-import ProductModal from "@/components/providers/products/modals/ProductModal";
+import FormularioProducto from "@/components/admin/productos/formulario/FormularioProducto";
 import QuickViewTable from "@/components/providers/products/modals/QuickViewTable";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
@@ -49,9 +46,6 @@ export default function DashboardClient() {
   // Queries
   const { data: garmentsData, isLoading, isError, error } = useGarments(page, limit, category || undefined, search || undefined);
   const { data: categories } = useCategories();
-  const { data: sizeTypes } = useSizeTypes();
-  const { data: providers } = useProviders();
-  const { data: colors } = useColors();
 
   // Datos para la tabla
   const garments = garmentsData?.data || [];
@@ -90,13 +84,7 @@ export default function DashboardClient() {
         </div>
         <div className="flex flex-row flex-wrap gap-3">
           <MovementModal garments={garments} onSuccess={invalidateProducts} />
-          <ProductModal
-            categories={categories || []}
-            sizes={sizeTypes || []}
-            providers={providers || []}
-            colors={colors || []}
-            onSuccess={invalidateProducts}
-          />
+          <FormularioProducto categorias={categories || []} onSuccess={invalidateProducts} />
         </div>
       </div>
 
@@ -122,9 +110,6 @@ export default function DashboardClient() {
           <QuickViewTable
             garments={garments}
             categories={categories || []}
-            sizeTypes={sizeTypes || []}
-            providers={providers || []}
-            colors={colors || []}
             onProductsChanged={invalidateProducts}
           />
 

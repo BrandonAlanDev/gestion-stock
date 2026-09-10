@@ -12,41 +12,48 @@ import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import type { Prisma } from "@/../generated/prisma/client";
 import type { ProductoDetalleSerializado } from "@/types/productos/detalle-producto";
+import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 
 export async function createGarment(data: GarmentInput) {
   const { tenantId } = await requiereAdmin();
 
   const parsed = garmentSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
+  if (!parsed.success) {
+    const primerIssue = parsed.error.issues[0];
+    return { error: primerIssue?.message ?? "Revisá los datos ingresados." };
+  }
 
-  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, controlaStock, activo, etiquetas, opciones } = parsed.data;
+
+  const datos: DatosGuardarProducto = {
+    name,
+    price,
+    maxPrice: maxPrice || null,
+    cost: cost ?? 0,
+    description: description || null,
+    categoryId,
+    subCategoryId: subCategoryId || null,
+    supplierId: supplierId || null,
+    controlaStock,
+    activo,
+    etiquetas,
+    opciones: opciones.map((opcion) => ({ name: opcion.name, values: opcion.values })),
+    variants: variants.map((v) => ({
+      id: v.id,
+      opcionValores: v.opcionValores ?? [],
+      stock: Number(v.stock),
+      sku: v.sku || null,
+      priceOverride: v.priceOverride ?? null,
+    })),
+    images: [],
+  };
 
   let garmentId: string | null = null;
   const publicIdsSubidos: string[] = [];
 
   try {
-    const garment = await garmentService.createGarment(tenantId, {
-      name,
-      price,
-      maxPrice: maxPrice || null,
-      cost,
-      description,
-      categoryId,
-      subCategoryId: subCategoryId || null,
-      supplierId: supplierId || null,
-      variants: {
-        create: variants.map((v) => ({
-          tenantId,
-          sku: v.sku || null,
-          stock: Number(v.stock),
-          sizeId: v.sizeId || null,
-          colorId: v.colorId || null,
-          attributes: v.attributes ? (v.attributes as Prisma.InputJsonValue) : undefined,
-        })),
-      },
-    });
+    const garment = await garmentService.createGarment(tenantId, datos);
     garmentId = garment.id;
 
     const carpeta = obtenerCarpetaPrenda(tenantId, categoryId, garment.id);
@@ -81,7 +88,7 @@ export async function createGarment(data: GarmentInput) {
   } catch (error: unknown) {
     console.error("❌ Error en createGarment:", error);
     if ((error as { code?: string })?.code === "P2002") {
-      return { error: "El SKU ingresado ya pertenece a otra variante." };
+      return { error: "El código ingresado ya pertenece a otra variante." };
     }
     await eliminarImagenes(publicIdsSubidos, tenantId);
     if (garmentId) {
@@ -160,15 +167,43 @@ export async function updateGarment(id: string, data: GarmentInput) {
   const { tenantId } = await requiereAdmin();
 
   const parsed = garmentSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.format() };
+  if (!parsed.success) {
+    const primerIssue = parsed.error.issues[0];
+    return { error: primerIssue?.message ?? "Revisá los datos ingresados." };
+  }
 
-  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = parsed.data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, controlaStock, activo, etiquetas, opciones } = parsed.data;
 
   const existing = await prisma.garment.findFirst({
     where: { id, tenantId },
     include: { images: { where: { tenantId } } },
   });
   if (!existing) return { error: "El producto no existe." };
+
+  const costoServicio = typeof cost === "number" && !Number.isNaN(cost) ? cost : Number(existing.cost);
+
+  const datos: DatosGuardarProducto = {
+    name,
+    price,
+    maxPrice: maxPrice || null,
+    cost: costoServicio,
+    description: description || "",
+    categoryId,
+    subCategoryId: subCategoryId || null,
+    supplierId: supplierId ?? existing.supplierId,
+    controlaStock,
+    activo,
+    etiquetas,
+    opciones: opciones.map((opcion) => ({ name: opcion.name, values: opcion.values })),
+    variants: variants.map((v) => ({
+      id: v.id,
+      opcionValores: v.opcionValores ?? [],
+      stock: Number(v.stock),
+      sku: v.sku || null,
+      priceOverride: v.priceOverride ?? null,
+    })),
+    images: [],
+  };
 
   const cambioCategoria = categoryId !== existing.categoryId;
   const carpetaNueva = obtenerCarpetaPrenda(tenantId, categoryId, id);
@@ -208,15 +243,7 @@ export async function updateGarment(id: string, data: GarmentInput) {
     }
 
     const updatedGarment = await garmentService.updateGarmentWithDetails(tenantId, id, {
-      name,
-      price,
-      maxPrice: maxPrice || null,
-      cost,
-      description: description || "",
-      categoryId,
-      subCategoryId: subCategoryId || null,
-      supplierId: supplierId || null,
-      variants,
+      ...datos,
       images: finalImages,
     });
 

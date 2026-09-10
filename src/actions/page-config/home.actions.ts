@@ -78,7 +78,7 @@ export async function updateHomeGrids(
       const nuevoHomegrid = await prisma.homegrid.create({
         data: {
           tenantId: contexto.tenantId,
-          title: title || "Home Destacado",
+          title: title || "",
           subtitle: "",
           style: 1,
           columns: "md:grid-cols-2",
@@ -97,9 +97,6 @@ export async function updateHomeGrids(
         select: { id: true },
       });
       if (!homegrid) throw new Error("La sección no pertenece a la tienda activa");
-      if (pageConfig.homegridId && pageConfig.homegridId !== homegrid.id) {
-        throw new Error("La sección no corresponde a la configuración activa");
-      }
       if (title) {
         await prisma.homegrid.update({ where: { id: homegrid.id }, data: { title } });
       }

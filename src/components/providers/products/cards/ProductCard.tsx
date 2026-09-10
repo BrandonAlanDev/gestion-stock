@@ -24,12 +24,7 @@ const ProductCard = ({ product }: Props) => {
   const [fade, setFade] = useState(true);
 
   const images = useMemo(() => {
-    const imagenesProducto = product.images ?? [];
-    return (
-      imagenesProducto.length > 1
-        ? imagenesProducto.slice(1).map((img) => img.srcImage)
-        : imagenesProducto.map((img) => img.srcImage)
-    );
+    return (product.images ?? []).map((img) => img.srcImage);
   }, [product.images]);
 
   useEffect(() => {

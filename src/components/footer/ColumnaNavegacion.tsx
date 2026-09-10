@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 
-interface ColumnaNavegacionProps {
-  escuelaEnabled: boolean;
-  arreglosEnabled: boolean;
-  planAhorroEnabled: boolean;
-}
-
-export default function ColumnaNavegacion({
-  escuelaEnabled,
-  arreglosEnabled,
-  planAhorroEnabled,
-}: ColumnaNavegacionProps) {
+export default function ColumnaNavegacion() {
   return (
     <nav>
       <h3 className="text-sm font-semibold uppercase tracking-wider opacity-80">
@@ -27,36 +17,6 @@ export default function ColumnaNavegacion({
             Catálogo
           </Link>
         </li>
-        {escuelaEnabled && (
-          <li>
-            <Link
-              href="/escuela"
-              className="opacity-70 transition hover:text-[var(--color-primario)] hover:opacity-100"
-            >
-              Escuela
-            </Link>
-          </li>
-        )}
-        {arreglosEnabled && (
-          <li>
-            <Link
-              href="/arreglos"
-              className="opacity-70 transition hover:text-[var(--color-primario)] hover:opacity-100"
-            >
-              Arreglos
-            </Link>
-          </li>
-        )}
-        {planAhorroEnabled && (
-          <li>
-            <Link
-              href="/plan-de-ahorro"
-              className="opacity-70 transition hover:text-[var(--color-primario)] hover:opacity-100"
-            >
-              Plan de ahorro
-            </Link>
-          </li>
-        )}
       </ul>
     </nav>
   );

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   BarChart3,
@@ -40,6 +42,9 @@ import GrupoConfiguracion from "./GrupoConfiguracion";
 import ItemConfiguracion from "./ItemConfiguracion";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
+import { obtenerMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
+import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
+import type { EstadoConexionMP } from "@/types/mercadopago";
 
 const gruposNav = [
   { id: "general", titulo: "General", icono: Settings },
@@ -50,12 +55,56 @@ const gruposNav = [
   { id: "avanzado", titulo: "Avanzado", icono: MoreHorizontal },
 ];
 
+const MENSAJES_ERROR_MP: Record<string, string> = {
+  no_autorizado: "No estás autorizado para conectar Mercado Pago.",
+  sin_codigo: "Mercado Pago no devolvió el código de autorización. Intentá de nuevo.",
+  estado_invalido: "La sesión de conexión expiró o fue manipulada. Intentá de nuevo.",
+  configuracion_incompleta: "La conexión no está disponible en este momento.",
+  conexion_fallida: "No se pudo completar la conexión. Intentá de nuevo más tarde.",
+  inicio_fallido: "No se pudo iniciar la conexión. Intentá de nuevo más tarde.",
+};
+
 export default function PanelConfiguracion({
   config,
+  estadoMercadoPago,
 }: {
   config: ConfigCompleta | null;
+  estadoMercadoPago: EstadoConexionMP;
 }) {
   const [drawerAbierto, setDrawerAbierto] = useState<ClaveDrawer | null>(null);
+  const [metodosPago, setMetodosPago] = useState<MetodoPagoAdmin[] | null>(null);
+  const router = useRouter();
+  const parametrosBusqueda = useSearchParams();
+
+  useEffect(() => {
+    let activo = true;
+    void obtenerMetodosPago().then((resultado) => {
+      if (!activo) return;
+      setMetodosPago(resultado.ok ? resultado.metodos : null);
+    });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (parametrosBusqueda.get("mp_success")) {
+      toast.success("Cuenta conectada correctamente", {
+        description: "Ahora podés cobrar con Mercado Pago. ¡Éxitos!",
+      });
+      setDrawerAbierto("mercadopago");
+      router.replace("/admin/pageConfig");
+    }
+
+    const codigoError = parametrosBusqueda.get("mp_error");
+    if (codigoError) {
+      const mensaje =
+        MENSAJES_ERROR_MP[codigoError] || "No se pudo conectar la cuenta de Mercado Pago.";
+      toast.error("Error al conectar", { description: mensaje });
+      setDrawerAbierto("mercadopago");
+      router.replace("/admin/pageConfig");
+    }
+  }, [parametrosBusqueda, router]);
 
   if (!config) {
     return (
@@ -212,7 +261,20 @@ export default function PanelConfiguracion({
               textoBadge={config.ecommerceEnabled ? "Activada" : "Desactivada"}
               alClick={() => setDrawerAbierto("tienda")}
             />
-            <ItemConfiguracion icono={CreditCard} titulo="Métodos de pago" proximamente />
+            <ItemConfiguracion
+              icono={CreditCard}
+              titulo="Métodos de pago"
+              descripcion="Tarjetas, transferencia y otros medios"
+              varianteBadge={(metodosPago?.some((metodo) => metodo.activo) ?? false) ? "activo" : "sin-configurar"}
+              textoBadge={
+                metodosPago
+                  ? metodosPago.some((metodo) => metodo.activo)
+                    ? "Activados"
+                    : "Sin activar"
+                  : "Cargando..."
+              }
+              alClick={() => setDrawerAbierto("pagos")}
+            />
             <ItemConfiguracion icono={Truck} titulo="Envíos" proximamente />
             <ItemConfiguracion icono={Percent} titulo="Impuestos" proximamente />
             <ItemConfiguracion icono={ClipboardList} titulo="Pedidos" proximamente />
@@ -233,7 +295,14 @@ export default function PanelConfiguracion({
               textoBadge={config.whatsapp ? "Conectado" : "Sin configurar"}
               alClick={() => setDrawerAbierto("whatsapp")}
             />
-            <ItemConfiguracion icono={Wallet} titulo="Mercado Pago" proximamente />
+            <ItemConfiguracion
+              icono={Wallet}
+              titulo="Mercado Pago"
+              descripcion="Cobrá online con tu cuenta"
+              varianteBadge={estadoMercadoPago.conectada ? "activo" : "sin-configurar"}
+              textoBadge={estadoMercadoPago.conectada ? "Conectado" : "Sin conectar"}
+              alClick={() => setDrawerAbierto("mercadopago")}
+            />
             <ItemConfiguracion icono={BarChart3} titulo="Google Analytics" proximamente />
             <ItemConfiguracion icono={Search} titulo="Google" proximamente />
           </GrupoConfiguracion>
@@ -277,6 +346,7 @@ export default function PanelConfiguracion({
         config={config}
         drawerAbierto={drawerAbierto}
         alCerrar={() => setDrawerAbierto(null)}
+        estadoMercadoPago={estadoMercadoPago}
       />
     </div>
   );

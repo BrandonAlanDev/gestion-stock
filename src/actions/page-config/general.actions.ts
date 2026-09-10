@@ -47,10 +47,6 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         currency: true,
         language: true,
         maintenanceMode: true,
-        arreglosEnabled: true,
-        escuelaEnabled: true,
-        personalizadoEnabled: true,
-        planAhorroEnabled: true,
         footerAboutText: true,
         footerCopyrightText: true,
         footerShowSobre: true,
@@ -80,6 +76,8 @@ async function obtenerPageConfigCacheada(tenantId: string) {
             subtitle: true,
             style: true,
             columns: true,
+            active: true,
+            featuredLayout: true,
             grids: {
               orderBy: [{
                 order: "asc",
@@ -100,10 +98,30 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         },
       },
     });
+    if (!pageConfig) {
+      throw new Error("Configuración de página no encontrada");
+    }
+
+    const homegrids = await prisma.homegrid.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        style: true,
+        columns: true,
+        active: true,
+        featuredLayout: true,
+        grids: {
+          orderBy: [{ order: "asc" }, { title: "asc" }],
+        },
+      },
+    });
 
     return {
       ok: true,
-      pageConfig,
+      pageConfig: { ...pageConfig, homegrids },
     };
   } catch (error: unknown) {
     console.error("Error real:", error instanceof Error ? error.message : error);

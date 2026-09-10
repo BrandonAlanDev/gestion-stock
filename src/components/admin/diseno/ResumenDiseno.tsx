@@ -48,7 +48,14 @@ export default async function ResumenDiseno() {
       }))
     : (pageConfig?.carousels ?? []);
   const cargados = respuestaCarouseles.success || respuestaConfig.ok;
-  const tarjetasDestacadas = pageConfig?.homegrid?.grids.length ?? 0;
+  const homegridsResumen =
+    ((pageConfig as Record<string, unknown> | null)?.["homegrids"] as
+      | Array<{ grids?: { length?: number }[] }>
+      | undefined) ?? [];
+  const tarjetasDestacadas =
+    homegridsResumen.reduce((s, h) => s + (h.grids?.length ?? 0), 0) ||
+    pageConfig?.homegrid?.grids.length ||
+    0;
 
   function BloqueResumen({
     icono: Icono,

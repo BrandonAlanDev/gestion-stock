@@ -15,7 +15,6 @@ interface MenuAgregarSeccionProps {
   alCrearCarrusel: () => void;
   alAgregarDestacada: () => void;
   alAgregarUbicacion: () => void;
-  destacadaAgregada: boolean;
   ubicacionAgregada: boolean;
 }
 
@@ -31,7 +30,6 @@ export default function MenuAgregarSeccion({
   alCrearCarrusel,
   alAgregarDestacada,
   alAgregarUbicacion,
-  destacadaAgregada,
   ubicacionAgregada,
 }: MenuAgregarSeccionProps) {
   const [abierto, setAbierto] = useState(false);
@@ -72,10 +70,8 @@ export default function MenuAgregarSeccion({
     {
       icono: Grid2X2,
       titulo: "Sección destacada",
-      descripcion: destacadaAgregada
-        ? "Ya está en la página"
-        : "Productos y categorías en cuadrícula",
-      deshabilitado: destacadaAgregada,
+      descripcion: "Productos y categorías en cuadrícula",
+      deshabilitado: false,
       alClic: () => {
         setAbierto(false);
         alAgregarDestacada();

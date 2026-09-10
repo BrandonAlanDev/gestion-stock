@@ -2,35 +2,18 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Truck, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { ProductProps } from "../types";
-import ProductAction from "@/components/ui/ProductAction";
-
-const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
+import SelectorProducto from "@/components/tienda/producto/SelectorProducto";
+import { renderMarkdown } from "@/lib/utilidades/markdown";
 
 export default function ProductoView({ product }: ProductProps) {
   const router = useRouter();
-  
-  const [selectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
-  // 📐 Determinar si el producto pertenece a la categoría Tablas
-  const esTabla = useMemo(() => {
-    const name = (product.category?.name || "").toLowerCase().trim();
-    return BOARD_CATEGORIES.some((cat) => name.includes(cat));
-  }, [product.category]);
+  const productImages = useMemo(() => product.images ?? [], [product.images]);
 
-  const logoImage = esTabla ? product.images?.[0]?.srcImage : null;
-
-  const productImages = useMemo(() => {
-    if (!product.images) return [];
-    return esTabla ? product.images.slice(1) : product.images;
-  }, [product.images, esTabla]);
-
-  const [selectedImage, setSelectedImage] = useState(
-    productImages[0]?.srcImage || "/images/placeholder.avif"
-  );
+  const [selectedImage, setSelectedImage] = useState(productImages[0]?.srcImage || "/images/placeholder.avif");
 
   useEffect(() => {
     if (productImages[0]?.srcImage) {
@@ -39,43 +22,6 @@ export default function ProductoView({ product }: ProductProps) {
       setSelectedImage("/images/placeholder.avif");
     }
   }, [productImages]);
-
-  // Procesar Talles
-  const sizes = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; stock: number }>();
-    product.variants.forEach((variant) => {
-      if (variant.size) {
-        const key = variant.size.id;
-        const talleExistente = map.get(key);
-        if (talleExistente) {
-          talleExistente.stock += variant.stock;
-        } else {
-          map.set(key, { id: variant.size.id, name: variant.size.value, stock: variant.stock });
-        }
-      } else if (typeof variant.attributes?.customSize === "string") {
-        const key = variant.id;
-        map.set(key, { id: key, name: variant.attributes.customSize, stock: variant.stock });
-      }
-    });
-    return Array.from(map.values());
-  }, [product.variants]);
-
-  // Procesar Colores
-  const colors = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; hex: string | null }>();
-    product.variants.forEach((variant) => {
-      if (!variant.color) return;
-      const key = variant.color.id;
-      if (!map.has(key)) {
-        map.set(key, { id: variant.color.id, name: variant.color.name, hex: variant.color.hex });
-      }
-    });
-    return Array.from(map.values());
-  }, [product.variants]);
-
-  const hasSizes = sizes.length > 0;
-  const hasColors = colors.length > 0;
-  const hasDescription = product.description && product.description.trim() !== "";
 
   return (
     <div className="bg-[var(--color-fondo-sitio)] min-h-screen pt-32 pb-24 text-[var(--texto-sobre-fondo)] selection:bg-[var(--color-secundario)]">
@@ -105,9 +51,9 @@ export default function ProductoView({ product }: ProductProps) {
                       ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
                     }`}
-                    style={{ 
+                    style={{
                       borderColor: selectedImage === img.srcImage ? "var(--color-primario)" : "transparent",
-                      boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none"
+                      boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none",
                     }}
                   >
                     <img src={img.srcImage} alt="" className="w-full h-full object-cover" />
@@ -128,110 +74,20 @@ export default function ProductoView({ product }: ProductProps) {
             </div>
           </div>
 
-          {/* BLOQUE DERECHO: DETALLES */}
-          <div className="flex flex-col space-y-8 lg:sticky lg:top-32">
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-primario)" }}>
-                {product.category?.name}
-                {product.subCategory?.name && ` / ${product.subCategory.name}`}
-              </p>
-
-              {esTabla && logoImage && (
-                <div className="w-full flex justify-center mb-4 select-none">
-                  <div className="w-full max-w-[140px] h-auto">
-                    <img
-                      src={logoImage}
-                      alt={`Logo de ${product.name}`}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <h1 className="text-3xl md:text-4xl font-light tracking-tight text-[var(--texto-sobre-fondo)] capitalize text-center lg:text-left">
-                {product.name.toLowerCase()}
-              </h1>
-            </div>
-
-            <div className="border-b border-[var(--color-secundario)] pb-6 text-center lg:text-left">
-              {esTabla ? (
-                <p className="text-2xl font-semibold" style={{ color: "var(--color-primario)" }}>
-                  USD {Number(product.price).toLocaleString("es-AR")} - {Number(product.maxPrice).toLocaleString("es-AR")}
-                </p>
-              ) : (
-                <p className="text-2xl font-bold text-[var(--texto-sobre-fondo)]">
-                  $ {Number(product.price).toLocaleString("es-AR")}
-                </p>
-              )}
-            </div>
-
-            {hasColors && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--texto-sobre-fondo)] opacity-60">Color</h3>
-                <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
-                  {colors.map((color) => (
-                    <button
-                      key={color.id}
-                      onClick={() => setSelectedColor(color.name)}
-                      title={color.name}
-                      className={`w-8 h-8 rounded-full border transition-all ${selectedColor === color.name
-                        ? "ring-2 ring-offset-2 scale-105"
-                        : "border-[var(--color-secundario)]"
-                      }`}
-                      style={{ 
-                        backgroundColor: color.hex || "#000",
-                        borderColor: selectedColor === color.name ? "var(--color-primario)" : "#e5e7eb",
-                        boxShadow: selectedColor === color.name ? "0 0 0 2px var(--color-primario)" : "none"
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {hasSizes && (
-              <div className="space-y-3 text-center lg:text-left">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--texto-sobre-fondo)] opacity-60">
-                  Medidas disponibles
-                </h3>
-                <div className="space-y-1">
-                  {sizes.map((size) => (
-                    <p key={size.id} className="text-sm text-[var(--texto-sobre-fondo)] opacity-70 font-light">
-                      {size.name}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3 text-xs text-[var(--texto-sobre-fondo)] opacity-70 border-t border-b border-[var(--color-secundario)] py-4">
-              <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <Truck className="w-3.5 h-3.5" style={{ color: "var(--color-primario)" }} />
-                <p>Envíos y logística a coordinar para todo el país.</p>
-              </div>
-            </div>
-
-            {/* INTEGRACIÓN DEL COMPONENTE DE ACCIÓN */}
-            <ProductAction 
-              product={product} 
-              size={selectedSize} 
-              color={selectedColor} 
-              esTabla={esTabla} 
-            />
-
-          </div>
+          {/* BLOQUE DERECHO: SELECCIÓN Y COMPRA */}
+          <SelectorProducto product={product} />
         </div>
 
         <div className="mt-24 border-t border-[var(--color-secundario)] pt-16 max-w-3xl">
           <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--color-primario)" }}>
-            Product Overview
+            Resumen del producto
           </h2>
-          <div className="text-[var(--texto-sobre-fondo)] opacity-70 font-light leading-relaxed space-y-4 text-base">
-            <p className="whitespace-pre-line">
-              {hasDescription ? product.description : "No description available for this model."}
-            </p>
-          </div>
+          <div
+            className="text-[var(--texto-sobre-fondo)] opacity-70 font-light leading-relaxed space-y-4 text-base prose prose-sm"
+            dangerouslySetInnerHTML={{
+              __html: renderMarkdown(product.description) || "No hay descripción disponible para este modelo.",
+            }}
+          />
         </div>
 
       </div>

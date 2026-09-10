@@ -4,9 +4,8 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
 import { compressImage } from "@/lib/image-utils";
-import { fileToBase64, getContrastColor } from "@/lib/utils";
+import { fileToBase64 } from "@/lib/utils";
 import { Crop, X } from "lucide-react";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import EditorRecorte from "@/components/imagen/EditorRecorte";
 
 export interface PendingImage {
@@ -33,14 +32,6 @@ export default function ImageUploader({
   onReorder,
   alEditarImagen,
 }: ImageUploaderProps) {
-  const { pageConfig } = usePageConfig();
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor((pageConfig?.secondaryColor as string) || "#00b4d8");
-  const isDarkBg = textColor === "#ffffff";
-  const inputBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-  const mutedColor = textColor + "99";
-
   // Estado local para el orden visual durante el arrastre
   const [orderedImages, setOrderedImages] = useState<PendingImage[]>(images);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -142,7 +133,7 @@ export default function ImageUploader({
     if (draggedIndex === null || draggedIndex === targetIndex) return;
 
     // Reordenar temporalmente el estado local para mostrar el desplazamiento
-    setOrderedImages(prev => {
+    setOrderedImages((prev) => {
       const newOrder = [...prev];
       const [moved] = newOrder.splice(originalIndexRef.current!, 1);
       newOrder.splice(targetIndex, 0, moved);
@@ -181,8 +172,8 @@ export default function ImageUploader({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between pb-2" style={{ borderBottom: `1px solid ${overlayBorder}` }}>
-        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: mutedColor }}>
+      <div className="flex justify-between border-b border-[var(--admin-borde)] pb-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--admin-texto-suave)]">
           Imágenes (Máx. 4)
         </span>
       </div>
@@ -193,25 +184,15 @@ export default function ImageUploader({
         accept="image/*"
         onChange={handleFileChange}
         disabled={uploading}
-        className="w-full p-3 outline-none"
-        style={{
-          background: inputBg,
-          border: `1px solid ${overlayBorder}`,
-          borderRadius: "12px",
-          color: textColor,
-          fontSize: "14px",
-        }}
+        className="w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-3 text-sm text-[var(--admin-texto)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--admin-primario)] file:px-3 file:py-1 file:text-sm file:font-medium file:text-[var(--admin-primario-texto)]"
       />
       {uploading && (
-        <p className="text-xs flex items-center gap-2" style={{ color: mutedColor }}>
-          <span
-            className="inline-block w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: mutedColor, borderTopColor: "transparent" }}
-          />
+        <p className="flex items-center gap-2 text-xs text-[var(--admin-texto-suave)]">
+          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--admin-texto-suave)] border-t-transparent" />
           Procesando...
         </p>
       )}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         {orderedImages.map((img, idx) => {
           const src = img.url || img.preview || "";
           const isDragging = draggedIndex === idx;
@@ -226,12 +207,11 @@ export default function ImageUploader({
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, idx)}
               onDragEnd={handleDragEnd}
-              className={`relative w-24 h-24 overflow-hidden group transition-all duration-200 cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40 scale-95 z-10" : ""
-                }`}
+              className={`relative h-24 w-24 overflow-hidden rounded-xl border transition-all duration-200 ${
+                isDragging ? "z-10 scale-95 opacity-40" : "cursor-grab active:cursor-grabbing"
+              }`}
               style={{
-                border: `1px solid ${isDragging ? accent : overlayBorder}`,
-                borderRadius: "12px",
-                boxShadow: isDragging ? `0 0 0 2px ${accent}4D` : "none",
+                borderColor: isDragging ? "var(--admin-primario)" : "var(--admin-borde)",
                 zIndex: isDragging ? 10 : 1,
               }}
             >
@@ -249,11 +229,10 @@ export default function ImageUploader({
                     e.stopPropagation();
                     reabrirEditor(idx);
                   }}
-                  className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  style={{ background: accent }}
+                  className="absolute bottom-1 left-1/2 flex -translate-x-1/2 cursor-pointer items-center gap-1 rounded-full bg-[var(--admin-primario)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--admin-primario-texto)] opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  <Crop size={10} style={{ color: "#fff" }} />
-                  <span style={{ color: "#fff" }}>Editar</span>
+                  <Crop size={10} />
+                  Editar
                 </button>
               )}
               <button
@@ -262,10 +241,9 @@ export default function ImageUploader({
                   e.stopPropagation();
                   handleRemove(idx);
                 }}
-                className="absolute top-1 right-1 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: "#ef4444" }}
+                className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
-                <X size={12} style={{ color: "#fff" }} />
+                <X size={12} />
               </button>
             </div>
           );

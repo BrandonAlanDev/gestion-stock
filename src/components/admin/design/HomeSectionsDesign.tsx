@@ -10,7 +10,7 @@ import { CSS } from "@dnd-kit/utilities";
 import GridModal, { type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./GridModal";
 import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
-import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
+import { actualizarSeccionDestacada } from "@/actions/page-config/secciones-destacadas.actions";
 import { getContrastColor } from "@/lib/utils";
 
 export interface GridLocal extends DatosTarjeta {
@@ -34,17 +34,13 @@ interface GridConfig {
   order?: number;
 }
 
-interface ConfigHomeSections {
-  featuredLayout?: string | null;
+interface Props {
   homegrid?: {
     id?: string;
     title?: string | null;
-    grids: GridConfig[];
+    grids?: GridConfig[];
   } | null;
-}
-
-interface Props {
-  config?: ConfigHomeSections;
+  featuredLayout?: string | null;
   primaryColor?: string;
   secondaryColor?: string;
   alGuardar?: () => void;
@@ -131,17 +127,18 @@ function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove
 }
 
 export default function HomeSectionsDesign({
-  config,
+  homegrid,
+  featuredLayout,
   primaryColor = "#06b6d4",
   secondaryColor = "#ffffff",
   alGuardar,
 }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [layout, setLayout] = useState(config?.featuredLayout?.toLowerCase() ?? "grid");
+  const [layout, setLayout] = useState(featuredLayout?.toLowerCase() ?? "grid");
   const [grids, setGrids] = useState<GridLocal[]>(
-    (config?.homegrid?.grids || []).map(normalizarGrid)
+    (homegrid?.grids || []).map(normalizarGrid)
   );
-  const [sectionTitle, setSectionTitle] = useState(config?.homegrid?.title || "Home Destacado");
+  const [sectionTitle, setSectionTitle] = useState(homegrid?.title ?? "");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGrid, setEditingGrid] = useState<GridLocal | null>(null);
@@ -166,9 +163,9 @@ export default function HomeSectionsDesign({
   };
 
   useEffect(() => {
-    setLayout(config?.featuredLayout?.toLowerCase() ?? "grid");
-    setSectionTitle(config?.homegrid?.title || "Home Destacado");
-    const rawGrids = config?.homegrid?.grids || [];
+    setLayout(featuredLayout?.toLowerCase() ?? "grid");
+    setSectionTitle(homegrid?.title ?? "");
+    const rawGrids = homegrid?.grids || [];
     setGrids(rawGrids.map(normalizarGrid));
 
     async function cargarOpciones() {
@@ -191,7 +188,7 @@ export default function HomeSectionsDesign({
     }
 
     cargarOpciones();
-  }, [config]);
+  }, [homegrid, featuredLayout]);
 
   const handleAddOrEdit = (data: DatosTarjeta) => {
     if (editingGrid) {
@@ -208,8 +205,6 @@ export default function HomeSectionsDesign({
   };
 
   const handleSave = async () => {
-    const homeGridId = config?.homegrid?.id;
-
     startTransition(async () => {
       try {
         const gridsForServer = grids.map((g, idx) => ({
@@ -229,17 +224,17 @@ export default function HomeSectionsDesign({
           buttonTextColor: g.buttonTextColor || undefined,
         }));
 
-        const [layoutRes, gridRes] = await Promise.all([
-          updateSectionVisibility({ featuredLayout: layout }),
-          updateHomeGrids(homeGridId, gridsForServer, sectionTitle)
-        ]);
+        const res = await actualizarSeccionDestacada(
+          homegrid?.id ?? "",
+          gridsForServer,
+          sectionTitle,
+          layout
+        );
 
-        if (!layoutRes.ok || !gridRes.ok) {
-          const layoutError = "error" in layoutRes ? layoutRes.error : "";
-          const gridError = "error" in gridRes ? gridRes.error : "";
-          toast.error("Error al guardar: " + (layoutError || gridError));
+        if (!res.ok) {
+          toast.error(res.error || "Error al guardar");
         } else {
-          toast.success("Todo guardado correctamente");
+          toast.success("Guardado correctamente");
           setIsModalOpen(false);
           setEditingGrid(null);
           alGuardar?.();
@@ -283,7 +278,7 @@ export default function HomeSectionsDesign({
               borderColor: getContrastColor(secondaryColor).concat("44"),
               color: getContrastColor(secondaryColor),
             }}
-            placeholder="Home Destacado"
+            placeholder="Dejalo vacío para ocultarlo"
           />
         </div>
 

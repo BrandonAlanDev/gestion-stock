@@ -1,10 +1,12 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
+import { obtenerEstadoConexionMP } from "@/actions/mercadopago/estado-conexion";
 import PanelConfiguracion from "@/components/admin/configuracion/PanelConfiguracion";
 import type { ConfigCompleta } from "@/components/admin/configuracion/tipos-configuracion";
 
 export default async function PageConfigPage() {
   const resultado = await getPageConfig();
   const pageConfig = resultado.ok ? resultado.pageConfig : null;
+  const estadoMercadoPago = await obtenerEstadoConexionMP();
 
   const config: ConfigCompleta | null = pageConfig
     ? {
@@ -49,10 +51,6 @@ export default async function PageConfigPage() {
         currency: pageConfig.currency ?? "ARS",
         language: pageConfig.language ?? "es",
         maintenanceMode: pageConfig.maintenanceMode ?? false,
-        arreglosEnabled: pageConfig.arreglosEnabled ?? false,
-        escuelaEnabled: pageConfig.escuelaEnabled ?? false,
-        personalizadoEnabled: pageConfig.personalizadoEnabled ?? false,
-        planAhorroEnabled: pageConfig.planAhorroEnabled ?? false,
         metaTitle: pageConfig.metaTitle ?? null,
         metaDescription: pageConfig.metaDescription ?? null,
         termsAndConditions: pageConfig.termsAndConditions ?? null,
@@ -68,5 +66,5 @@ export default async function PageConfigPage() {
       }
     : null;
 
-  return <PanelConfiguracion config={config} />;
+  return <PanelConfiguracion config={config} estadoMercadoPago={estadoMercadoPago} />;
 }
