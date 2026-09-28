@@ -144,4 +144,4 @@ src/
 - **Error de conexión (Timeout / active=0):** Asegúrate de que `DATABASE_HOST` sea `127.0.0.1` en el `.env`.
 - **Error "Configuration" al loguearse:** Falta la tabla `Account` en la DB (`npx prisma db push`) o las credenciales de Google están mal.
 - **Error de rutas Prisma:** Si moviste carpetas, borra `node_modules` `.next` `package-lock.json` y ejecuta `npm install` y `npx prisma generate` de nuevo.
-- **Si modificas la estructura de la DB:** borra `node_modules` `.next` `package-lock.json` y ejecuta `npm install`, `npx prisma db pull` y `npx prisma generate`
+- **Si modificas la estructura de la DB:** borra `node_modules` `.next` `package-lock.json` y ejecuta `npm install`, `npx prisma db push` y `npx prisma generate`
