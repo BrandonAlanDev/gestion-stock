@@ -1,7 +1,7 @@
 "use client";
 
 import SubidaImagen from "@/components/imagen/SubidaImagen";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { DatosTarjeta } from "./tipos";
 
 interface ZonaImagenSeccionProps {

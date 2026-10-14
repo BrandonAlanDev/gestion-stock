@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
 import ColorPicker from "@/components/ui/color-picker";
-import type { PlantillaColor } from "@/lib/plantillas-colores";
+import type { PlantillaColor } from "@/lib/plantillas-colores/plantillas-colores";
 
 import SelectorPlantillasColores from "./SelectorPlantillasColores";
 import VistaPreviaPersonalizada from "./VistaPreviaPersonalizada";

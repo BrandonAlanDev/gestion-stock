@@ -4,7 +4,7 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import LayoutGrid from "./LayoutGrid";
 import LayoutCollage from "./LayoutCollage";
 import LayoutMinimal from "./LayoutMinimal";
-import mapGridToCard from "@/helpers/GridToCard";
+import mapearGridATarjeta from "@/lib/grillas/mapear-grid-a-tarjeta";
 
 export default function FeaturedSection() {
   const { pageConfig } = usePageConfig();
@@ -16,7 +16,7 @@ export default function FeaturedSection() {
   // 2. Obtenemos los datos dinámicos desde el modelo Homegrid
   // Ajusta esto según cómo venga tu objeto pageConfig (probablemente pageConfig.homegrid)
   const homeData = config?.homegrid;
-  const categories = (homeData?.grids || []).map(mapGridToCard);
+  const categories = (homeData?.grids || []).map(mapearGridATarjeta);
 
   if (categories.length === 0) return null; // O un skeleton
 

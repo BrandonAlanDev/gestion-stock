@@ -65,7 +65,7 @@ export const providerDetailsSchema = z
   .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]+$/, "El detalle puede contener letras, números y espacios")
   .optional();
 
-const emailSchema = z.string().email();
+export const esquemaCorreo = z.string().email();
 const phoneSchema = z.string().regex(/^[0-9+\-\s()]+$/);
 
 export const contactSchema = z
@@ -73,15 +73,10 @@ export const contactSchema = z
   .min(3, "Contacto muy corto")
   .refine(
     (val) =>
-      emailSchema.safeParse(val).success ||
+      esquemaCorreo.safeParse(val).success ||
       phoneSchema.safeParse(val).success,
     "Debe ser un email o teléfono válido"
   );
-
-export const normalizeContact = (c: string) => c.trim();
-
-export const getContactType = (c: string) =>
-  emailSchema.safeParse(c).success ? "EMAIL" : "PHONE";
 
 export const createProviderSchema = z.object({
   name: providerNameSchema,

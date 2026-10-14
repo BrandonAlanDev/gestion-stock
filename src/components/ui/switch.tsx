@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 interface SwitchProps {
   activo: boolean;

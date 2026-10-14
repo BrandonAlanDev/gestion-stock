@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface HeroLayoutPickerProps {
   value: "standard" | "split" | "minimal";

@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
 import { prisma } from "@/lib/prisma";
-import { registerSchema } from "@/lib/zod";
+import { registerSchema } from "@/lib/validaciones/esquemas";
 import type { EstadoAccionSesion } from "@/types/acciones-sesion";
 
 function esConflictoUnico(error: unknown): boolean {

@@ -3,20 +3,18 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Globe, Eye, Settings } from "lucide-react";
 
-import {
-  getCustomPages,
-  createCustomPage,
-  deleteCustomPage,
-} from "@/actions/custom-page.actions";
-import { updateCustomPageContent } from "@/actions/custom-page-builder.actions";
+import { obtenerPaginasPersonalizadas } from "@/actions/paginas-personalizadas/obtener-paginas";
+import { crearPaginaPersonalizada } from "@/actions/paginas-personalizadas/crear-pagina";
+import { eliminarPaginaPersonalizada } from "@/actions/paginas-personalizadas/eliminar-pagina";
+import { actualizarContenidoPaginaPersonalizada } from "@/actions/paginas-personalizadas/actualizar-contenido-pagina";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { PageBuilderModal } from "@/components/admin/custom-page/Modals";
 import DeleteConfirmModal from "@/components/admin/custom-page/DeleteConfirmModal";
 import ViewPageModal from "@/components/admin/custom-page/ViewPageModal";
 
-type PaginaCustomizada = Awaited<ReturnType<typeof getCustomPages>>[number];
-type DatosPagina = Parameters<typeof updateCustomPageContent>[1] & {
+type PaginaCustomizada = Awaited<ReturnType<typeof obtenerPaginasPersonalizadas>>[number];
+type DatosPagina = Parameters<typeof actualizarContenidoPaginaPersonalizada>[1] & {
   title: string;
   slug: string;
 };
@@ -50,7 +48,7 @@ export default function CustomPagesPage() {
 
   const loadPages = async () => {
     setLoading(true);
-    const data = await getCustomPages();
+    const data = await obtenerPaginasPersonalizadas();
     setPages(data || []);
     setLoading(false);
   };
@@ -85,7 +83,7 @@ export default function CustomPagesPage() {
       let pageId = selectedPage?.id;
 
       if (!pageId) {
-        const newPage = await createCustomPage({
+        const newPage = await crearPaginaPersonalizada({
           title: formData.title,
           slug: formData.slug,
           subtitle: formData.subtitle,
@@ -94,7 +92,7 @@ export default function CustomPagesPage() {
         pageId = newPage.id;
       }
 
-      await updateCustomPageContent(pageId, {
+      await actualizarContenidoPaginaPersonalizada(pageId, {
         title: formData.title,
         slug: formData.slug,
         subtitle: formData.subtitle,
@@ -116,7 +114,7 @@ export default function CustomPagesPage() {
     if (!selectedPage) return;
     setIsProcessing(true);
     try {
-      await deleteCustomPage(selectedPage.id);
+      await eliminarPaginaPersonalizada(selectedPage.id);
       await loadPages();
       setIsDeleteOpen(false);
     } catch (error) {

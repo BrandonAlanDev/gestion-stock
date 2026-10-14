@@ -9,7 +9,7 @@ import {
   Youtube,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { normalizarUrlHttps } from "@/helpers/normalizarUrlHttps";
+import { normalizarUrlHttps } from "@/lib/enlaces/normalizar-url-https";
 
 interface ColumnaRedesProps {
   instagram: string | null;

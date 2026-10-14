@@ -1,5 +1,5 @@
-import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
-import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
+import { normalizarValorEnlace } from "@/lib/enlaces/normalizar-valor-enlace";
+import { normalizarEnlaceNavegable } from "@/lib/enlaces/normalizar-enlace-navegable";
 
 export function resolverEnlaceSlide(slide: {
   url?: string | null;

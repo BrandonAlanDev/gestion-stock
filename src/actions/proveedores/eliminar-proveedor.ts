@@ -3,7 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { eliminarProveedor } from "@/lib/services/proveedores/eliminar-proveedor";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { idSchema } from "@/lib/zod";
+import { idSchema } from "@/lib/validaciones/esquemas";
 
 export async function deleteProvider(id: unknown) {
   const contexto = await requiereAdmin();

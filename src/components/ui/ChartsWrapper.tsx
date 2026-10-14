@@ -2,7 +2,7 @@
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { AlertTriangle, Package, TrendingUp, ArrowUpDown, ShoppingBag } from "lucide-react";
 
 interface Stats {

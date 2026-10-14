@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 export default function HeroDots({
   slidesCount,

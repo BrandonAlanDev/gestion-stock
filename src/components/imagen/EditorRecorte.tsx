@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Cropper, { type Area } from "react-easy-crop";
 import { Check, X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { generarImagenRecortada } from "./utilidades-recorte";
 import type { FormaRecorte } from "./tipos";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";

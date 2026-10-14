@@ -1,6 +1,6 @@
 import { getDashboardStats } from "@/actions/estadisticas/obtener-estadisticas-dashboard";
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import ChartWrapper from "@/components/ui/ChartWrapperClient";
 
 export default async function AdminPage() {

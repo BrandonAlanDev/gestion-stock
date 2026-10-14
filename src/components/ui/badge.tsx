@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 type VarianteBadge =
   | "activo"

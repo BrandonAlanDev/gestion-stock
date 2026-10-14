@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { deleteSubCategory } from "@/actions/categorias/eliminar-subcategoria";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 export default function DeleteSubBtn({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
   const { pageConfig } = usePageConfig();

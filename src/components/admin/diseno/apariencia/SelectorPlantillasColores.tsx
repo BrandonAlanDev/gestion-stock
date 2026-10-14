@@ -1,5 +1,5 @@
-import { PLANTILLAS_COLORES } from "@/lib/plantillas-colores";
-import type { PlantillaColor } from "@/lib/plantillas-colores";
+import { PLANTILLAS_COLORES } from "@/lib/plantillas-colores/plantillas-colores";
+import type { PlantillaColor } from "@/lib/plantillas-colores/plantillas-colores";
 
 import TarjetaPlantillaColor from "./TarjetaPlantillaColor";
 

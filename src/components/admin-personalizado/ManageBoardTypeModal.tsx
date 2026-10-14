@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBoardType, updateBoardType, deleteBoardType } from "@/actions/admin-personalizado";
+import { crearModeloTabla, actualizarModeloTabla, eliminarModeloTabla } from "@/actions/personalizado/modelos.actions";
 import { X, Edit2, Trash2, Tag, Loader2, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type {
   ModeloTabla,
   ColaTabla,
@@ -69,8 +69,8 @@ export default function ManageBoardTypeModal({ boardType, availableTails, availa
         configIds: formData.configIds,
       };
       const res = isEdit
-        ? await updateBoardType(boardType.id, { ...payload, active: true })
-        : await createBoardType(payload);
+        ? await actualizarModeloTabla(boardType.id, { ...payload, active: true })
+        : await crearModeloTabla(payload);
 
       if (res?.error) toast.error(res.error);
       else {
@@ -91,7 +91,7 @@ export default function ManageBoardTypeModal({ boardType, availableTails, availa
     if (!boardType) return;
     if (!confirm("¿Eliminar este modelo de tabla?")) return;
     setLoading(true);
-    const res = await deleteBoardType(boardType.id);
+    const res = await eliminarModeloTabla(boardType.id);
     setLoading(false);
     if (res?.error) toast.error(res.error);
     else { toast.success("Modelo eliminado"); setIsOpen(false); }

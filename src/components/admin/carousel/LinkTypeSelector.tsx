@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import Input from "@/components/admin/page-config/shared/Input";
 
 export const LINK_TYPES = [

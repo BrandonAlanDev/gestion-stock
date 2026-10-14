@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 const PATRON_HEX = /^#([0-9a-fA-F]{6})$/;
 

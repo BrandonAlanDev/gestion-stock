@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBoardFin, updateBoardFin, deleteBoardFin } from "@/actions/admin-personalizado";
+import { crearQuillaTabla, actualizarQuillaTabla, eliminarQuillaTabla } from "@/actions/personalizado/quillas.actions";
 import { X, Edit2, Trash2, Tag, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { QuillaTabla } from "@/types/personalizado";
 
 interface ManageFinModalProps {
@@ -38,8 +38,8 @@ export default function ManageFinModal({ fin }: ManageFinModalProps) {
     setLoading(true);
     try {
       const res = isEdit
-        ? await updateBoardFin(fin.id, { name: formData.name, active: true })
-        : await createBoardFin({ name: formData.name });
+        ? await actualizarQuillaTabla(fin.id, { name: formData.name, active: true })
+        : await crearQuillaTabla({ name: formData.name });
       if (res?.error) toast.error(res.error);
       else {
         toast.success(isEdit ? "Quilla actualizada" : "Quilla creada");
@@ -56,7 +56,7 @@ export default function ManageFinModal({ fin }: ManageFinModalProps) {
     if (!fin) return;
     if (!confirm("¿Eliminar este tipo de quilla?")) return;
     setLoading(true);
-    const res = await deleteBoardFin(fin.id);
+    const res = await eliminarQuillaTabla(fin.id);
     setLoading(false);
     if (res?.error) toast.error(res.error);
     else { toast.success("Quilla eliminada"); setIsOpen(false); }

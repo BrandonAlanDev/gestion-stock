@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Pencil, Grid2X2, Columns3, LayoutDashboard, GripVertical } from "lucide-react";
@@ -11,7 +12,8 @@ import GridModal, { type DatosTarjeta, type SelectorCategoria, type SelectorProd
 import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
 import { updateSectionVisibility, updateHomeGrids } from "@/actions/page-config/home.actions";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 export interface GridLocal extends DatosTarjeta {
   id: string;
@@ -110,7 +112,11 @@ function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove
       <button {...attributes} {...listeners} className="cursor-grab p-1 opacity-50 hover:opacity-100 transition-opacity">
         <GripVertical size={20} />
       </button>
-      <img src={grid.image} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg" alt="" />
+      {grid.image ? (
+        <Image src={grid.image} width={64} height={64} unoptimized={!imagenAdmiteOptimizacion(grid.image)} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg" alt="" />
+      ) : (
+        <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-lg bg-black/10" />
+      )}
       <div className="flex-1 min-w-0">
         <p className="font-bold truncate">{grid.title}</p>
         <p className="text-xs opacity-60">{grid.subtitle}</p>

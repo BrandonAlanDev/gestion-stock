@@ -50,7 +50,7 @@ interface PaginaEntrada {
   sections?: SeccionEntrada[];
 }
 type DatosPaginaGuardado = Parameters<
-  typeof import("@/actions/custom-page-builder.actions")["updateCustomPageContent"]
+  typeof import("@/actions/paginas-personalizadas/actualizar-contenido-pagina")["actualizarContenidoPaginaPersonalizada"]
 >[1] & { title: string; slug: string };
 
 interface PropiedadesConstructorPagina {

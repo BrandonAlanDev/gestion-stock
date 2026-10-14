@@ -1,7 +1,7 @@
 "use client";
 
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 const HEX_VALIDO = /^#[0-9a-fA-F]{6}$/;
 

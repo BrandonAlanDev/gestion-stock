@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { LayoutTemplate, Waves, Settings2, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import ManageBoardTypeModal from "./ManageBoardTypeModal";
 import type {
   ModeloTabla,

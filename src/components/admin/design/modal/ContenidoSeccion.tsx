@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import { LIMITES_TARJETA, type DatosTarjeta } from "./tipos";
 
 interface ContenidoSeccionProps {

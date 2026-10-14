@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import LinkTypeSelector from "./LinkTypeSelector";
 import type { SlideFormData } from "./SlideEditor";
 

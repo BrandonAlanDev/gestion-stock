@@ -10,7 +10,7 @@ import {
 import type { ReactNode } from "react";
 
 import { getCarousels } from "@/actions/carousel/carousel.actions";
-import { getCustomPages } from "@/actions/custom-page.actions";
+import { obtenerPaginasPersonalizadas } from "@/actions/paginas-personalizadas/obtener-paginas";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import BloqueContenido from "@/components/admin/diseno/BloqueContenido";
 import BloqueEstructura from "@/components/admin/diseno/BloqueEstructura";
@@ -35,7 +35,7 @@ interface PropsBloque {
 
 export default async function ResumenDiseno() {
   const [respuestaConfig, respuestaCarouseles, paginasDinamicas] =
-    await Promise.all([getPageConfig(), getCarousels(), getCustomPages()]);
+    await Promise.all([getPageConfig(), getCarousels(), obtenerPaginasPersonalizadas()]);
 
   const pageConfig = respuestaConfig.ok
     ? (respuestaConfig.pageConfig ?? null)

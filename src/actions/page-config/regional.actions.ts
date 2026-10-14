@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, revalidatePath } from "next/cache";
-import { regionalSchema } from "@/lib/zod";
+import { regionalSchema } from "@/lib/validaciones/esquemas";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateRegionalConfig(data: unknown) {

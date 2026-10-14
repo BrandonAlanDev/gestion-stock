@@ -2,7 +2,7 @@
 
 import CardsLayoutSimple from "./CardsLayoutSimple";
 import OfferCarousel from "./offer-carousel/OfferCarousel";
-import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
+import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 
 interface CarouselSlide {
   id: string;

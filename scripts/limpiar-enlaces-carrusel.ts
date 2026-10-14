@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../generated/prisma/client";
-import { normalizarValorEnlace } from "../src/helpers/normalizarValorEnlace";
+import { normalizarValorEnlace } from "../src/lib/enlaces/normalizar-valor-enlace";
 
 const esLocal =
   process.env.DATABASE_HOST === "localhost" ||

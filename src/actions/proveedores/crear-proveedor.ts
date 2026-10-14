@@ -3,11 +3,9 @@
 import { revalidateTag } from "next/cache";
 import { crearProveedor } from "@/lib/services/proveedores/crear-proveedor";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import {
-  createProviderSchema,
-  getContactType,
-  normalizeContact,
-} from "@/lib/zod";
+import { createProviderSchema } from "@/lib/validaciones/esquemas";
+import { obtenerTipoContacto as getContactType } from "@/lib/validaciones/proveedores/obtener-tipo-contacto";
+import { normalizarContacto as normalizeContact } from "@/lib/validaciones/proveedores/normalizar-contacto";
 
 export async function createProvider(datos: unknown) {
   const contexto = await requiereAdmin();

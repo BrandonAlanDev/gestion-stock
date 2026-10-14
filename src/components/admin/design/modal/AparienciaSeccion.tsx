@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { Sparkles } from "lucide-react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import AcordeonSeccion from "./AcordeonSeccion";
 import InterruptorConDescripcion from "./InterruptorConDescripcion";
 import { OPCIONES_BOTON, type DatosTarjeta } from "./tipos";

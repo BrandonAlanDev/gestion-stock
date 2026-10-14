@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 
 interface CarouselSlide {
   id: string;

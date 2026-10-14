@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, Save, AlertCircle } from "lucide-react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import ZonaImagenSeccion from "./modal/ZonaImagenSeccion";
 import ContenidoSeccion from "./modal/ContenidoSeccion";

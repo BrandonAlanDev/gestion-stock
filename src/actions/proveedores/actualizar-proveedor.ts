@@ -3,7 +3,8 @@
 import { revalidateTag } from "next/cache";
 import { actualizarProveedor } from "@/lib/services/proveedores/actualizar-proveedor";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { normalizeContact, updateProviderSchema } from "@/lib/zod";
+import { updateProviderSchema } from "@/lib/validaciones/esquemas";
+import { normalizarContacto as normalizeContact } from "@/lib/validaciones/proveedores/normalizar-contacto";
 
 export async function updateProvider(datos: unknown) {
   const contexto = await requiereAdmin();

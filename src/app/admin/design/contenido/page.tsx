@@ -1,5 +1,5 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import { getCustomPages } from "@/actions/custom-page.actions";
+import { obtenerPaginasPersonalizadas } from "@/actions/paginas-personalizadas/obtener-paginas";
 import GestorContenido from "@/components/admin/diseno/contenido/GestorContenido";
 import type {
   ConfigContenido,
@@ -12,7 +12,7 @@ export default async function ContenidoPage() {
 
   let paginasDinamicas: PaginaDinamicaResumen[] = [];
   try {
-    const paginas = await getCustomPages();
+    const paginas = await obtenerPaginasPersonalizadas();
     paginasDinamicas = paginas.map((pagina) => ({
       id: pagina.id,
       title: pagina.title,

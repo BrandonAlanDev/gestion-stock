@@ -1,21 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, Tag, Layers, Palette, ShoppingBag } from "lucide-react";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 type Color = { id: string; name: string; hex: string | null; active?: boolean };
 type Size = { id: string; value: string; order: number; active?: boolean; sizeTypeId?: string };
 type Variant = { id: string; stock: number; sku: string | null; size: Size | null; color: Color | null };
-type Image = { id: string; srcImage: string; alt: string | null; order: number; garmentId?: string };
+type ImagenProducto = { id: string; srcImage: string; alt: string | null; order: number; garmentId?: string };
 export type Garment = {
   id: string;
   name: string;
   price: string | number | { toString(): string };
   description: string | null;
   subCategory: { id?: string; name: string; active?: boolean; categoryId?: string } | null;
-  images: Image[];
+  images: ImagenProducto[];
   variants: Variant[];
 };
 
@@ -43,11 +45,13 @@ function ProductCard({ garment, onClick }: { garment: Garment; onClick: () => vo
         onMouseLeave={() => setImgIndex(0)}
       >
         {cover ? (
-          <img
-            src={obtenerUrlImagenOptimizada(cover, 1200) || undefined}
+          <Image
+            src={obtenerUrlImagenOptimizada(cover, 1200) || cover}
             alt={garment.name}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            unoptimized={!imagenAdmiteOptimizacion(cover)}
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -155,10 +159,13 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
               {/* Imagen principal */}
               <div className="aspect-square rounded-2xl overflow-hidden bg-[var(--superficie-imagen)] relative">
                 {garment.images[selectedImg] ? (
-                  <img
-                    src={obtenerUrlImagenOptimizada(garment.images[selectedImg].srcImage, 1200) || undefined}
+                  <Image
+                    src={obtenerUrlImagenOptimizada(garment.images[selectedImg].srcImage, 1200) || garment.images[selectedImg].srcImage}
                     alt={garment.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    unoptimized={!imagenAdmiteOptimizacion(garment.images[selectedImg].srcImage)}
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -180,9 +187,9 @@ function ProductModal({ garment, onClose }: { garment: Garment; onClose: () => v
                     <button
                       key={img.id}
                       onClick={() => setSelectedImg(i)}
-                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-[var(--color-primario)]" : "border-transparent opacity-60 hover:opacity-100"}`}
+                      className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImg === i ? "border-[var(--color-primario)]" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
-                      <img src={obtenerUrlImagenOptimizada(img.srcImage, 200) || undefined} alt={img.alt || ""} loading="lazy" className="w-full h-full object-cover" />
+                      <Image src={obtenerUrlImagenOptimizada(img.srcImage, 200) || img.srcImage} alt={img.alt || ""} fill sizes="64px" unoptimized={!imagenAdmiteOptimizacion(img.srcImage)} className="object-cover" />
                     </button>
                   ))}
                 </div>

@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import {
-  createDeliveryOption,
-  updateDeliveryOption,
-  deleteDeliveryOption,
-} from "@/actions/admin-personalizado";
+  crearOpcionEntrega,
+  actualizarOpcionEntrega,
+  eliminarOpcionEntrega,
+} from "@/actions/personalizado/opciones-entrega.actions";
 import { X, Edit2, Trash2, Clock, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { EntregaTabla } from "@/types/personalizado";
 
 interface ManageDeliveryModalProps {
@@ -50,18 +50,18 @@ export default function ManageDeliveryModal({ delivery }: ManageDeliveryModalPro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.label.trim()) {
-      toast.error("El label es obligatorio.");
+      toast.error("El nombre de la opción es obligatorio.");
       return;
     }
     setLoading(true);
     try {
       const res = isEdit
-        ? await updateDeliveryOption(delivery.id, {
+        ? await actualizarOpcionEntrega(delivery.id, {
             label: formData.label,
             description: formData.description,
             active: formData.active,
           })
-        : await createDeliveryOption({
+        : await crearOpcionEntrega({
             label: formData.label,
             description: formData.description,
           });
@@ -86,7 +86,7 @@ export default function ManageDeliveryModal({ delivery }: ManageDeliveryModalPro
     if (!delivery) return;
     if (!confirm("¿Eliminar esta opción de entrega?")) return;
     setLoading(true);
-    const res = await deleteDeliveryOption(delivery.id);
+    const res = await eliminarOpcionEntrega(delivery.id);
     setLoading(false);
     if (res?.error) toast.error(res.error);
     else {

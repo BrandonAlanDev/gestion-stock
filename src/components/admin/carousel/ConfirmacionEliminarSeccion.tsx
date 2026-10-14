@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Trash2 } from "lucide-react";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";
 

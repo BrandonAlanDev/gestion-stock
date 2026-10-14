@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
+import { normalizarEnlaceNavegable } from "@/lib/enlaces/normalizar-enlace-navegable";
 
 export default function HeroCtaButton({
   url,

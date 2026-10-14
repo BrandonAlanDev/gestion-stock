@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save } from "lucide-react";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import CarouselWizardStep2 from "./CarouselWizardStep2";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { updateCarousel } from "@/actions/carousel/carousel.actions";

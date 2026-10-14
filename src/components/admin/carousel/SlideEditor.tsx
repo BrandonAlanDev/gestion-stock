@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertCircle } from "lucide-react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
-import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+import { normalizarValorEnlace } from "@/lib/enlaces/normalizar-valor-enlace";
 import ZonaImagenSlide from "./ZonaImagenSlide";
 import SeccionContenidoSlide from "./SeccionContenidoSlide";
 import OpcionesAvanzadasSlide from "./OpcionesAvanzadasSlide";

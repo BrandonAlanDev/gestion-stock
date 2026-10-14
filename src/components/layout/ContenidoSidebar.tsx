@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import {
   Package, Tags, Truck, Ruler, LogOut, User, History,
   Store, LayoutDashboard, Settings, Image as ImageIcon,
@@ -94,7 +96,7 @@ export default function ContenidoSidebar({
         style={{ borderColor: overlaySuave }}
       >
         {logo ? (
-          <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" draggable={false} />
+          <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="w-8 h-8 rounded-lg object-cover shrink-0" draggable={false} />
         ) : (
           <div className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0" style={{ borderColor: "var(--color-primario)" }}>
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />
@@ -109,9 +111,12 @@ export default function ContenidoSidebar({
         <div className={`group relative flex items-center py-2 rounded-xl transition-all select-none ${colapsado ? "gap-0 px-0" : "gap-3 px-1.5"}`}>
           <div className="relative shrink-0 w-10 h-10">
             {sesionDelTenant.user.image ? (
-              <img
+              <Image
                 src={sesionDelTenant.user.image}
                 alt={sesionDelTenant.user.name ?? "Usuario"}
+                width={40}
+                height={40}
+                unoptimized
                 className="w-10 h-10 rounded-full object-cover"
                 draggable={false}
               />

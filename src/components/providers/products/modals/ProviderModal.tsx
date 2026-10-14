@@ -2,7 +2,7 @@
 
 import { X, Truck, Phone, Mail } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface ProviderModalProps {
   provider: {

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBoardTail, updateBoardTail, deleteBoardTail } from "@/actions/admin-personalizado";
+import { crearColaTabla, actualizarColaTabla, eliminarColaTabla } from "@/actions/personalizado/colas.actions";
 import { X, Edit2, Trash2, Tag, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { ColaTabla } from "@/types/personalizado";
 
 interface ManageTailModalProps {
@@ -43,8 +43,8 @@ export default function ManageTailModal({ tail }: ManageTailModalProps) {
     setLoading(true);
     try {
       const res = isEdit
-        ? await updateBoardTail(tail.id, { name: formData.name, svgPath: formData.svgPath, active: true })
-        : await createBoardTail({ name: formData.name, svgPath: formData.svgPath });
+        ? await actualizarColaTabla(tail.id, { name: formData.name, svgPath: formData.svgPath, active: true })
+        : await crearColaTabla({ name: formData.name, svgPath: formData.svgPath });
       if (res?.error) {
         toast.error(res.error);
       } else {
@@ -62,7 +62,7 @@ export default function ManageTailModal({ tail }: ManageTailModalProps) {
     if (!tail) return;
     if (!confirm("¿Estás seguro de eliminar esta cola?")) return;
     setLoading(true);
-    const res = await deleteBoardTail(tail.id);
+    const res = await eliminarColaTabla(tail.id);
     setLoading(false);
     if (res?.error) { toast.error(res.error); }
     else { toast.success("Cola eliminada"); setIsOpen(false); }

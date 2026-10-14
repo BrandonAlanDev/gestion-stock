@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";

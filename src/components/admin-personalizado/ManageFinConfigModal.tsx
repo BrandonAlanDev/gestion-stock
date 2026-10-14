@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBoardFinConfig, updateBoardFinConfig, deleteBoardFinConfig } from "@/actions/admin-personalizado";
+import { crearConfiguracionQuillas, actualizarConfiguracionQuillas, eliminarConfiguracionQuillas } from "@/actions/personalizado/configuraciones-quillas.actions";
 import { X, Edit2, Trash2, Tag, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { ConfigQuillaTabla } from "@/types/personalizado";
 
 interface ManageFinConfigModalProps {
@@ -38,8 +38,8 @@ export default function ManageFinConfigModal({ config }: ManageFinConfigModalPro
     setLoading(true);
     try {
       const res = isEdit
-        ? await updateBoardFinConfig(config.id, { name: formData.name, count: Number(formData.count), active: true })
-        : await createBoardFinConfig({ name: formData.name, count: Number(formData.count) });
+        ? await actualizarConfiguracionQuillas(config.id, { name: formData.name, count: Number(formData.count), active: true })
+        : await crearConfiguracionQuillas({ name: formData.name, count: Number(formData.count) });
       if (res?.error) toast.error(res.error);
       else {
         toast.success(isEdit ? "Config. actualizada" : "Config. creada");
@@ -56,7 +56,7 @@ export default function ManageFinConfigModal({ config }: ManageFinConfigModalPro
     if (!config) return;
     if (!confirm("¿Eliminar esta configuración?")) return;
     setLoading(true);
-    const res = await deleteBoardFinConfig(config.id);
+    const res = await eliminarConfiguracionQuillas(config.id);
     setLoading(false);
     if (res?.error) toast.error(res.error);
     else { toast.success("Config. eliminada"); setIsOpen(false); }

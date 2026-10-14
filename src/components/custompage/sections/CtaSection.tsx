@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
+import { normalizarEnlaceNavegable } from "@/lib/enlaces/normalizar-enlace-navegable";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import LocationCard from "@/components/ui/LocationCard";
 import { CustomSection } from "@/components/custompage/PageRender";

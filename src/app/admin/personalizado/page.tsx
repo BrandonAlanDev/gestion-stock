@@ -1,8 +1,8 @@
-import { getBoardAdminOptions } from "@/actions/admin-personalizado";
+import { obtenerOpcionesTablasAdministrador } from "@/actions/personalizado/obtener-opciones-administrador";
 import { Wrench, Layers, Waves, FileText, Settings2, Clock } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 import BoardTypesList from "@/components/admin-personalizado/BoardTypesList";
@@ -24,7 +24,7 @@ export default async function AdminPersonalizadoPage() {
     redirect("/404");
   }
 
-  const { data, success } = await getBoardAdminOptions();
+  const { data, success } = await obtenerOpcionesTablasAdministrador();
   
   if (!success || !data) {
     return <div className="p-8 pt-24 text-red-500 font-bold text-center">Error cargando configuraciones.</div>;

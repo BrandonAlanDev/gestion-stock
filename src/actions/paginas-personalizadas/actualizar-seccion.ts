@@ -1,0 +1,12 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import type { EntradaActualizarSeccion } from "@/types/paginas-personalizadas/entradas-acciones";
+
+export async function actualizarSeccionPersonalizada(id: string, datos: EntradaActualizarSeccion) {
+  const { tenantId } = await requiereAdmin();
+  const seccion = await prisma.customSection.findFirst({ where: { id, tenantId }, select: { id: true } });
+  if (!seccion) throw new Error("La sección no pertenece a la tienda activa");
+  return prisma.customSection.update({ where: { id: seccion.id }, data: datos });
+}

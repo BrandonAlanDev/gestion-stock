@@ -1,6 +1,6 @@
 "use server";
 
-import { SizeTypeNameSchema } from "@/lib/zod";
+import { SizeTypeNameSchema } from "@/lib/validaciones/esquemas";
 import * as servicioTalles from "@/lib/services/size-service";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { revalidarTalles } from "./revalidar-talles";

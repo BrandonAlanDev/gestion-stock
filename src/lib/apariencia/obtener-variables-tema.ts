@@ -1,6 +1,6 @@
 import { esColorHexValido } from "@/lib/contraste/es-color-hex-valido";
 import { aclararColor } from "@/lib/contraste/aclarar-color";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 function colorValido(valor: unknown, fallback: string): string {
   return typeof valor === "string" && esColorHexValido(valor) ? valor : fallback;

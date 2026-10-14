@@ -1,13 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Crop, Upload, X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { compressImage } from "@/lib/image-utils";
-import { fileToBase64, getContrastColor } from "@/lib/utils";
+import { convertirArchivoBase64 as fileToBase64 } from "@/lib/utilidades/convertir-archivo-base64";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import EditorRecorte from "./EditorRecorte";
 import SubidaImagenBoton from "./SubidaImagenBoton";
 import type { FormaRecorte } from "./tipos";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 interface SubidaImagenProps {
   valor: string;
@@ -200,7 +203,7 @@ export default function SubidaImagen({
             }}
           >
             {valor ? (
-              <img src={valor} alt={etiqueta} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+              <Image src={valor} alt={etiqueta} fill sizes="(min-width: 768px) 50vw, 100vw" unoptimized={!imagenAdmiteOptimizacion(valor)} draggable={false} className="object-cover" />
             ) : (
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
                 <Upload size={32} style={{ color: primario }} />

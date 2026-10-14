@@ -1,4 +1,4 @@
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import HeroLayoutPicker from "./HeroLayoutPicker";
 import type { DefinicionConfiguracion, TipoCarousel, VarianteCarousel } from "./registroConfiguraciones";
 

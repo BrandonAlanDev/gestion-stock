@@ -1,6 +1,7 @@
 import CatalogoClient from "@/components/providers/products/views/CatalogoClient";
-import { getCachedCategories, getCachedProducts } from "@/lib/cache";
-import { serializeData } from "@/lib/utils";
+import { obtenerCategoriasCacheadas } from "@/lib/cache/obtener-categorias-cacheadas";
+import { obtenerProductosCacheados } from "@/lib/cache/obtener-productos-cacheados";
+import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 
 export default async function CatalogoPage({
@@ -15,7 +16,7 @@ export default async function CatalogoPage({
   const categoria = sp?.categoria || undefined;
   const subcategoria = sp?.subcategoria || undefined;
 
-  const categories = await getCachedCategories(tenant.id);
+  const categories = await obtenerCategoriasCacheadas(tenant.id);
 
   let categoryId: string | undefined;
   if (categoria) {
@@ -35,7 +36,7 @@ export default async function CatalogoPage({
       )?.id;
   }
 
-  const { garments, total } = await getCachedProducts(
+  const { garments, total } = await obtenerProductosCacheados(
     tenant.id,
     currentPage,
     limit,

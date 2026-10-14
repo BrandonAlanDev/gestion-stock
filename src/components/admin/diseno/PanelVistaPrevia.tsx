@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import Sheet from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 import useVistaPrevia from "./use-vista-previa";
 import type { DispositivoVistaPrevia } from "./contexto-vista-previa";

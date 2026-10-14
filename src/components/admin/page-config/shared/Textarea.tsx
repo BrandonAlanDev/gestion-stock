@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface Props {
   label?: string;

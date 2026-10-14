@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode, RefObject } from "react";
 import { Crop, Upload, X } from "lucide-react";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 interface SubidaImagenBotonProps {
   valor: string;
@@ -81,17 +83,20 @@ export default function SubidaImagenBoton({
         {valor && (
           <div className="flex items-center gap-2 flex-wrap">
             <div
-              className="h-16 w-16 overflow-hidden rounded-lg border"
+              className="relative h-16 w-16 overflow-hidden rounded-lg border"
               style={{
                 borderColor: primario + "40",
                 backgroundColor: primario + "10",
               }}
             >
-              <img
+              <Image
                 src={valor}
                 alt="Vista previa"
+                fill
+                sizes="64px"
+                unoptimized={!imagenAdmiteOptimizacion(valor)}
                 draggable={false}
-                className="h-full w-full object-cover"
+                className="object-cover"
               />
             </div>
             {puedeEditarRecorte && (

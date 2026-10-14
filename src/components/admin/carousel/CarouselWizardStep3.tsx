@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Image as ImageIcon, AlertTriangle, ChevronLeft } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import SlideOrdenable from "./SlideOrdenable";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";

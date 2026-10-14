@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, revalidatePath } from "next/cache";
-import { flagsPaginaSchema } from "@/lib/zod";
+import { flagsPaginaSchema } from "@/lib/validaciones/esquemas";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updatePageFlags(data: unknown) {

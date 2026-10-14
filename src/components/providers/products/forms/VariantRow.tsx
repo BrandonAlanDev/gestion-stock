@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import ColorDropdown from "@/components/ui/color-dropdown";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface Size {
   id: string;

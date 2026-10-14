@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBoardMaterial, updateBoardMaterial, deleteBoardMaterial } from "@/actions/admin-personalizado";
+import { crearMaterialTabla, actualizarMaterialTabla, eliminarMaterialTabla } from "@/actions/personalizado/materiales.actions";
 import { X, Edit2, Trash2, Tag, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { MaterialTabla } from "@/types/personalizado";
 
 interface ManageMaterialModalProps {
@@ -38,8 +38,8 @@ export default function ManageMaterialModal({ material }: ManageMaterialModalPro
     setLoading(true);
     try {
       const res = isEdit
-        ? await updateBoardMaterial(material.id, { name: formData.name, description: formData.description, active: true })
-        : await createBoardMaterial({ name: formData.name, description: formData.description });
+        ? await actualizarMaterialTabla(material.id, { name: formData.name, description: formData.description, active: true })
+        : await crearMaterialTabla({ name: formData.name, description: formData.description });
       if (res?.error) toast.error(res.error);
       else {
         toast.success(isEdit ? "Material actualizado" : "Material creado");
@@ -56,7 +56,7 @@ export default function ManageMaterialModal({ material }: ManageMaterialModalPro
     if (!material) return;
     if (!confirm("¿Eliminar este material?")) return;
     setLoading(true);
-    const res = await deleteBoardMaterial(material.id);
+    const res = await eliminarMaterialTabla(material.id);
     setLoading(false);
     if (res?.error) toast.error(res.error);
     else { toast.success("Material eliminado"); setIsOpen(false); }

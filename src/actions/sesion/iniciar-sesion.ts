@@ -2,7 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
-import { loginSchema } from "@/lib/zod";
+import { loginSchema } from "@/lib/validaciones/esquemas";
 import type { EstadoAccionSesion } from "@/types/acciones-sesion";
 
 export async function iniciarSesion(

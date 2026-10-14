@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import ControlesConfiguracion from "./ControlesConfiguracion";
 import { obtenerConfiguraciones } from "./registroConfiguraciones";
 

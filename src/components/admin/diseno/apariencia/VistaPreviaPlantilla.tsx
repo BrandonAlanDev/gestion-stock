@@ -1,5 +1,5 @@
-import type { PlantillaColor } from "@/lib/plantillas-colores";
-import { getContrastColor } from "@/lib/utils";
+import type { PlantillaColor } from "@/lib/plantillas-colores/plantillas-colores";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 const CHIPS_FANTASMA = ["Productos", "Categorías", "Envíos"];
 

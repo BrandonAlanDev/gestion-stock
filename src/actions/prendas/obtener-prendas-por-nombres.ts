@@ -1,6 +1,6 @@
 "use server";
 
-import { getCachedCategories } from "@/lib/cache";
+import { obtenerCategoriasCacheadas } from "@/lib/cache/obtener-categorias-cacheadas";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { obtenerPrendas } from "./obtener-prendas";
 
@@ -15,7 +15,7 @@ export async function obtenerPrendasPorNombres(
   let idCategoria: string | undefined;
   let idSubcategoria: string | undefined;
   if (categoria || subcategoria) {
-    const categorias = await getCachedCategories(idTenant);
+    const categorias = await obtenerCategoriasCacheadas(idTenant);
     if (categoria) {
       const categoriaDecodificada = decodeURIComponent(categoria).trim().toLowerCase();
       idCategoria = categorias.find((categoriaActual) => categoriaActual.id === categoriaDecodificada || categoriaActual.name.trim().toLowerCase() === categoriaDecodificada)?.id;

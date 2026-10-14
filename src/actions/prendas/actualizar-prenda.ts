@@ -9,8 +9,8 @@ import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { updateGarmentWithDetails as actualizarRegistroPrendaConDetalles } from "@/lib/services/garment-service";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { serializeData } from "@/lib/utils";
-import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/zod";
+import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
+import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
 
 export async function actualizarPrenda(id: string, datos: EntradaPrenda) {

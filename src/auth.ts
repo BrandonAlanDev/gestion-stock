@@ -5,7 +5,7 @@ import { authConfig } from "@/auth.config";
 import { crearAdaptadorTenant } from "@/lib/autenticacion/crear-adaptador-tenant";
 import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
 import { prisma } from "@/lib/prisma";
-import { loginSchema } from "@/lib/zod";
+import { loginSchema } from "@/lib/validaciones/esquemas";
 
 // Excepción técnica: Auth.js entrega estas cuatro funciones en un único factory.
 export const { handlers, auth, signIn, signOut } = NextAuth({

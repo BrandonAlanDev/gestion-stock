@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit2 } from "lucide-react";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 export default function CategoryTriggerButton({
   isEdit,

@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Image as ImageIcon, FileText, LayoutGrid, Layers, X } from 'lucide-react';
-import { getGlobalSearchIndex, type SearchItem } from '@/actions/search';
+import { buscarContenido } from '@/actions/busqueda/buscar-contenido';
+import type { ResultadoBusqueda } from '@/types/busqueda/resultado-busqueda';
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
@@ -14,7 +16,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   const config = rawConfig as unknown as Record<string, unknown>;
 
   const [query, setQuery] = useState('');
-  const [index, setIndex] = useState<SearchItem[]>([]);
+  const [index, setIndex] = useState<ResultadoBusqueda[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,32 +38,34 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function loadIndex() {
-      const claveCache = `searchIndexCache:${tenantId ?? "sin-tenant"}`;
-      try {
-        const cached = sessionStorage.getItem(claveCache);
-        if (cached) {
-          const datos: unknown = JSON.parse(cached);
-          if (Array.isArray(datos)) {
-            setIndex(datos as SearchItem[]);
-            return;
-          }
-        }
-      } catch {
-        sessionStorage.removeItem(claveCache);
-      }
-
-      setIsLoading(true);
-      try {
-        const data = await getGlobalSearchIndex();
-        setIndex(data);
-        sessionStorage.setItem(claveCache, JSON.stringify(data));
-      } finally {
-        setIsLoading(false);
-      }
+    const texto = query.trim();
+    let vigente = true;
+    setIndex([]);
+    if (texto.length < 2) {
+      setIsLoading(false);
+      return;
     }
-    loadIndex();
-  }, [tenantId]);
+
+    setIsLoading(true);
+    const temporizador = window.setTimeout(() => {
+      buscarContenido(texto)
+        .then((resultados) => {
+          if (vigente) setIndex(resultados);
+        })
+        .catch((error: unknown) => {
+          console.error("Error al consultar la búsqueda:", error);
+          if (vigente) setIndex([]);
+        })
+        .finally(() => {
+          if (vigente) setIsLoading(false);
+        });
+    }, 250);
+
+    return () => {
+      vigente = false;
+      window.clearTimeout(temporizador);
+    };
+  }, [query, tenantId]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,10 +78,10 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   }, []);
 
   const filteredResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const searchStr = query.toLowerCase();
-    const staticLinks: SearchItem[] = [
-      { id: 'home', type: 'page', title: 'Inicio / Home', url: '/' },
+    const textoNormalizado = query.trim().toLowerCase();
+    if (!textoNormalizado) return [];
+    const staticLinks: ResultadoBusqueda[] = [
+      { id: 'home', type: 'page', title: 'Inicio', url: '/' },
       { id: 'catalogo', type: 'page', title: 'Catálogo de Productos', url: '/productos' },
     ];
 
@@ -88,11 +92,10 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
       staticLinks.push({ id: 'personalizado', type: 'page', title: 'Trabajos Personalizados', url: '/personalizado' });
     }
 
-    const combined = [...staticLinks, ...index];
-    
-    return combined
-      .filter(item => item.title.toLowerCase().includes(searchStr))
-      .slice(0, 8);
+    const enlacesEstaticos = staticLinks.filter((item) =>
+      item.title.toLowerCase().includes(textoNormalizado)
+    );
+    return [...enlacesEstaticos, ...index].slice(0, 8);
   }, [query, index, config]);
 
   const getIconForType = (type: string) => {
@@ -109,7 +112,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   return (
     <div ref={containerRef} className="relative flex-1 w-full max-w-[200px] sm:max-w-md lg:max-w-2xl mx-3 sm:mx-6 z-50">
       
-      {/* Search Input */}
+      {/* Campo de búsqueda */}
       <div
         className={`relative flex items-center w-full h-10 sm:h-11 rounded-xl transition-all duration-300 backdrop-blur-md ${
            !isTransparentState ? 'border' : 'border-transparent'
@@ -152,7 +155,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
         )}
       </div>
 
-      {/* Accordion / Dropdown Popup */}
+      {/* Lista desplegable de resultados */}
       {isFocused && query.trim().length > 0 && (
         <div 
           className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl border overflow-hidden flex flex-col max-h-[60vh] sm:max-h-[400px] overflow-y-auto backdrop-blur-xl transition-all"
@@ -187,6 +190,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
                           alt={item.title} 
                           width={40} 
                           height={40} 
+                          unoptimized={!imagenAdmiteOptimizacion(item.imageUrl)}
                           className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (

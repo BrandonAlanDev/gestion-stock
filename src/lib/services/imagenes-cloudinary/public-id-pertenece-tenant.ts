@@ -1,4 +1,4 @@
-import { RAICES_HISTORICAS_CLOUDINARY } from "@/lib/services/imagenes-cloudinary/raices-historicas-cloudinary";
+import { RAICES_HISTORICAS_CLOUDINARY } from "./raices-historicas-cloudinary";
 
 export function publicIdPerteneceTenant(publicId: string, tenantId: string): boolean {
   const segmentos = publicId.split("/").filter(Boolean);

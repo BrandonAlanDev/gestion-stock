@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { GripVertical, Image as ImageIcon, Link, Edit, Trash2 } from "lucide-react";
 import type { SlideWizardData } from "@/types/carousel";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 interface SlideOrdenableProps {
   slide: SlideWizardData;
@@ -55,7 +57,7 @@ export default function SlideOrdenable({
 
         <div className="relative w-16 h-12 sm:w-24 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden" style={{ backgroundColor: primaryColor + "15" }}>
           {slide.image ? (
-            <img src={slide.image} alt="" className="w-full h-full object-cover" />
+            <Image src={slide.image} alt="" fill sizes="(min-width: 640px) 96px, 64px" unoptimized={!imagenAdmiteOptimizacion(slide.image)} className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ color: iconColor }}>
               <ImageIcon className="w-8 h-8" />

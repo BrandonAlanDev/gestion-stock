@@ -5,7 +5,7 @@ import { Layers, Plus, X, Loader2 } from "lucide-react";
 import { createSubCategory } from "@/actions/categorias/crear-subcategoria";
 import { deleteSubCategory } from "@/actions/categorias/eliminar-subcategoria";
 import { toast } from "sonner";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 interface SubCategoryManagerProps {

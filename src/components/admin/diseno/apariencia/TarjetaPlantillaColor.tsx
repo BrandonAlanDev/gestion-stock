@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
-import type { PlantillaColor } from "@/lib/plantillas-colores";
-import { cn } from "@/lib/utils";
+import type { PlantillaColor } from "@/lib/plantillas-colores/plantillas-colores";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 
 import VistaPreviaPlantilla from "./VistaPreviaPlantilla";
 

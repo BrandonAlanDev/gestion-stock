@@ -1,3 +1,5 @@
+import { normalizarEnlaceNavegable } from "@/lib/enlaces/normalizar-enlace-navegable";
+
 export interface DatosGrid {
   id: string;
   title?: string | null;
@@ -29,14 +31,14 @@ export interface TarjetaDestacada {
   image: string;
 }
 
-export default function mapGridToCard(grid: DatosGrid): TarjetaDestacada {
+export default function mapearGridATarjeta(grid: DatosGrid): TarjetaDestacada {
   let href = "#";
   switch (grid.linkType) {
     case "CATEGORY":
-      href = `/productos?categoria=${grid.linkValue}`;
+      href = grid.linkValue ? `/productos?categoria=${encodeURIComponent(grid.linkValue)}` : "#";
       break;
     case "PRODUCT":
-      href = `/productos/item/${grid.linkValue}`;
+      href = grid.linkValue ? `/productos/item/${encodeURIComponent(grid.linkValue)}` : "#";
       break;
     case "PAGE":
       href = grid.linkValue && /^\/(?!\/)/.test(grid.linkValue.trim())
@@ -44,7 +46,7 @@ export default function mapGridToCard(grid: DatosGrid): TarjetaDestacada {
         : "#";
       break;
     case "EXTERNAL":
-      href = grid.linkValue || "#";
+      href = normalizarEnlaceNavegable(grid.linkValue) ?? "#";
       break;
     case "NONE":
     default:

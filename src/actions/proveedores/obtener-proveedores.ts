@@ -1,9 +1,9 @@
 "use server";
 
-import { getCachedProviders } from "@/lib/cache";
+import { obtenerProveedoresCacheados } from "@/lib/cache/obtener-proveedores-cacheados";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function getProviders() {
   const { tenantId } = await requiereAdmin();
-  return getCachedProviders(tenantId);
+  return obtenerProveedoresCacheados(tenantId);
 }

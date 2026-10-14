@@ -1,4 +1,4 @@
-import { getCachedCarousels } from "@/lib/cache";
+import { obtenerCarruselesCacheados } from "@/lib/cache/obtener-carruseles-cacheados";
 import { contarCarruselesActivos } from "@/lib/services/carruseles/contar-carruseles-activos";
 import { obtenerCarruseles } from "@/lib/services/carruseles/obtener-carruseles";
 import { obtenerLimitesCarrusel } from "@/lib/services/carruseles/obtener-limites-carrusel";
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: carousels });
     }
 
-    const carousels = await getCachedCarousels(tenantId);
+    const carousels = await obtenerCarruselesCacheados(tenantId);
     return NextResponse.json({ success: true, data: carousels });
   } catch (error) {
     console.error("Error fetching carousels:", error);

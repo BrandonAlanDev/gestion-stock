@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { useColoresTema } from "@/hooks/use-colores-tema";
 
 export interface CategoriaTarjeta {

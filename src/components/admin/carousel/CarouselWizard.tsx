@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertTriangle } from "lucide-react";
-import { cn, getContrastColor } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 const TYPE_LABELS: Record<string, string> = {
   HERO: "Portada principal",

@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Truck, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { ProductProps } from "../types";
+import type { ProductProps } from "@/components/providers/products/types";
 import ProductAction from "@/components/ui/ProductAction";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 const BOARD_CATEGORIES = ["tablas", "tabla", "surfboard", "surfboards"];
 
@@ -101,7 +103,7 @@ export default function ProductoView({ product }: ProductProps) {
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
-                    className={`w-16 h-20 overflow-hidden bg-[var(--superficie-imagen)] rounded-md transition-all border ${selectedImage === img.srcImage
+                    className={`relative w-16 h-20 overflow-hidden bg-[var(--superficie-imagen)] rounded-md transition-all border ${selectedImage === img.srcImage
                       ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
                     }`}
@@ -110,7 +112,7 @@ export default function ProductoView({ product }: ProductProps) {
                       boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none"
                     }}
                   >
-                    <img src={img.srcImage} alt="" className="w-full h-full object-cover" />
+                    <Image src={img.srcImage} alt="" fill sizes="64px" unoptimized={!imagenAdmiteOptimizacion(img.srcImage)} className="object-cover" />
                   </button>
                 ))}
               </div>
@@ -139,11 +141,14 @@ export default function ProductoView({ product }: ProductProps) {
 
               {esTabla && logoImage && (
                 <div className="w-full flex justify-center mb-4 select-none">
-                  <div className="w-full max-w-[140px] h-auto">
-                    <img
+                  <div className="w-full max-w-[140px]">
+                    <Image
                       src={logoImage}
                       alt={`Logo de ${product.name}`}
-                      className="w-full h-full object-contain"
+                      width={140}
+                      height={140}
+                      unoptimized={!imagenAdmiteOptimizacion(logoImage)}
+                      className="w-full h-auto object-contain"
                     />
                   </div>
                 </div>

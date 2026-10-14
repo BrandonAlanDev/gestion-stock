@@ -1,6 +1,6 @@
 "use client";
 
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import SubidaImagen from "@/components/imagen/SubidaImagen";
 
 interface ZonaImagenSlideProps {

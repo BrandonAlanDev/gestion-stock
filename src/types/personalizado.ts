@@ -1,7 +1,7 @@
-import type { getBoardAdminOptions } from "@/actions/admin-personalizado";
+import type { obtenerOpcionesTablasAdministrador } from "@/actions/personalizado/obtener-opciones-administrador";
 
 export type DatosPersonalizado = NonNullable<
-  Awaited<ReturnType<typeof getBoardAdminOptions>>["data"]
+  Awaited<ReturnType<typeof obtenerOpcionesTablasAdministrador>>["data"]
 >;
 
 export type ModeloTabla = DatosPersonalizado["types"][number];

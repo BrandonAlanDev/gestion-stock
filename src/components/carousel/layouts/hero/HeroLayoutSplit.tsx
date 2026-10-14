@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Store } from "lucide-react";
 import { CarouselSlide } from "../types";
-import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
+import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 import HeroCtaButton from "./HeroCtaButton";
 
 export default function HeroLayoutSplit({

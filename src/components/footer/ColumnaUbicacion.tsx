@@ -1,7 +1,7 @@
 "use client";
 
 import { MapPin } from "lucide-react";
-import { normalizarUrlHttps } from "@/helpers/normalizarUrlHttps";
+import { normalizarUrlHttps } from "@/lib/enlaces/normalizar-url-https";
 
 interface ColumnaUbicacionProps {
   address: string | null;

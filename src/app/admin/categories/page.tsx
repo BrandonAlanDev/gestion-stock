@@ -8,7 +8,7 @@ import { Tag, Layers, FolderDot } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { getCategories } from "@/actions/categorias/obtener-categorias";
 import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 export default function CategoriesAdminPage() {

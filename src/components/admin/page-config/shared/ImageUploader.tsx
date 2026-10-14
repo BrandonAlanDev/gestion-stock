@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import SubidaImagen from "@/components/imagen/SubidaImagen";
 import type { FormaRecorte } from "@/components/imagen/tipos";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface Props {
   label: string;

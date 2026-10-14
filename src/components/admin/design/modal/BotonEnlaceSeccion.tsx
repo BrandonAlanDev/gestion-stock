@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { Link2, Image as IconoImagen, MousePointerClick } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import AcordeonSeccion from "./AcordeonSeccion";
 import SelectorDestino from "./SelectorDestino";
 import {

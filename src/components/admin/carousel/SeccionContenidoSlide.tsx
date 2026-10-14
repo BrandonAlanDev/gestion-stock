@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import Input from "@/components/admin/page-config/shared/Input";
 import Textarea from "@/components/admin/page-config/shared/Textarea";
 import type { SlideFormData } from "./SlideEditor";

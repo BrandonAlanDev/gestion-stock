@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -9,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
@@ -83,7 +85,7 @@ export default function Header({
       <div className="w-full max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           {logo ? (
-            <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+            <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="w-8 h-8 rounded-lg object-cover" />
           ) : (
             <div className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: "var(--color-primario)" }}>
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />

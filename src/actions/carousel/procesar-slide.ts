@@ -1,9 +1,9 @@
 import type { z } from "zod";
-import { carouselWizardSlideSchema } from "@/lib/zod";
+import { carouselWizardSlideSchema } from "@/lib/validaciones/esquemas";
 import { obtenerCarpetaCarrusel } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-carrusel";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
-import { resolverEnlaceGuardado } from "@/helpers/resolverEnlaceGuardado";
+import { resolverEnlaceGuardado } from "@/lib/enlaces/resolver-enlace-guardado";
 import type { SlideConfig } from "@/types/carousel";
 
 type SlideDelWizard = z.infer<typeof carouselWizardSlideSchema>;

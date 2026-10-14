@@ -1,5 +1,5 @@
 import { getPageConfig } from "@/actions/page-config/general.actions";
-import { getCustomPages } from "@/actions/custom-page.actions";
+import { obtenerPaginasPersonalizadas } from "@/actions/paginas-personalizadas/obtener-paginas";
 import EditorEstructura from "@/components/admin/diseno/estructura/EditorEstructura";
 import type { PaginaDinamicaEstructura } from "@/components/admin/diseno/estructura/tipos-estructura";
 import type { ConfigContenido } from "@/components/admin/diseno/contenido/tipos-contenido";
@@ -10,7 +10,7 @@ export default async function EstructuraPage() {
 
   let paginas: PaginaDinamicaEstructura[] = [];
   try {
-    const paginasDinamicas = await getCustomPages();
+    const paginasDinamicas = await obtenerPaginasPersonalizadas();
     paginas = paginasDinamicas.map((pagina) => ({
       id: pagina.id,
       title: pagina.title,

@@ -1,5 +1,8 @@
 "use client";
 
+import Image from "next/image";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
+
 interface ColumnaSobreProps {
   logo: string | null;
   storeName: string;
@@ -11,9 +14,12 @@ export default function ColumnaSobre({ logo, storeName, texto }: ColumnaSobrePro
     <div>
       <div className="flex items-center gap-3">
         {logo && (
-          <img
+          <Image
             src={logo}
             alt={`Logo de ${storeName}`}
+            width={40}
+            height={40}
+            unoptimized={!imagenAdmiteOptimizacion(logo)}
             className="h-10 w-10 rounded-lg object-cover"
           />
         )}

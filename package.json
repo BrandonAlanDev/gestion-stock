@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && (prisma db push --accept-data-loss || echo 'Database unreachable, skipping push') && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src scripts next.config.ts prisma.config.ts eslint.config.mjs postcss.config.mjs --quiet",
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
     "verificar:aislamiento": "ts-node --project tsconfig.scripts.json scripts/verificacion-aislamiento.ts",
     "migrar:base-antigua": "ts-node --project tsconfig.scripts.json scripts/migracion-base-antigua/ejecutar-migracion.ts"

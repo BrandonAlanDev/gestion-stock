@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidateTag, revalidatePath } from "next/cache";
-import { serializeData } from "@/lib/utils";
+import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import {
   carouselReorderSchema,
   carouselWizardSchema,
-} from "@/lib/zod";
+} from "@/lib/validaciones/esquemas";
 import { actualizarCarrusel } from "@/lib/services/carruseles/actualizar-carrusel";
 import { contarCarruselesActivos } from "@/lib/services/carruseles/contar-carruseles-activos";
 import { crearCarrusel as crearCarruselPersistido } from "@/lib/services/carruseles/crear-carrusel";

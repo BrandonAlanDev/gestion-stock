@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createCustomBoard } from "@/actions/custom-boards";
-import { getBoardOptions } from "@/actions/board-options";
+import { obtenerOpcionesTablas } from "@/actions/personalizado/obtener-opciones-tablas";
 import { toast } from "sonner";
 import { Loader2, Settings2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -120,7 +120,7 @@ export default function PersonalizadoPage() {
     const [s, setS] = useState<State>({ tipo: "", largo: "", ancho: "", espesor: "", volumen: "", material: "", cola: "", killaTipo: "", killaCount: "", notas: "", deliveryOption: "" });
     useEffect(() => {
     async function loadOptions() {
-      const data = await getBoardOptions();
+      const data = await obtenerOpcionesTablas();
       setOptions(data);
     }
 

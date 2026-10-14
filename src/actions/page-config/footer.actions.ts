@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidateTag, revalidatePath } from "next/cache";
-import { footerSchema } from "@/lib/zod";
+import { footerSchema } from "@/lib/validaciones/esquemas";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateFooterConfig(data: unknown) {

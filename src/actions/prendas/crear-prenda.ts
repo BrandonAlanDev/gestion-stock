@@ -8,8 +8,8 @@ import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-im
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { createGarment as crearRegistroPrenda, deleteGarment as eliminarRegistroPrenda } from "@/lib/services/garment-service";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { serializeData } from "@/lib/utils";
-import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/zod";
+import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
+import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
 
 export async function crearPrenda(datos: EntradaPrenda) {

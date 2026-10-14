@@ -9,7 +9,7 @@ import { X, Tag, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CategoryTriggerButton from "./CategoryTriggerButton";
 import SubCategoryManager from "./SubCategoryManager";
-import { getContrastColor } from "@/lib/utils";
+import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 interface ManageCategoryModalProps {

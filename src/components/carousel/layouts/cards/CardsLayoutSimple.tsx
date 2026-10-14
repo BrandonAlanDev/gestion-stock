@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { resolverEnlaceSlide } from "@/helpers/enlaceSlide";
+import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 
 interface Slide {
   id: string;
