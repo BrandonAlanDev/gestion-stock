@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCategories } from "@/actions/categories";
+import { getCategories } from "@/actions/categorias/obtener-categorias";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useCategories() {

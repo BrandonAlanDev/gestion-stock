@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { 
-  getSizeTypes, 
-  createSizeType, 
-  updateSizeType,
-  deleteSizeType, 
-  addSizeToType, 
-  updateSize,
-  deleteSize 
-} from "@/actions/sizes";
+import { addSizeToType } from "@/actions/talles/agregar-talle-a-tipo";
+import { createSizeType } from "@/actions/talles/crear-tipo-talle";
+import { deleteSize } from "@/actions/talles/eliminar-talle";
+import { deleteSizeType } from "@/actions/talles/eliminar-tipo-talle";
+import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
+import { updateSize } from "@/actions/talles/actualizar-talle";
+import { updateSizeType } from "@/actions/talles/actualizar-tipo-talle";
 import { Ruler, Plus, Trash2, Edit, Layers, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import SizeTypeModal from "@/components/admin/sizes/SizeTypeModal";

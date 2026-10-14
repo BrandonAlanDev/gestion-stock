@@ -56,6 +56,10 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
     return () => clearInterval(timer);
   }, [autoPlay, transitionDuration, slides.length, handleNext]);
 
+  useEffect(() => {
+    setCurrent((prev) => Math.min(prev, Math.max(slides.length - 1, 0)));
+  }, [slides.length]);
+
   if (slides.length === 0) return null;
 
   const slide = slides[current];
@@ -126,9 +130,9 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
                   {slide.description}
                 </motion.p>
               )}
-              {(slide.url?.trim() || slide.ctaText) && (
+              {resolverEnlaceSlide(slide) && (
                 <motion.a
-                  href={resolverEnlaceSlide(slide) || "#"}
+                  href={resolverEnlaceSlide(slide) ?? undefined}
                   className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] font-black uppercase tracking-wider text-sm hover:opacity-90 transition-opacity"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

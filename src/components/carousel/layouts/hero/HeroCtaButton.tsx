@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
 
 export default function HeroCtaButton({
   url,
@@ -11,13 +12,14 @@ export default function HeroCtaButton({
   ctaText?: string;
   hideButton?: boolean;
 }) {
-  if (hideButton || !url) return null;
+  const enlace = normalizarEnlaceNavegable(url);
+  if (hideButton || !enlace) return null;
 
   return (
     <div className="flex flex-wrap gap-4 mt-10">
       <button
         onClick={() => {
-          window.location.href = url;
+          window.location.href = enlace;
         }}
         className="group relative overflow-hidden px-8 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm flex items-center gap-3 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         style={{

@@ -53,7 +53,11 @@ export default function ProductAction({ product, size, color, esTabla = false }:
             return;
         }
         
-        const lines = [`Hola! Me interesa: *${product.name}*`, size ? `Talle: ${size}` : null].filter(Boolean).join("\n");
+        const lines = [
+            `Hola! Me interesa: *${product.name}*`,
+            size ? `Talle: ${size}` : null,
+            color ? `Color: ${color}` : null,
+        ].filter(Boolean).join("\n");
         window.open(`https://wa.me/${WS_NUMBER}?text=${encodeURIComponent(lines)}`, "_blank");
     };
 

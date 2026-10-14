@@ -24,6 +24,7 @@ export async function createProvider(datos: unknown) {
       }),
     });
     revalidateTag(`tenant:${contexto.tenantId}:providers`);
+    revalidateTag(`tenant:${contexto.tenantId}:products`);
     return { success: true, provider: proveedor };
   } catch (error: unknown) {
     if (

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
 import { X, Package, Edit3 } from "lucide-react";
-import { getGarmentById } from "@/actions/garments";
+import { obtenerPrendaPorId } from "@/actions/prendas/obtener-prenda-por-id";
 import { useProductForm } from "@/hooks/useProductForm";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import VariantRow from "@/components/providers/products/forms/VariantRow";
@@ -78,7 +78,7 @@ export default function ProductModal({ categories, sizes, providers, colors, gar
 
   useEffect(() => {
     if (garmentId) {
-      getGarmentById(garmentId).then(data => {
+      obtenerPrendaPorId(garmentId).then(data => {
         if (data) setFullGarment(data);
       });
     }

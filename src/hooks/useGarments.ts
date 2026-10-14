@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getGarments } from "@/actions/garments";
+import { obtenerPrendas } from "@/actions/prendas/obtener-prendas";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useGarments(
@@ -20,7 +20,7 @@ export function useGarments(
       { page, limit, categoryId, search },
     ],
     queryFn: async () => {
-      const res = await getGarments(page, limit, categoryId, search);
+      const res = await obtenerPrendas(page, limit, categoryId, search);
       if (res.error) throw new Error(res.error);
       return res; // { success, data, total, page, totalPages }
     },

@@ -1,4 +1,5 @@
 import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
 
 export function resolverEnlaceSlide(slide: {
   url?: string | null;
@@ -14,8 +15,9 @@ export function resolverEnlaceSlide(slide: {
     const destino = normalizarValorEnlace(url);
     return destino ? `/productos/item/${destino}` : null;
   }
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
-    return url;
+  const enlaceNavegable = normalizarEnlaceNavegable(url);
+  if (enlaceNavegable) {
+    return enlaceNavegable;
   }
   const linkType =
     typeof slide.config?.linkType === "string"
@@ -27,7 +29,7 @@ export function resolverEnlaceSlide(slide: {
     case "PRODUCT":
       return `/productos/item/${normalizarValorEnlace(url)}`;
     case "EXTERNAL":
-      return url;
+      return normalizarEnlaceNavegable(url);
     default:
       return null;
   }

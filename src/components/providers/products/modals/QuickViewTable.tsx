@@ -6,7 +6,7 @@ import ProductModal from "./ProductModal";
 import ProviderModal from "./ProviderModal";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { deleteGarment } from "@/actions/garments";
+import { eliminarPrenda } from "@/actions/prendas/eliminar-prenda";
 import { toast } from "sonner";
 import type {
   CategoriaAdministracion,
@@ -61,7 +61,7 @@ export default function QuickViewTable({ garments, categories, sizeTypes, provid
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    const res = await deleteGarment(deleteTarget.id);
+    const res = await eliminarPrenda(deleteTarget.id);
     if (res.error) {
       toast.error(res.error);
     } else {

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
@@ -22,15 +22,18 @@ const ProductCard = ({ product }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
+  const timeoutTransicionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const images = useMemo(() => {
     const imagenesProducto = product.images ?? [];
     return (
-      imagenesProducto.length > 1
-        ? imagenesProducto.slice(1).map((img) => img.srcImage)
-        : imagenesProducto.map((img) => img.srcImage)
+      imagenesProducto.map((img) => img.srcImage)
     );
   }, [product.images]);
+
+  useEffect(() => {
+    setCurrentImage((imagenActual) => Math.min(imagenActual, Math.max(images.length - 1, 0)));
+  }, [images.length]);
 
   useEffect(() => {
     if (!isHovering || images.length <= 1) {
@@ -40,12 +43,18 @@ const ProductCard = ({ product }: Props) => {
     }
     const interval = setInterval(() => {
       setFade(false);
-      setTimeout(() => {
+      timeoutTransicionRef.current = setTimeout(() => {
         setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
         setFade(true);
       }, 300);
     }, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (timeoutTransicionRef.current) {
+        clearTimeout(timeoutTransicionRef.current);
+        timeoutTransicionRef.current = null;
+      }
+    };
   }, [isHovering, images]);
 
   const totalStock =

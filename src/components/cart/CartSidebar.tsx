@@ -7,6 +7,7 @@ import { useState, useMemo, useEffect } from "react";
 import FilaItemCarrito from "@/components/carrito/fila-item-carrito";
 import WhatsAppOrderForm from "@/components/providers/products/forms/WhatsAppOrder";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { cartItems, updateCartItemSpecs } = useCart();
+  const { pageConfig } = usePageConfig();
   const [editingItem, setEditingItem] = useState<ItemCarrito | null>(null);
 
   useBloqueoScroll(isOpen);
@@ -42,6 +44,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   );
 
   const handleWhatsAppCheckout = () => {
+    if (cartItems.length === 0) return;
+
     let message = "🛍️ *¡Hola! Quiero realizar el siguiente pedido:*\n\n";
 
     cartItems.forEach((item) => {
@@ -58,8 +62,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     message += `*TOTAL: $${subtotal.toLocaleString()}*`;
 
-    const phone = "2235644043";
-    //const phone = pageConfig?.whatsapp || "2235644043";
+    const phone = pageConfig?.whatsapp || "2235644043";
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -94,7 +97,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex-1 overflow-y-auto space-y-3">
               {cartItems.map((item) => (
                 <FilaItemCarrito
-                  key={`${item.id}-${JSON.stringify(item.specs)}`}
+                  key={item.uid}
                   item={item}
                   onEdit={() => setEditingItem(item)}
                 />
@@ -107,7 +110,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               </div>
               <button
                 onClick={handleWhatsAppCheckout}
-                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                disabled={cartItems.length === 0}
+                className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >
                 Finalizar Pedido <ArrowRight size={16} />
@@ -122,8 +126,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         <WhatsAppOrderForm
           item={editingItem}
           onClose={() => setEditingItem(null)}
-          onSave={(id, specs) => {
-            updateCartItemSpecs(String(id), specs);
+          onSave={(_, specs) => {
+            updateCartItemSpecs(editingItem.uid, specs);
             setEditingItem(null);
           }}
         />

@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { getGarmentsByNames } from "@/actions/garments";
+import { obtenerPrendasPorNombres } from "@/actions/prendas/obtener-prendas-por-nombres";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
@@ -30,7 +30,7 @@ export function useCatalogGarments(
       { page, limit, categoria, search, subcategoria },
     ],
     queryFn: async () => {
-      const resultado = await getGarmentsByNames(page, limit, categoria, search, subcategoria);
+      const resultado = await obtenerPrendasPorNombres(page, limit, categoria, search, subcategoria);
       if ("error" in resultado) {
         return { success: false, data: [], total: 0, page, totalPages: 1 };
       }

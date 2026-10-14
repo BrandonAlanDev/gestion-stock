@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getColors } from "@/actions/colors";
+import { getColors } from "@/actions/colores/obtener-colores";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useColors() {

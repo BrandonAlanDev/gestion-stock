@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { createSubCategory } from "@/actions/categories";
+import { createSubCategory } from "@/actions/categorias/crear-subcategoria";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

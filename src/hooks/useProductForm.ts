@@ -1,7 +1,8 @@
 "use client";
 import { toast } from "sonner";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { createGarment, updateGarment } from "@/actions/garments";
+import { actualizarPrenda } from "@/actions/prendas/actualizar-prenda";
+import { crearPrenda } from "@/actions/prendas/crear-prenda";
 import type { PendingImage } from "@/components/providers/products/forms/ImageUploader";
 import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
 
@@ -311,9 +312,9 @@ export function useProductForm({ garment, categories, sizes }: UseProductFormPro
     };
 
     if (isEdit) {
-      return updateGarment(garment.id, payload);
+      return actualizarPrenda(garment.id, payload);
     } else {
-      return createGarment(payload);
+      return crearPrenda(payload);
     }
   }, [formData, garment, isEdit]);
 

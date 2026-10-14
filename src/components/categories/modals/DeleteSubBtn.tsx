@@ -1,6 +1,6 @@
 "use client";
 import { X } from "lucide-react";
-import { deleteSubCategory } from "@/actions/categories";
+import { deleteSubCategory } from "@/actions/categorias/eliminar-subcategoria";
 import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getContrastColor } from "@/lib/utils";

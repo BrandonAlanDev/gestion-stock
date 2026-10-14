@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getSizeTypes } from "@/actions/sizes";
+import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useSizeTypes() {

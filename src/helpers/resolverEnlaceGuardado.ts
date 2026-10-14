@@ -1,4 +1,5 @@
 import { normalizarValorEnlace } from "@/helpers/normalizarValorEnlace";
+import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
 
 export function resolverEnlaceGuardado(
   linkType: string | undefined,
@@ -14,7 +15,7 @@ export function resolverEnlaceGuardado(
       return destino ? `/productos/item/${destino}` : "";
     }
     case "EXTERNAL":
-      return (url ?? "").trim();
+      return normalizarEnlaceNavegable(url) ?? "";
     default:
       return "";
   }

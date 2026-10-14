@@ -4,11 +4,11 @@ import { useProductDetail } from "@/hooks/useProductDetail";
 import ProductoView from "@/components/providers/products/views/ProductoView";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
-import type { getGarmentById } from "@/actions/garments";
+import type { obtenerPrendaPorId } from "@/actions/prendas/obtener-prenda-por-id";
 
 interface Props {
   id: string;
-  initialProduct: NonNullable<Awaited<ReturnType<typeof getGarmentById>>>;
+  initialProduct: NonNullable<Awaited<ReturnType<typeof obtenerPrendaPorId>>>;
 }
 
 export default function ProductDetailClient({ id, initialProduct }: Props) {

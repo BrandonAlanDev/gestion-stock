@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getGarmentById } from "@/actions/garments";
+import { obtenerPrendaPorId } from "@/actions/prendas/obtener-prenda-por-id";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
-type ResultadoDetalleProducto = Awaited<ReturnType<typeof getGarmentById>>;
+type ResultadoDetalleProducto = Awaited<ReturnType<typeof obtenerPrendaPorId>>;
 
 export function useProductDetail(
   id: string,
@@ -15,7 +15,7 @@ export function useProductDetail(
   return useQuery({
     queryKey: ["tenant", tenantId, "productDetail", id],
     queryFn: async () => {
-      const product = await getGarmentById(id);
+      const product = await obtenerPrendaPorId(id);
       if (!product || !product.active) {
         throw new Error("Producto no encontrado");
       }

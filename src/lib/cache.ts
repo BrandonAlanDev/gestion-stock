@@ -40,7 +40,13 @@ export const getCachedProductById = (tenantId: string, id: string) => async () =
   return unstable_cache(
     () => garmentService.getGarmentById(tenantId, id),
     [`tenant:${tenantId}:product:${id}`],
-    { revalidate: 300, tags: [`tenant:${tenantId}:product:${id}`] }
+    {
+      revalidate: 300,
+      tags: [
+        `tenant:${tenantId}:products`,
+        `tenant:${tenantId}:product:${id}`,
+      ],
+    }
   )();
 };
 

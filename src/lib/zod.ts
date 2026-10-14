@@ -41,7 +41,7 @@ export const garmentSchema = z.object({
       colorId: z.string().optional().nullable(),
       sku: z.string().optional(),
       stock: z.coerce.number().int().nonnegative(),
-      attributes: z.any().optional().nullable(),
+      attributes: z.json().optional().nullable(),
     })
   ),
 });

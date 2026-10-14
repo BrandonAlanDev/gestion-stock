@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { createCategory, updateCategory, deleteCategory } from "@/actions/categories";
+import { createCategory } from "@/actions/categorias/crear-categoria";
+import { updateCategory } from "@/actions/categorias/actualizar-categoria";
+import { deleteCategory } from "@/actions/categorias/eliminar-categoria";
 import { X, Tag, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CategoryTriggerButton from "./CategoryTriggerButton";

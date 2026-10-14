@@ -57,10 +57,8 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
 
   // Este useEffect asegura que si el item que llega cambia, el form se actualice.
   useEffect(() => {
-    if (item.specs) {
-      setForm(construirFormulario(item.specs));
-    }
-  }, [item.specs]);
+    setForm(construirFormulario(item.specs));
+  }, [item.id, item.specs]);
 
   const set = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -118,7 +116,7 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
 
             {/* Opciones de quillas, cola y material */}
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-secundario)] mb-3">Fin Setup</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-secundario)] mb-3">Configuración de quillas</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {QUILLA_OPTIONS.map((opt) => (
                   <button key={opt} type="button" onClick={() => set("sistemaQuillas", form.sistemaQuillas === opt ? "" : opt)} className={`py-3 rounded-lg text-xs font-medium uppercase tracking-wider border transition-all ${form.sistemaQuillas === opt ? "border-[var(--color-primario)] bg-[var(--color-primario)] text-[var(--texto-sobre-primario)]" : "border-[var(--color-secundario)] text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100"}`}>{opt}</button>
@@ -127,7 +125,7 @@ export default function WhatsAppOrderForm({ item, onClose, onSave }: FormProps) 
             </div>
 
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-secundario)] mb-3">Tail Options</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--texto-sobre-secundario)] mb-3">Opciones de cola</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {COLA_OPTIONS.map((opt) => (
                   <button key={opt} type="button" onClick={() => set("tipoCola", form.tipoCola === opt ? "" : opt)} className={`py-3 rounded-lg text-xs font-medium uppercase tracking-wider border transition-all ${form.tipoCola === opt ? "border-[var(--color-primario)] bg-[var(--color-primario)] text-[var(--texto-sobre-primario)]" : "border-[var(--color-secundario)] text-[var(--texto-sobre-secundario)] opacity-70 hover:opacity-100"}`}>{opt}</button>

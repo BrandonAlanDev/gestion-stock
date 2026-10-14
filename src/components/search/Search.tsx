@@ -1,7 +1,7 @@
 "use client";
 
 import { Search as SearchIcon } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SearchProps {
   initialValue?: string;
@@ -11,12 +11,22 @@ interface SearchProps {
 
 export default function Search({ initialValue = "", onChange, className }: SearchProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  }, []);
 
   // Diseños basados en la superficie
   const overlayBorder = "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setValue(value);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       onChange(value);
@@ -33,7 +43,7 @@ export default function Search({ initialValue = "", onChange, className }: Searc
       <input
         type="text"
         placeholder="Buscar producto..."
-        defaultValue={initialValue}
+        value={value}
         onChange={handleChange}
         className="w-full pl-10 pr-4 py-3 rounded-xl text-sm font-medium outline-none"
         style={{

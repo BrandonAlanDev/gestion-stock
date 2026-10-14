@@ -33,6 +33,10 @@ export default function HeroLayout({ carousel }: HeroLayoutProps) {
     return () => clearInterval(timer);
   }, [autoPlay, transitionDuration, slides.length, handleNext]);
 
+  useEffect(() => {
+    setCurrent((prev) => Math.min(prev, Math.max(slides.length - 1, 0)));
+  }, [slides.length]);
+
   if (slides.length === 0) return null;
 
   const slide = slides[current];

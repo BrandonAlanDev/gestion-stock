@@ -1,13 +1,14 @@
 import { ArrowRight } from "lucide-react";
-import { usePageConfig } from "../../providers/PageConfigProvider";
-import LocationCard from "../../ui/LocationCard";
-import { CustomSection } from "../PageRender";
+import { normalizarEnlaceNavegable } from "@/helpers/normalizar-enlace-navegable";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import LocationCard from "@/components/ui/LocationCard";
+import { CustomSection } from "@/components/custompage/PageRender";
 
 export default function CtaSection({ section }: { section: CustomSection }) {
   const { pageConfig } = usePageConfig();
   const config = pageConfig || {};
   const btnText = section.config?.buttonText || "ESCRIBINOS";
-  const btnLink = section.config?.buttonLink || "#";
+  const btnLink = normalizarEnlaceNavegable(section.config?.buttonLink) ?? "#";
 
   if (section.config?.style === "block") {
     return (

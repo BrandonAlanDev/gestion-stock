@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Layers, Plus, X, Loader2 } from "lucide-react";
-import { createSubCategory, deleteSubCategory } from "@/actions/categories";
+import { createSubCategory } from "@/actions/categorias/crear-subcategoria";
+import { deleteSubCategory } from "@/actions/categorias/eliminar-subcategoria";
 import { toast } from "sonner";
 import { getContrastColor } from "@/lib/utils";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";

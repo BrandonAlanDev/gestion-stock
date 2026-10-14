@@ -6,8 +6,8 @@ import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
 import { Tag, Layers, FolderDot } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { getCategories } from "@/actions/categories";
-import { getSizeTypes } from "@/actions/sizes";
+import { getCategories } from "@/actions/categorias/obtener-categorias";
+import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
 import { getContrastColor } from "@/lib/utils";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
