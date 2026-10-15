@@ -23,55 +23,49 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/sizes",
 ]);
 
-export default auth(async (req) => {
-  const isLoggedIn = !!req.auth;
-  const userRole = req.auth?.user?.role;
-  const { nextUrl } = req;
+const RUTAS_GESTION = ["/dashboard", "/provider", "/sizes", "/movements"];
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
-  const isAuthRoute = ["/login", "/register"].includes(nextUrl.pathname);
-  const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isGestionRoute = ["/dashboard", "/provider", "/sizes", "/movements"].includes(nextUrl.pathname);
-  const isProtectedRoute = [].some((route) => 
-    nextUrl.pathname.startsWith(route)
+export default auth(async (solicitud) => {
+  const estaAutenticado = Boolean(solicitud.auth);
+  const rolUsuario = solicitud.auth?.user?.role;
+  const { nextUrl } = solicitud;
+
+  const esRutaApiAutenticacion = nextUrl.pathname.startsWith("/api/auth");
+  const esRutaAutenticacion = ["/login", "/register"].includes(nextUrl.pathname);
+  const esRutaAdmin = nextUrl.pathname.startsWith("/admin");
+  const esRutaGestion = RUTAS_GESTION.some(
+    (ruta) => nextUrl.pathname === ruta || nextUrl.pathname.startsWith(`${ruta}/`),
   );
 
-  if (isApiAuthRoute) return NextResponse.next();
+  if (esRutaApiAutenticacion) return NextResponse.next();
 
-  if (isAdminRoute && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
+  if (esRutaAdmin && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
     return NextResponse.redirect(new URL("/404", nextUrl));
   }
 
-  // 1. .redirect
-  if (isAuthRoute) {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/", nextUrl));
+  if (esRutaAutenticacion) {
+    const debeRecuperarSesion =
+      nextUrl.searchParams.get("recuperarSesion") === "1";
+
+    if (estaAutenticado && !debeRecuperarSesion) {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
+
     return NextResponse.next();
   }
 
-  // 2. Lógica de ADMIN
-  if (isAdminRoute || isGestionRoute) {
-    if (!isLoggedIn) {
+  if (esRutaAdmin || esRutaGestion) {
+    if (!estaAutenticado) {
       const callbackUrl = nextUrl.pathname + nextUrl.search;
-      return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, nextUrl));
+      const destino = `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      return NextResponse.redirect(new URL(destino, nextUrl));
     }
-    
-    if (userRole !== "ADMIN") {
-      // Redirigir si no tiene permisos
-      return NextResponse.redirect(new URL("/", nextUrl));
-    }
-    
-    return NextResponse.next();
-  }
 
-  // 3. Protección de rutas generales
-  if (isProtectedRoute && !isLoggedIn) {
-    let callbackUrl = nextUrl.pathname;
-    if (nextUrl.search) {
-      callbackUrl += nextUrl.search;
+    if (esRutaAdmin && rolUsuario !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
-    return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, nextUrl));
+
+    return NextResponse.next();
   }
 
   return NextResponse.next();
@@ -82,6 +76,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)$).*)",
   ],
 };
-
-
-//cambio

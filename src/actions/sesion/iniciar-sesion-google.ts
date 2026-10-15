@@ -5,5 +5,5 @@ import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-a
 
 export async function iniciarSesionGoogle(): Promise<void> {
   await obtenerTenantAutenticacion();
-  await signIn("google", { redirectTo: "/" });
+  await signIn("google", { redirectTo: "/dashboard" });
 }

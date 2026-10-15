@@ -10,46 +10,63 @@ import { signIn } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import Image from "next/image";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [isPending, setIsPending] = useState(false);
-  const { pageConfig } = usePageConfig();
-  const [hover, setHover] = useState(false);
+export default function IniciarSesionPage() {
+  const enrutador = useRouter();
+  const [mensajeError, establecerMensajeError] = useState("");
+  const [estaIngresando, setEstaIngresando] = useState(false);
+  const { pageConfig: configuracionPagina } = usePageConfig();
+  const [estaSobreBoton, setEstaSobreBoton] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setIsPending(true);
+  const manejarInicioSesion = async (evento: React.FormEvent<HTMLFormElement>) => {
+    evento.preventDefault();
+    establecerMensajeError("");
+    setEstaIngresando(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const datosFormulario = new FormData(evento.currentTarget);
+    const correo = datosFormulario.get("email") as string;
+    const contrasena = datosFormulario.get("password") as string;
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const resultado = await signIn("credentials", {
+        email: correo,
+        password: contrasena,
+        redirect: false,
+      });
 
-    setIsPending(false);
+      if (resultado?.error) {
+        establecerMensajeError("Credenciales incorrectas");
+        return;
+      }
 
-    if (result?.error) {
-      setError("Credenciales incorrectas");
-      return;
+      const destinoSolicitado = new URLSearchParams(window.location.search).get("callbackUrl");
+      let destino = "/dashboard";
+
+      if (destinoSolicitado) {
+        try {
+          const urlDestino = new URL(destinoSolicitado, window.location.origin);
+          if (urlDestino.origin === window.location.origin) {
+            destino = `${urlDestino.pathname}${urlDestino.search}${urlDestino.hash}`;
+          }
+        } catch {
+          destino = "/dashboard";
+        }
+      }
+
+      enrutador.replace(destino);
+    } catch {
+      establecerMensajeError("No se pudo iniciar sesión. Intentá nuevamente.");
+    } finally {
+      setEstaIngresando(false);
     }
-
-    router.refresh();
-    router.push("/dashboard");
   };
 
   return (
     <AuthLayout>
       <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-[linear-gradient(to_bottom_right,color-mix(in_srgb,var(--color-fondo-sitio)_60%,transparent),color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent))] border border-[color-mix(in_srgb,var(--texto-sobre-fondo)_10%,transparent)] rounded-3xl p-8 shadow-2xl relative">
         <div className="text-center mb-6">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${pageConfig?.logo ? '' : 'bg-[color-mix(in_srgb,var(--color-fondo-sitio)_80%,transparent)] border border-[color-mix(in_srgb,var(--color-primario)_20%,transparent)] '} mb-4`}>
-            {typeof pageConfig?.logo === "string" && pageConfig.logo ? (
-              <Image src={pageConfig.logo} alt="Logo" width={32} height={32} unoptimized />
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${configuracionPagina?.logo ? '' : 'bg-[color-mix(in_srgb,var(--color-fondo-sitio)_80%,transparent)] border border-[color-mix(in_srgb,var(--color-primario)_20%,transparent)] '} mb-4`}>
+            {typeof configuracionPagina?.logo === "string" && configuracionPagina.logo ? (
+              <Image src={configuracionPagina.logo} alt="Logotipo" width={32} height={32} unoptimized />
             ) : (
               <Shirt
                 className="w-8 h-8 text-[var(--color-primario)]"
@@ -57,14 +74,14 @@ export default function LoginPage() {
             )}
           </div>
           <h1 className="text-3xl font-black italic uppercase tracking-tighter">
-            {(typeof pageConfig?.storeName === "string" ? pageConfig.storeName : "Gestion OK").split(" ").map((word: string, index: number) => (
-              index % 2 !== 0 ? (
-                <span key={index} className="text-[var(--color-primario)]">
-                  {word}{" "}
+            {(typeof configuracionPagina?.storeName === "string" ? configuracionPagina.storeName : "Gestion OK").split(" ").map((palabra: string, indice: number) => (
+              indice % 2 !== 0 ? (
+                <span key={indice} className="text-[var(--color-primario)]">
+                  {palabra}{" "}
                 </span>
               ) : (
-                <span className="text-[var(--texto-sobre-fondo)]" key={index}>
-                  {word}{" "}
+                <span className="text-[var(--texto-sobre-fondo)]" key={indice}>
+                  {palabra}{" "}
                 </span>
               )
             ))}
@@ -85,9 +102,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={manejarInicioSesion} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
-            {/* Input Email */}
+            {/* Campo de correo */}
             <div className="space-y-1">
               <div className="relative">
                 <Mail
@@ -103,7 +120,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Input Password */}
+            {/* Campo de contraseña */}
             <div className="space-y-1">
               <div className="relative">
                 <Lock
@@ -120,26 +137,26 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {error && (
+          {mensajeError && (
             <p className="text-red-400 text-xs text-center font-bold bg-red-500/10 py-2 rounded-lg border border-red-500/20">
-              {error}
+              {mensajeError}
             </p>
           )}
 
           <button
             type="submit"
-            disabled={isPending}
-            onMouseEnter={() => setHover(true)}
-            onMouseLeave={() => setHover(false)}
+            disabled={estaIngresando}
+            onMouseEnter={() => setEstaSobreBoton(true)}
+            onMouseLeave={() => setEstaSobreBoton(false)}
             className="w-full font-black py-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.25)] transition-all duration-300 flex items-center justify-center gap-3 uppercase italic hover:cursor-pointer"
             style={{
-              background: hover
+              background: estaSobreBoton
                 ? "linear-gradient(to right, color-mix(in srgb, var(--color-primario) 94%, black), color-mix(in srgb, var(--color-primario) 82%, white))"
                 : "linear-gradient(to right, color-mix(in srgb, var(--color-primario) 88%, black), color-mix(in srgb, var(--color-primario) 88%, white))",
               color: "var(--texto-sobre-primario)",
             }}
           >
-            {isPending ? "Ingresando..." : (
+            {estaIngresando ? "Ingresando..." : (
               <>
                 <ChevronRight className="w-5 h-5" />
                 Iniciar Sesión

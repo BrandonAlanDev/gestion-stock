@@ -34,10 +34,10 @@ export default function RegisterPage() {
               )}
           </div>
           <h1 className="text-3xl font-black text-[var(--texto-sobre-fondo)] italic uppercase tracking-tighter">
-            Obtén tu <span className="text-[var(--color-primario)]"
-            >permiso</span>
+            Creá tu <span className="text-[var(--color-primario)]"
+            >cuenta</span>
           </h1>
-          <p className="text-[var(--texto-sobre-fondo)]/70 text-sm mt-1">Regístrate y espera la aprobacion de tu cuenta</p>
+          <p className="text-[var(--texto-sobre-fondo)]/70 text-sm mt-1">Registrate y luego iniciá sesión para ingresar al panel de gestión</p>
         </div>
 
         <div className="space-y-3 mb-6">
