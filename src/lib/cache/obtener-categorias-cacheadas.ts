@@ -1,9 +1,9 @@
 import { unstable_cache } from "next/cache";
-import * as servicioCategorias from "@/lib/services/category-service";
+import { obtenerCategoriasCompletas } from "@/lib/services/categorias/obtener-categorias-completas";
 
 export async function obtenerCategoriasCacheadas(tenantId: string) {
   return unstable_cache(
-    () => servicioCategorias.getCategoriesFull(tenantId),
+    () => obtenerCategoriasCompletas(tenantId),
     [`tenant:${tenantId}:categories`],
     { revalidate: 3600, tags: [`tenant:${tenantId}:categories`] }
   )();

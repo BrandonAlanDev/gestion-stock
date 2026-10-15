@@ -2,7 +2,6 @@
 
 import SeccionLegal from "@/components/admin/diseno/ajustes/SeccionLegal";
 import SeccionMantenimiento from "@/components/admin/diseno/ajustes/SeccionMantenimiento";
-import SeccionPaginasSitio from "@/components/admin/diseno/ajustes/SeccionPaginasSitio";
 import SeccionRegional from "@/components/admin/diseno/ajustes/SeccionRegional";
 import SeccionSeo from "@/components/admin/diseno/ajustes/SeccionSeo";
 import SeccionTiendaOnline from "@/components/admin/diseno/ajustes/SeccionTiendaOnline";
@@ -15,20 +14,25 @@ import LocationSection from "@/components/admin/page-config/LocationSection";
 import SocialsSection from "@/components/admin/page-config/SocialsSection";
 import DrawerSeccion from "./DrawerSeccion";
 import PanelAvanzado from "./PanelAvanzado";
+import SeccionMercadoPago from "./SeccionMercadoPago";
 import SeccionWhatsApp from "./SeccionWhatsApp";
+import SeccionMetodosPago from "@/components/admin/pagos/SeccionMetodosPago";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
+import type { EstadoConexionMP } from "@/types/mercadopago";
 
 interface DrawersConfiguracionProps {
   config: ConfigCompleta;
   drawerAbierto: ClaveDrawer | null;
   alCerrar: () => void;
+  estadoMercadoPago: EstadoConexionMP;
 }
 
 export default function DrawersConfiguracion({
   config,
   drawerAbierto,
   alCerrar,
+  estadoMercadoPago,
 }: DrawersConfiguracionProps) {
   const aConfigApariencia = (): ConfigApariencia => ({
     storeName: config.storeName,
@@ -55,10 +59,6 @@ export default function DrawersConfiguracion({
     currency: config.currency,
     language: config.language,
     maintenanceMode: config.maintenanceMode,
-    arreglosEnabled: config.arreglosEnabled,
-    escuelaEnabled: config.escuelaEnabled,
-    personalizadoEnabled: config.personalizadoEnabled,
-    planAhorroEnabled: config.planAhorroEnabled,
     termsAndConditions: config.termsAndConditions ?? null,
     privacyPolicy: config.privacyPolicy ?? null,
   });
@@ -158,6 +158,24 @@ export default function DrawersConfiguracion({
       </DrawerSeccion>
 
       <DrawerSeccion
+        abierto={drawerAbierto === "mercadopago"}
+        alCerrar={alCerrar}
+        titulo="Mercado Pago"
+        descripcion="Conectá tu cuenta para cobrar online"
+      >
+        <SeccionMercadoPago estadoInicial={estadoMercadoPago} />
+      </DrawerSeccion>
+
+      <DrawerSeccion
+        abierto={drawerAbierto === "pagos"}
+        alCerrar={alCerrar}
+        titulo="Métodos de pago"
+        descripcion="Configurá cómo tus clientes pueden pagar sus compras."
+      >
+        <SeccionMetodosPago />
+      </DrawerSeccion>
+
+      <DrawerSeccion
         abierto={drawerAbierto === "mantenimiento"}
         alCerrar={alCerrar}
         titulo="Mantenimiento"
@@ -173,15 +191,6 @@ export default function DrawersConfiguracion({
         descripcion="Título y descripción para buscadores"
       >
         <SeccionSeo config={aConfigAjustes()} />
-      </DrawerSeccion>
-
-      <DrawerSeccion
-        abierto={drawerAbierto === "paginas-sitio"}
-        alCerrar={alCerrar}
-        titulo="Páginas del sitio"
-        descripcion="Mostrá u ocultá secciones especiales"
-      >
-        <SeccionPaginasSitio config={aConfigAjustes()} />
       </DrawerSeccion>
 
       <DrawerSeccion

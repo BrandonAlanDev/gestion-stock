@@ -14,7 +14,7 @@ interface CategoryContentClientProps {
   subCategories: SubCategory[];
   garments: Garment[];
   selectedSubId: string; // "all" o el id de la subcategoría activa
-  basePath: string; // ej: "/productos/tablas"
+  basePath: string; // ej: "/productos/ropa"
 }
 
 export default function CategoryContentClient({

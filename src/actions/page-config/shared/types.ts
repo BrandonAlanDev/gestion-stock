@@ -47,10 +47,6 @@ export type PageConfigInput = {
 
   maintenanceMode?: boolean;
 
-  arreglosEnabled?: boolean;
-  escuelaEnabled?: boolean;
-  personalizadoEnabled?: boolean;
-
   footerAboutText?: string | null;
   footerCopyrightText?: string | null;
   footerShowSobre?: boolean;

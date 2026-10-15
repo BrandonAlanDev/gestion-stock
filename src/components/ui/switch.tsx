@@ -8,6 +8,7 @@ interface SwitchProps {
   etiqueta?: string;
   descripcion?: string;
   deshabilitado?: boolean;
+  mostrarEstado?: boolean;
 }
 
 export default function Switch({
@@ -16,14 +17,15 @@ export default function Switch({
   etiqueta,
   descripcion,
   deshabilitado,
+  mostrarEstado,
 }: SwitchProps) {
   const conTexto = Boolean(etiqueta || descripcion);
 
   const toggle = (
     <span
       className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors",
-        activo ? "bg-[var(--admin-primario)]" : "bg-[var(--admin-fondo-hover)]",
+        "relative inline-flex h-6 w-11 shrink-0 rounded-full border border-[var(--admin-borde)] transition-colors",
+        activo ? "border-transparent bg-[var(--admin-primario)]" : "bg-[var(--admin-fondo-hover)]",
       )}
     >
       <span
@@ -35,9 +37,32 @@ export default function Switch({
     </span>
   );
 
+  const estado = (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-xs font-medium",
+        activo
+          ? "bg-[var(--admin-primario-suave)] text-[var(--admin-primario)]"
+          : "text-[var(--admin-texto-suave)]",
+      )}
+    >
+      {activo ? "Activo" : "Inactivo"}
+    </span>
+  );
+
+  const ladoDerecho = mostrarEstado ? (
+    <span className="flex shrink-0 items-center gap-2">
+      {estado}
+      {toggle}
+    </span>
+  ) : (
+    toggle
+  );
+
   const clasesBase = cn(
     deshabilitado && "pointer-events-none opacity-50",
     conTexto && "flex w-full items-center justify-between gap-4 py-3",
+    !conTexto && "inline-flex items-center",
   );
 
   return (
@@ -59,7 +84,7 @@ export default function Switch({
           )}
         </span>
       )}
-      {toggle}
+      {ladoDerecho}
     </button>
   );
 }

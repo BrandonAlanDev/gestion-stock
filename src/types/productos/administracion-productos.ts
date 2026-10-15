@@ -42,8 +42,10 @@ export interface VarianteAdministracion {
   stock?: number;
   sku?: string | null;
   attributes?: unknown;
+  priceOverride?: number | string | { toString(): string } | null;
   size?: { value?: string | null } | null;
   color?: ColorAdministracion | null;
+  optionValues?: Array<{ optionValue: { value: string; option: { name: string } } }>;
 }
 
 export interface ProductoAdministracion {

@@ -17,8 +17,4 @@ export const DEFAULT_VALUES = {
 
   currency: "ARS",
   language: "es",
-
-  carouselHeroLimit: 1,
-  carouselBannerLimit: 1,
-  carouselCardsLimit: 3,
 };

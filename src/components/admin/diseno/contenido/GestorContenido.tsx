@@ -7,8 +7,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-  Eye,
-  EyeOff,
   Grid2X2,
   Image as ImageIcon,
   LayoutDashboard,
@@ -22,7 +20,6 @@ import CarouselDesignModal from "@/components/admin/carousel/CarouselDesignModal
 import CarouselSettingsModal from "@/components/admin/carousel/CarouselSettingsModal";
 import CarouselWizard from "@/components/admin/carousel/CarouselWizard";
 import ConfirmacionEliminarSeccion from "@/components/admin/carousel/ConfirmacionEliminarSeccion";
-import Badge from "@/components/ui/badge";
 import EstadoVacio from "@/components/ui/estado-vacio";
 import type { Carousel } from "@/types/carousel";
 
@@ -30,11 +27,13 @@ import DrawerSeccionDestacada from "./DrawerSeccionDestacada";
 import DrawerUbicacion from "./DrawerUbicacion";
 import FilaSeccion from "./FilaSeccion";
 import MenuAgregarSeccion from "./MenuAgregarSeccion";
+import SeccionOcultas from "./SeccionOcultas";
 import SeccionPaginasDinamicas from "./SeccionPaginasDinamicas";
 import useGestorContenido from "./use-gestor-contenido";
 import type { ConfigContenido, PaginaDinamicaResumen } from "./tipos-contenido";
 
 const PREFIJO_CARRUSEL = "carousel_";
+const PREFIJO_DESTACADA = "featured_";
 
 const ETIQUETAS_TIPO: Record<Carousel["type"], string> = {
   HERO: "Portada principal",
@@ -59,15 +58,19 @@ export default function GestorContenido({
     abrirEdicionCarrusel,
     abrirWizardNuevo,
     actualizarCarouselLocal,
+    agregarSeccionDestacada,
+    alternarVisibilidadDestacada,
     cargando,
     carouselPorId,
     cerrarWizard,
     confirmarEliminacion,
     datosInicialesWizard,
     designCarousel,
-    drawerDestacada,
+    drawerDestacadaHomegridId,
     drawerUbicacion,
     duplicarCarrusel,
+    duplicarDestacada,
+    eliminarDestacada,
     eliminarId,
     filas,
     guardarWizard,
@@ -75,7 +78,7 @@ export default function GestorContenido({
     paginaSeleccionada,
     sensors,
     setDesignCarousel,
-    setDrawerDestacada,
+    setDrawerDestacadaHomegridId,
     setDrawerUbicacion,
     setEliminarId,
     setPaginaSeleccionada,
@@ -84,24 +87,56 @@ export default function GestorContenido({
     toggleSeccionFija,
     toggleVisibilidadCarrusel,
     wizardAbierto,
-  } = useGestorContenido(config.sectionOrder);
+  } = useGestorContenido(config);
 
-  const ocultasFijas = ["featured", "location"].filter(
-    (id) => !filas.includes(id)
-  );
+  const homegridPorId = new Map(config.homegrids.map((h) => [h.id, h]));
+
   const carruselesOcultos = [...carouselPorId.values()].filter(
     (c) => !c.active
   );
   const idsOcultos = new Set(
     carruselesOcultos.map((c) => PREFIJO_CARRUSEL + c.id)
   );
-  const filasVisibles = filas.filter((id) => !idsOcultos.has(id));
-  const hayOcultas = ocultasFijas.length > 0 || carruselesOcultos.length > 0;
-
-  const estiloBotonAccion =
-    "rounded-md p-1.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
+  const instanciasOcultas = config.homegrids.filter((h) => !h.active);
+  const mostrarUbicacionOculta = !filas.includes("location");
+  const filasVisibles = filas.filter((id) => {
+    if (idsOcultos.has(id)) return false;
+    if (id.startsWith(PREFIJO_DESTACADA)) {
+      const hg = homegridPorId.get(id.slice(PREFIJO_DESTACADA.length));
+      return !!hg && hg.active;
+    }
+    return true;
+  });
+  const hayOcultas =
+    mostrarUbicacionOculta ||
+    carruselesOcultos.length > 0 ||
+    instanciasOcultas.length > 0;
 
   const resolverFila = (id: string): ReactNode => {
+    if (id.startsWith(PREFIJO_DESTACADA)) {
+      const homegridId = id.slice(PREFIJO_DESTACADA.length);
+      const hg = homegridPorId.get(homegridId);
+      if (!hg) return null;
+      const cantidad = hg.grids.length;
+      const enOrden = filas.includes(id) && hg.active;
+      return (
+        <FilaSeccion
+          key={id}
+          id={id}
+          icono={Grid2X2}
+          titulo={hg.title?.trim() ? hg.title : "Sección destacada"}
+          detalle={cantidad ? `${cantidad} tarjetas` : "Sin configurar"}
+          varianteBadge={!enOrden ? "oculto" : cantidad ? "activo" : "sin-configurar"}
+          textoBadge={!enOrden ? "Oculto" : cantidad ? "Visible" : "Sin configurar"}
+          alEditar={() => setDrawerDestacadaHomegridId(homegridId)}
+          alDuplicar={() => void duplicarDestacada(homegridId)}
+          alVisibilidad={() => void alternarVisibilidadDestacada(homegridId)}
+          etiquetaVisibilidad={hg.active ? "Ocultar" : "Mostrar"}
+          alEliminar={() => void eliminarDestacada(homegridId)}
+        />
+      );
+    }
+
     if (id === "featured") {
       const enOrden = filas.includes(id);
       const cantidad = config.homegrid?.grids.length ?? 0;
@@ -118,7 +153,9 @@ export default function GestorContenido({
           textoBadge={
             !enOrden ? "Oculto" : cantidad ? "Visible" : "Sin configurar"
           }
-          alEditar={() => setDrawerDestacada(true)}
+          alEditar={() =>
+            setDrawerDestacadaHomegridId(config.homegrid?.id ?? null)
+          }
           alVisibilidad={() => void toggleSeccionFija(id)}
           etiquetaVisibilidad={enOrden ? "Ocultar" : "Mostrar"}
         />
@@ -191,43 +228,6 @@ export default function GestorContenido({
     return null;
   };
 
-  const filaOculta = ({
-    id,
-    icono: Icono,
-    titulo,
-    detalle,
-    alMostrar,
-  }: {
-    id: string;
-    icono: LucideIcon;
-    titulo: string;
-    detalle: string;
-    alMostrar: () => void;
-  }): ReactNode => (
-    <div key={id} className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
-        <Icono size={16} className="text-[var(--admin-texto)]" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[var(--admin-texto)]">
-          {titulo}
-        </p>
-        <p className="truncate text-xs text-[var(--admin-texto-suave)]">
-          {detalle}
-        </p>
-      </div>
-      <Badge variante="oculto">Oculto</Badge>
-      <button
-        type="button"
-        onClick={alMostrar}
-        title="Mostrar"
-        className={estiloBotonAccion}
-      >
-        <Eye size={15} />
-      </button>
-    </div>
-  );
-
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -248,9 +248,8 @@ export default function GestorContenido({
         </div>
         <MenuAgregarSeccion
           alCrearCarrusel={abrirWizardNuevo}
-          alAgregarDestacada={() => void toggleSeccionFija("featured")}
+          alAgregarDestacada={() => void agregarSeccionDestacada()}
           alAgregarUbicacion={() => void toggleSeccionFija("location")}
-          destacadaAgregada={filas.includes("featured")}
           ubicacionAgregada={filas.includes("location")}
         />
       </div>
@@ -291,47 +290,19 @@ export default function GestorContenido({
               )}
 
               {hayOcultas && (
-                <div className="mt-4 rounded-xl border border-dashed border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <EyeOff size={15} className="text-[var(--admin-texto-suave)]" />
-                    <h4 className="text-sm font-semibold text-[var(--admin-texto)]">
-                      Secciones ocultas
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {ocultasFijas.map((id) =>
-                      id === "featured"
-                        ? filaOculta({
-                          id: "featured",
-                          icono: Grid2X2,
-                          titulo: "Sección destacada",
-                          detalle: config.homegrid?.grids.length
-                            ? `${config.homegrid.grids.length} tarjetas`
-                            : "Sin configurar",
-                          alMostrar: () => void toggleSeccionFija(id),
-                        })
-                        : filaOculta({
-                          id: "location",
-                          icono: MapPin,
-                          titulo: "Ubicación",
-                          detalle: config.address ?? "Sin dirección",
-                          alMostrar: () => void toggleSeccionFija(id),
-                        })
-                    )}
-                    {carruselesOcultos.map((carousel) => {
-                      const label = ETIQUETAS_TIPO[carousel.type];
-                      const cantidad = carousel.slides?.length ?? 0;
-                      return filaOculta({
-                        id: `hidden-carousel-${carousel.id}`,
-                        icono: ICONOS_TIPO[carousel.type],
-                        titulo: carousel.title || label,
-                        detalle: `${label} · ${cantidad} slides`,
-                        alMostrar: () =>
-                          void toggleVisibilidadCarrusel(carousel),
-                      });
-                    })}
-                  </div>
-                </div>
+                <SeccionOcultas
+                  direccion={config.address}
+                  mostrarUbicacionOculta={mostrarUbicacionOculta}
+                  instancias={instanciasOcultas}
+                  carruseles={carruselesOcultos}
+                  etiquetasTipo={ETIQUETAS_TIPO}
+                  iconosTipo={ICONOS_TIPO}
+                  iconoUbicacion={MapPin}
+                  iconoDestacada={Grid2X2}
+                  alMostrarUbicacion={() => void toggleSeccionFija("location")}
+                  alMostrarDestacada={(id) => void alternarVisibilidadDestacada(id)}
+                  alMostrarCarrusel={(carousel) => void toggleVisibilidadCarrusel(carousel)}
+                />
               )}
             </>
           )}
@@ -379,9 +350,10 @@ export default function GestorContenido({
       )}
 
       <DrawerSeccionDestacada
-        abierto={drawerDestacada}
-        alCerrar={() => setDrawerDestacada(false)}
+        abierto={drawerDestacadaHomegridId !== null}
+        alCerrar={() => setDrawerDestacadaHomegridId(null)}
         config={config}
+        homegridId={drawerDestacadaHomegridId}
         primaryColor={config.primaryColor}
         secondaryColor={config.secondaryColor}
       />

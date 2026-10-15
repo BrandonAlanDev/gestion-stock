@@ -25,10 +25,7 @@ const ProductCard = ({ product }: Props) => {
   const timeoutTransicionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const images = useMemo(() => {
-    const imagenesProducto = product.images ?? [];
-    return (
-      imagenesProducto.map((img) => img.srcImage)
-    );
+    return (product.images ?? []).map((img) => img.srcImage);
   }, [product.images]);
 
   useEffect(() => {
@@ -99,7 +96,7 @@ const ProductCard = ({ product }: Props) => {
           style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
         >
           <Image
-            src={obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.avif"}
+            src={obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.svg"}
             alt={product.name}
             width={500}
             height={700}

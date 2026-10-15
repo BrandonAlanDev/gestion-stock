@@ -28,14 +28,13 @@ export default function ContenidoSidebar({
   const { data: session } = useSession();
   const tenantId = useTenantId();
   const pageConfig = usePageConfig();
-  const config = pageConfig?.pageConfig;
 
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
 
   const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
   const storeName =
-    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "VALEN";
+    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Mi Tienda";
 
   const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
 
@@ -48,18 +47,12 @@ export default function ContenidoSidebar({
 
   const adminLinks = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/dashboard", label: "Productos", icon: Package },
+    { href: "/admin/productos", label: "Productos", icon: Package },
     { href: "/admin/categories", label: "Categorías", icon: Tags },
     { href: "/admin/provider", label: "Proveedores", icon: Truck },
     { href: "/admin/sizes", label: "Talles", icon: Ruler },
     { href: "/admin/movements", label: "Historial", icon: History },
     { href: "/admin/design", label: "Diseño", icon: ImageIcon },
-    {
-      href: "/admin/personalizado",
-      label: "Personalizado",
-      icon: Settings,
-      enabled: config ? Boolean(config.personalizadoEnabled) : false
-    },
     { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
   ];
 
@@ -195,9 +188,7 @@ export default function ContenidoSidebar({
             </span>
             <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
           </div>
-          {adminLinks
-            .filter((link) => link.enabled !== false)
-            .map((link) => {
+          {adminLinks.map((link) => {
               const active = pathname === link.href;
               const Icon = link.icon;
               return (

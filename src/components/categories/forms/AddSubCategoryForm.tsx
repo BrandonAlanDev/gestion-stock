@@ -89,7 +89,7 @@ export default function AddSubCategoryForm({ categoryId, sizeTypes, onSuccess }:
       <div className="flex flex-col gap-2">
         <input
           style={fieldStyle}
-          placeholder="Nombre (ej: Neoprenes)"
+          placeholder="Nombre de la subcategoría"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required

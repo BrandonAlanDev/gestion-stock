@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { History, X, ArrowUpCircle, ArrowDownCircle, DollarSign, Info, ChevronDown } from "lucide-react";
 import { obtenerTallaPersonalizada } from "@/lib/utilidades/obtener-talla-personalizada";
+import { nombreCombinacion } from "@/lib/productos/nombre-combinacion";
 
 interface Props {
   garments: ProductoMovimiento[];
@@ -17,6 +18,7 @@ interface VarianteMovimiento {
   stock: number;
   size?: { value?: string | null } | null;
   attributes?: unknown;
+  optionValues?: Array<{ optionValue: { value: string; option: { name: string } } }>;
 }
 
 interface ProductoMovimiento {
@@ -193,7 +195,7 @@ export default function MovementModal({ garments, onSuccess }: Props) {
                       {garments.map((g) =>
                         g.variants.map((v) => (
                           <option key={v.id} value={v.id} style={{ backgroundColor: secondaryColor }}>
-                            {g.name} - {v.size?.value || obtenerTallaPersonalizada(v.attributes) || "S/T"} (Stock: {v.stock})
+                            {g.name} - {nombreCombinacion(v.optionValues) || v.size?.value || obtenerTallaPersonalizada(v.attributes) || "S/T"} (Stock: {v.stock})
                           </option>
                         ))
                       )}

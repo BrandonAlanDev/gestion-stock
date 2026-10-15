@@ -52,15 +52,6 @@ export const RESET_DATA = {
   maintenanceMode:
     DEFAULT_VALUES.maintenanceMode,
 
-  carouselHeroLimit:
-    DEFAULT_VALUES.carouselHeroLimit,
-
-  carouselBannerLimit:
-    DEFAULT_VALUES.carouselBannerLimit,
-
-  carouselCardsLimit:
-    DEFAULT_VALUES.carouselCardsLimit,
-
   metaTitle:
     DEFAULT_VALUES.metaTitle,
 

@@ -6,9 +6,10 @@ export type ClaveDrawer =
   | "regional"
   | "tienda"
   | "whatsapp"
+  | "mercadopago"
+  | "pagos"
   | "mantenimiento"
   | "avanzado"
   | "seo"
-  | "paginas-sitio"
   | "legal"
   | "footer";

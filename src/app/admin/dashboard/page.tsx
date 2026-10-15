@@ -1,5 +1,5 @@
-import DashboardClient from "@/components/dashboard/DashboardClient";
+import PanelEstadisticas from "@/components/dashboard/PanelEstadisticas";
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return <PanelEstadisticas />;
 }

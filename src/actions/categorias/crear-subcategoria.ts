@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import * as servicioCategorias from "@/lib/services/category-service";
+import { crearSubcategoria } from "@/lib/services/categorias/crear-subcategoria";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function createSubCategory(datos: { name: string; categoryId: string; sizeTypeId: string | null }) {
@@ -10,7 +10,7 @@ export async function createSubCategory(datos: { name: string; categoryId: strin
     if (!datos.name || !datos.categoryId) {
       return { error: "El nombre y la categoría madre son obligatorios." };
     }
-    const nuevaSubcategoria = await servicioCategorias.createSubCategory(tenantId, datos);
+    const nuevaSubcategoria = await crearSubcategoria(tenantId, datos);
     revalidateTag(`tenant:${tenantId}:categories`);
     revalidateTag(`tenant:${tenantId}:products`);
     return { success: true, data: nuevaSubcategoria };

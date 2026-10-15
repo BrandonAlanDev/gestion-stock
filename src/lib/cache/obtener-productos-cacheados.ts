@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import * as servicioPrendas from "@/lib/services/garment-service";
+import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 
 export async function obtenerProductosCacheados(
   tenantId: string,
@@ -14,7 +14,7 @@ export async function obtenerProductosCacheados(
   const busqueda = search?.trim();
 
   if (busqueda) {
-    return servicioPrendas.getGarmentsPaginated(
+    return obtenerPrendasPaginadas(
       tenantId,
       paginaSegura,
       limiteSeguro,
@@ -26,7 +26,7 @@ export async function obtenerProductosCacheados(
 
   return unstable_cache(
     () =>
-      servicioPrendas.getGarmentsPaginated(
+      obtenerPrendasPaginadas(
         tenantId,
         paginaSegura,
         limiteSeguro,

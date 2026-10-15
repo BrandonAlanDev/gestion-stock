@@ -3,13 +3,6 @@ import type { ReactNode } from "react";
 
 import Badge from "@/components/ui/badge";
 
-interface ConfigPaginas {
-  escuelaEnabled: boolean;
-  arreglosEnabled: boolean;
-  personalizadoEnabled: boolean;
-  planAhorroEnabled: boolean;
-}
-
 interface PaginaResumen {
   id: string;
   title: string;
@@ -18,7 +11,7 @@ interface PaginaResumen {
 }
 
 interface PropsPaginas {
-  config: ConfigPaginas | null;
+  config: Record<string, unknown> | null;
   paginas: PaginaResumen[];
 }
 
@@ -64,34 +57,6 @@ export default function BloquePaginas({ config, paginas }: PropsPaginas) {
         href="/productos"
         badge={<Badge variante="activo">Activa</Badge>}
       />
-      {config.escuelaEnabled && (
-        <FilaPagina
-          etiqueta="Escuela"
-          href="/escuela"
-          badge={<Badge variante="activo">Activa</Badge>}
-        />
-      )}
-      {config.arreglosEnabled && (
-        <FilaPagina
-          etiqueta="Arreglos"
-          href="/arreglos"
-          badge={<Badge variante="activo">Activa</Badge>}
-        />
-      )}
-      {config.personalizadoEnabled && (
-        <FilaPagina
-          etiqueta="Personalizado"
-          href="/personalizado"
-          badge={<Badge variante="activo">Activa</Badge>}
-        />
-      )}
-      {config.planAhorroEnabled && (
-        <FilaPagina
-          etiqueta="Plan de ahorro"
-          href="/plan-de-ahorro"
-          badge={<Badge variante="activo">Activa</Badge>}
-        />
-      )}
       {paginas.slice(0, 6).map((pagina) => (
         <FilaPagina
           key={pagina.id}

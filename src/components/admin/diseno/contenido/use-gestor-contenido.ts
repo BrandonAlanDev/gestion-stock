@@ -12,6 +12,7 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -23,9 +24,16 @@ import {
   updateCarouselActive,
 } from "@/actions/carousel/carousel.actions";
 import { updateSectionOrder } from "@/actions/page-config/order.actions";
+import {
+  alternarVisibilidadSeccionDestacada,
+  crearSeccionDestacada,
+  duplicarSeccionDestacada,
+  eliminarSeccionDestacada,
+} from "@/actions/page-config/secciones-destacadas.actions";
 import type { Carousel, CarouselWizardData } from "@/types/carousel";
 
 import { normalizarSecciones } from "./normalizarSecciones";
+import type { ConfigContenido } from "./tipos-contenido";
 
 function ordenPersistido(rawOrder: string | null): string[] {
   if (!rawOrder) return [];
@@ -43,7 +51,8 @@ function ordenarPorOrder(carousels: Carousel[]): Carousel[] {
   return [...carousels].sort((a, b) => a.order - b.order);
 }
 
-export default function useGestorContenido(sectionOrder: string | null) {
+export default function useGestorContenido(config: ConfigContenido) {
+  const router = useRouter();
   const [carousels, setCarousels] = useState<Carousel[]>([]);
   const [filas, setFilas] = useState<string[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -57,7 +66,9 @@ export default function useGestorContenido(sectionOrder: string | null) {
   );
   const [designCarousel, setDesignCarousel] = useState<Carousel | null>(null);
   const [eliminarId, setEliminarId] = useState<string | null>(null);
-  const [drawerDestacada, setDrawerDestacada] = useState(false);
+  const [drawerDestacadaHomegridId, setDrawerDestacadaHomegridId] = useState<
+    string | null
+  >(null);
   const [drawerUbicacion, setDrawerUbicacion] = useState(false);
 
   const filasRef = useRef(filas);
@@ -73,10 +84,14 @@ export default function useGestorContenido(sectionOrder: string | null) {
         if (!activo) return;
         if (res.success && res.data) {
           const datos = ordenarPorOrder(res.data as Carousel[]);
-          const normalizadas = normalizarSecciones(datos, sectionOrder);
+          const normalizadas = normalizarSecciones(
+            datos,
+            config.sectionOrder,
+            config.homegrids
+          );
           setCarousels(datos);
           setFilas(normalizadas);
-          const persistido = ordenPersistido(sectionOrder);
+          const persistido = ordenPersistido(config.sectionOrder);
           if (JSON.stringify(normalizadas) !== JSON.stringify(persistido)) {
             const resOrden = await updateSectionOrder(normalizadas);
             if (resOrden.success) toast.info("Secciones sincronizadas");
@@ -94,13 +109,14 @@ export default function useGestorContenido(sectionOrder: string | null) {
     return () => {
       activo = false;
     };
-  }, [sectionOrder]);
+  }, [config.sectionOrder, config.homegrids]);
 
   useEffect(() => {
     if (cargando || filasRef.current.length === 0) return;
     const normalizadas = normalizarSecciones(
       carousels,
-      JSON.stringify(filasRef.current)
+      JSON.stringify(filasRef.current),
+      config.homegrids
     );
     if (JSON.stringify(normalizadas) === JSON.stringify(filasRef.current)) {
       return;
@@ -110,7 +126,7 @@ export default function useGestorContenido(sectionOrder: string | null) {
       if (res.success) toast.info("Secciones sincronizadas");
       else toast.error(res.error || "Error al sincronizar secciones");
     });
-  }, [carousels, cargando]);
+  }, [carousels, cargando, config.homegrids]);
 
   const carouselPorId = useMemo(() => {
     return new Map(carousels.map((c) => [c.id, c]));
@@ -152,13 +168,7 @@ export default function useGestorContenido(sectionOrder: string | null) {
     const agregar = !filas.includes(id);
     let siguiente: string[];
     if (agregar) {
-      if (id === "featured") {
-        const idx = filas.indexOf("location");
-        const en = idx >= 0 ? idx : filas.length;
-        siguiente = [...filas.slice(0, en), id, ...filas.slice(en)];
-      } else {
-        siguiente = [...filas, id];
-      }
+      siguiente = [...filas, id];
     } else {
       siguiente = filas.filter((s) => s !== id);
     }
@@ -173,6 +183,44 @@ export default function useGestorContenido(sectionOrder: string | null) {
       toast.error(res.error || "Error al guardar");
       setFilas(filas);
     }
+  };
+
+  const agregarSeccionDestacada = async () => {
+    try {
+      const res = await crearSeccionDestacada();
+      if (res.ok) {
+        toast.success("Sección destacada agregada");
+      } else {
+        toast.error("Error al agregar la sección");
+      }
+      router.refresh();
+    } catch {
+      toast.error("Error al agregar la sección");
+    }
+  };
+
+  const duplicarDestacada = async (homegridId: string) => {
+    const res = await duplicarSeccionDestacada(homegridId);
+    if (res.ok) {
+      toast.success("Sección duplicada");
+      router.refresh();
+    } else {
+      toast.error(res.error);
+    }
+  };
+
+  const alternarVisibilidadDestacada = async (homegridId: string) => {
+    const res = await alternarVisibilidadSeccionDestacada(homegridId);
+    if (res.ok) toast.success(res.activo ? "Sección visible" : "Sección ocultada");
+    else toast.error(res.error);
+    router.refresh();
+  };
+
+  const eliminarDestacada = async (homegridId: string) => {
+    const res = await eliminarSeccionDestacada(homegridId);
+    if (res.ok) toast.success("Sección eliminada");
+    else toast.error(res.error);
+    router.refresh();
   };
 
   const guardarWizard = async (wizardData: CarouselWizardData) => {
@@ -291,15 +339,19 @@ export default function useGestorContenido(sectionOrder: string | null) {
     abrirEdicionCarrusel,
     abrirWizardNuevo,
     actualizarCarouselLocal,
+    agregarSeccionDestacada,
+    alternarVisibilidadDestacada,
     cargando,
     carouselPorId,
     cerrarWizard,
     confirmarEliminacion,
     datosInicialesWizard,
     designCarousel,
-    drawerDestacada,
+    drawerDestacadaHomegridId,
     drawerUbicacion,
     duplicarCarrusel,
+    duplicarDestacada,
+    eliminarDestacada,
     eliminarId,
     filas,
     guardarWizard,
@@ -307,7 +359,7 @@ export default function useGestorContenido(sectionOrder: string | null) {
     paginaSeleccionada,
     sensors,
     setDesignCarousel,
-    setDrawerDestacada,
+    setDrawerDestacadaHomegridId,
     setDrawerUbicacion,
     setEliminarId,
     setPaginaSeleccionada,

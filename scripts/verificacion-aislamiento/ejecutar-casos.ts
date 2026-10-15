@@ -127,12 +127,31 @@ export async function ejecutarCasos(contexto: ContextoVerificacion): Promise<Res
     afirmar(!await cliente.account.findFirst({ where: { tenantId: tenantA, providerAccountId: "google-no-asociado" } }), "Cuenta Google no asociada apareció vinculada");
   });
   await caso("14. Puentes M:N", async () => {
-    const tipo = await cliente.boardTypeOption.create({ data: { tenantId: tenantA, name: "Tipo prueba" } });
-    const cola = await cliente.boardTailOption.create({ data: { tenantId: tenantA, name: "Cola prueba" } });
-    await cliente.boardTypeTailOption.create({ data: { tenantId: tenantA, boardTypeId: tipo.id, tailId: cola.id } });
-    const puentes = await cliente.boardTypeTailOption.findMany({ where: { tenantId: tenantA }, include: { boardType: true, tail: true } });
+    const opcion = await cliente.garmentOption.create({
+      data: { tenantId: tenantA, garmentId: contexto.productoA, name: "Color" },
+    });
+    const valor = await cliente.garmentOptionValue.create({
+      data: { tenantId: tenantA, optionId: opcion.id, value: "Rojo" },
+    });
+    const variante = await cliente.garmentVariant.create({
+      data: { tenantId: tenantA, garmentId: contexto.productoA },
+    });
+    await cliente.garmentVariantOptionValue.create({
+      data: { variantId: variante.id, optionValueId: valor.id },
+    });
+    const puentes = await cliente.garmentVariantOptionValue.findMany({
+      where: { variant: { tenantId: tenantA } },
+      include: { variant: true, optionValue: true },
+    });
     afirmar(puentes.length === 1, "El conteo de puentes M:N es incorrecto");
-    afirmar(puentes.every((puente) => puente.tenantId === puente.boardType.tenantId && puente.tenantId === puente.tail.tenantId), "Hay pares M:N huérfanos o cruzados");
+    afirmar(
+      puentes.every(
+        (puente) =>
+          puente.variant.tenantId === tenantA &&
+          puente.optionValue.tenantId === tenantA
+      ),
+      "Hay pares M:N huérfanos o cruzados"
+    );
   });
   await caso("15. Proveedores exige ADMIN", async () => {
     const codigo = await leerCodigo("src", "actions", "proveedores", "obtener-proveedores.ts");

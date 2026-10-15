@@ -44,6 +44,7 @@ export async function obtenerEstadisticasDashboard(tenantId: string) {
           },
           size: { select: { value: true } },
           color: { select: { name: true } },
+          optionValues: { include: { optionValue: { include: { option: true } } } },
         },
         orderBy: { stock: "asc" },
         take: 20,

@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
-import { deleteGarment as eliminarRegistroPrenda } from "@/lib/services/garment-service";
+import { eliminarRegistroPrenda } from "@/lib/services/prendas/eliminar-registro-prenda";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { revalidateTag } from "next/cache";
 

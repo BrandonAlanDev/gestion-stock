@@ -1,18 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { Minus, Plus, Settings, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import type { ItemCarrito } from "@/contextos/carrito/tipos-carrito";
 
 interface PropiedadesFilaItemCarrito {
   item: ItemCarrito;
-  onEdit: () => void;
 }
 
 export default function FilaItemCarrito({
   item,
-  onEdit,
 }: PropiedadesFilaItemCarrito) {
   const { updateQty, removeItem } = useCart();
 
@@ -27,14 +25,10 @@ export default function FilaItemCarrito({
       />
       <div className="flex-1">
         <h3 className="font-bold text-sm truncate">{item.name}</h3>
-        {item.esTabla && (
-          <button
-            onClick={onEdit}
-            className="text-[10px] flex items-center gap-1 opacity-60 hover:text-[var(--color-primario)]"
-          >
-            <Settings size={10} />
-            {item.specs ? "Editar especificaciones" : "Configurar"}
-          </button>
+        {item.varianteInfo && Object.values(item.varianteInfo).filter(Boolean).length > 0 && (
+          <p className="text-[11px] uppercase tracking-wide opacity-60 truncate">
+            {Object.values(item.varianteInfo).filter(Boolean).join(" / ")}
+          </p>
         )}
         <div className="flex justify-between items-center mt-2">
           <div className="flex items-center gap-2">

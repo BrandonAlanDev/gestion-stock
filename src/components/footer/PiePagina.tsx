@@ -47,11 +47,7 @@ export default function PiePagina({ alAbrirPrivacidad, alAbrirTerminos }: PiePag
             />
           )}
           {activo("footerShowNavegacion") && (
-            <ColumnaNavegacion
-              escuelaEnabled={activo("escuelaEnabled")}
-              arreglosEnabled={activo("arreglosEnabled")}
-              planAhorroEnabled={activo("planAhorroEnabled")}
-            />
+            <ColumnaNavegacion />
           )}
           {activo("footerShowContacto") && (
             <ColumnaContacto

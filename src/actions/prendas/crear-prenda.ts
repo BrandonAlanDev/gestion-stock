@@ -1,23 +1,24 @@
 "use server";
 
-import { Prisma } from "@/../generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { obtenerCarpetaPrenda } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-prenda";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
-import { createGarment as crearRegistroPrenda, deleteGarment as eliminarRegistroPrenda } from "@/lib/services/garment-service";
+import { crearRegistroPrenda } from "@/lib/services/prendas/crear-registro-prenda";
+import { eliminarRegistroPrenda } from "@/lib/services/prendas/eliminar-registro-prenda";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
-import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/validaciones/esquemas";
+import { garmentSchema as esquemaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
+import type { z } from "zod";
 
-export async function crearPrenda(datos: EntradaPrenda) {
+export async function crearPrenda(datos: z.input<typeof esquemaPrenda>) {
   const { tenantId } = await requiereAdmin();
   const resultadoValidacion = esquemaPrenda.safeParse(datos);
   if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
 
-  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = resultadoValidacion.data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
   let idPrenda: string | null = null;
   const idsPublicosSubidos: string[] = [];
 
@@ -26,21 +27,25 @@ export async function crearPrenda(datos: EntradaPrenda) {
       name,
       price,
       maxPrice: maxPrice || null,
-      cost,
-      description,
+      cost: cost ?? 0,
+      description: description ?? null,
       categoryId,
       subCategoryId: subCategoryId || null,
       supplierId: supplierId || null,
-      variants: {
-        create: variants.map((variante) => ({
-          tenantId,
+      controlaStock,
+      activo,
+      etiquetas,
+      opciones,
+      variants: variants.map((variante) => ({
           sku: variante.sku || null,
           stock: Number(variante.stock),
           sizeId: variante.sizeId || null,
           colorId: variante.colorId || null,
-          attributes: variante.attributes === null ? Prisma.JsonNull : variante.attributes ?? undefined,
+          attributes: variante.attributes ?? null,
+          priceOverride: variante.priceOverride ?? null,
+          opcionValores: variante.opcionValores,
         })),
-      },
+      images: [],
     });
     idPrenda = prenda.id;
 
@@ -83,6 +88,6 @@ export async function crearPrenda(datos: EntradaPrenda) {
         console.error("No se pudo eliminar el producto tras un error de imágenes.");
       }
     }
-    return { error: "No se pudieron cargar las imágenes del producto. Intentá nuevamente." };
+    return { error: "No se pudo crear el producto. Revisá los datos e intentá nuevamente." };
   }
 }

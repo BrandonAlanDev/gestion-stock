@@ -1,17 +1,18 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import * as servicioCategorias from "@/lib/services/category-service";
+import { contarSubcategorias } from "@/lib/services/categorias/contar-subcategorias";
+import { eliminarCategoria } from "@/lib/services/categorias/eliminar-categoria";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function deleteCategory(id: string) {
   try {
     const { tenantId } = await requiereAdmin();
-    const cantidadSubcategorias = await servicioCategorias.getSubCategoriesCount(tenantId, id);
+    const cantidadSubcategorias = await contarSubcategorias(tenantId, id);
     if (cantidadSubcategorias > 0) {
       return { error: `No se puede eliminar. Tenés ${cantidadSubcategorias} subcategorías vinculadas.` };
     }
-    await servicioCategorias.deleteCategory(tenantId, id);
+    await eliminarCategoria(tenantId, id);
     revalidateTag(`tenant:${tenantId}:categories`);
     revalidateTag(`tenant:${tenantId}:products`);
     return { success: true };

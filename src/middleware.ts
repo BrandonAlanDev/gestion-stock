@@ -18,7 +18,7 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/design/estructura",
   "/admin/movements",
   "/admin/pageConfig",
-  "/admin/personalizado",
+  "/admin/productos",
   "/admin/provider",
   "/admin/sizes",
 ]);
@@ -82,3 +82,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)$).*)",
   ],
 };
+
+
+//cambio

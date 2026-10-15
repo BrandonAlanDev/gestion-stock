@@ -1,19 +1,17 @@
 import { motion } from "framer-motion";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 
 interface AuthProps {
     children: React.ReactNode;
 }
 
 export default function AuthLayout({ children }: AuthProps) {
-  const { pageConfig } = usePageConfig();
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
     
     {/* Fondo con blur */}
     <div
         className="absolute inset-0 bg-cover bg-no-repeat bg-right-bottom blur-sm scale-105"
-        style={{ backgroundImage: pageConfig?.storeName==='New SurfBoards' ? `url('/images/shape.jpg')` : `url('https://www.jasminsoftware.es/wp-content/uploads/2020/01/gestion-de-inventario.jpg')`, backgroundRepeat: "no-repeat", backgroundSize: "cover", backgroundPosition: "right bottom", minWidth: "100vw", minHeight: "100vh", }}
+        style={{ backgroundImage: `url('https://www.jasminsoftware.es/wp-content/uploads/2020/01/gestion-de-inventario.jpg')`, backgroundRepeat: "no-repeat", backgroundSize: "cover", backgroundPosition: "right bottom", minWidth: "100vw", minHeight: "100vh", }}
     />
 
       {/* Capa oscura */}

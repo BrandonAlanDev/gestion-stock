@@ -1,29 +1,67 @@
 "use server";
 
-import { Prisma } from "@/../generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { obtenerCarpetaPrenda } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-prenda";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
-import { updateGarmentWithDetails as actualizarRegistroPrendaConDetalles } from "@/lib/services/garment-service";
+import { actualizarRegistroPrendaConDetalles } from "@/lib/services/prendas/actualizar-registro-prenda";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
-import { garmentSchema as esquemaPrenda, type GarmentInput as EntradaPrenda } from "@/lib/validaciones/esquemas";
+import { garmentSchema as esquemaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
+import type { z } from "zod";
 
-export async function actualizarPrenda(id: string, datos: EntradaPrenda) {
+export async function actualizarPrenda(id: string, datos: z.input<typeof esquemaPrenda>) {
   const { tenantId } = await requiereAdmin();
   const resultadoValidacion = esquemaPrenda.safeParse(datos);
   if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
 
-  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images } = resultadoValidacion.data;
+  const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
   const prendaExistente = await prisma.garment.findFirst({
     where: { id, tenantId },
-    include: { images: { where: { tenantId } } },
+    include: {
+      images: { where: { tenantId }, orderBy: { order: "asc" } },
+      variants: {
+        where: { tenantId },
+        include: { optionValues: { include: { optionValue: { include: { option: true } } } } },
+      },
+      opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+    },
   });
   if (!prendaExistente) return { error: "El producto no existe." };
+
+  const opcionesFinales = datos.opciones === undefined
+    ? prendaExistente.opciones.map((opcion) => ({
+        name: opcion.name,
+        values: [...opcion.values].sort((a, b) => a.position - b.position).map((valor) => valor.value),
+      }))
+    : opciones;
+  const etiquetasExistentes = Array.isArray(prendaExistente.etiquetas)
+    ? prendaExistente.etiquetas.filter((etiqueta): etiqueta is string => typeof etiqueta === "string")
+    : [];
+  const variantesFinales = variants.map((variante, indice) => {
+    const anterior = prendaExistente.variants.find((actual) => actual.id === variante.id);
+    const original = datos.variants[indice];
+    return {
+      id: variante.id,
+      stock: variante.stock,
+      sku: variante.sku ?? null,
+      sizeId: original.sizeId === undefined ? anterior?.sizeId ?? null : variante.sizeId ?? null,
+      colorId: original.colorId === undefined ? anterior?.colorId ?? null : variante.colorId ?? null,
+      attributes: original.attributes === undefined ? anterior?.attributes ?? null : variante.attributes ?? null,
+      priceOverride: original.priceOverride === undefined
+        ? anterior?.priceOverride == null ? null : Number(anterior.priceOverride)
+        : variante.priceOverride ?? null,
+      opcionValores: datos.opciones === undefined
+        ? anterior?.optionValues.map((vinculo) => ({
+            opcion: vinculo.optionValue.option.name,
+            valor: vinculo.optionValue.value,
+          })) ?? []
+        : variante.opcionValores,
+    };
+  });
 
   const cambioCategoria = categoryId !== prendaExistente.categoryId;
   const carpetaNueva = obtenerCarpetaPrenda(tenantId, categoryId, id);
@@ -35,7 +73,7 @@ export async function actualizarPrenda(id: string, datos: EntradaPrenda) {
   const sufijoUnico = Date.now();
 
   try {
-    for (const imagen of images ?? []) {
+    for (const imagen of images ?? prendaExistente.images.map((actual) => actual.srcImage)) {
       if (imagen.startsWith("data:image")) {
         contadorImagenes += 1;
         const subida = await subirImagen(imagen, carpetaNueva, `imagen-${sufijoUnico}-${contadorImagenes}`);
@@ -66,15 +104,16 @@ export async function actualizarPrenda(id: string, datos: EntradaPrenda) {
       name,
       price,
       maxPrice: maxPrice || null,
-      cost,
+      cost: cost ?? Number(prendaExistente.cost),
       description: description || "",
       categoryId,
       subCategoryId: subCategoryId || null,
-      supplierId: supplierId || null,
-      variants: variants.map((variante) => ({
-        ...variante,
-        attributes: variante.attributes === null ? Prisma.JsonNull : variante.attributes ?? undefined,
-      })),
+      supplierId: datos.supplierId === undefined ? prendaExistente.supplierId : supplierId || null,
+      controlaStock: datos.controlaStock === undefined ? prendaExistente.controlaStock : controlaStock,
+      activo: datos.activo === undefined ? prendaExistente.active : activo,
+      etiquetas: datos.etiquetas === undefined ? etiquetasExistentes : etiquetas,
+      opciones: opcionesFinales,
+      variants: variantesFinales,
       images: imagenesFinales,
     });
 

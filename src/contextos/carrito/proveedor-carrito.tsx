@@ -56,12 +56,11 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const addToCart = useCallback(
-    (producto: ProductoParaCarrito) => {
+    (producto: ProductoParaCarrito, cantidad: number = 1) => {
       const nuevoItem: ItemCarrito = {
         ...producto,
         uid: `${producto.id}-${Date.now()}`,
-        qty: 1,
-        specs: producto.specs ?? {},
+        qty: Math.max(1, cantidad),
       };
 
       setCartItems((anteriores) => [...anteriores, nuevoItem]);
@@ -75,7 +74,10 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
     setCartItems((anteriores) =>
       anteriores.map((item) =>
         item.uid === uid
-          ? { ...item, qty: Math.max(1, item.qty + delta) }
+          ? {
+              ...item,
+              qty: Math.max(1, item.stock != null ? Math.min(item.stock, item.qty + delta) : item.qty + delta),
+            }
           : item
       )
     );
@@ -88,18 +90,6 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
     toast.info("Producto eliminado del carrito");
   }, []);
 
-  const updateCartItemSpecs = useCallback(
-    (uid: string, nuevasEspecificaciones: Record<string, unknown>) => {
-      setCartItems((anteriores) =>
-        anteriores.map((item) =>
-          item.uid === uid ? { ...item, specs: nuevasEspecificaciones } : item
-        )
-      );
-      toast.success("Especificaciones actualizadas");
-    },
-    []
-  );
-
   const valor = useMemo(
     () => ({
       cartItems,
@@ -109,7 +99,6 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       addToCart,
       updateQty,
       removeItem,
-      updateCartItemSpecs,
     }),
     [
       addToCart,
@@ -118,7 +107,6 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       isCartOpen,
       openCart,
       removeItem,
-      updateCartItemSpecs,
       updateQty,
     ]
   );

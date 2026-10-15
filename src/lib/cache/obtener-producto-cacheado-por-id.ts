@@ -1,9 +1,9 @@
 import { unstable_cache } from "next/cache";
-import * as servicioPrendas from "@/lib/services/garment-service";
+import { obtenerPrendaPorId } from "@/lib/services/prendas/obtener-prenda-por-id";
 
 export const obtenerProductoCacheadoPorId = (tenantId: string, id: string) => async () => {
   return unstable_cache(
-    () => servicioPrendas.getGarmentById(tenantId, id),
+    () => obtenerPrendaPorId(tenantId, id),
     [`tenant:${tenantId}:product:${id}`],
     {
       revalidate: 300,

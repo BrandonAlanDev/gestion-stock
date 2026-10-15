@@ -1,9 +1,19 @@
 import type { Carousel } from "@/types/carousel";
 
 const PREFIJO_CARRUSEL = "carousel_";
+const PREFIJO_DESTACADA = "featured_";
+
+interface InterfaceHomegridMin {
+  id: string;
+  active: boolean;
+}
 
 function esIdCarrusel(id: string): boolean {
   return id.startsWith(PREFIJO_CARRUSEL);
+}
+
+function esIdDestacada(id: string): boolean {
+  return id.startsWith(PREFIJO_DESTACADA);
 }
 
 function ordenarPorOrder(carousels: Carousel[]): Carousel[] {
@@ -77,7 +87,8 @@ function parsearOrden(rawOrder: string | null): string[] {
 
 export function normalizarSecciones(
   carousels: Carousel[],
-  rawOrder: string | null
+  rawOrder: string | null,
+  homegrids: InterfaceHomegridMin[] = []
 ): string[] {
   const idsExistentes = new Set(carousels.map((c) => PREFIJO_CARRUSEL + c.id));
 
@@ -131,6 +142,20 @@ export function normalizarSecciones(
     siguiente = [
       ...siguiente.slice(0, en),
       ...nuevosCards,
+      ...siguiente.slice(en),
+    ];
+  }
+
+  const idInstancias = new Set(siguiente.filter(esIdDestacada));
+  const nuevasDestacadas = homegrids
+    .filter((hg) => hg.active && !idInstancias.has(PREFIJO_DESTACADA + hg.id))
+    .map((hg) => PREFIJO_DESTACADA + hg.id);
+  if (nuevasDestacadas.length > 0) {
+    const idxUbicacion = siguiente.indexOf("location");
+    const en = idxUbicacion >= 0 ? idxUbicacion : siguiente.length;
+    siguiente = [
+      ...siguiente.slice(0, en),
+      ...nuevasDestacadas,
       ...siguiente.slice(en),
     ];
   }

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import * as servicioCategorias from "@/lib/services/category-service";
+import { contarPrendasPorSubcategoria } from "@/lib/services/categorias/contar-prendas-por-subcategoria";
+import { eliminarSubcategoria } from "@/lib/services/categorias/eliminar-subcategoria";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function deleteSubCategory(id: string) {
@@ -10,11 +11,11 @@ export async function deleteSubCategory(id: string) {
     if (!id) {
       return { error: "ID de subcategoría no provisto." };
     }
-    const cantidadProductos = await servicioCategorias.getGarmentCountBySubCategory(tenantId, id);
+    const cantidadProductos = await contarPrendasPorSubcategoria(tenantId, id);
     if (cantidadProductos > 0) {
       return { error: `No se puede eliminar. Hay ${cantidadProductos} producto(s) asignado(s).` };
     }
-    await servicioCategorias.deleteSubCategory(tenantId, id);
+    await eliminarSubcategoria(tenantId, id);
     revalidateTag(`tenant:${tenantId}:categories`);
     revalidateTag(`tenant:${tenantId}:products`);
     return { success: true };

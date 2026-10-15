@@ -2,16 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import type { PageConfig_featuredLayout } from "../../../generated/prisma/client";
 import { obtenerCarpetaGrids } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-grids";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-
-export interface UpdateConfigData {
-  featuredLayout?: string;
-}
 
 interface GridItem {
   id?: string;
@@ -33,26 +28,6 @@ interface GridItem {
   buttonText?: string;
   buttonBgColor?: string;
   buttonTextColor?: string;
-}
-
-export async function updateSectionVisibility(data: UpdateConfigData) {
-  try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
-    await prisma.pageConfig.update({
-      where: { id: pageConfig.id },
-      data: {
-        featuredLayout: data.featuredLayout
-          ? (data.featuredLayout.toUpperCase() as PageConfig_featuredLayout)
-          : undefined,
-      },
-    });
-
-    revalidatePath("/", "layout");
-    return { ok: true };
-  } catch (error) {
-    console.error("Error al actualizar:", error);
-    return { ok: false, error: "No se pudo actualizar la configuración" };
-  }
 }
 
 export async function updateHomeGrids(
@@ -78,7 +53,7 @@ export async function updateHomeGrids(
       const nuevoHomegrid = await prisma.homegrid.create({
         data: {
           tenantId: contexto.tenantId,
-          title: title || "Home Destacado",
+          title: title || "",
           subtitle: "",
           style: 1,
           columns: "md:grid-cols-2",
@@ -97,9 +72,6 @@ export async function updateHomeGrids(
         select: { id: true },
       });
       if (!homegrid) throw new Error("La sección no pertenece a la tienda activa");
-      if (pageConfig.homegridId && pageConfig.homegridId !== homegrid.id) {
-        throw new Error("La sección no corresponde a la configuración activa");
-      }
       if (title) {
         await prisma.homegrid.update({ where: { id: homegrid.id }, data: { title } });
       }

@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import * as servicioCategorias from "@/lib/services/category-service";
+import { crearCategoria } from "@/lib/services/categorias/crear-categoria";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function createCategory(datosFormulario: { name: string; description?: string }) {
   try {
     const { tenantId } = await requiereAdmin();
-    const nuevaCategoria = await servicioCategorias.createCategory(tenantId, datosFormulario.name);
+    const nuevaCategoria = await crearCategoria(tenantId, datosFormulario.name);
     revalidateTag(`tenant:${tenantId}:categories`);
     revalidateTag(`tenant:${tenantId}:products`);
     return { success: true, data: nuevaCategoria };
