@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
+import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 
 async function obtenerPageConfigCacheada(tenantId: string) {
   return unstable_cache(
@@ -89,6 +90,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         },
 
         carousels: {
+          where: { type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
           select: {
             id: true,
             type: true,
