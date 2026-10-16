@@ -1,9 +1,13 @@
 import "server-only";
 
-import type { Prisma } from "@/../generated/prisma/client";
-import { prisma } from "@/lib/prisma";
-import type { EstadoPagoId, PagoWebhookNormalizado } from "@/lib/pagos/tipos";
-import { descontarStockPedido } from "@/lib/pedidos/descontar-stock-pedido";
+import type { Prisma, PrismaClient } from "@/../generated/prisma/client";
+import { conPrismaTenant } from "../tenants/prisma-factory";
+import type { EstadoPagoId, PagoWebhookNormalizado } from "./tipos";
+import { descontarStockPedido } from "../pedidos/descontar-stock-pedido";
+import {
+  confirmarReservaStockPedido,
+  liberarReservaStockPedido,
+} from "../pedidos/gestionar-reserva-stock";
 
 type ClienteTx = Prisma.TransactionClient;
 
@@ -12,6 +16,20 @@ type MapaEstado = {
   cancelar: boolean;
   acreditar: boolean;
 };
+
+const ERROR_REVERTIR_PAGO_SIN_PEDIDO = "PAYMENT_ORDER_TRANSITION_FAILED";
+
+type EjecutarConPrismaTenant = <T>(
+  tenantId: string,
+  operacion: (prisma: PrismaClient) => Promise<T>,
+) => Promise<T>;
+
+export interface DependenciasAplicadorWebhookPago {
+  conPrismaTenant: EjecutarConPrismaTenant;
+  descontarStockPedido: typeof descontarStockPedido;
+  confirmarReservaStockPedido: typeof confirmarReservaStockPedido;
+  liberarReservaStockPedido: typeof liberarReservaStockPedido;
+}
 
 function mapearEstado(estadoExterno: string): MapaEstado | null {
   switch (estadoExterno) {
@@ -80,93 +98,188 @@ async function buscarOCrearPayment(
   }
 }
 
-/** Aplica una notificación verificada por la pasarela una sola vez por operación. */
-export async function aplicarWebhookPago(
-  tenantIdIndicado: string | null,
-  pago: PagoWebhookNormalizado,
-): Promise<void> {
-  const pedidoId = pago.pedidoId;
-  const mapa = mapearEstado(pago.estadoExterno);
-  if (!pedidoId || !pago.externalId || !mapa) return;
+/** Crea el aplicador para permitir probar las transiciones con un cliente transaccional aislado. */
+export function crearAplicadorWebhookPago(
+  dependencias: DependenciasAplicadorWebhookPago,
+): (tenantIdIndicado: string | null, pago: PagoWebhookNormalizado) => Promise<void> {
+  return async function aplicarWebhookPagoTenant(
+    tenantIdIndicado: string | null,
+    pago: PagoWebhookNormalizado,
+  ): Promise<void> {
+    if (!tenantIdIndicado) return;
+    const tenantId = tenantIdIndicado;
+    const pedidoId = pago.pedidoId;
+    const mapa = mapearEstado(pago.estadoExterno);
+    if (!pedidoId || !pago.externalId || !mapa) return;
 
-  const pedido = await prisma.pedido.findUnique({
-    where: { id: pedidoId },
-    select: {
-      id: true,
-      tenantId: true,
-      total: true,
-      moneda: true,
-      metodoPago: true,
-      estado: true,
-      mpPreferenceId: true,
-    },
-  });
-  if (!pedido || pedido.tenantId !== tenantIdIndicado) return;
-  if (pedido.metodoPago !== "mercadopago" || !pedido.mpPreferenceId) return;
-  if (pedido.estado === "CANCELADO") return;
+    try {
+      await dependencias.conPrismaTenant(tenantId, (prisma) =>
+        prisma.$transaction(async (tx) => {
+          const pedido = await tx.pedido.findFirst({
+            where: { id: pedidoId, tenantId: tenantIdIndicado },
+            select: {
+              id: true,
+              tenantId: true,
+              total: true,
+              moneda: true,
+              metodoPago: true,
+              estado: true,
+              stockReservado: true,
+              mpPreferenceId: true,
+              mpPaymentId: true,
+            },
+          });
+          if (!pedido || pedido.metodoPago !== "mercadopago" || !pedido.mpPreferenceId) return;
+          if (pedido.estado === "CANCELADO" && !mapa.acreditar) return;
 
-  const montoEsperado = Math.round(Number(pedido.total) * 100);
-  const montoRecibido = pago.montoPago;
-  if (
-    montoRecibido === null ||
-    !Number.isFinite(montoRecibido) ||
-    Math.round(montoRecibido * 100) !== montoEsperado ||
-    pago.monedaPago !== pedido.moneda
-  ) {
-    console.error("Se ignoró un pago con monto o moneda distintos al pedido", pedidoId);
-    return;
-  }
+          const montoEsperado = Math.round(Number(pedido.total) * 100);
+          const montoRecibido = pago.montoPago;
+          if (
+            montoRecibido === null ||
+            !Number.isFinite(montoRecibido) ||
+            Math.round(montoRecibido * 100) !== montoEsperado ||
+            pago.monedaPago !== pedido.moneda
+          ) {
+            console.error("Se ignoró un pago con monto o moneda distintos al pedido", pedidoId);
+            return;
+          }
 
-  await prisma.$transaction(async (tx) => {
-    const payment = await buscarOCrearPayment(
-      tx,
-      pedidoId,
-      pedido.tenantId,
-      pago.externalId,
-      montoRecibido,
-      pedido.moneda,
-    );
-    if (!payment) return;
+          const payment = await buscarOCrearPayment(
+            tx,
+            pedidoId,
+            pedido.tenantId,
+            pago.externalId,
+            montoRecibido,
+            pedido.moneda,
+          );
+          if (!payment) return;
 
-    const actualizado = await tx.payment.updateMany({
-      where: {
-        id: payment.id,
-        tenantId: pedido.tenantId,
-        pedidoId,
-        proveedor: "mercadopago",
-        externalId: payment.externalId,
-        estado: { notIn: ["CANCELADO", ...(mapa.cancelar ? [] : ["APROBADO" as const])] },
-      },
-      data: {
-        externalId: pago.externalId,
-        estado: mapa.estadoPago,
-        monto: montoRecibido,
-      },
-    });
-    if (actualizado.count !== 1) return;
+          if (mapa.acreditar) {
+            if (pedido.estado === "CANCELADO") {
+              const pagoTardio = await tx.payment.updateMany({
+                where: {
+                  id: payment.id,
+                  tenantId: pedido.tenantId,
+                  pedidoId,
+                  proveedor: "mercadopago",
+                  externalId: pago.externalId,
+                  estado: { not: "APROBADO" },
+                },
+                data: { estado: "APROBADO", monto: montoRecibido },
+              });
+              if (pagoTardio.count === 1) {
+                console.error(
+                  "Pago aprobado después de cancelar el pedido; requiere revisión de reembolso",
+                  pedidoId,
+                );
+              }
+              return;
+            }
 
-    if (mapa.cancelar) {
-      await tx.pedido.updateMany({
-        where: { id: pedidoId, tenantId: pedido.tenantId },
-        data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
-      });
-      return;
+            if (pedido.estado === "CONFIRMADO" && pedido.mpPaymentId === pago.externalId) {
+              await tx.payment.updateMany({
+                where: {
+                  id: payment.id,
+                  tenantId: pedido.tenantId,
+                  pedidoId,
+                  proveedor: "mercadopago",
+                  externalId: pago.externalId,
+                  estado: { not: "CANCELADO" },
+                },
+                data: { estado: "APROBADO", monto: montoRecibido },
+              });
+              return;
+            }
+
+            if (pedido.estado !== "PENDIENTE") return;
+
+            const actualizado = await tx.payment.updateMany({
+              where: {
+                id: payment.id,
+                tenantId: pedido.tenantId,
+                pedidoId,
+                proveedor: "mercadopago",
+                externalId: pago.externalId,
+                estado: { notIn: ["CANCELADO", "APROBADO"] },
+              },
+              data: { estado: "APROBADO", monto: montoRecibido },
+            });
+            if (actualizado.count !== 1) return;
+
+            const confirmado = await tx.pedido.updateMany({
+              where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
+              data: {
+                estado: "CONFIRMADO",
+                estadoPago: "APROBADO",
+                mpPaymentId: pago.externalId,
+                stockReservado: false,
+              },
+            });
+            if (confirmado.count !== 1) {
+              // Evita confirmar el Payment si otra operación ganó la transición del pedido.
+              throw new Error(ERROR_REVERTIR_PAGO_SIN_PEDIDO);
+            }
+
+            if (pedido.stockReservado) {
+              await dependencias.confirmarReservaStockPedido(pedidoId, pedido.tenantId, tx);
+            } else {
+              // Pedidos anteriores al despliegue no tienen stock reservado.
+              await dependencias.descontarStockPedido(pedidoId, pedido.tenantId, tx);
+            }
+            return;
+          }
+
+          const actualizado = await tx.payment.updateMany({
+            where: {
+              id: payment.id,
+              tenantId: pedido.tenantId,
+              pedidoId,
+              proveedor: "mercadopago",
+              externalId: pago.externalId,
+              estado: mapa.cancelar
+                ? { not: "CANCELADO" }
+                : { notIn: ["CANCELADO", "APROBADO"] },
+            },
+            data: {
+              externalId: pago.externalId,
+              estado: mapa.estadoPago,
+              monto: montoRecibido,
+            },
+          });
+          if (actualizado.count !== 1) return;
+
+          if (mapa.cancelar) {
+            const cancelado = await tx.pedido.updateMany({
+              where: { id: pedidoId, tenantId: pedido.tenantId, estado: pedido.estado },
+              data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
+            });
+            if (cancelado.count === 1 && pedido.stockReservado) {
+              const liberada = await dependencias.liberarReservaStockPedido(
+                pedidoId,
+                pedido.tenantId,
+                tx,
+              );
+              if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
+            }
+            return;
+          }
+
+          await tx.pedido.updateMany({
+            where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
+            data: { estadoPago: mapa.estadoPago },
+          });
+      }));
+    } catch (error) {
+      if (error instanceof Error && error.message === ERROR_REVERTIR_PAGO_SIN_PEDIDO) return;
+      throw error;
     }
-
-    if (mapa.acreditar) {
-      const confirmado = await tx.pedido.updateMany({
-        where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
-        data: { estado: "CONFIRMADO", estadoPago: "APROBADO", mpPaymentId: pago.externalId },
-      });
-      if (confirmado.count === 1) {
-        await descontarStockPedido(pedidoId, pedido.tenantId, tx);
-      }
-      return;
-    }
-
-    await tx.pedido.updateMany({
-      where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
-      data: { estadoPago: mapa.estadoPago },
-    });
-  });
+  };
 }
+
+/** Aplica una notificación verificada por la pasarela en el silo resuelto. */
+export const aplicarWebhookPago = crearAplicadorWebhookPago({
+  conPrismaTenant,
+  descontarStockPedido,
+  confirmarReservaStockPedido,
+  liberarReservaStockPedido,
+});

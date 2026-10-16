@@ -76,7 +76,8 @@ export async function POST(req: Request) {
 
     const resultado = await subirImagen(
       dataUri,
-      obtenerCarpetaIdentidad(tenantId)
+      obtenerCarpetaIdentidad(tenantId),
+      tenantId
     );
 
     return NextResponse.json({

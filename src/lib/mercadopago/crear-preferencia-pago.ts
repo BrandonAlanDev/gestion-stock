@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Preference } from "mercadopago";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { construirPreferenciaPago } from "@/lib/mercadopago/construir-preferencia";
 import { obtenerCredencialesMP } from "@/lib/mercadopago/obtener-credenciales";
 import { obtenerUrlCheckout } from "@/lib/mercadopago/url-checkout";
@@ -21,17 +21,26 @@ export async function crearPreferenciaPago(
   pedidoId: string,
   tenantId: string,
   baseUrl: string,
+  reservaExpiraEn: Date,
 ): Promise<ResultadoCrearPreferencia> {
-  const pedido = await prisma.pedido.findUnique({
-    where: { id: pedidoId },
-    include: { items: true },
-  });
+  const pedido = await conPrismaTenant(tenantId, (prisma) =>
+    prisma.pedido.findFirst({
+      where: { id: pedidoId, tenantId },
+      include: { items: { where: { tenantId } } },
+    }),
+  );
 
   if (!pedido) {
     throw new Error(`Pedido ${pedidoId} no encontrado`);
   }
-  if (pedido.tenantId !== tenantId) {
-    throw new Error("El pedido no pertenece al comercio indicado");
+  if (
+    pedido.estado !== "PENDIENTE" ||
+    !pedido.stockReservado ||
+    !pedido.reservaExpiraEn ||
+    pedido.reservaExpiraEn.getTime() !== reservaExpiraEn.getTime() ||
+    reservaExpiraEn <= new Date()
+  ) {
+    throw new Error("La reserva del pedido venció antes de iniciar el checkout");
   }
   if (pedido.items.length === 0) {
     throw new Error("El pedido no tiene ítems para cobrar");
@@ -47,6 +56,7 @@ export async function crearPreferenciaPago(
       id: pedido.id,
       moneda: pedido.moneda,
       total: Number(pedido.total),
+      reservaExpiraEn,
       nombreCliente: pedido.nombreCliente,
       emailCliente: pedido.emailCliente,
       items: pedido.items.map((item) => ({
@@ -64,10 +74,21 @@ export async function crearPreferenciaPago(
     throw new Error("Mercado Pago no devolvió un identificador de preferencia");
   }
 
-  await prisma.pedido.update({
-    where: { id: pedido.id },
-    data: { mpPreferenceId: respuesta.id },
-  });
+  const actualizado = await conPrismaTenant(tenantId, (prisma) =>
+    prisma.pedido.updateMany({
+      where: {
+        id: pedido.id,
+        tenantId,
+        estado: "PENDIENTE",
+        stockReservado: true,
+        reservaExpiraEn: { equals: reservaExpiraEn, gt: new Date() },
+      },
+      data: { mpPreferenceId: respuesta.id },
+    }),
+  );
+  if (actualizado.count !== 1) {
+    throw new Error("La reserva venció mientras se iniciaba el checkout");
+  }
 
   const checkout = obtenerUrlCheckout(respuesta, tokenAcceso);
 

@@ -21,6 +21,7 @@ export const authConfig = {
         token.tenantId = user.tenantId;
         token.tenantNombre = user.tenantNombre;
         token.tenantSlug = user.tenantSlug;
+        token.tenantHost = user.tenantHost;
         token.telefono = user.telefono;
         token.image = user.image;
       }
@@ -33,6 +34,7 @@ export const authConfig = {
         session.user.tenantId = typeof token.tenantId === "string" ? token.tenantId : "";
         session.user.tenantNombre = typeof token.tenantNombre === "string" ? token.tenantNombre : "";
         session.user.tenantSlug = typeof token.tenantSlug === "string" ? token.tenantSlug : "";
+        session.user.tenantHost = typeof token.tenantHost === "string" ? token.tenantHost : undefined;
         session.user.telefono = typeof token.telefono === "string" ? token.telefono : null;
         session.user.image = typeof token.image === "string" ? token.image : null;
       }

@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { registerSchema } from "@/lib/validaciones/esquemas";
 import type { EstadoAccionSesion } from "@/types/acciones-sesion";
 
@@ -26,26 +26,31 @@ export async function registrarUsuario(
   }
   const { email, password, name } = validacion.data;
   const emailNormalizado = email.trim().toLowerCase();
-  const existente = await prisma.user.findUnique({
-    where: {
-      tenantId_email: {
-        tenantId: tenant.id,
-        email: emailNormalizado,
+  const existente = await conPrismaTenant(tenant.id, (prisma) =>
+    prisma.user.findUnique({
+      where: {
+        tenantId_email: {
+          tenantId: tenant.id,
+          email: emailNormalizado,
+        },
       },
-    },
-  });
+    }),
+  );
   if (existente) return { error: "El usuario ya existe" };
 
   try {
-    await prisma.user.create({
-      data: {
-        tenantId: tenant.id,
-        email: emailNormalizado,
-        name,
-        password: await bcrypt.hash(password, 10),
-        role: "USER",
-      },
-    });
+    const passwordHash = await bcrypt.hash(password, 10);
+    await conPrismaTenant(tenant.id, (prisma) =>
+      prisma.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: emailNormalizado,
+          name,
+          password: passwordHash,
+          role: "USER",
+        },
+      }),
+    );
     return { success: true };
   } catch (error: unknown) {
     if (esConflictoUnico(error)) {

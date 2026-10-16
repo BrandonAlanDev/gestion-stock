@@ -1,5 +1,5 @@
 import { Prisma } from "@/../generated/prisma/client";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type {
   EstadoProducto,
   FiltroStock,
@@ -149,89 +149,91 @@ export async function obtenerProductosAdmin(
     ) AS subconsulta
   `;
 
-  const [filasCrudas, conteo] = await Promise.all([
-    prisma.$queryRaw<FilaCrudaConsulta[]>(consultaFilas),
-    prisma.$queryRaw<Array<{ total: string | number }>>(consultaTotal),
-  ]);
+  return conPrismaTenant(tenantId, async (prisma) => {
+    const [filasCrudas, conteo] = await Promise.all([
+      prisma.$queryRaw<FilaCrudaConsulta[]>(consultaFilas),
+      prisma.$queryRaw<Array<{ total: string | number }>>(consultaTotal),
+    ]);
 
-  const total = Number(conteo[0]?.total ?? 0);
+    const total = Number(conteo[0]?.total ?? 0);
 
-  const ids = filasCrudas.map((fila) => fila.id);
-  const imagenPorId = new Map<string, string>();
-  if (ids.length > 0) {
-    const imagenes = await prisma.garmentImage.findMany({
-      where: { garmentId: { in: ids }, tenantId },
-      orderBy: { order: "asc" },
-      select: { garmentId: true, srcImage: true },
-    });
-    for (const imagen of imagenes) {
-      if (!imagenPorId.has(imagen.garmentId)) {
-        imagenPorId.set(imagen.garmentId, imagen.srcImage);
+    const ids = filasCrudas.map((fila) => fila.id);
+    const imagenPorId = new Map<string, string>();
+    if (ids.length > 0) {
+      const imagenes = await prisma.garmentImage.findMany({
+        where: { garmentId: { in: ids }, tenantId },
+        orderBy: { order: "asc" },
+        select: { garmentId: true, srcImage: true },
+      });
+      for (const imagen of imagenes) {
+        if (!imagenPorId.has(imagen.garmentId)) {
+          imagenPorId.set(imagen.garmentId, imagen.srcImage);
+        }
       }
     }
-  }
 
-  const variantesPorProducto = new Map<string, VarianteAdminResumen[]>();
-  if (ids.length > 0) {
-    const variantes = await prisma.garmentVariant.findMany({
-      where: { garmentId: { in: ids }, tenantId },
-      include: {
-        optionValues: {
-          include: {
-            optionValue: { include: { option: true } },
+    const variantesPorProducto = new Map<string, VarianteAdminResumen[]>();
+    if (ids.length > 0) {
+      const variantes = await prisma.garmentVariant.findMany({
+        where: { garmentId: { in: ids }, tenantId },
+        include: {
+          optionValues: {
+            include: {
+              optionValue: { include: { option: true } },
+            },
           },
         },
-      },
-    });
-    for (const variante of variantes) {
-      const opcionValores = variante.optionValues.map((ov) => ({
-        opcion: ov.optionValue.option.name,
-        valor: ov.optionValue.value,
-      }));
-      const resumen: VarianteAdminResumen = {
-        id: variante.id,
-        nombre: opcionValores.map((ov) => ov.valor).join(" / "),
-        stock: Number(variante.stock),
-        sku: variante.sku ?? null,
-        precioOverride: variante.priceOverride == null ? null : Number(variante.priceOverride),
-        opcionValores,
-      };
-      const actuales = variantesPorProducto.get(variante.garmentId) ?? [];
-      actuales.push(resumen);
-      variantesPorProducto.set(variante.garmentId, actuales);
+      });
+      for (const variante of variantes) {
+        const opcionValores = variante.optionValues.map((ov) => ({
+          opcion: ov.optionValue.option.name,
+          valor: ov.optionValue.value,
+        }));
+        const resumen: VarianteAdminResumen = {
+          id: variante.id,
+          nombre: opcionValores.map((ov) => ov.valor).join(" / "),
+          stock: Number(variante.stock),
+          sku: variante.sku ?? null,
+          precioOverride: variante.priceOverride == null ? null : Number(variante.priceOverride),
+          opcionValores,
+        };
+        const actuales = variantesPorProducto.get(variante.garmentId) ?? [];
+        actuales.push(resumen);
+        variantesPorProducto.set(variante.garmentId, actuales);
+      }
     }
-  }
 
-  const filas: ProductoAdminRow[] = filasCrudas.map((fila) => {
-    const variantes = variantesPorProducto.get(fila.id) ?? [];
+    const filas: ProductoAdminRow[] = filasCrudas.map((fila) => {
+      const variantes = variantesPorProducto.get(fila.id) ?? [];
+      return {
+        id: fila.id,
+        nombre: fila.nombre,
+        precio: Number(fila.precio),
+        precioMaximo: fila.precioMaximo == null ? null : Number(fila.precioMaximo),
+        activo: Boolean(fila.activo),
+        stockTotal: Number(fila.stockTotal ?? 0),
+        cantidadVariantes: Number(fila.cantidadVariantes ?? 0),
+        imagenPrincipal: imagenPorId.get(fila.id) ?? null,
+        categoria: fila.categoriaNombre
+          ? { id: fila.categoriaId, nombre: fila.categoriaNombre }
+          : null,
+        subcategoria: fila.subcategoriaNombre
+          ? { id: fila.subcategoriaId ?? "", nombre: fila.subcategoriaNombre }
+          : null,
+        proveedor: fila.proveedorNombre
+          ? { id: fila.proveedorId ?? "", nombre: fila.proveedorNombre }
+          : null,
+        creadoEn: fila.creadoEn instanceof Date ? fila.creadoEn.toISOString() : String(fila.creadoEn),
+        esConVariantes: variantes.some((v) => v.opcionValores.length > 0),
+        variantes,
+      };
+    });
+
     return {
-      id: fila.id,
-      nombre: fila.nombre,
-      precio: Number(fila.precio),
-      precioMaximo: fila.precioMaximo == null ? null : Number(fila.precioMaximo),
-      activo: Boolean(fila.activo),
-      stockTotal: Number(fila.stockTotal ?? 0),
-      cantidadVariantes: Number(fila.cantidadVariantes ?? 0),
-      imagenPrincipal: imagenPorId.get(fila.id) ?? null,
-      categoria: fila.categoriaNombre
-        ? { id: fila.categoriaId, nombre: fila.categoriaNombre }
-        : null,
-      subcategoria: fila.subcategoriaNombre
-        ? { id: fila.subcategoriaId ?? "", nombre: fila.subcategoriaNombre }
-        : null,
-      proveedor: fila.proveedorNombre
-        ? { id: fila.proveedorId ?? "", nombre: fila.proveedorNombre }
-        : null,
-      creadoEn: fila.creadoEn instanceof Date ? fila.creadoEn.toISOString() : String(fila.creadoEn),
-      esConVariantes: variantes.some((v) => v.opcionValores.length > 0),
-      variantes,
+      filas,
+      total,
+      pagina,
+      totalPaginas: Math.max(1, Math.ceil(total / limite)),
     };
   });
-
-  return {
-    filas,
-    total,
-    pagina,
-    totalPaginas: Math.max(1, Math.ceil(total / limite)),
-  };
 }

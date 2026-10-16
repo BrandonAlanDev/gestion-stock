@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 
 export type ResultadoAgregarCarrito =
@@ -18,10 +18,12 @@ export async function agregarAlCarrito(datos: {
     return { ok: false, error: "La cantidad no es válida." };
   }
 
-  const variant = await prisma.garmentVariant.findFirst({
-    where: { id: datos.variantId, tenantId, garmentId: datos.productId },
-    include: { garment: { select: { controlaStock: true } } },
-  });
+  const variant = await conPrismaTenant(tenantId, (prisma) =>
+    prisma.garmentVariant.findFirst({
+      where: { id: datos.variantId, tenantId, garmentId: datos.productId },
+      include: { garment: { select: { controlaStock: true } } },
+    }),
+  );
 
   if (!variant) {
     return { ok: false, error: "El producto no está disponible." };

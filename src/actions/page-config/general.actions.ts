@@ -1,8 +1,8 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 
@@ -10,7 +10,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
   return unstable_cache(
     async () => {
   try {
-    const pageConfig = await prisma.pageConfig.findFirst({
+    const pageConfig = await conPrismaTenant(tenantId, (prisma) => prisma.pageConfig.findFirst({
       where: { tenantId },
       select: {
         storeName: true,
@@ -65,6 +65,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
 
         // Mantenemos tus banners
         banners: {
+          where: { tenantId },
           orderBy: {
             order: "asc",
           },
@@ -80,6 +81,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
             active: true,
             featuredLayout: true,
             grids: {
+              where: { tenantId },
               orderBy: [{
                 order: "asc",
               },{
@@ -90,7 +92,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         },
 
         carousels: {
-          where: { type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
+          where: { tenantId, type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
           select: {
             id: true,
             type: true,
@@ -99,12 +101,12 @@ async function obtenerPageConfigCacheada(tenantId: string) {
           },
         },
       },
-    });
+    }));
     if (!pageConfig) {
       throw new Error("Configuración de página no encontrada");
     }
 
-    const homegrids = await prisma.homegrid.findMany({
+    const homegrids = await conPrismaTenant(tenantId, (prisma) => prisma.homegrid.findMany({
       where: { tenantId },
       orderBy: { createdAt: "asc" },
       select: {
@@ -116,10 +118,11 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         active: true,
         featuredLayout: true,
         grids: {
+          where: { tenantId },
           orderBy: [{ order: "asc" }, { title: "asc" }],
         },
       },
-    });
+    }));
 
     return {
       ok: true,

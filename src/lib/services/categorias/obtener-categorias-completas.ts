@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerCategoriasCompletas(tenantId: string) {
-  return prisma.category.findMany({
+  return conPrismaTenant(tenantId, (prisma) => prisma.category.findMany({
     where: { tenantId },
     include: {
       subCategories: {
@@ -14,5 +14,5 @@ export async function obtenerCategoriasCompletas(tenantId: string) {
       },
     },
     orderBy: { name: "asc" },
-  });
+  }));
 }

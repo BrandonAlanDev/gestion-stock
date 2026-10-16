@@ -1,9 +1,11 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function eliminarElementoSeccion(id: string) {
   const { tenantId } = await requiereAdmin();
-  return prisma.customSectionItem.deleteMany({ where: { id, tenantId } });
+  return conPrismaTenant(tenantId, (prisma) =>
+    prisma.customSectionItem.deleteMany({ where: { id, tenantId } }),
+  );
 }

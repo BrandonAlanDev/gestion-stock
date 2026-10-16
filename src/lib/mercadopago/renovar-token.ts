@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { URL_TOKEN_MP } from "./constantes";
 import type { RespuestaTokenMP } from "@/types/mercadopago";
 
@@ -9,9 +9,9 @@ import type { RespuestaTokenMP } from "@/types/mercadopago";
  * refresh_token, y persiste el nuevo conjunto de tokens. Devuelve el token nuevo.
  */
 export async function renovarTokenMP(tenantId: string): Promise<string> {
-  const cuenta = await prisma.cuentaMercadoPago.findUnique({
-    where: { tenantId },
-  });
+  const cuenta = await conPrismaTenant(tenantId, (prisma) =>
+    prisma.cuentaMercadoPago.findUnique({ where: { tenantId } }),
+  );
 
   if (!cuenta?.refreshToken) {
     throw new Error(
@@ -43,18 +43,20 @@ export async function renovarTokenMP(tenantId: string): Promise<string> {
     );
   }
 
-  await prisma.cuentaMercadoPago.update({
-    where: { tenantId },
-    data: {
-      accessToken: datos.access_token,
-      refreshToken: datos.refresh_token ?? cuenta.refreshToken,
-      expiraEn: datos.expires_in
-        ? new Date(Date.now() + datos.expires_in * 1000)
-        : cuenta.expiraEn,
-      liveMode: datos.live_mode ?? cuenta.liveMode,
-      updatedAt: new Date(),
-    },
-  });
+  await conPrismaTenant(tenantId, (prisma) =>
+    prisma.cuentaMercadoPago.update({
+      where: { tenantId },
+      data: {
+        accessToken: datos.access_token,
+        refreshToken: datos.refresh_token ?? cuenta.refreshToken,
+        expiraEn: datos.expires_in
+          ? new Date(Date.now() + datos.expires_in * 1000)
+          : cuenta.expiraEn,
+        liveMode: datos.live_mode ?? cuenta.liveMode,
+        updatedAt: new Date(),
+      },
+    }),
+  );
 
   return datos.access_token;
 }

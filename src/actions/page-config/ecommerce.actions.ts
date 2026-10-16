@@ -1,8 +1,8 @@
 "use server";
-import { prisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function updateEcommerceConfig(
   data: {
@@ -14,23 +14,17 @@ export async function updateEcommerceConfig(
 ) {
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const ecommerce =
-      await prisma.pageConfig.update({
-        where: { id: pageConfig.id },
-
+    const ecommerce = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
         data: {
-          ecommerceEnabled:
-            data.ecommerceEnabled,
-
-          cartEnabled:
-            data.cartEnabled,
-
-          checkoutEnabled:
-            data.checkoutEnabled,
-
+          ecommerceEnabled: data.ecommerceEnabled,
+          cartEnabled: data.cartEnabled,
+          checkoutEnabled: data.checkoutEnabled,
           currency: data.currency,
         },
-      });
+      }),
+    );
 
     revalidateTag(`page-config:${contexto.tenantId}`);
 
@@ -43,8 +37,8 @@ export async function updateEcommerceConfig(
 export async function getEcommerceConfig() {
   try {
     const { id: tenantId } = await requiereTenantActivo();
-    const ecommerce =
-      await prisma.pageConfig.findFirst({
+    const ecommerce = await conPrismaTenant(tenantId, (prisma) =>
+      prisma.pageConfig.findFirst({
         where: { tenantId },
 
         select: {
@@ -53,7 +47,8 @@ export async function getEcommerceConfig() {
           checkoutEnabled: true,
           currency: true,
         },
-      });
+      }),
+    );
 
     return { ok: true, ecommerce };
   } catch {

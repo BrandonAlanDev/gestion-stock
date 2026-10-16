@@ -1,10 +1,10 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
@@ -63,16 +63,16 @@ export async function updateBrandingConfig(data: BrandingInput) {
       density: data.density ?? pageConfig?.density ?? "comoda",
     };
 
-    const pageConfigActualizado = pageConfig
-      ? await prisma.pageConfig.update({
-          where: {
-            id: pageConfig.id,
-          },
-          data: payload,
-        })
-      : await prisma.pageConfig.create({
-          data: { ...payload, tenantId: contexto.tenantId },
-        });
+    const pageConfigActualizado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      pageConfig
+        ? prisma.pageConfig.update({
+            where: { id: pageConfig.id, tenantId: contexto.tenantId },
+            data: payload,
+          })
+        : prisma.pageConfig.create({
+            data: { ...payload, tenantId: contexto.tenantId },
+          }),
+    );
 
     const publicIdsAEliminar: Array<string | null | undefined> = [];
 
@@ -109,9 +109,10 @@ async function obtenerBrandingCacheado(tenantId: string) {
  return unstable_cache(
   async () => {
     try {
-      const branding = await prisma.pageConfig.findFirst({
-        where: { tenantId },
-        select: {
+      const branding = await conPrismaTenant(tenantId, (prisma) =>
+        prisma.pageConfig.findFirst({
+          where: { tenantId },
+          select: {
           storeName: true,
           slogan: true,
           description: true,
@@ -122,6 +123,7 @@ async function obtenerBrandingCacheado(tenantId: string) {
           bgColor: true,
 
           banners: {
+            where: { tenantId },
             orderBy: {
               order: "asc",
             },
@@ -135,8 +137,9 @@ async function obtenerBrandingCacheado(tenantId: string) {
               url: true,
             },
           },
-        },
-      });
+          },
+        }),
+      );
 
       return {
         ok: true,
@@ -156,7 +159,7 @@ async function obtenerBrandingCacheado(tenantId: string) {
     revalidate: 3600,
     tags: [`branding-config:${tenantId}`],
   },
-)();
+  )();
 }
 
 export async function getBrandingConfig() {

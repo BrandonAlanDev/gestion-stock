@@ -203,7 +203,7 @@ export default function SubidaImagen({
         textoSobreSecundario={textoSobreSecundario}
         colorAyuda={colorAyuda}
         adminActivo={adminActivo}
-        errorVisible={errorVisible}
+        errorVisible={errorVisible ?? null}
         contenidoSuperpuesto={contenidoSuperpuesto}
         accionesSobreZona={accionesSobreZona}
         puedeEditarRecorte={puedeEditarRecorte}

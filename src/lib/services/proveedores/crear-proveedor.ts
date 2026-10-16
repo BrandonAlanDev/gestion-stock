@@ -1,13 +1,13 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { DatosCrearProveedor } from "@/lib/services/proveedores/tipos-proveedor";
 
 export async function crearProveedor(
   tenantId: string,
   datos: DatosCrearProveedor,
 ) {
-  return prisma.provider.create({
+  return conPrismaTenant(tenantId, (prisma) => prisma.provider.create({
     data: {
       tenantId,
       name: datos.nombre,
@@ -21,5 +21,5 @@ export async function crearProveedor(
       },
     },
     include: { contacts: { where: { tenantId, active: true } } },
-  });
+  }));
 }

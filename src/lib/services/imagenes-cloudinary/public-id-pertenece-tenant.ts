@@ -1,13 +1,23 @@
-import { RAICES_HISTORICAS_CLOUDINARY } from "./raices-historicas-cloudinary";
-
 export function publicIdPerteneceTenant(publicId: string, tenantId: string): boolean {
-  const segmentos = publicId.split("/").filter(Boolean);
+  const segmentos = publicId.split("/");
+  if (
+    !tenantId ||
+    segmentos.length === 0 ||
+    segmentos.some((segmento) => !segmento || segmento === "." || segmento === "..")
+  ) return false;
   if (segmentos[0] === tenantId) return true;
 
-  const indiceTenants = segmentos.indexOf("tenants");
-  if (indiceTenants === -1) {
-    return RAICES_HISTORICAS_CLOUDINARY.has(segmentos[0] ?? "");
-  }
+  // Prefijo histórico conocido; evita aceptar "tenants/{id}" en cualquier raíz.
+  return segmentos[0] === "gestion-stock" &&
+    segmentos[1] === "tenants" &&
+    segmentos[2] === tenantId;
+}
 
-  return segmentos[indiceTenants + 1] === tenantId;
+/** Valida carpetas nuevas bajo la raíz propia del tenant. */
+export function carpetaCloudinaryPerteneceTenant(carpeta: string, tenantId: string): boolean {
+  if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) return false;
+  const segmentos = carpeta.split("/");
+  return segmentos.length > 0 &&
+    segmentos[0] === tenantId &&
+    segmentos.every((segmento) => /^[a-zA-Z0-9_-]+$/.test(segmento));
 }

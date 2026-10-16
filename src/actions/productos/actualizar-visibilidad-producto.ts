@@ -2,7 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 const esquemaVisibilidad = z.object({
@@ -23,10 +23,12 @@ export async function actualizarVisibilidadProducto(id: string, activo: boolean)
   if (!parsed.success) return { error: "Datos inválidos" };
 
   try {
-    const resultado = await prisma.garment.updateMany({
-      where: { id: parsed.data.id, tenantId },
-      data: { active: parsed.data.activo },
-    });
+    const resultado = await conPrismaTenant(tenantId, (prisma) =>
+      prisma.garment.updateMany({
+        where: { id: parsed.data.id, tenantId },
+        data: { active: parsed.data.activo },
+      }),
+    );
     if (resultado.count === 0) return { error: "Producto no encontrado" };
     revalidateTag(`tenant:${tenantId}:products`);
     revalidateTag(`tenant:${tenantId}:product:${id}`);

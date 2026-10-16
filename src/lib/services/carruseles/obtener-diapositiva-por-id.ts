@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerDiapositivaPorId(tenantId: string, id: string) {
-  return prisma.carouselSlide.findFirst({ where: { id, tenantId, carousel: { tenantId } } });
+  return conPrismaTenant(tenantId, (prisma) =>
+    prisma.carouselSlide.findFirst({ where: { id, tenantId, carousel: { tenantId } } }),
+  );
 }

@@ -1,11 +1,11 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPrendaParaEdicion(id: string) {
   const { tenantId } = await requiereAdmin();
-  const producto = await prisma.garment.findFirst({
+  const producto = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
     where: { id, tenantId },
     include: {
       images: { where: { tenantId }, orderBy: { order: "asc" } },
@@ -15,7 +15,7 @@ export async function obtenerPrendaParaEdicion(id: string) {
         include: { optionValues: { include: { optionValue: { include: { option: true } } } } },
       },
     },
-  });
+  }));
   if (!producto) return null;
 
   return {

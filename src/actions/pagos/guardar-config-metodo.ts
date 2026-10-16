@@ -1,8 +1,8 @@
 "use server";
 
 import "server-only";
-import { prisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 
 export type DatosConfigMetodo = {
@@ -26,7 +26,7 @@ export async function guardarConfigMetodo(
     const instrucciones =
       typeof datos.instrucciones === "string" ? datos.instrucciones.trim() : null;
 
-    await prisma.metodoPago.upsert({
+    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
       where: {
         tenantId_metodo: {
           tenantId: contexto.tenantId,
@@ -43,7 +43,7 @@ export async function guardarConfigMetodo(
         config: { instrucciones },
         updatedAt: new Date(),
       },
-    });
+    }));
 
     return { success: true };
   } catch (error) {

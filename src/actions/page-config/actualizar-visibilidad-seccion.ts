@@ -1,9 +1,9 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { PageConfig_featuredLayout } from "@/../generated/prisma/client";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export interface DatosVisibilidadSeccion {
   featuredLayout?: string;
@@ -12,14 +12,16 @@ export interface DatosVisibilidadSeccion {
 export async function actualizarVisibilidadSeccion(datos: DatosVisibilidadSeccion) {
   try {
     const { pageConfig } = await requerirPageConfigAdministrador();
-    await prisma.pageConfig.update({
-      where: { id: pageConfig.id },
-      data: {
-        featuredLayout: datos.featuredLayout
-          ? (datos.featuredLayout.toUpperCase() as PageConfig_featuredLayout)
-          : undefined,
-      },
-    });
+    await conPrismaTenant(pageConfig.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: pageConfig.tenantId },
+        data: {
+          featuredLayout: datos.featuredLayout
+            ? (datos.featuredLayout.toUpperCase() as PageConfig_featuredLayout)
+            : undefined,
+        },
+      }),
+    );
 
     revalidatePath("/", "layout");
     return { ok: true };

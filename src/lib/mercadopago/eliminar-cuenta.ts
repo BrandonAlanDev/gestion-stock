@@ -1,10 +1,10 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 /** Borra la conexión de Mercado Pago de un comercio para poder vincular otra cuenta. */
 export async function eliminarCuentaMP(tenantId: string) {
-  await prisma.cuentaMercadoPago.deleteMany({
-    where: { tenantId },
-  });
+  await conPrismaTenant(tenantId, (prisma) =>
+    prisma.cuentaMercadoPago.deleteMany({ where: { tenantId } }),
+  );
 }

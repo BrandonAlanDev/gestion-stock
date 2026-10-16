@@ -1,8 +1,8 @@
 "use server";
-import { prisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function updateSocialsConfig(
   data: {
@@ -16,12 +16,12 @@ export async function updateSocialsConfig(
 ) {
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const socials =
-      await prisma.pageConfig.update({
-        where: { id: pageConfig.id },
-
+    const socials = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
         data,
-      });
+      }),
+    );
 
     revalidateTag(`page-config:${contexto.tenantId}`);
 
@@ -34,8 +34,8 @@ export async function updateSocialsConfig(
 export async function getSocialsConfig() {
   try {
     const { id: tenantId } = await requiereTenantActivo();
-    const socials =
-      await prisma.pageConfig.findFirst({
+    const socials = await conPrismaTenant(tenantId, (prisma) =>
+      prisma.pageConfig.findFirst({
         where: { tenantId },
 
         select: {
@@ -46,7 +46,8 @@ export async function getSocialsConfig() {
           youtube: true,
           linkedin: true,
         },
-      });
+      }),
+    );
 
     return { ok: true, socials };
   } catch {

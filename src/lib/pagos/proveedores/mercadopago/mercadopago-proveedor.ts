@@ -64,10 +64,14 @@ export const proveedorMercadoPago: PaymentProvider = {
   },
 
   async crearPago(datos: DatosCrearPago): Promise<ResultadoCrearPago> {
+    if (!datos.reservaExpiraEn) {
+      throw new Error("Mercado Pago requiere una fecha de expiración de la reserva");
+    }
     const { preferenceId, checkoutUrl, esSandbox } = await crearPreferenciaPago(
       datos.pedidoId,
       datos.tenantId,
       datos.baseUrl,
+      datos.reservaExpiraEn,
     );
 
     return {

@@ -1,11 +1,12 @@
-import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/../generated/prisma/client";
+import type { PrismaClient } from "@/../generated/prisma/client";
 import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 import { sincronizarOpciones } from "@/lib/services/prendas/sincronizar-opciones";
 import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-variante";
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
 
 export async function actualizarRegistroPrendaConDetalles(
+  prisma: PrismaClient,
   tenantId: string,
   id: string,
   datos: DatosGuardarProducto
@@ -22,7 +23,7 @@ export async function actualizarRegistroPrendaConDetalles(
     const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId, tenantId }, select: { id: true } });
     if (!proveedor) throw new Error("Proveedor no encontrado");
   }
-  await validarReferenciasVariantes(tenantId, datos.variants);
+  await validarReferenciasVariantes(prisma, tenantId, datos.variants);
 
   const cost = typeof datos.cost === "number" && !Number.isNaN(datos.cost) ? datos.cost : producto.cost;
 

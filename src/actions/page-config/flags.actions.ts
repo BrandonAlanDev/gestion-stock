@@ -1,9 +1,9 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { flagsPaginaSchema } from "@/lib/validaciones/esquemas";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function updatePageFlags(data: unknown) {
   try {
@@ -13,10 +13,12 @@ export async function updatePageFlags(data: unknown) {
     }
 
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const config = await prisma.pageConfig.update({
-      where: { id: pageConfig.id },
-      data: { ...parsed.data },
-    });
+    const config = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { ...parsed.data },
+      }),
+    );
 
     revalidateTag(`page-config:${contexto.tenantId}`);
     revalidatePath("/");

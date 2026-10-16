@@ -1,13 +1,14 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { obtenerCarpetaPrenda } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-prenda";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
+import { publicIdPerteneceTenant } from "@/lib/services/imagenes-cloudinary/public-id-pertenece-tenant";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { actualizarRegistroPrendaConDetalles } from "@/lib/services/prendas/actualizar-registro-prenda";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import { garmentSchema as esquemaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
@@ -19,7 +20,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
   if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
-  const prendaExistente = await prisma.garment.findFirst({
+  const prendaExistente = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
     where: { id, tenantId },
     include: {
       images: { where: { tenantId }, orderBy: { order: "asc" } },
@@ -29,7 +30,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       },
       opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
     },
-  });
+  }));
   if (!prendaExistente) return { error: "El producto no existe." };
 
   const opcionesFinales = datos.opciones === undefined
@@ -76,7 +77,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
     for (const imagen of images ?? prendaExistente.images.map((actual) => actual.srcImage)) {
       if (imagen.startsWith("data:image")) {
         contadorImagenes += 1;
-        const subida = await subirImagen(imagen, carpetaNueva, `imagen-${sufijoUnico}-${contadorImagenes}`);
+        const subida = await subirImagen(imagen, carpetaNueva, tenantId, `imagen-${sufijoUnico}-${contadorImagenes}`);
         idsPublicosSubidos.push(subida.publicId);
         imagenesFinales.push({ url: subida.url, publicId: subida.publicId, order: imagenesFinales.length });
         urlsFinales.add(subida.url);
@@ -84,7 +85,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
         const imagenExistente = prendaExistente.images.find((imagenActual) => imagenActual.srcImage === imagen);
         if (imagenExistente) {
           const idPublicoExistente = imagenExistente.publicId ?? obtenerPublicIdDesdeUrl(imagenExistente.srcImage);
-          if (cambioCategoria && idPublicoExistente) {
+          if (cambioCategoria && idPublicoExistente && publicIdPerteneceTenant(idPublicoExistente, tenantId)) {
             const imagenMovida = await moverImagen(idPublicoExistente, carpetaNueva, tenantId);
             paresMovidos.push({ viejo: idPublicoExistente, nuevo: imagenMovida.publicId });
             imagenesFinales.push({ url: imagenMovida.url, publicId: imagenMovida.publicId, order: imagenesFinales.length });
@@ -100,7 +101,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       }
     }
 
-    const prendaActualizada = await actualizarRegistroPrendaConDetalles(tenantId, id, {
+    const prendaActualizada = await conPrismaTenant(tenantId, (prisma) => actualizarRegistroPrendaConDetalles(prisma, tenantId, id, {
       name,
       price,
       maxPrice: maxPrice || null,
@@ -115,7 +116,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       opciones: opcionesFinales,
       variants: variantesFinales,
       images: imagenesFinales,
-    });
+    }));
 
     const imagenesARemover = prendaExistente.images.filter((imagenActual) => !urlsFinales.has(imagenActual.srcImage));
     const resultados = await eliminarImagenes(

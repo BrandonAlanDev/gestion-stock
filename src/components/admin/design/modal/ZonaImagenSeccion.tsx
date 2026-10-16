@@ -21,7 +21,6 @@ export default function ZonaImagenSeccion({
   alCambiarEditorAbierto,
   alCambiarImagen,
   primaryColor,
-  textColor,
 }: ZonaImagenSeccionProps) {
   const bgBoton = datos.buttonBgColor || primaryColor;
   const colorBoton = datos.buttonTextColor || getContrastColor(bgBoton);

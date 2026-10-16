@@ -1,5 +1,5 @@
 import PageRenderer from "@/components/custompage/PageRender";
-import prisma from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { notFound } from "next/navigation";
 
@@ -16,26 +16,28 @@ export default async function RutaPaginaPersonalizada({ searchParams }: Propieda
     return notFound();
   }
 
-  const paginaPersonalizada = await prisma.customPage.findUnique({
-    where: {
-      tenantId_slug: {
-        tenantId: tenant.id,
-        slug: tituloConsulta,
+  const paginaPersonalizada = await conPrismaTenant(tenant.id, (prisma) =>
+    prisma.customPage.findUnique({
+      where: {
+        tenantId_slug: {
+          tenantId: tenant.id,
+          slug: tituloConsulta,
+        },
       },
-    },
-    include: {
-      sections: {
-        where: { tenantId: tenant.id },
-        orderBy: { order: "asc" },
-        include: {
-          items: {
-            where: { tenantId: tenant.id },
-            orderBy: { order: "asc" },
+      include: {
+        sections: {
+          where: { tenantId: tenant.id },
+          orderBy: { order: "asc" },
+          include: {
+            items: {
+              where: { tenantId: tenant.id },
+              orderBy: { order: "asc" },
+            },
           },
         },
       },
-    },
-  });
+    }),
+  );
 
   if (!paginaPersonalizada?.isActive) {
     return notFound();

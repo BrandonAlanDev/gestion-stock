@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/../generated/prisma/client";
 import { INCLUDE_VARIANTE } from "@/lib/services/prendas/incluir-variante";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPrendasPaginadas(
   tenantId: string,
@@ -22,22 +22,24 @@ export async function obtenerPrendasPaginadas(
     ...(busqueda && { name: { contains: busqueda } }),
   };
 
-  const [garments, total] = await Promise.all([
-    prisma.garment.findMany({
-      where,
-      include: {
-        images: { where: { tenantId }, orderBy: { order: "asc" } },
-        variants: { where: { tenantId }, include: INCLUDE_VARIANTE, take: 5 },
-        subCategory: true,
-        category: true,
-        opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
-      },
-      skip,
-      take: limiteSeguro,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.garment.count({ where }),
-  ]);
+  return conPrismaTenant(tenantId, async (prisma) => {
+    const [garments, total] = await Promise.all([
+      prisma.garment.findMany({
+        where,
+        include: {
+          images: { where: { tenantId }, orderBy: { order: "asc" } },
+          variants: { where: { tenantId }, include: INCLUDE_VARIANTE, take: 5 },
+          subCategory: true,
+          category: true,
+          opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+        },
+        skip,
+        take: limiteSeguro,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.garment.count({ where }),
+    ]);
 
-  return { garments, total, page: paginaSegura, limit: limiteSeguro };
+    return { garments, total, page: paginaSegura, limit: limiteSeguro };
+  });
 }

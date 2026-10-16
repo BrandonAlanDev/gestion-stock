@@ -1,8 +1,8 @@
 "use server";
-import { prisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function updateContactConfig(
   data: {
@@ -13,16 +13,12 @@ export async function updateContactConfig(
 ) {
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const contact =
-      await prisma.pageConfig.update({
-        where: { id: pageConfig.id },
-
-        data: {
-          phone: data.phone,
-          whatsapp: data.whatsapp,
-          email: data.email,
-        },
-      });
+    const contact = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { phone: data.phone, whatsapp: data.whatsapp, email: data.email },
+      }),
+    );
 
     revalidateTag(`page-config:${contexto.tenantId}`);
     return { ok: true, contact };
@@ -34,8 +30,8 @@ export async function updateContactConfig(
 export async function getContactConfig() {
   try {
     const { id: tenantId } = await requiereTenantActivo();
-    const contact =
-      await prisma.pageConfig.findFirst({
+    const contact = await conPrismaTenant(tenantId, (prisma) =>
+      prisma.pageConfig.findFirst({
         where: { tenantId },
 
         select: {
@@ -43,7 +39,8 @@ export async function getContactConfig() {
           whatsapp: true,
           email: true,
         },
-      });
+      }),
+    );
     return { ok: true, contact };
   } catch {
     return { ok: false, error: "Error contacto" };

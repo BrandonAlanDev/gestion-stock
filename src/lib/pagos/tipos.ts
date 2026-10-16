@@ -23,6 +23,7 @@ export interface DatosCrearPago {
   paymentId: string;
   pedidoId: string;
   tenantId: string;
+  reservaExpiraEn: Date | null;
   baseUrl: string;
   monto: number;
   moneda: string;

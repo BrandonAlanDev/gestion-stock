@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 interface DatosMovimiento {
   variantId: string;
@@ -14,7 +14,7 @@ export async function crearMovimiento(
   tenantId: string,
   datos: DatosMovimiento,
 ) {
-  return prisma.$transaction(async (tx) => {
+  return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
     const variante = await tx.garmentVariant.findFirst({
       where: { id: datos.variantId, tenantId },
       select: { id: true },
@@ -45,5 +45,5 @@ export async function crearMovimiento(
         note: datos.note || null,
       },
     });
-  });
+  }));
 }

@@ -1,6 +1,9 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import { reservarStockPedido } from "./gestionar-reserva-stock";
+import { obtenerVencimientoReserva } from "./politica-reserva-stock";
 
 export type ItemParaCrearPedido = {
   productId: string | number;
@@ -33,9 +36,11 @@ export async function crearPedidoDesdeCarrito(
   tenantId: string,
   userId: string,
   items: ItemParaCrearPedido[],
+  metodoPago: MetodoPagoId,
 ): Promise<ResultadoCrearPedido> {
   if (!items.length) throw new Error("El carrito está vacío");
 
+  return conPrismaTenant(tenantId, async (prisma) => {
   const pageConfig = await prisma.pageConfig.findFirst({
     where: { tenantId },
     select: { currency: true },
@@ -105,17 +110,24 @@ export async function crearPedidoDesdeCarrito(
     select: { name: true, email: true },
   });
 
-  const pedido = await prisma.pedido.create({
-    data: {
-      tenantId,
-      userId,
-      total,
-      moneda,
-      nombreCliente: user?.name ?? null,
-      emailCliente: user?.email ?? null,
-      items: { create: itemsPreparados },
-    },
+  const pedido = await prisma.$transaction(async (tx) => {
+    const creado = await tx.pedido.create({
+      data: {
+        tenantId,
+        userId,
+        total,
+        moneda,
+        nombreCliente: user?.name ?? null,
+        emailCliente: user?.email ?? null,
+        stockReservado: true,
+        reservaExpiraEn: obtenerVencimientoReserva(metodoPago, new Date()),
+        items: { create: itemsPreparados },
+      },
+    });
+    await reservarStockPedido(creado.id, tenantId, tx);
+    return creado;
   });
 
   return { pedidoId: pedido.id, total, moneda };
+  });
 }

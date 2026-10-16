@@ -1,9 +1,8 @@
 import "server-only";
 
 import type { Prisma } from "@/../generated/prisma/client";
-import { prisma } from "@/lib/prisma";
 
-type ClienteTx = Prisma.TransactionClient | typeof prisma;
+type ClienteTx = Prisma.TransactionClient;
 
 /**
  * Descuenta el stock de las variantes de un pedido y registra un movimiento
@@ -14,7 +13,7 @@ type ClienteTx = Prisma.TransactionClient | typeof prisma;
 export async function descontarStockPedido(
   pedidoId: string,
   tenantId: string,
-  cliente: ClienteTx = prisma,
+  cliente: ClienteTx,
 ) {
   const items = await cliente.pedidoItem.findMany({
     where: { pedidoId, tenantId },

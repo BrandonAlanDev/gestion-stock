@@ -60,6 +60,8 @@ const MENSAJES_ERROR_MP: Record<string, string> = {
   sin_codigo: "Mercado Pago no devolvió el código de autorización. Intentá de nuevo.",
   estado_invalido: "La sesión de conexión expiró o fue manipulada. Intentá de nuevo.",
   configuracion_incompleta: "La conexión no está disponible en este momento.",
+  autorizacion_cancelada: "Cancelaste la autorización de Mercado Pago.",
+  autorizacion_fallida: "Mercado Pago no pudo autorizar la conexión. Intentá de nuevo.",
   conexion_fallida: "No se pudo completar la conexión. Intentá de nuevo más tarde.",
   inicio_fallido: "No se pudo iniciar la conexión. Intentá de nuevo más tarde.",
 };

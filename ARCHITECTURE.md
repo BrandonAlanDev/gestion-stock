@@ -25,8 +25,10 @@ etc.). Para las reglas de desarrollo vigentes ver `AGENTS.md`.
 ## 1. Descripción general
 
 Sistema full-stack de **gestión de inventario y e-commerce** construido sobre **Next.js 15 App
-Router**. Opera como plataforma **multi-tenant**: una misma instalación sirve a múltiples tiendas,
-aisladas por `tenantId`.
+Router**, refactorizado para enrutar cada tenant a una base MySQL independiente según el hostname.
+En desarrollo usa un registro local cifrado. En producción consume la API privada v1 de Logabyte
+Core cuando se configuran sus variables globales. La validación contra Core desplegado y dos
+bases de prueba sigue pendiente. Ver `MULTI_TENANCY.md` para el estado.
 
 Dos capas diferenciadas:
 
@@ -50,7 +52,7 @@ tienda.
 | **React** | 19.x | UI con Server y Client Components |
 | **TypeScript** | 5 | Tipado estático (strict) |
 | **Prisma** | 7.x | ORM con Driver Adapter nativo para MariaDB |
-| **MySQL / MariaDB / TiDB** | — | Base de datos relacional (`@prisma/adapter-mariadb`) |
+| **TiDB Cloud / MySQL / MariaDB** | — | TiDB Cloud en el entorno desplegado y MySQL-compatible; `@prisma/adapter-mariadb` |
 | **Auth.js (NextAuth)** | 5.0.0-beta.30 | Autenticación: Google OAuth + Credenciales |
 | **Tailwind CSS** | 4 | Estilos (`@tailwindcss/postcss`) |
 | **Zod** | 4.x | Validación de esquemas en cliente y servidor |
@@ -88,7 +90,8 @@ tienda.
 │
 ├── scripts/
 │   ├── limpiar-enlaces-carrusel.ts
-│   └── verificacion-aislamiento/   # Verificación de aislamiento entre tenants
+│   ├── verificar-silos.ts          # Verificación de conexión y esquema por silo
+│   └── verificacion-aislamiento/   # Verificación heredada de filtros tenantId
 │
 └── src/
     ├── auth.ts               # Instancia NextAuth (Google + Credentials + adapter Prisma)
@@ -120,8 +123,9 @@ El cliente Prisma se genera en `/generated/prisma` (raíz del repo) y el código
 UI (pages + components)
   -> Server Actions (src/actions): validan Zod, autentican, manejan errores, invalidan caché
     -> Servicios (src/lib/services): queries de Prisma puras, sin lógica de negocio
-      -> Prisma (src/lib/prisma.ts): singleton con driver adapter MariaDB
-        -> Base de datos (MySQL / MariaDB / TiDB)
+      -> Resolver de tenant: hostname -> registro central cacheado
+        -> Fábrica Prisma tenant-aware (pool limitado y clientes reutilizables)
+          -> Base MySQL independiente del tenant
 ```
 
 | Capa | Responsabilidad |
@@ -129,12 +133,11 @@ UI (pages + components)
 | **UI (pages + components)** | Renderizado, interacción, estados locales. `"use client"` solo cuando es necesario. |
 | **Server Actions (`src/actions`)** | Interfaz pública de negocio: validan con Zod, autentican con `auth()`, manejan errores, llaman `revalidateTag`/`revalidatePath` y devuelven `{ ok, error }`. |
 | **Servicios (`src/lib/services`)** | Queries de Prisma puras y reutilizables. |
-| **Prisma (`src/lib/prisma.ts`)** | Singleton de `PrismaClient` con driver adapter MariaDB y SSL automático (desactivado en local). |
+| **Resolución (`src/lib/tenants/`)** | Normaliza el host y consulta `TenantRegistryProvider`; el runtime local usa un registro cifrado y producción usa el cliente HTTP privado de Logabyte Core. |
+| **Acceso a datos (`src/lib/tenants/prisma-factory.ts`)** | `conPrismaTenant(tenantId, fn)` resuelve el destino desde el registro del servidor y conserva un cliente por tenant con límites de clientes, pools, leases y expiración. No existe un cliente comercial global. |
 | **Base de datos** | Relacional con `relationMode = "prisma"` (relaciones simuladas, sin FKs nativas). |
 
-> **Nota:** varias acciones consultan `prisma` directamente para queries puntuales o no cacheadas
-> (por ejemplo `search.ts`, `movements.ts`, `custom-page*.actions.ts`, `home-config/*` y todo
-> `page-config/*`).
+> **Nota:** las acciones y servicios usan `conPrismaTenant` para consultas puntuales o no cacheadas. Los servicios reutilizables reciben el cliente o el `tenantId` explícitamente; no importan una instancia Prisma global.
 
 ---
 
@@ -144,7 +147,9 @@ UI (pages + components)
 
 - Provider `mysql` con `relationMode = "prisma"`.
 - Cliente generado en `/generated/prisma`.
-- `PageConfig` es uno a uno por tenant (`@@unique([tenantId])`).
+- Cada tenant recibe el mismo schema y las mismas migraciones.
+- El modelo `Tenant` y las columnas `tenantId` siguen presentes por compatibilidad durante la migración de datos; el aislamiento runtime también se aplica por base.
+- `PageConfig` conserva su unicidad heredada sobre `tenantId` hasta una migración posterior.
 
 ### Modelos por dominio
 
@@ -171,12 +176,14 @@ UI (pages + components)
 ## 6. Autenticación y protección de rutas
 
 - `src/auth.config.ts`: config edge-compatible (Google + sesión JWT + callbacks).
-- `src/auth.ts`: instancia final con `PrismaAdapter` tenant-aware y provider `Credentials`.
-- `src/middleware.ts`: protección por rol (`ADMIN`) y whitelist de rutas `/admin`.
+- `src/auth.ts`: instancia final con adapter y provider `Credentials` sobre la base del hostname.
+- `src/middleware.ts`: protección por rol (`ADMIN`), whitelist de rutas `/admin` y comprobación del hostname asociado al JWT.
 - La zona `/admin` valida sesión y rol `ADMIN` también en `src/app/admin/layout.tsx`.
 
-Los roles se guardan en el token JWT. El aislamiento por tenant se resuelve por hostname
-(`src/lib/tenants/`) y cada query recibe `tenantId` explícito.
+Los roles se guardan en el token JWT. El token queda asociado al hostname que inició sesión; el
+middleware exige que coincida con `Host`. El callback de servidor además comprueba que `tenantId`
+coincida con el tenant resuelto y relee el usuario en su base. Las consultas heredadas también
+mantienen filtros `tenantId` mientras se migra el modelo.
 
 ---
 
@@ -227,6 +234,8 @@ carrusel, custom-page, design, page-config, pagos, configuracion), `carousel/`, 
 
 - Integración genérica en `src/lib/cloudinary.ts` y `src/lib/services/imagenes-cloudinary/`.
 - Los assets nuevos viven bajo `{tenantId}/...`, lo que garantiza aislamiento entre tiendas.
+- Las URLs históricas siguen sirviendo imágenes, pero los IDs antiguos sin propietario verificable
+  no se pueden mover ni eliminar desde el panel de ninguna tienda.
 - Carpetas: `page-config/identidad`, `page-config/home-grids/{id}`, `carousels/{id}`,
   `garments/{categoria}/{producto}`.
 - Cada tienda carga su propio logo, favicon, banners, imágenes de producto y contenido visual.
@@ -247,8 +256,8 @@ carrusel, custom-page, design, page-config, pagos, configuracion), `carousel/`, 
 ## 12. Variables de entorno
 
 ```env
-# Base de datos
-DATABASE_URL, DATABASE_HOST, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_PORT
+# Prisma CLI (base elegida explícitamente para generar o migrar)
+DATABASE_URL
 
 # Autenticación
 AUTH_SECRET, AUTH_TRUST_HOST, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET
@@ -256,8 +265,9 @@ AUTH_SECRET, AUTH_TRUST_HOST, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET
 # Cloudinary
 CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
-# Multi-tenancy
-DOMINIO_PRINCIPAL
+# Registro local cifrado y límites compartidos por instancia
+TENANT_REGISTRY_FILE, TENANT_REGISTRY_ENCRYPTION_KEY
+TENANT_PRISMA_MAX_CLIENTS, TENANT_PRISMA_CONNECTION_LIMIT, TENANT_PRISMA_IDLE_TTL_MS
 
 # Mercado Pago (Checkout Pro + OAuth)
 MP_CLIENT_ID, MP_CLIENT_SECRET, MP_AUTH_BASE_URL, MP_WEBHOOK_SECRET, MP_REDIRECT_URI
@@ -275,7 +285,15 @@ Ver `.env.example` para el detalle.
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Servidor de desarrollo (Turbopack). |
-| `npm run build` | `prisma generate` + `prisma db push` + `next build`. |
+| `npm run build` | `prisma generate` + `next build`; no cambia ninguna base. |
 | `npm run start` | Servidor de producción. |
 | `npm run lint` | ESLint. |
-| `npm run verificar:aislamiento` | Verifica el aislamiento entre tenants. |
+| `npm run verificar:silos` | Compara bases, esquema Prisma e historial de migraciones de tenants de prueba; es de solo lectura. |
+| `npm run verificar:historial-migraciones` | Prueba la comparación de checksums versionados sin conectar a MySQL. |
+| `npm run verificar:preflight-migraciones` | Prueba las guardas del runner de migraciones sin conectar a MySQL. |
+| `npm run verificar:factory-tenant` | Prueba límites, leases y reutilización de clientes con dobles en memoria. |
+| `npm run verificar:aislamiento` | Prueba filtros heredados en una base local `_test` con opt-in y confirmación exacta del destino; no comprueba silos físicos. |
+| `npm run verificar:silos:reales` | Levanta dos MySQL descartables y comprueba schema e independencia física; requiere Docker Compose. |
+| `npm run verificar:guardas-aislamiento-silos` | Prueba offline las guardas de destino local y confirmación exacta. |
+| `npm run verificar:acciones-pago-tenant` | Comprueba el enrutamiento por tenant de las Server Actions de pago con dependencias aisladas. |
+| `npm run registro:local:cifrar` | Cifra por stdin el registro de desarrollo. |

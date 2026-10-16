@@ -1,7 +1,9 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { evaluarPagoPedido } from "./evaluar-pago-pedido";
+import { descontarStockPedido } from "./descontar-stock-pedido";
+import { confirmarReservaStockPedido } from "./gestionar-reserva-stock";
 
 export type ResultadoConfirmacionPago = {
   ok: boolean;
@@ -29,16 +31,19 @@ export type DatosConfirmarPago = {
 export async function confirmarPedidoPorPago(
   argumentos: DatosConfirmarPago,
 ): Promise<ResultadoConfirmacionPago> {
-  const pedido = await prisma.pedido.findUnique({
-    where: { id: argumentos.pedidoId },
-    select: { id: true, tenantId: true, estado: true, total: true },
+  return conPrismaTenant(argumentos.tenantId, async (prisma) => prisma.$transaction(async (tx) => {
+  const pedido = await tx.pedido.findFirst({
+    where: { id: argumentos.pedidoId, tenantId: argumentos.tenantId },
+    select: {
+      id: true,
+      tenantId: true,
+      estado: true,
+      total: true,
+      stockReservado: true,
+    },
   });
 
   if (!pedido) return { ok: false, error: "Pedido no encontrado" };
-  if (pedido.tenantId !== argumentos.tenantId) {
-    return { ok: false, error: "El pedido no pertenece a este comercio" };
-  }
-
   const validacion = evaluarPagoPedido({
     pedidoId: pedido.id,
     estado: pedido.estado,
@@ -53,14 +58,15 @@ export async function confirmarPedidoPorPago(
     return { ok: true, yaConfirmado: true, pedidoId: pedido.id };
   }
 
-  const resultado = await prisma.pedido.updateMany({
-    where: { id: pedido.id, estado: "PENDIENTE" },
+  const resultado = await tx.pedido.updateMany({
+    where: { id: pedido.id, tenantId: argumentos.tenantId, estado: "PENDIENTE" },
     data: {
       estado: validacion.estado,
       estadoPago: validacion.estadoPago,
       ...(argumentos.paymentId
         ? { mpPaymentId: String(argumentos.paymentId) }
         : {}),
+      stockReservado: false,
     },
   });
 
@@ -68,5 +74,13 @@ export async function confirmarPedidoPorPago(
     return { ok: true, yaConfirmado: true, pedidoId: pedido.id };
   }
 
+  if (pedido.stockReservado) {
+    await confirmarReservaStockPedido(pedido.id, pedido.tenantId, tx);
+  } else {
+    // Pedidos anteriores al despliegue todavía no tienen stock reservado.
+    await descontarStockPedido(pedido.id, pedido.tenantId, tx);
+  }
+
   return { ok: true, pedidoId: pedido.id };
+  }));
 }

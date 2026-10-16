@@ -1,13 +1,14 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { EntradaActualizarCarrusel } from "@/lib/services/carruseles/tipos";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 export async function actualizarCarrusel(tenantId: string, datos: EntradaActualizarCarrusel) {
   const { id, slides, ...cambios } = datos;
-  const existente = await prisma.carousel.findFirst({ where: { id, tenantId }, select: { id: true } });
-  if (!existente) throw new Error("El carrusel no pertenece a la tienda activa");
+  return conPrismaTenant(tenantId, async (prisma) => {
+    const existente = await prisma.carousel.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!existente) throw new Error("El carrusel no pertenece a la tienda activa");
 
-  return prisma.$transaction(async (transaccion) => {
+    return prisma.$transaction(async (transaccion) => {
     if (Object.keys(cambios).length > 0) {
       await transaccion.carousel.update({
         where: { id },
@@ -38,6 +39,7 @@ export async function actualizarCarrusel(tenantId: string, datos: EntradaActuali
     return transaccion.carousel.findFirst({
       where: { id, tenantId },
       include: { slides: { where: { tenantId }, orderBy: { order: "asc" } } },
+    });
     });
   });
 }

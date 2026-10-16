@@ -1,18 +1,19 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPaginasPersonalizadas() {
   const { tenantId } = await requiereAdmin();
-  return prisma.customPage.findMany({
+  return conPrismaTenant(tenantId, (prisma) => prisma.customPage.findMany({
     where: { tenantId },
     include: {
       sections: {
-        include: { items: true },
+        where: { tenantId },
+        include: { items: { where: { tenantId } } },
         orderBy: { order: "asc" },
       },
     },
     orderBy: { createdAt: "desc" },
-  });
+  }));
 }

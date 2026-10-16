@@ -1,17 +1,18 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPaginaPersonalizadaPorSlug(slug: string) {
   const { id: tenantId } = await requiereTenantActivo();
-  return prisma.customPage.findFirst({
+  return conPrismaTenant(tenantId, (prisma) => prisma.customPage.findFirst({
     where: { slug, tenantId, isActive: true },
     include: {
       sections: {
-        include: { items: true },
+        where: { tenantId },
+        include: { items: { where: { tenantId } } },
         orderBy: { order: "asc" },
       },
     },
-  });
+  }));
 }

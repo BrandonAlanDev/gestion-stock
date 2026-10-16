@@ -2,8 +2,9 @@ import "server-only";
 
 import { cache } from "react";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
+import { resolverContextoSesionTenant } from "@/lib/tenants/resolver-contexto-sesion";
 import type { ContextoTenantSesion } from "@/types/tenants";
 
 const obtenerTenantDeSesionMemoizado = cache(
@@ -12,47 +13,19 @@ const obtenerTenantDeSesionMemoizado = cache(
       obtenerTenantPublico(),
       auth(),
     ]);
-    const usuarioSesion = sesion?.user;
-
-    if (
-      !tenant ||
-      !usuarioSesion?.id ||
-      !usuarioSesion.tenantId ||
-      usuarioSesion.tenantId !== tenant.id
-    ) {
-      return null;
-    }
-
-    const usuarioBase = await prisma.user.findFirst({
-      where: {
-        id: usuarioSesion.id,
-        tenantId: usuarioSesion.tenantId,
+    return resolverContextoSesionTenant(
+      tenant,
+      {
+        id: sesion?.user?.id,
+        tenantId: sesion?.user?.tenantId,
       },
-      select: {
-        id: true,
-        tenantId: true,
-        role: true,
-      },
-    });
-
-    if (
-      !usuarioBase ||
-      usuarioBase.id !== usuarioSesion.id ||
-      usuarioBase.tenantId !== usuarioSesion.tenantId ||
-      usuarioBase.tenantId !== tenant.id
-    ) {
-      return null;
-    }
-
-    return {
-      tenantId: tenant.id,
-      tenantNombre: tenant.nombre,
-      tenantSlug: tenant.slug,
-      tenantDominio: tenant.dominio,
-      tenantEstado: tenant.estado,
-      usuarioId: usuarioBase.id,
-      rol: usuarioBase.role,
-    };
+      (tenantId, usuarioId) => conPrismaTenant(tenantId, (prisma) =>
+        prisma.user.findFirst({
+          where: { id: usuarioId, tenantId },
+          select: { id: true, tenantId: true, role: true },
+        }),
+      ),
+    );
   },
 );
 

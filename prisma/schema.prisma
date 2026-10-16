@@ -604,6 +604,8 @@ model Pedido {
   userId         String
   estado         PedidoEstado     @default(PENDIENTE)
   estadoPago     PedidoEstadoPago @default(PENDIENTE)
+  stockReservado Boolean          @default(false)
+  reservaExpiraEn DateTime?
   total          Decimal          @db.Decimal(10, 2)
   moneda         String           @default("ARS")
   nombreCliente  String?
@@ -619,6 +621,7 @@ model Pedido {
   payments       Payment[]
 
   @@index([tenantId, createdAt])
+  @@index([tenantId, estado, reservaExpiraEn])
   @@index([userId])
 }
 
@@ -626,6 +629,7 @@ model PedidoItem {
   id             String   @id @default(cuid())
   pedidoId       String
   tenantId       String
+  stockReservado Boolean  @default(false)
   garmentId      String
   variantId      String
   nombre         String

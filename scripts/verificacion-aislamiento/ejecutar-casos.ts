@@ -56,9 +56,11 @@ export async function ejecutarCasos(contexto: ContextoVerificacion): Promise<Res
   });
   await caso("5. Sesión A en host B", async () => {
     const codigo = await leerCodigo("src", "lib", "tenants", "obtener-tenant-de-sesion.ts");
+    const auth = await leerCodigo("src", "auth.ts");
     afirmar(codigo.includes("usuarioSesion.tenantId !== tenant.id"), "La sesión no se compara con el tenant del host");
     afirmar(codigo.includes("tenantId: usuarioSesion.tenantId"), "El usuario no se relee dentro del tenant de la sesión");
     afirmar(codigo.includes("usuarioBase.tenantId !== tenant.id"), "La pertenencia del usuario no se contrasta con el host");
+    afirmar(auth.includes("tenantIdToken !== tenant.id"), "El JWT no se invalida al cambiar de tenant por hostname");
   });
   await caso("6. Tenant suspendido", async () => {
     await cliente.tenant.update({ where: { id: tenantA }, data: { estado: "SUSPENDIDO" } });
@@ -77,13 +79,9 @@ export async function ejecutarCasos(contexto: ContextoVerificacion): Promise<Res
     await cliente.tenant.update({ where: { id: tenantB }, data: { estado: "ACTIVO" } });
   });
   await caso("8. Hostname inexistente", async () => {
-    const tenant = await cliente.tenant.findFirst({
-      where: { OR: [{ dominio: "inexistente.verificacion.local" }, { slug: "inexistente" }] },
-    });
-    afirmar(tenant === null, "Un hostname inexistente resolvió un tenant");
     const codigo = await leerCodigo("src", "lib", "tenants", "resolver-tenant-host.ts");
-    afirmar(codigo.includes("if (!dominioPrincipal) return null"), "El resolver aplica un fallback sin dominio principal");
-    afirmar(codigo.includes("if (!hostname.endsWith(sufijo)) return null"), "El resolver acepta hosts fuera del dominio principal");
+    afirmar(codigo.includes("resolverPorHostname(hostname)"), "El resolver no consulta el registro por hostname exacto");
+    afirmar(!codigo.includes("prisma."), "El resolver tiene un fallback a una base comercial");
   });
   await caso("9. Identidad de cache", () => {
     const clave = (tenantId: string, pagina: number, categoria: string) =>
@@ -114,7 +112,7 @@ export async function ejecutarCasos(contexto: ContextoVerificacion): Promise<Res
     afirmar(!publicIdPerteneceTenant(carpetaA, tenantB), "El guard aceptó el namespace de otro tenant");
     afirmar(publicIdPerteneceTenant(`gestion-stock/tenants/${tenantA}/producto`, tenantA), "El guard rechazó el namespace multitenant anterior");
     afirmar(!publicIdPerteneceTenant(`gestion-stock/tenants/${tenantA}/producto`, tenantB), "El guard aceptó un namespace multitenant anterior ajeno");
-    afirmar(publicIdPerteneceTenant("gestion-stock/producto-historico", tenantA), "El guard dejó de aceptar recursos históricos");
+    afirmar(!publicIdPerteneceTenant("gestion-stock/producto-historico", tenantA), "El guard aceptó un recurso histórico sin propietario verificable");
   });
   await caso("13. OAuth y linking", async () => {
     await cliente.account.createMany({ data: [

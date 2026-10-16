@@ -1,6 +1,5 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type {
   PageConfig_featuredLayout,
@@ -13,6 +12,7 @@ import { obtenerCarpetaGrids } from "@/lib/services/imagenes-cloudinary/obtener-
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 interface SeccionDestacadaGrid {
   title: string;
@@ -51,27 +51,30 @@ function insertarAntesDeUbicacion(secciones: string[], id: string): string[] {
 export async function crearSeccionDestacada() {
   const { contexto, pageConfig } = await requerirPageConfigAdministrador();
 
-  const nuevo = await prisma.homegrid.create({
-    data: {
-      tenantId: contexto.tenantId,
-      title: "",
-      subtitle: "",
-      style: 1,
-      columns: "md:grid-cols-2",
-      active: true,
-      featuredLayout: "GRID",
-    },
-  });
-
-  const orden = insertarAntesDeUbicacion(
-    parsearOrden(pageConfig.sectionOrder),
-    PREFIJO_DESTACADA + nuevo.id
+  const nuevo = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    prisma.$transaction(async (tx) => {
+      const homegrid = await tx.homegrid.create({
+        data: {
+          tenantId: contexto.tenantId,
+          title: "",
+          subtitle: "",
+          style: 1,
+          columns: "md:grid-cols-2",
+          active: true,
+          featuredLayout: "GRID",
+        },
+      });
+      const orden = insertarAntesDeUbicacion(
+        parsearOrden(pageConfig.sectionOrder),
+        PREFIJO_DESTACADA + homegrid.id,
+      );
+      await tx.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { sectionOrder: JSON.stringify(orden) },
+      });
+      return homegrid;
+    }),
   );
-
-  await prisma.pageConfig.update({
-    where: { id: pageConfig.id },
-    data: { sectionOrder: JSON.stringify(orden) },
-  });
 
   revalidateTag(`page-config:${contexto.tenantId}`);
   revalidatePath("/");
@@ -98,10 +101,12 @@ export async function actualizarSeccionDestacada(
       return { ok: false, error: "Las páginas de destino deben comenzar con una sola barra (/)" };
     }
 
-    const homegrid = await prisma.homegrid.findFirst({
-      where: { id: homegridId, tenantId: contexto.tenantId },
-      select: { id: true },
-    });
+    const homegrid = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.homegrid.findFirst({
+        where: { id: homegridId, tenantId: contexto.tenantId },
+        select: { id: true },
+      }),
+    );
     if (!homegrid) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
     let gridsProcesados: SeccionDestacadaGrid[] | null = null;
@@ -112,6 +117,7 @@ export async function actualizarSeccionDestacada(
             const subida = await subirImagen(
               g.image,
               obtenerCarpetaGrids(contexto.tenantId, homegridId),
+              contexto.tenantId,
               `imagen-${Date.now()}-${indice + 1}`
             );
             publicIdsSubidos.push(subida.publicId);
@@ -126,11 +132,13 @@ export async function actualizarSeccionDestacada(
       return { ok: false, error: "No se pudieron actualizar las secciones" };
     }
 
-    const gridsExistentes = await prisma.grid.findMany({
-      where: { homegridId: homegrid.id, tenantId: contexto.tenantId },
-    });
+    const gridsExistentes = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.grid.findMany({
+        where: { homegridId: homegrid.id, tenantId: contexto.tenantId },
+      }),
+    );
 
-    await prisma.$transaction(async (tx) => {
+    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
       await tx.homegrid.update({
         where: { id: homegrid.id },
         data: {
@@ -163,7 +171,7 @@ export async function actualizarSeccionDestacada(
           homegridId: homegrid.id,
         })),
       });
-    });
+    }));
 
     const urlsFinales = new Set(gridsProcesados!.map((g) => g.image));
     const publicIdsARemover = gridsExistentes
@@ -189,74 +197,83 @@ export async function actualizarSeccionDestacada(
 export async function alternarVisibilidadSeccionDestacada(homegridId: string) {
   const { contexto } = await requerirPageConfigAdministrador();
 
-  const hg = await prisma.homegrid.findFirst({
-    where: { id: homegridId, tenantId: contexto.tenantId },
-    select: { id: true, active: true },
+  const actualizado = await conPrismaTenant(contexto.tenantId, async (prisma) => {
+    const hg = await prisma.homegrid.findFirst({
+      where: { id: homegridId, tenantId: contexto.tenantId },
+      select: { id: true, active: true },
+    });
+    if (!hg) return null;
+    await prisma.homegrid.update({
+      where: { id: hg.id },
+      data: { active: !hg.active },
+    });
+    return !hg.active;
   });
-  if (!hg) return { ok: false, error: "La sección no pertenece a la tienda activa" };
-
-  await prisma.homegrid.update({
-    where: { id: hg.id },
-    data: { active: !hg.active },
-  });
+  if (actualizado === null) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
   revalidateTag(`page-config:${contexto.tenantId}`);
   revalidatePath("/");
 
-  return { ok: true, activo: !hg.active };
+  return { ok: true, activo: actualizado };
 }
 
 export async function duplicarSeccionDestacada(homegridId: string) {
   const { contexto, pageConfig } = await requerirPageConfigAdministrador();
 
-  const fuente = await prisma.homegrid.findFirst({
-    where: { id: homegridId, tenantId: contexto.tenantId },
-    include: { grids: true },
-  });
-  if (!fuente) return { ok: false, error: "La sección no pertenece a la tienda activa" };
+  const copia = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    prisma.$transaction(async (tx) => {
+      const fuente = await tx.homegrid.findFirst({
+        where: { id: homegridId, tenantId: contexto.tenantId },
+        include: { grids: { where: { tenantId: contexto.tenantId } } },
+      });
+      if (!fuente) return null;
 
-  const copia = await prisma.homegrid.create({
-    data: {
-      tenantId: contexto.tenantId,
-      title: fuente.title ? fuente.title + " (copia)" : "",
-      subtitle: fuente.subtitle,
-      style: fuente.style,
-      columns: fuente.columns,
-      active: true,
-      featuredLayout: fuente.featuredLayout,
-    },
-  });
+      const nueva = await tx.homegrid.create({
+        data: {
+          tenantId: contexto.tenantId,
+          title: fuente.title ? fuente.title + " (copia)" : "",
+          subtitle: fuente.subtitle,
+          style: fuente.style,
+          columns: fuente.columns,
+          active: true,
+          featuredLayout: fuente.featuredLayout,
+        },
+      });
 
-  for (const g of fuente.grids) {
-    await prisma.grid.create({
-      data: {
-        tenantId: contexto.tenantId,
-        title: g.title,
-        subtitle: g.subtitle,
-        image: g.image,
-        order: g.order,
-        linkType: g.linkType,
-        linkValue: g.linkValue,
-        subtitleNeon: g.subtitleNeon,
-        subtitleDim: g.subtitleDim,
-        linkStyle: g.linkStyle,
-        buttonVariant: g.buttonVariant,
-        buttonText: g.buttonText,
-        buttonBgColor: g.buttonBgColor,
-        buttonTextColor: g.buttonTextColor,
-        homegridId: copia.id,
-      },
-    });
-  }
+      if (fuente.grids.length > 0) {
+        await tx.grid.createMany({
+          data: fuente.grids.map((g) => ({
+            tenantId: contexto.tenantId,
+            title: g.title,
+            subtitle: g.subtitle,
+            image: g.image,
+            order: g.order,
+            linkType: g.linkType,
+            linkValue: g.linkValue,
+            subtitleNeon: g.subtitleNeon,
+            subtitleDim: g.subtitleDim,
+            linkStyle: g.linkStyle,
+            buttonVariant: g.buttonVariant,
+            buttonText: g.buttonText,
+            buttonBgColor: g.buttonBgColor,
+            buttonTextColor: g.buttonTextColor,
+            homegridId: nueva.id,
+          })),
+        });
+      }
 
-  const orden = insertarAntesDeUbicacion(
-    parsearOrden(pageConfig.sectionOrder),
-    PREFIJO_DESTACADA + copia.id
+      const orden = insertarAntesDeUbicacion(
+        parsearOrden(pageConfig.sectionOrder),
+        PREFIJO_DESTACADA + nueva.id,
+      );
+      await tx.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { sectionOrder: JSON.stringify(orden) },
+      });
+      return nueva;
+    }),
   );
-  await prisma.pageConfig.update({
-    where: { id: pageConfig.id },
-    data: { sectionOrder: JSON.stringify(orden) },
-  });
+  if (!copia) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
   revalidateTag(`page-config:${contexto.tenantId}`);
   revalidatePath("/");
@@ -267,28 +284,35 @@ export async function duplicarSeccionDestacada(homegridId: string) {
 export async function eliminarSeccionDestacada(homegridId: string) {
   const { contexto, pageConfig } = await requerirPageConfigAdministrador();
 
-  const homegrid = await prisma.homegrid.findFirst({
-    where: { id: homegridId, tenantId: contexto.tenantId },
-    include: { grids: true },
-  });
-  if (!homegrid) return { ok: false, error: "La sección no pertenece a la tienda activa" };
+  const eliminado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    prisma.$transaction(async (tx) => {
+      const homegrid = await tx.homegrid.findFirst({
+        where: { id: homegridId, tenantId: contexto.tenantId },
+        include: { grids: { where: { tenantId: contexto.tenantId } } },
+      });
+      if (!homegrid) return null;
 
-  const publicIds = homegrid.grids
-    .map((g) => obtenerPublicIdDesdeUrl(g.image))
-    .filter(Boolean);
+      const publicIds = homegrid.grids
+        .map((g) => obtenerPublicIdDesdeUrl(g.image))
+        .filter(Boolean);
+      await tx.homegrid.delete({ where: { id: homegrid.id } });
 
-  await prisma.homegrid.delete({ where: { id: homegrid.id } });
-
-  const orden = parsearOrden(pageConfig.sectionOrder).filter(
-    (s) => s !== PREFIJO_DESTACADA + homegrid.id
+      const orden = parsearOrden(pageConfig.sectionOrder).filter(
+        (s) => s !== PREFIJO_DESTACADA + homegrid.id,
+      );
+      await tx.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { sectionOrder: JSON.stringify(orden) },
+      });
+      return publicIds;
+    }),
   );
-  await prisma.pageConfig.update({
-    where: { id: pageConfig.id },
-    data: { sectionOrder: JSON.stringify(orden) },
-  });
+  if (!eliminado) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
-  if (publicIds.length) {
-    await eliminarImagenes(publicIds as string[], contexto.tenantId);
+  const publicIds = eliminado.filter((publicId): publicId is string => Boolean(publicId));
+
+  if (publicIds.length > 0) {
+    await eliminarImagenes(publicIds, contexto.tenantId);
   }
 
   revalidateTag(`page-config:${contexto.tenantId}`);

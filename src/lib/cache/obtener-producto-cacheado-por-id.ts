@@ -1,8 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { obtenerPrendaPorId } from "@/lib/services/prendas/obtener-prenda-por-id";
+import { conContextoTenantRuntime } from "@/lib/tenants/contexto-tenant-runtime";
 
 export const obtenerProductoCacheadoPorId = (tenantId: string, id: string) => async () => {
-  return unstable_cache(
+  return conContextoTenantRuntime(tenantId, () => unstable_cache(
     () => obtenerPrendaPorId(tenantId, id),
     [`tenant:${tenantId}:product:${id}`],
     {
@@ -12,5 +13,5 @@ export const obtenerProductoCacheadoPorId = (tenantId: string, id: string) => as
         `tenant:${tenantId}:product:${id}`,
       ],
     }
-  )();
+  )());
 };

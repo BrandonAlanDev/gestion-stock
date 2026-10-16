@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/../generated/prisma/client";
+import type { PrismaClient } from "@/../generated/prisma/client";
 import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 import { sincronizarOpciones } from "@/lib/services/prendas/sincronizar-opciones";
 import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-variante";
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
 
-export async function crearRegistroPrenda(tenantId: string, datos: DatosGuardarProducto) {
+export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string, datos: DatosGuardarProducto) {
   const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId, tenantId }, select: { id: true } });
   if (!categoria) throw new Error("Categoría no encontrada");
   if (datos.subCategoryId) {
@@ -16,7 +16,7 @@ export async function crearRegistroPrenda(tenantId: string, datos: DatosGuardarP
     const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId, tenantId }, select: { id: true } });
     if (!proveedor) throw new Error("Proveedor no encontrado");
   }
-  await validarReferenciasVariantes(tenantId, datos.variants);
+  await validarReferenciasVariantes(prisma, tenantId, datos.variants);
 
   const id = await prisma.$transaction(
     async (tx) => {

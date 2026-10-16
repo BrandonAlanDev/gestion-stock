@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 
 export async function updateSectionOrder(sections: unknown) {
@@ -15,10 +15,12 @@ export async function updateSectionOrder(sections: unknown) {
 
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    await prisma.pageConfig.update({
-      where: { id: pageConfig.id },
-      data: { sectionOrder: JSON.stringify(sections) },
-    });
+    await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.pageConfig.update({
+        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        data: { sectionOrder: JSON.stringify(sections) },
+      }),
+    );
 
     revalidateTag(`page-config:${contexto.tenantId}`);
     revalidatePath("/");

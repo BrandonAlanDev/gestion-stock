@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { RespuestaTokenMP, OpcionesGuardarCuentaMP } from "@/types/mercadopago";
 
 /**
@@ -16,7 +16,7 @@ export async function guardarCuentaMP(
     ? new Date(Date.now() + datos.expires_in * 1000)
     : null;
 
-  await prisma.cuentaMercadoPago.upsert({
+  await conPrismaTenant(tenantId, (prisma) => prisma.cuentaMercadoPago.upsert({
     where: { tenantId },
     create: {
       tenantId,
@@ -40,5 +40,5 @@ export async function guardarCuentaMP(
       expiraEn,
       updatedAt: new Date(),
     },
-  });
+  }));
 }

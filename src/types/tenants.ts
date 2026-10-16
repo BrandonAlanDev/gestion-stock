@@ -1,6 +1,11 @@
 export type RolTenant = "USER" | "ADMIN";
 
-export type EstadoTenant = "ACTIVO" | "SUSPENDIDO" | "INACTIVO";
+export type EstadoTenant =
+  | "PROVISIONING"
+  | "ACTIVO"
+  | "SUSPENDIDO"
+  | "INACTIVO"
+  | "ERROR";
 
 export interface TenantPublico {
   id: string;

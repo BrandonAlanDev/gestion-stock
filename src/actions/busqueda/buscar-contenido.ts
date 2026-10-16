@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import type { ResultadoBusqueda } from "@/types/busqueda/resultado-busqueda";
 
@@ -14,7 +14,7 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
 
   const { id: tenantId } = await requiereTenantActivo();
   try {
-    const [prendas, categorias, subcategorias, paginas] = await Promise.all([
+    const [prendas, categorias, subcategorias, paginas] = await conPrismaTenant(tenantId, (prisma) => Promise.all([
       prisma.garment.findMany({
         where: { tenantId, active: true, name: { contains: texto }, category: { tenantId, active: true } },
         orderBy: { name: "asc" },
@@ -48,7 +48,7 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
         take: LIMITE_POR_TIPO,
         select: { id: true, title: true, slug: true },
       }),
-    ]);
+    ]));
 
     const grupos: ResultadoBusqueda[][] = [
       prendas.map((prenda) => ({

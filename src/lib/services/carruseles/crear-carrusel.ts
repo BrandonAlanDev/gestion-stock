@@ -1,14 +1,15 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { EntradaCrearCarrusel } from "@/lib/services/carruseles/tipos";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 export async function crearCarrusel(tenantId: string, datos: EntradaCrearCarrusel) {
-  const configuracion = await prisma.pageConfig.findUnique({
-    where: { tenantId },
-    select: { id: true },
-  });
-  if (!configuracion) throw new Error("La configuración de la tienda no existe");
-  return prisma.carousel.create({
+  return conPrismaTenant(tenantId, async (prisma) => {
+    const configuracion = await prisma.pageConfig.findUnique({
+      where: { tenantId },
+      select: { id: true },
+    });
+    if (!configuracion) throw new Error("La configuración de la tienda no existe");
+    return prisma.carousel.create({
     data: {
       tenantId,
       type: datos.type,
@@ -26,5 +27,6 @@ export async function crearCarrusel(tenantId: string, datos: EntradaCrearCarruse
       },
     },
     include: { slides: { where: { tenantId }, orderBy: { order: "asc" } } },
+    });
   });
 }

@@ -28,7 +28,7 @@ export async function procesarSlide(
   let imageUrl = slide.image;
   let publicId: string | null | undefined;
   if (imageUrl.startsWith("data:image")) {
-    const subida = await subirImagen(imageUrl, obtenerCarpetaCarrusel(tenantId, carouselId));
+    const subida = await subirImagen(imageUrl, obtenerCarpetaCarrusel(tenantId, carouselId), tenantId);
     imageUrl = subida.url;
     publicId = subida.publicId;
   } else {

@@ -2,6 +2,7 @@ export interface PedidoParaPreferencia {
   id: string;
   moneda: string;
   total: number;
+  reservaExpiraEn: Date;
   nombreCliente: string | null;
   emailCliente: string | null;
   items: Array<{
@@ -43,6 +44,6 @@ export function construirPreferenciaPago(
     metadata: { pedidoId: pedido.id, tenantId },
     expires: true,
     expiration_date_from: new Date().toISOString(),
-    expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    expiration_date_to: pedido.reservaExpiraEn.toISOString(),
   };
 }

@@ -1,5 +1,8 @@
 import cloudinary from "@/lib/cloudinary";
-import { publicIdPerteneceTenant } from "@/lib/services/imagenes-cloudinary/public-id-pertenece-tenant";
+import {
+  carpetaCloudinaryPerteneceTenant,
+  publicIdPerteneceTenant,
+} from "@/lib/services/imagenes-cloudinary/public-id-pertenece-tenant";
 
 export async function moverImagen(
   publicIdViejo: string,
@@ -8,6 +11,9 @@ export async function moverImagen(
 ): Promise<{ url: string; publicId: string }> {
   if (!publicIdPerteneceTenant(publicIdViejo, tenantId)) {
     throw new Error("La imagen no pertenece a la tienda activa");
+  }
+  if (!carpetaCloudinaryPerteneceTenant(carpetaNueva, tenantId)) {
+    throw new Error("La carpeta de destino no pertenece a la tienda activa");
   }
 
   const nombre = publicIdViejo.split("/").pop() || "imagen";

@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function crearCategoria(tenantId: string, nombre: string) {
-  return prisma.category.create({ data: { tenantId, name: nombre } });
+  return conPrismaTenant(tenantId, (prisma) =>
+    prisma.category.create({ data: { tenantId, name: nombre } }),
+  );
 }

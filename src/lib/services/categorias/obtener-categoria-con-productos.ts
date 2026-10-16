@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerCategoriaConProductos(tenantId: string, nombreCategoria: string) {
-  return prisma.category.findFirst({
+  return conPrismaTenant(tenantId, (prisma) => prisma.category.findFirst({
     where: { tenantId, name: nombreCategoria, active: true },
     include: {
       subCategories: {
@@ -28,5 +28,5 @@ export async function obtenerCategoriaConProductos(tenantId: string, nombreCateg
       },
       _count: { select: { garments: { where: { active: true } } } },
     },
-  });
+  }));
 }

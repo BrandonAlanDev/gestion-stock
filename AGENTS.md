@@ -17,13 +17,14 @@ Estas instrucciones rigen el repositorio completo. Para entender una zona concre
 - Mantené atómicas las operaciones que cambian stock y movimientos. En pedidos, pagos y callbacks externos, preservá los controles existentes de autorización, consistencia e idempotencia; verificá su flujo antes de editarlo.
 - `prisma/schema.prisma` es la fuente de verdad del modelo. No edites `generated/` ni `.next/` manualmente. No ejecutes cambios de esquema contra una base compartida sin conocer el entorno y el alcance.
 
-## Arquitectura objetivo del próximo sprint (todavía no implementada)
+## Arquitectura silo y transición de datos
 
-- Se mantendrá una sola aplicación Next.js, pero se migrará a **una base de datos por tenant**. Una base central funcionará como directorio: a partir del dominio normalizado resolverá la identidad del tenant, su estado y la referencia a su base de datos. Los datos operativos de cada tienda residirán en su propia base.
-- La resolución y selección de la conexión ocurrirán exclusivamente en el servidor, antes de consultar datos del tenant. Un dominio desconocido, inactivo o sin base válida debe fallar de forma cerrada; nunca debe usar una base por defecto ni aceptar un destino de conexión indicado por el cliente.
-- Hasta completar la migración, siguen vigentes el `tenantId`, los filtros, las validaciones y el `PrismaClient` compartido actuales. No elimines estas protecciones ni presentes la arquitectura objetivo como comportamiento existente.
-- Cuando se implemente, centralizá el acceso a la base del tenant detrás de una interfaz explícita. Diseñá el ciclo de vida y los límites de las conexiones por tenant; evitá crear un cliente y un pool nuevos por solicitud. Mantené la identidad del tenant en autorización, caché, almacenamiento y assets aunque cambie su base física.
-- Antes del corte, definí y verificá el esquema del directorio central, la ubicación de usuarios y sesiones, el manejo de credenciales, el aprovisionamiento y las migraciones por tenant, el traslado de datos, la reversión y las pruebas de aislamiento. `MULTI_TENANCY.md` detalla la transición prevista.
+- Se mantiene una sola aplicación Next.js. El runtime resuelve el tenant por hostname y usa una base MySQL independiente mediante `TenantRegistryProvider` y la fábrica de `src/lib/tenants/prisma-factory.ts`. El registro local cifrado está implementado; el transporte de Logabyte Core y su gestor de credenciales quedan pendientes de su contrato oficial.
+- La resolución y selección de conexión ocurren exclusivamente en el servidor. Un dominio desconocido, tenant inactivo o referencia inválida debe fallar de forma cerrada; nunca uses una base por defecto ni aceptes un destino de conexión indicado por el cliente.
+- `tenantId`, sus filtros y validaciones siguen presentes en el schema y en el código como protecciones de transición. No los elimines hasta que todas las tiendas estén copiadas y verificadas en sus bases independientes. No vuelvas a introducir un singleton Prisma conectado a una base compartida.
+- No crees un `PrismaClient` por solicitud ni vuelvas a introducir la fachada global eliminada `src/lib/prisma.ts`. Usá `conPrismaTenant(tenantId, fn)` con un ID obtenido del registro del servidor; en solicitudes HTTP, resolvé el tenant por hostname antes de llamar esa función.
+- Logabyte Core debe quedar como fuente externa de dominios, suscripciones/estado y referencias opacas de conexión. La incorporación dinámica sin cambios de variables de Vercel queda habilitada cuando se integre el gateway y el resolver de secretos; no presentes el archivo local como solución productiva dinámica.
+- Antes de aplicar migraciones en bases existentes, compará DDL e historial, definí el baseline, aprovisionamiento, credenciales, traslado, validaciones y reversión. Todas las bases deben ejecutar el mismo schema y las mismas migraciones. `MULTI_TENANCY.md` detalla la transición.
 
 ## Código y alcance de los cambios
 

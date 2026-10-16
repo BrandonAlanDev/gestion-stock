@@ -1,23 +1,7 @@
 import "dotenv/config";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "../generated/prisma/client";
+import { conPrismaTenant, invalidarClientesPrismaTenant } from "../src/lib/tenants/prisma-factory";
+import { obtenerProveedorRegistroTenant } from "../src/lib/tenants/registry/proveedor-registro";
 import { normalizarValorEnlace } from "../src/lib/enlaces/normalizar-valor-enlace";
-
-const esLocal =
-  process.env.DATABASE_HOST === "localhost" ||
-  process.env.DATABASE_HOST === "127.0.0.1";
-
-const adaptador = new PrismaMariaDb({
-  host: process.env.DATABASE_HOST,
-  user: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
-  ssl: esLocal ? false : { rejectUnauthorized: true },
-  connectionLimit: 5,
-  connectTimeout: 10000,
-});
-
-const prisma = new PrismaClient({ adapter: adaptador });
 
 function enlaceLimpio(url: string): string | null {
   if (url.startsWith("/productos?categoria=")) {
@@ -31,29 +15,48 @@ function enlaceLimpio(url: string): string | null {
   return url;
 }
 
-async function main() {
-  const slides = await prisma.carouselSlide.findMany({
-    select: { id: true, url: true },
-  });
-  let actualizadas = 0;
-  for (const slide of slides) {
-    if (!slide.url) continue;
-    const limpio = enlaceLimpio(slide.url);
-    if (!limpio || limpio === slide.url) continue;
-    await prisma.carouselSlide.update({
-      where: { id: slide.id },
-      data: { url: limpio },
-    });
-    actualizadas++;
+async function main(): Promise<void> {
+  const registro = obtenerProveedorRegistroTenant();
+  const tenantId = process.env.TENANT_ID?.trim();
+  const incluirTodos = process.argv.includes("--todos");
+  if (!tenantId && !incluirTodos) {
+    throw new Error("Definí TENANT_ID o pasá --todos para ejecutar la limpieza en todos los tenants activos");
   }
-  console.log(`CarouselSlide revisadas: ${slides.length} · enlaces normalizados: ${actualizadas}`);
+
+  const tenants = tenantId
+    ? [await registro.resolverPorId(tenantId)].filter((tenant) => tenant?.tenant.estado === "ACTIVO")
+    : (await registro.listarTenants()).filter((tenant) => tenant.tenant.estado === "ACTIVO");
+  if (tenants.length === 0) throw new Error("No se encontraron tenants activos para procesar");
+
+  try {
+    for (const entry of tenants) {
+      if (!entry) continue;
+      const resultado = await conPrismaTenant(entry.tenant.id, async (cliente) => {
+        const slides = await cliente.carouselSlide.findMany({
+          select: { id: true, url: true },
+        });
+        let actualizadas = 0;
+        for (const slide of slides) {
+          if (!slide.url) continue;
+          const limpio = enlaceLimpio(slide.url);
+          if (!limpio || limpio === slide.url) continue;
+          await cliente.carouselSlide.update({
+            where: { id: slide.id },
+            data: { url: limpio },
+          });
+          actualizadas++;
+        }
+        return { revisadas: slides.length, actualizadas };
+      });
+      console.log(`${entry.tenant.slug}: ${resultado.revisadas} diapositivas · ${resultado.actualizadas} enlaces normalizados`);
+      await invalidarClientesPrismaTenant(entry.tenant.id);
+    }
+  } finally {
+    await Promise.all(tenants.filter(Boolean).map((entry) => invalidarClientesPrismaTenant(entry!.tenant.id)));
+  }
 }
 
-main()
-  .catch((error: unknown) => {
-    console.error("Error al limpiar enlaces de carrusel:", error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+void main().catch((error: unknown) => {
+  console.error("Error al limpiar enlaces de carrusel:", error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

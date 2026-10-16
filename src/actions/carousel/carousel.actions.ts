@@ -19,13 +19,17 @@ import { obtenerCarpetaCarrusel } from "@/lib/services/imagenes-cloudinary/obten
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
-import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../generated/prisma/client";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import { procesarSlide } from "./procesar-slide";
 import type { CarouselSettings, SlideConfig } from "@/types/carousel";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
+
+type SlidePersistido = Omit<Awaited<ReturnType<typeof procesarSlide>>, "url"> & {
+  url?: string;
+};
 
 function migrateSettings(data: unknown): unknown {
   if (typeof data !== "object" || data === null) return data;
@@ -75,7 +79,7 @@ export async function createCarousel(data: unknown) {
 
     const subidas: string[] = [];
     try {
-      const slidesProcesados = [];
+      const slidesProcesados: SlidePersistido[] = [];
       for (let index = 0; index < parsed.data.slides.length; index++) {
         const procesado = await procesarSlide(parsed.data.slides[index], tenantId, carousel.id);
         if (
@@ -87,21 +91,23 @@ export async function createCarousel(data: unknown) {
         slidesProcesados.push({ ...procesado, order: index });
       }
 
-      await prisma.carouselSlide.createMany({
-        data: slidesProcesados.map((slide) => ({
-          tenantId,
-          carouselId: carousel.id,
-          image: slide.image,
-          publicId: slide.publicId,
-          title: slide.title,
-          subtitle: slide.subtitle,
-          description: slide.description,
-          ctaText: slide.ctaText,
-          url: slide.url,
-          config: slide.config as unknown as Prisma.InputJsonValue,
-          order: slide.order,
-        })),
-      });
+      await conPrismaTenant(tenantId, (prisma) =>
+        prisma.carouselSlide.createMany({
+          data: slidesProcesados.map((slide) => ({
+            tenantId,
+            carouselId: carousel.id,
+            image: slide.image,
+            publicId: slide.publicId,
+            title: slide.title,
+            subtitle: slide.subtitle,
+            description: slide.description,
+            ctaText: slide.ctaText,
+            url: slide.url,
+            config: slide.config as unknown as Prisma.InputJsonValue,
+            order: slide.order,
+          })),
+        }),
+      );
     } catch (error) {
       await eliminarImagenes(subidas, tenantId);
       await eliminarCarruselPersistido(tenantId, carousel.id);
@@ -207,10 +213,12 @@ export async function deleteCarousel(id: string) {
         const sections = JSON.parse(pageConfig.sectionOrder) as string[];
         const filtered = sections.filter((s) => s !== `carousel_${id}`);
         if (filtered.length !== sections.length) {
-          await prisma.pageConfig.update({
-            where: { id: pageConfig.id },
-            data: { sectionOrder: JSON.stringify(filtered) },
-          });
+          await conPrismaTenant(tenantId, (prisma) =>
+            prisma.pageConfig.update({
+              where: { id: pageConfig.id, tenantId },
+              data: { sectionOrder: JSON.stringify(filtered) },
+            }),
+          );
         }
       } catch { }
     }
@@ -303,14 +311,14 @@ export async function duplicateCarousel(id: string) {
 
     const subidas: string[] = [];
     try {
-      const slides = [];
+      const slides: SlidePersistido[] = [];
       for (let index = 0; index < (original.slides ?? []).length; index++) {
         const slideOriginal = original.slides?.[index];
         if (!slideOriginal) continue;
         let image = slideOriginal.image ?? "";
         let publicId: string | null | undefined;
         if (slideOriginal.publicId || obtenerPublicIdDesdeUrl(image)) {
-          const subida = await subirImagen(image, obtenerCarpetaCarrusel(tenantId, copia.id));
+          const subida = await subirImagen(image, obtenerCarpetaCarrusel(tenantId, copia.id), tenantId);
           image = subida.url;
           publicId = subida.publicId;
           subidas.push(subida.publicId);
@@ -328,21 +336,23 @@ export async function duplicateCarousel(id: string) {
         });
       }
 
-      await prisma.carouselSlide.createMany({
-        data: slides.map((slide) => ({
-          tenantId,
-          carouselId: copia.id,
-          image: slide.image,
-          publicId: slide.publicId,
-          title: slide.title,
-          subtitle: slide.subtitle,
-          description: slide.description,
-          ctaText: slide.ctaText,
-          url: slide.url,
-          config: slide.config as unknown as Prisma.InputJsonValue,
-          order: slide.order,
-        })),
-      });
+      await conPrismaTenant(tenantId, (prisma) =>
+        prisma.carouselSlide.createMany({
+          data: slides.map((slide) => ({
+            tenantId,
+            carouselId: copia.id,
+            image: slide.image,
+            publicId: slide.publicId,
+            title: slide.title,
+            subtitle: slide.subtitle,
+            description: slide.description,
+            ctaText: slide.ctaText,
+            url: slide.url,
+            config: slide.config as unknown as Prisma.InputJsonValue,
+            order: slide.order,
+          })),
+        }),
+      );
     } catch (error) {
       await eliminarImagenes(subidas, tenantId);
       await eliminarCarruselPersistido(tenantId, copia.id);

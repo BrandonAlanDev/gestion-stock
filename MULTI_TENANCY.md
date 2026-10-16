@@ -1,158 +1,227 @@
 # Multi-tenancy
 
-## Modelo operativo
+## Estado de la migración
 
-La aplicación usa aislamiento lógico por `tenantId`:
+La resolución de dominio, el registro local de desarrollo, la fábrica de clientes Prisma y el transporte privado v1 de Logabyte Core están implementados. Con el registro local, las consultas se enrutan a una base MySQL por tenant. En producción se exige la URL HTTPS, el producto y el token de servicio de Core; la integración aún requiere pruebas contra Core desplegado y dos bases de prueba antes de declararse validada.
 
-```text
-Servicio = unidad de capacidad
-Tenant = unidad de aislamiento lógico
+El esquema Prisma actual conserva `Tenant`, `tenantId` y las validaciones de pertenencia. Esas columnas son redundantes dentro de una base aislada, pero se mantienen durante el traslado y permiten conservar el comportamiento de la aplicación mientras se migra cada tienda. No se agregaron columnas `tenantId` nuevas. La eliminación de las columnas existentes requiere una fase posterior, después de copiar y validar todos los datos.
 
-1 servicio Next.js
-1 PrismaClient singleton y 1 pool
-1 base de datos
-N tenants aislados dentro de esa base
-```
+La aplicación no tiene un fallback a una base compartida o predeterminada. Un hostname sin registro, un tenant inactivo, una referencia inválida o un fallo de conexión detienen la operación.
 
-El modelo `Tenant` no conoce el servicio donde está alojado. La única diferencia necesaria entre dos servicios equivalentes es `DATABASE_URL` y las variables de conexión relacionadas. Esto permite exportar un tenant de DB1, importarlo en DB2 y actualizar el routing externo sin modificar el código de la aplicación.
-
-Para conservar sesiones al mover un tenant entre servicios, ambos servicios deben ejecutar el mismo código y compartir `AUTH_SECRET`. Si el secreto cambia, las sesiones existentes dejan de ser válidas y los usuarios deben autenticarse nuevamente.
-
-## Arquitectura objetivo: una base por tenant (próximo sprint; no implementada)
-
-Se mantendrá una única aplicación Next.js, pero el almacenamiento pasará del modelo compartido anterior a una base de datos dedicada para cada tenant. Una base central actuará como directorio de control; la aplicación consultará allí qué tenant corresponde al dominio solicitado y cuál es la referencia de su base. Los datos operativos de la tienda vivirán en la base dedicada. Esta sección describe el objetivo y **no modifica las reglas operativas actuales** de las secciones siguientes.
+## Arquitectura implementada
 
 ```text
-Solicitud por dominio
-  -> normalizar y validar hostname en el servidor
-  -> directorio central: dominio -> tenant, estado, referencia de base
-  -> seleccionar conexión del tenant en el servidor
-  -> autorizar y operar sobre la base dedicada
+Host recibido por la solicitud
+  -> normalizar hostname en el servidor
+  -> TenantRegistryProvider (cache de metadatos de 30 s por instancia)
+  -> tenant activo + referencia/version de conexión
+  -> fábrica Prisma por tenant (pool limitado, cache LRU con leases)
+  -> una base MySQL del tenant
 ```
 
-Principios para el diseño y la migración:
+## Despliegue en Vercel con TiDB Cloud
 
-1. La identidad del tenant debe mantenerse estable aunque cambie su base física. El cliente no puede elegir `tenantId`, base de datos ni credenciales; el servidor resuelve la ruta a partir del hostname validado. Si el dominio no existe, el tenant no está activo o la base no se puede resolver, la solicitud falla de forma cerrada.
-2. El directorio central conserva solamente la información necesaria para localizar y administrar tenants. La ubicación definitiva de usuarios, cuentas y sesiones requiere una decisión de diseño antes de implementar el cambio; no se debe asumir que el modelo `Tenant` actual ya representa el nuevo directorio.
-3. El acceso a datos del tenant debe concentrarse detrás de una interfaz de resolución de conexión. Habrá que limitar y gestionar clientes y pools por base, con un ciclo de vida adecuado al despliegue; crear un `PrismaClient` por solicitud no es una opción aceptable.
-4. Todas las bases de tenant deberán recibir el mismo esquema y una estrategia de aprovisionamiento, migraciones, copias de seguridad, restauración y observabilidad. Las operaciones que involucren la base central y una base de tenant no tendrán una transacción local única; su consistencia y recuperación deben diseñarse explícitamente.
-5. La migración desde la base compartida exige un plan de extracción por tenant, validación de conteos y relaciones, cambio de ruteo, comprobación de aislamiento y reversión. Hasta completar y verificar el corte, continúan vigentes los filtros y controles por `tenantId` descritos abajo. No se retiran columnas ni validaciones como preparación aislada.
+Vercel alojará la aplicación Next.js; TiDB Cloud alojará las bases operativas. Docker no forma parte del despliegue. El comando `verificar:silos:reales` usa Docker Compose solo para levantar dos MySQL locales y descartables durante una prueba de integración; también se puede omitir esa prueba si no hay Docker disponible. Antes de producción, la misma matriz de aislamiento debe verificarse contra bases de prueba reales de TiDB Cloud.
 
-El trabajo del próximo sprint debe cerrar primero las decisiones pendientes sobre esquema del directorio, credenciales, autenticación y sesiones, límites de conexiones, despliegue de migraciones y procedimiento de corte. Después se podrá implementar por etapas con pruebas de dos o más tenants y de fallo de resolución.
+La aplicación usa hoy Prisma 7 con `@prisma/adapter-mariadb` mediante conexiones MySQL/TiDB por TCP. La fábrica exige TLS en producción y limita los pools por instancia de Node; esos límites deben dimensionarse frente al escalado concurrente de Vercel y al límite de conexiones de TiDB Cloud. La documentación de TiDB Cloud también ofrece un driver HTTP/serverless para Prisma en ciertos planes, pero no se reemplaza el adaptador actual sin una prueba de compatibilidad con las transacciones, migraciones y consultas de este proyecto.
 
-## Resolución del tenant
+La configuración local examinada apunta a un gateway de TiDB Cloud en us-west-2, puerto 4000. Ese endpoint y el código no permiten distinguir con certeza el plan comercial; confirmalo en la consola de TiDB Cloud antes de automatizar la creación de recursos. El diseño requiere una base con nombre distinto por tenant y credenciales de runtime con permisos limitados a esa base. Si varios silos se crean dentro de un mismo cluster TiDB, el aislamiento de datos es por base y permisos, pero el cómputo del cluster sigue compartido; un cluster dedicado por tenant sería un nivel adicional de aislamiento y no es requisito del código actual.
 
-El hostname se normaliza en el servidor: minúsculas, sin puerto y sin punto final. La resolución sigue este orden:
+Vercel tendrá secretos globales del SaaS y del acceso al registro central, nunca variables de entorno por tenant. Configurá `LOGABYTE_CORE_URL`, `LOGABYTE_CORE_PRODUCTO` y `LOGABYTE_CORE_SERVICE_TOKEN`; el token debe pertenecer al producto y poseer los cuatro scopes de lectura y resolución detallados en `README.md`. El runtime obtiene del registro una referencia opaca, resuelve sus credenciales en servidor y enruta al silo; no se debe conectar una base tenant al proyecto Vercel como variable `DATABASE_URL` ni convertirla en fallback. El driver administrativo para crear bases/usuarios en TiDB Cloud sigue pendiente.
 
-1. Coincidencia exacta con `Tenant.dominio`.
-2. Un único subdominio de `DOMINIO_PRINCIPAL` que coincida con `Tenant.slug`.
-3. En desarrollo local, `{slug}.localhost` resuelve por slug. `localhost`
-   busca primero un tenant cuyo dominio sea local y, como respaldo, usa el
-   primer tenant activo por fecha de creación. No requiere configurar un ID.
-4. Si no hay coincidencia, la solicitud falla cerrada; en producción nunca se usa un tenant por defecto.
+- `resolverTenantPorHost()` resuelve el dominio por coincidencia exacta. Ya no consulta la tabla `Tenant` del cliente Prisma ni infiere tenants por slug.
+- `ProveedorRegistroLocal` lee un archivo cifrado AES-256-GCM. Los metadatos y credenciales se validan; cada tenant debe tener una referencia y una base distintas. El archivo se ignora en Git.
+- `ProveedorRegistroCacheado` conserva metadatos en memoria por 30 segundos. No cachea credenciales; `conPrismaTenant` consulta el estado vigente en Core antes de cada operación.
+- `ProveedorLogabyteCore` adapta `ClienteLogabyteCore`, que consume el contrato privado v1 implementado en el proyecto `logabyte`. La URI de conexión solo se solicita al crear un cliente Prisma y no se cachea como metadato.
+- `conPrismaTenant(tenantId, fn)` es la entrada explícita para trabajos programados y scripts. La identidad debe derivarse del registro del servidor.
+- La fachada `src/lib/prisma.ts` fue eliminada. Las rutas, Server Actions y servicios resuelven el tenant en la frontera del servidor y usan `conPrismaTenant`; las transacciones interactivas conservan un único cliente durante toda la transacción.
+- La fábrica comparte clientes dentro de una instancia de Node, limita por defecto a 10 clientes, 2 conexiones por pool y 60 segundos de inactividad. El pool MariaDB usa `minimumIdle=1`: con `0`, el driver instalado no crea ninguna conexión y agota `acquireTimeout`. El cliente Prisma cacheado se desconecta cuando el gestor lo expulsa en una solicitud posterior o por invalidación. Los límites se aplican por instancia de ejecución; Vercel puede tener varias instancias simultáneas.
 
-Los slugs de infraestructura, como `www`, `api`, `admin`, `app`, `logabyte`, `cdn` y `assets`, están reservados. La lectura de headers ocurre fuera de la función cacheada; el hostname normalizado se pasa como argumento al lookup.
+## Reserva de stock y tareas programadas
 
-`obtenerTenantPublico()` memoiza por render con `cache()` de React. `resolverTenantPorHost()` usa Data Cache con un TTL corto de 20 segundos. No se mantienen tenants en `Map`, LRU ni estado global del proceso.
+Al crear un pedido, `crearPedidoDesdeCarrito` guarda el pedido, sus ítems y la reserva en una sola transacción tenant-aware. Cada variante con control de stock se descuenta condicionalmente (`stock >= cantidad`), por lo que dos checkouts concurrentes no pueden reservar las mismas unidades. El egreso se registra como reserva. Mercado Pago vence a los 30 minutos, igual que la preferencia que ya generaba la aplicación. La transferencia conserva su comportamiento actual y no tiene vencimiento automático; su reserva permanece hasta una cancelación explícita.
 
-## Estados y acceso
+`Pedido.stockReservado` y `PedidoItem.stockReservado` distinguen pedidos nuevos y sus ítems reservados de los pendientes anteriores al despliegue; la marca por ítem conserva qué unidades se retuvieron aunque después cambie `controlaStock`. Al aprobar un pago, el stock reservado pasa a venta sin volver a descontarlo; los pedidos antiguos, con las marcas predeterminadas `false`, mantienen el descuento al aprobarse. Al cancelar o vencer un pedido reservado, la liberación incrementa el stock y registra un movimiento de ingreso dentro de la misma transacción. El reclamo de la marca hace idempotente la liberación.
 
-- `ACTIVO`: permite tienda y autenticación.
-- `SUSPENDIDO`: muestra la pantalla de suspensión y no permite usar la aplicación.
-- `INACTIVO`: no expone la tienda.
+La migración `20261016000000_reservar_stock_pedido` agrega esas marcas e índice sin cambiar las filas existentes. Aplicala en todos los silos mediante el runner común después de reconciliar la baseline. No convierte pedidos históricos pendientes en reservas.
 
-Las fronteras públicas usan `requiereTenantActivo()`. Las fronteras administrativas usan `requiereAdmin()`, que exige coherencia entre el tenant del hostname, el `tenantId` del JWT/sesión, el usuario real en base de datos y su rol `ADMIN` actual. El rol del token no se considera suficiente por sí solo.
+`GET /api/cron/expirar-pedidos` procesa los tenants `ACTIVO` del registro y vence hasta 100 pedidos por tenant por invocación. Requiere el encabezado `Authorization: Bearer <CRON_SECRET>`; el secreto es global al SaaS, nunca por tenant. Configurá un scheduler externo para invocarlo con frecuencia de un minuto o la menor frecuencia compatible con la oferta operativa. No se agregó una programación Vercel fija porque su frecuencia mínima depende del plan. Cada iteración usa `conPrismaTenant` y no permite que el scheduler elija el destino. Solo se vencen reservas que tienen fecha límite; las transferencias no vencen automáticamente. Si llega una aprobación de Mercado Pago después de que el pedido venció y se liberó, se conserva el pago como aprobado sin reactivar el pedido ni volver a reservar; queda registrada una alerta de revisión para reembolso manual.
 
-El middleware solo resuelve reglas de sesión y rutas. No usa Prisma, no hace self-fetch y no decide el tenant; los gates que necesitan datos viven en layouts y acciones del servidor.
+El resolver usa únicamente `Host`, que debe ser establecido por el proxy de entrada. No confía en `x-forwarded-host` ni `x-forwarded-proto` para elegir un tenant o construir una URL OAuth. El valor del tenant nunca se toma del body, de `FormData` ni de un query string como autorización.
 
-## Auth.js y usuarios
+El normalizador rechaza valores de `Host` en formato de lista y nombres con más de un punto final. Las URLs públicas de pago se construyen desde el hostname canónico; en producción solo aceptan el puerto HTTPS predeterminado. Mercado Pago OAuth usa en producción una única `MP_REDIRECT_URI` HTTPS registrada para la aplicación, con ruta `/api/mercadopago/oauth/callback`; la autorización y el intercambio de código envían esa misma URI. El inicio se hace mediante POST y compara `Origin` con `Host`. El `state` cifra y autentica con AES-256-GCM durante diez minutos el tenant y el origen de retorno; no incluye el verificador PKCE. El verificador queda en una cookie `HttpOnly`, `SameSite=Lax` y host-only del dominio que inició el flujo. Si Mercado Pago vuelve al dominio fijo, ese callback valida el estado, tenant activo y dominio registrado, y solo redirige al origen firmado con los parámetros permitidos. El callback del tenant exige la cookie de estado coincidente, el verificador PKCE, una sesión ADMIN del mismo tenant y el host firmado antes de intercambiar el código y guardar los tokens en ese silo. Las respuestas OAuth usan `no-store` y `no-referrer`. En desarrollo sin URI fija se conserva el callback por dominio y puerto local.
 
-Los usuarios son completamente independientes por tenant. Las claves relevantes son compuestas:
+## Registro local para desarrollo
 
-- `User`: `tenantId + email`.
-- `Account`: `tenantId + provider + providerAccountId`.
+`TENANT_REGISTRY_FILE` apunta por defecto a `.local/tenant-registry.enc.json`. `TENANT_REGISTRY_ENCRYPTION_KEY` debe tener 64 caracteres hexadecimales y se guarda fuera del repositorio. El registro descifrado tiene esta forma:
 
-Por eso el mismo correo y la misma cuenta Google pueden existir en tenants distintos sin enlazar `Account` de un tenant con `User` de otro. El adaptador de Auth.js agrega y valida el tenant en las operaciones de usuario y cuenta. No se habilita `allowDangerousEmailAccountLinking`.
-
-El alta por credenciales siempre crea rol `USER`. Un tenant suspendido o inactivo no puede registrarse ni iniciar sesión.
-
-## Reglas para datos y servicios
-
-Toda entidad de negocio tiene `tenantId` obligatorio. Las unicidades que representan nombres o identidades del negocio son compuestas con el tenant. Las relaciones M:N usan modelos puente explícitos que también contienen `tenantId`.
-
-Reglas para cualquier desarrollo nuevo:
-
-1. Una Server Action o route handler obtiene el tenant exclusivamente del contexto del servidor.
-2. Nunca se acepta `tenantId` desde body, `FormData`, query string ni props como autorización.
-3. Los servicios reciben `tenantId` explícito y no leen headers, cookies ni sesión.
-4. Toda lectura, escritura, actualización y eliminación agrega el tenant a su filtro o valida pertenencia antes de operar.
-5. Toda acción administrativa pasa por `requiereAdmin()`.
-6. Los identificadores enviados por el cliente se consideran no confiables y se validan contra el tenant antes de relacionarlos.
-7. Las operaciones de stock que combinan movimiento y saldo se ejecutan en una transacción.
-
-## Rutas y configuración visual
-
-Las páginas públicas viven en el route group `src/app/(tienda)`, que no altera sus URLs. Su layout aplica en el servidor los gates de tenant, suspensión y mantenimiento. El layout raíz conserva únicamente providers y contexto global compartido.
-
-`PageConfig` es uno a uno por tenant mediante una clave única sobre `tenantId`; su `id` es un entero autoincremental y no tiene significado global. Si todavía no existe configuración, la capa de configuración aplica valores seguros para no romper la aplicación ni la vista.
-
-## Caché y estado del cliente
-
-Las identidades de Data Cache y sus tags incluyen siempre el tenant y todos los parámetros que cambian el resultado. Una clave conceptual sigue esta forma:
-
-```text
-tenant:{tenantId}:recurso:{filtros}
+```json
+{
+  "version": 1,
+  "tenants": [
+    {
+      "id": "tenant-demo",
+      "nombre": "Tienda Demo",
+      "slug": "demo",
+      "dominio": "demo.localhost",
+      "dominios": ["demo.localhost"],
+      "estado": "ACTIVO",
+      "referenciaBase": "mysql/demo",
+      "versionCredenciales": "v1"
+    }
+  ],
+  "conexiones": {
+    "mysql/demo": {
+      "host": "127.0.0.1",
+      "puerto": 3306,
+      "usuario": "usuario-local",
+      "contrasena": "",
+      "base": "gestion_demo",
+      "ssl": false
+    }
+  }
+}
 ```
 
-Las búsquedas de texto arbitrario no ingresan en Data Cache para evitar cardinalidad no acotada. Las mutaciones invalidan tags del tenant real obtenido por el servidor. No existe un recolector manual: se usan TTL, `revalidateTag` y el GC nativo de TanStack Query.
+Pasos:
 
-En el cliente, las query keys comienzan con `tenant` y `tenantId`. El carrito, consentimientos, sidebar e índice de búsqueda usan claves de storage separadas por tenant. El `tenantId` del contexto cliente sirve para identidad de UI y caché, nunca para autorizar operaciones del servidor.
+1. Generar una clave con `node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex') + '\\n')"` y guardarla en `TENANT_REGISTRY_ENCRYPTION_KEY`.
+2. Enviar el JSON por stdin a `npm run registro:local:cifrar`. El comando escribe solo el archivo cifrado y rechaza sobrescribirlo salvo que se indique `--sobrescribir`.
+3. Abrir `http://demo.localhost:3000` y cargar la conexión local de esa base.
 
-## Cloudinary
+El proveedor local sirve para desarrollo y pruebas con varios tenants. No es un directorio dinámico para Vercel: agregar un tenant allí requiere actualizar el archivo cifrado. En producción se usa Core cuando están configuradas las variables globales del SaaS. Las credenciales se resuelven solo cuando se crea un cliente Prisma y nunca se envían al navegador.
 
-Los assets nuevos se guardan debajo de:
+### Contrato privado v1 de Logabyte Core
 
-```text
-{tenantId}/garments/...
-{tenantId}/carousels/...
-{tenantId}/page-config/home-grids/...
-{tenantId}/page-config/identidad/...
-```
+Logabyte Core será la autoridad central de tenants, dominios, suscripciones y referencias de conexión. El e-commerce no replica los datos de suscripción: recibe del registro el estado efectivo del tenant, derivado por Core de la suscripción y de su estado operativo. El puerto interno `TenantRegistryProvider` requiere resolver por hostname e ID, listar tenants para trabajos administrativos y resolver credenciales a partir de una referencia opaca y una versión. Los metadatos internos contienen identidad estable, dominios normalizados, estado efectivo, referencia y versión; nunca incluyen credenciales. Los estados conocidos son `PROVISIONING`, `ACTIVO`, `SUSPENDIDO`, `INACTIVO` y `ERROR`.
 
-La carpeta se construye en el servidor a partir del tenant autorizado. Los assets históricos no se mueven: el parser acepta las rutas antiguas y las nuevas. Al trasladar un tenant entre servicios, Cloudinary no se migra salvo decisión operativa independiente; las URLs guardadas continúan apuntando al mismo CDN.
+El cliente usa `GET /api/internal/v1/tenants/hostname`, `/tenants/{id}`, `/tenants` paginado, `/tenants/{id}/estado` y `/tenants/{id}/credenciales`. Core autentica el token Bearer y restringe por producto y scope. El proveedor cachea metadatos 30 segundos, pero consulta `/estado` antes de cada acceso a Prisma; si cambia `versionCache`, descarta metadatos y cliente local. Una operación ya iniciada puede terminar si Core suspende el tenant durante su ejecución: el contrato v1 no ofrece lease distribuido para cortar transacciones en curso. El límite actual de Core es 120 lecturas generales y 30 resoluciones de credenciales por minuto por token, por lo que esta comprobación por operación requiere dimensionamiento antes de habilitar tráfico real.
 
-## Traslado entre servicios
+`DATABASE_URL` se usa solo por la CLI de Prisma para apuntar explícitamente a una base durante generación o migraciones. La aplicación en runtime no lee `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_USER` ni una base por defecto.
 
-Procedimiento conceptual para mover un tenant:
+## Accesos, autenticación y tareas
 
-1. Detener o bloquear temporalmente escrituras del tenant de origen.
-2. Exportar las filas del tenant y sus relaciones desde DB1.
-3. Importarlas en DB2 dentro de una transacción y validar conteos, referencias y unicidades.
-4. Conservar IDs `String`. Los IDs `Int` pueden requerir remapeo y actualización de referencias durante la importación.
-5. Mantener `AUTH_SECRET` si se desea conservar la validez criptográfica de los JWT.
-6. Actualizar dominio/subdominio en el routing externo.
-7. Aceptar caché fría en el servicio destino; no se transfieren entradas de Data Cache ni TanStack Query.
+- Server Actions, páginas y route handlers obtienen el tenant desde el hostname validado en el servidor y operan mediante `conPrismaTenant`; ningún módulo de negocio importa un Prisma global.
+- `Auth.js` usa las operaciones tenant-aware del adaptador y las credenciales se buscan en la base del hostname. El JWT queda vinculado al hostname que inició sesión y el middleware lo compara con `Host`; la verificación de servidor también contrasta `tenantId` y vuelve a leer el usuario en el silo actual. Los usuarios y cuentas quedan en la base de su tienda.
+- El webhook de Mercado Pago verifica que el `tenantId` de la URL coincida con el tenant resuelto por el hostname. Luego consulta el estado del pago con las credenciales de ese tenant y aplica los cambios en su base dentro de una transacción.
+- El inicio OAuth de Mercado Pago exige ADMIN y POST con `Origin` coincidente. El estado cifrado y autenticado vincula tenant, hostname y origen; la cookie host-only conserva el estado y el verificador PKCE en el navegador que inició el flujo. El callback fijo usa el registro para validar tenant activo y dominio, y hace relay al dominio firmado sin canjear el código. Allí se exigen cookie coincidente, verificador, sesión ADMIN del mismo tenant y host firmado antes de intercambiar el código y guardar tokens en ese silo. Luego se redirige al panel del origen firmado. En producción `MP_REDIRECT_URI` debe ser fija, HTTPS y coincidir exactamente con la registrada en Mercado Pago.
+- `MP_WEBHOOK_SECRET` sigue siendo un secreto de la aplicación de Mercado Pago compartida por este SaaS; los access tokens OAuth de las cuentas conectadas sí se guardan por tenant. Mercado Pago indica que la clave de firma se configura para la aplicación. Si en el futuro se usan varias aplicaciones de MP, el secreto deberá resolverse según la aplicación asociada antes de verificar el webhook ([documentación oficial de Webhooks](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-orders/notifications?scope=prod)).
+- `GET /api/cron/expirar-pedidos` enumera los tenants activos del proveedor y procesa cada silo con `conPrismaTenant`; el endpoint exige `CRON_SECRET`. El repositorio no registra una frecuencia Vercel fija, por lo que la operación depende de configurar un scheduler externo.
+- `scripts/limpiar-enlaces-carrusel.ts` también selecciona explícitamente el tenant o requiere `--todos`.
 
-La operación no requiere cambios en el código ni una relación entre `Tenant` y `Servicio`.
+Las operaciones que actualizan stock y movimientos siguen ejecutándose juntas en la misma transacción de la base del tenant. Para pedidos nuevos, la reserva y su movimiento se escriben al crear el pedido; la aprobación convierte esa reserva en venta sin descontar stock de nuevo. Para pedidos antiguos aún no reservados, el descuento ocurre durante la aprobación en la misma transacción que el pago y la transición del pedido. Si otra operación gana la transición, la transacción revierte el estado del pago. El `tenantId` de sesión sirve además como control de coherencia mientras continúe el esquema heredado.
 
-## Esquema: historial y sincronización
+## Estado y fallos
 
-El mecanismo operativo actual del proyecto es:
+- Solo `ACTIVO` permite consultas comerciales y autenticación.
+- `SUSPENDIDO`, `INACTIVO`, `PROVISIONING` y `ERROR` fallan cerrados.
+- Si el tenant o la conexión no se resuelven, no se conecta a una base alternativa.
+- Las credenciales se cargan cuando se crea un cliente; los siguientes accesos reutilizan el cliente cacheado hasta la expiración por inactividad, expulsión LRU o cambio de versión.
 
-```bash
-npx prisma db push
-```
+## Esquema común y migraciones
 
-Los directorios bajo `prisma/migrations/` documentan el historial SQL y las decisiones de los pasos de transición. Con el flujo actual, ese historial no es la fuente ejecutable de verdad y `db push` no registra migraciones aplicadas. Adoptar `prisma migrate deploy` en el futuro exige una tarea separada para establecer una línea base consistente.
+`prisma/schema.prisma` y `prisma/migrations/` son la fuente común para todas las bases tenant. La construcción de la aplicación solo genera el cliente Prisma y crea el build Next; no debe ejecutar migraciones ni `db push` de forma automática.
 
-La conversión inicial se hizo en tres actos: columnas nullable conservando unicidades globales; backfill validado hacia el tenant inicial; y finalmente `tenantId` obligatorio, unicidades compuestas y puentes M:N explícitos.
+El historial existente no coincide con certeza con todas las bases desplegadas: el proyecto ya usó `db push` y hay migraciones que documentan pasos que no están representados como una cadena ejecutable completa. Antes de `prisma migrate deploy` hay que comparar `SHOW CREATE TABLE` y `_prisma_migrations` de cada base, establecer un baseline reproducible y probarlo en bases descartables. Este cambio no ejecutó migraciones ni alteró una base existente.
 
-## Verificación
+`npm run inventariar:tenant-origen` genera un informe JSON de solo lectura con el DDL de las tablas, columnas, índices, conteos por `tenantId`, existencia de cada tenant seleccionado, cantidad de filas en tablas sin ese campo y checksums/estado de `_prisma_migrations`. También deriva del schema las relaciones Prisma, agrega la pertenencia a `Tenant` y revisa las relaciones lógicas heredadas `PedidoItem.garmentId` y `variantId`; informa por tenant referencias huérfanas o dirigidas a otro tenant, además de las tablas puente `GarmentVariantOptionValue` huérfanas o cruzadas. Las relaciones ausentes en el DDL aparecen como `relacionesNoEvaluables`. Requiere un usuario MySQL de solo lectura, IDs explícitos y confirmación exacta del host/base/IDs mediante `TENANT_SOURCE_INVENTORY_*`; las credenciales se pasan solo al proceso local y el comando rechaza `NODE_ENV=production`. El informe no copia ni modifica datos.
 
-La suite de aislamiento crea dos tenants temporales, ejecuta 15 casos y elimina solamente esos datos:
+Variables temporales requeridas: `TENANT_SOURCE_INVENTORY_MODE=1`, `TENANT_SOURCE_INVENTORY_READ_ONLY_ACK=1`, `TENANT_SOURCE_DB_HOST`, `TENANT_SOURCE_DB_PORT`, `TENANT_SOURCE_DB_USER`, `TENANT_SOURCE_DB_PASSWORD`, `TENANT_SOURCE_DB_NAME`, `TENANT_SOURCE_DB_SSL=0|1` y `TENANT_SOURCE_INVENTORY_TENANT_IDS=id1,id2`. `TENANT_SOURCE_INVENTORY_CONFIRM` debe ser exactamente `<host>:<puerto>/<base>|<ids-en-el-mismo-orden>`. Guardá stdout en un archivo local protegido para revisión; no agregues estas variables a Vercel ni las compartas en el chat.
 
-```bash
-npm run verificar:aislamiento
-```
+La revisión del historial encontró tres migraciones que requieren revisión explícita antes de aplicarse: `20260715030342_add_carousel_limits_to_pageconfig` elimina `user.estado`; `20260830020000_multitenancy_paso2` presupone un backfill previo pero su SQL elimina tres tablas puente; y `20260910000000_eliminar_tablas_surf_y_flags` elimina datos del módulo Surf. No ejecutes esas migraciones contra una base de origen hasta reconciliar el baseline y decidir cómo preservar o excluir los datos afectados.
 
-Incluye IDOR de lectura/escritura/borrado, unicidades, host y sesión cruzados, estados suspendido/inactivo, caché, query keys, storage, Cloudinary, OAuth, puentes M:N y rechazo de proveedores para un usuario sin rol administrativo.
+`src/lib/tenants/migracion-datos/manifiesto.ts` clasifica los 31 modelos del schema actual y define su orden de copia por dependencias; `relaciones.ts` extrae las referencias declaradas en Prisma, suma las de pertenencia al tenant y documenta las dos referencias lógicas heredadas de `PedidoItem`. `npm run inventariar:tenant-origen` compara las tablas reales con el manifiesto y reporta tablas históricas no clasificadas, modelos ausentes y relaciones inválidas/no evaluables. `npm run verificar:manifiesto-migracion-tenant` comprueba el manifiesto y las referencias extraídas contra `prisma/schema.prisma`. La transferencia operativa ahora está implementada en modo explícito; las condiciones, límites y comandos están documentados debajo.
+
+Todas las bases tenant deben recibir exactamente el mismo commit de esquema y las mismas migraciones. `npm run verificar:silos` comprueba, en modo explícito de prueba, que dos o más tenants resuelven a bases distintas, cada base coincide con `prisma/schema.prisma`, comparten tablas/columnas/índices y tienen los nombres y checksums de migración del repositorio en `_prisma_migrations`. El diff usa `prisma migrate diff` en modo de comparación y no modifica datos.
+
+`npm run transferir:datos-tenant -- --planificar` valida el origen y un destino `PROVISIONING` en el registro local, comprueba esquema e historial exactos, revisa referencias, exige que el destino solo contenga su fila `Tenant` y muestra los conteos. El modo de planificación conecta a ambas bases con operaciones de lectura. Para importar, usá un usuario de solo lectura en el origen, pausá sus escrituras y bloqueá operativamente cualquier activador/proceso que pueda publicar el destino. Ejecutá `npm run transferir:datos-tenant -- --ejecutar` con `TENANT_DATA_TRANSFER_MODE=1`, `TENANT_TRANSFER_TENANT_ID`, `TENANT_DATA_TRANSFER_SOURCE_READ_ONLY_ACK=1`, `TENANT_DATA_TRANSFER_SOURCE_FROZEN_ACK=1`, `TENANT_DATA_TRANSFER_COORDINATION_ACK=1`, `TENANT_DATA_TRANSFER_CONFIRM_SOURCE=<host>:<puerto>/<base>|<tenantId>` y `TENANT_DATA_TRANSFER_CONFIRM_TARGETS` igual a la cadena de destino impresa por la planificación. La transferencia lee el origen en una transacción MySQL `REPEATABLE READ`, exige tablas InnoDB, vuelve a resolver el estado `PROVISIONING` y la referencia/versión/credenciales antes de cada tabla y al verificar, y compara conteos finales de todas las tablas del destino. También actualiza y verifica el hash de la fila `Tenant` precreada, preservando su identidad, dominio, estado y fechas; eso no activa el tenant en el registro central, que debe permanecer `PROVISIONING`. `TENANT_DATA_TRANSFER_TIMEOUT_MS` acepta de 60000 a 7200000 ms (por defecto 1800000). La transacción de lectura larga retiene versiones MVCC hasta terminar; dimensioná la ventana y el almacenamiento undo de MySQL. `TENANT_DATA_TRANSFER_COORDINATION_ACK` es una confirmación operativa, no un lock distribuido: sin una operación futura de lease/CAS de Logabyte Core, el script no puede impedir atómicamente que otro proceso cambie el estado después de una revalidación. En producción requiere además `TENANT_DATA_TRANSFER_ALLOW_PRODUCTION=1`; la API privada v1 de Core no entrega credenciales de tenants `PROVISIONING`, por lo que este traslado sigue limitado al registro local hasta acordar una operación administrativa segura.
+
+Para un tenant existente, mantenelo en `PROVISIONING`, aplicá las migraciones a la base vacía y luego creá su fila `Tenant` (la tabla aparece en `20260828000000_multitenancy_paso1`) antes de importar. No ejecutes el loader de configuración inicial porque podría ocupar tablas que deben recibir los datos existentes. Los tenants nuevos y vacíos siguen el flujo normal de inicialización.
+
+La importación preserva IDs, fechas, decimales, bytes y la distinción entre JSON `null` y SQL `NULL`; copia lotes sin `skipDuplicates`, vuelve a comparar conteos y SHA-256 por modelo y audita relaciones en ambos lados. No copia `_prisma_migrations` ni sobrescribe la fila `Tenant` del registro central. Las inserciones destino se confirman por lotes y no son atómicas con la lectura del origen: ante un error el destino queda en `PROVISIONING`, sin limpieza automática; para reintentar hay que preparar otra base vacía. La transferencia no activa el tenant. Revisá [el runbook de restauración](RUNBOOK_RESTABLECIMIENTO_TENANT.md) para el tratamiento de backups, escrituras posteriores al corte y assets de Cloudinary. No ejecutes el comando contra datos productivos hasta revisar el inventario real y aprobar el origen, destino, baseline y ventana de corte.
+
+La tabla puente `GarmentVariantOptionValue` se audita por los tenants de sus filas padre. Los vínculos completamente huérfanos, que no se pueden atribuir a ningún tenant, detienen la transferencia hasta una revisión global; una referencia dañada que se pueda atribuir solo a otro tenant no bloquea la copia seleccionada.
+
+## Aprovisionamiento de tenants
+
+`src/lib/tenants/provisioning/aprovisionar-tenant.ts` implementa la secuencia administrativa sobre puertos inyectables: asegurar una base aislada, verificar la conexión, registrar una referencia mientras el tenant sigue en `PROVISIONING`, aplicar migraciones, cargar configuración inicial idempotente, verificar integridad y recién entonces activar el tenant. Los errores guardan la etapa y un código de error sin incluir secretos. La clave de idempotencia debe ser estable para que los reintentos reanuden el mismo destino.
+
+La orquestación está preparada, pero no hay un driver real de creación de bases/usuarios, un worker que procese solicitudes ni un transporte de escritura para Logabyte Core. Esos componentes requieren el contrato de Core y un proceso administrativo con los permisos de TiDB Cloud correspondientes al plan confirmado. El runtime comercial no crea bases ni expone credenciales administrativas; las solicitudes deben procesarse en un worker o herramienta administrativa. Si una migración falla, la base queda referenciada en estado `ERROR` para recuperación idempotente. La eliminación automática de una base parcial requiere una operación administrativa que compruebe que no contiene datos que deban preservarse.
+
+## Plan de migración incremental
+
+1. **Validar la integración con Core desplegado.** Verificar el token del producto, scopes, dominios, estados, referencias/versiones y dos bases de prueba; dimensionar el límite de lecturas de estado. Acordar un contrato administrativo separado para migrar tenants `PROVISIONING`.
+2. **Inventariar bases actuales.** Por cada tenant, registrar dominio, filas, conteos, relaciones, usuarios, pagos, pedidos, stock y estado de migraciones. Identificar diferencias respecto al esquema común.
+3. **Alinear migraciones.** Reconciliar el historial con el DDL real, probar baseline y migraciones sobre bases MySQL descartables y publicar un proceso que aplique el mismo release a cada silo.
+4. **Aprovisionar destinos.** Crear una base y credencial separadas por tenant con permisos mínimos. El tenant permanece en `PROVISIONING`; su referencia se registra para aplicar migraciones y, si se trata de una tienda existente, transferir sus datos antes de inicializar valores por defecto.
+5. **Copiar un tenant piloto.** Detener escrituras de esa tienda y usar `npm run transferir:datos-tenant` para validar y copiar solo las filas del tenant seleccionado. El proceso conserva IDs, relaciones y campos escalares de la fila `Tenant`, y verifica conteos/hash por modelo; luego hay que comprobar unicidades, saldos, pagos, pedidos y assets antes del cambio de routing. No copiar un tenant completo de la base compartida a cada silo.
+6. **Probar y cambiar el routing.** Revisar la integridad de la base en `PROVISIONING`, activar y cambiar el routing en una ventana controlada, y después ejecutar `npm run verificar:silos` junto con las pruebas de aislamiento de un entorno descartable. Comprobar tienda, admin, login, API, pagos, webhooks y assets.
+7. **Repetir por tenant y retirar el origen.** Migrar las demás tiendas por separado. Mantener una copia consistente de la base compartida según la política de backups hasta cerrar el período de reversión.
+8. **Eliminar la redundancia del esquema.** En una migración posterior, quitar `tenantId` de modelos comerciales, claves compuestas que ya no tengan sentido y el modelo `Tenant` operativo, después de verificar que ninguna acción usa esos campos como control o relación.
+
+La reversión requiere congelar escrituras del silo, exportar los cambios desde el último corte e importar al origen antes de cambiar el registro. Cambiar solo el destino de conexión perdería las operaciones que entraron después del corte.
+
+## Runbook de registro y operación
+
+Este runbook distingue el flujo local ya disponible del flujo productivo que depende del contrato de Logabyte Core. No define endpoints, comandos remotos ni payloads de Core.
+
+1. **Registrar un tenant.** En desarrollo, agregá una entrada con ID estable, hostname(s), estado `ACTIVO`, referencia y versión de credenciales al JSON local; cifralo con `npm run registro:local:cifrar`. En producción, Core deberá crear la identidad y sus dominios en estado `PROVISIONING`, sin almacenar datos comerciales en el registro.
+2. **Configurar dominios.** Creá DNS/CNAME para cada subdominio o dominio personalizado hacia el ingress del SaaS y registrá el hostname normalizado en el proveedor. El proxy debe validar el dominio entrante y establecer el `Host` que recibe Next.js; la app rechaza dominios no registrados y headers ambiguos.
+3. **Aprovisionar la base.** Ejecutá `aprovisionarTenant` desde un worker o proceso administrativo con los puertos implementados para TiDB Cloud y Core. El orquestador agrupa llamadas simultáneas al mismo tenant dentro de una instancia, pero no coordina workers concurrentes entre instancias; Core debe ofrecer claim/lease/CAS antes de habilitar el worker. Para un tenant nuevo, el worker crea una base y un usuario dedicados con permisos mínimos, guarda una referencia opaca, aplica migraciones, inicializa configuración y recién entonces activa el tenant. Para migrar una tienda existente, mantiene el tenant en `PROVISIONING`, prepara la fila `Tenant`, aplica migraciones y ejecuta la transferencia antes de cualquier inicialización que ocupe tablas comerciales. El worker real todavía no existe porque faltan el contrato administrativo para esa tarea, la confirmación del plan TiDB Cloud y su integración administrativa.
+4. **Aplicar migraciones.** Antes, ejecutá el inventario del origen y reconciliá la baseline comparando DDL e historial; la variable de confirmación no reemplaza esa revisión. Para un tenant canario, definí `TENANT_MIGRATION_MODE=1`, `TENANT_MIGRATION_IDS` y `TENANT_MIGRATION_CONFIRM` con la misma lista ordenada. Para la flota completa, el runner deriva los IDs de `listarTenants()` sin una lista de tenants en variables de entorno. Definí `TENANT_MIGRATION_MODE=1`, `TENANT_MIGRATION_CONFIRM=TODOS` y `TENANT_MIGRATION_BASELINE_RECONCILED=1`; ejecutá `npm run migrar:silos -- --todos --planificar` y revisá la selección/destinos impresos. El plan muestra una huella `sha256:` sin credenciales. Pausá las altas y cambios del registro, definí `TENANT_MIGRATION_REGISTRY_FROZEN_ACK=1`, copiá la huella en `TENANT_MIGRATION_CONFIRM_TARGETS` y ejecutá `npm run migrar:silos -- --todos`. El runner exige ese acuse solo para ejecución, vuelve a listar y comparar el conjunto tras el preflight y antes del primer DDL, y revalida destino/estado por tenant; el puerto actual no ofrece un lease o snapshot distribuido que bloquee cambios concurrentes. Antes del primer cambio, inspecciona todos los historiales y rechaza migraciones incompletas, nombres/checksums que no formen un prefijo versionado, bases con objetos pero sin historial aplicado y tenants `ACTIVO`, `SUSPENDIDO` o `INACTIVO` sin historial. Solo una base vacía en `PROVISIONING` puede iniciar sin historial; los tenants en `ERROR` requieren recuperación. Si el preflight encuentra migraciones pendientes con `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, `DELETE FROM` o `MODIFY`, también exige `TENANT_MIGRATION_ACK_DESTRUCTIVE` con la lista exacta de nombres en orden lexicográfico, separados por comas. Hoy las migraciones detectadas son `20260715030342_add_carousel_limits_to_pageconfig,20260830020000_multitenancy_paso2,20260910000000_eliminar_tablas_surf_y_flags`; el valor real se limita a las migraciones pendientes para la selección revisada. Este detector es conservador y no sustituye leer todo el SQL, probarlo en clones, conservar `user.estado`, demostrar el backfill de las tablas puente ni decidir el destino de los datos Surf. Si una migración falla a mitad de flota, quedan aplicados los tenants previos y el runner se detiene; una vez recuperado el fallo, volvé a planificar y confirmar el lote completo. El control de baseline no demuestra que el DDL actual coincida con las migraciones ni que el sufijo preserve datos; conservá el inventario y probá el sufijo en clones descartables. Producción requiere además `TENANT_MIGRATION_ALLOW_PRODUCTION=1`; el runner no puede resolver credenciales de un tenant `PROVISIONING` mediante la API privada v1 de Core. Conservá el log por tenant.
+5. **Administrar conexiones.** El runtime busca credenciales por referencia/version solo al crear un cliente y no requiere una variable Vercel por tienda. Los límites predeterminados por instancia son 10 clientes y 2 conexiones por pool; `TENANT_PRISMA_IDLE_TTL_MS` configura el tiempo ocioso, convertido a segundos para MariaDB. El pool mantiene una conexión mínima porque el driver instalado no crea conexiones con `minimumIdle=0`; el `idleTimeout` debe ser menor que el `wait_timeout` de MySQL. Dimensioná `TENANT_PRISMA_MAX_CLIENTS`, `TENANT_PRISMA_CONNECTION_LIMIT` y la capacidad MySQL considerando instancias, regiones y despliegues simultáneos. La rotación debe aumentar `versionCredenciales`; el control de estado vigente invalida metadata y clientes al observar un cambio de `versionCache`.
+6. **Suspender/reactivar.** Core debe cambiar el estado derivado de la suscripción y emitir invalidación de caché. `SUSPENDIDO`, `INACTIVO`, `PROVISIONING` y `ERROR` se rechazan. Hoy la caché puede tardar 30 segundos en reflejar el cambio y no existe transporte de invalidación; en desarrollo actualizá el registro local y volvé a cifrarlo. No uses la reactivación para saltar migraciones o recuperación de pagos.
+7. **Recuperar desde backup.** Restaurá el respaldo en una base nueva y aislada; no sobrescribas el silo actual. Verificá esquema, historial/checksums, conteos y relaciones, incluidos pedidos/pagos/stock y puentes sin `tenantId`. Tras validar el destino, Core deberá publicar una nueva referencia/version; conservá la base anterior durante la ventana de rollback e invalidá clientes antes de retirarla.
+8. **Reutilizar en otros SaaS.** Replicá el puerto de registro, el resolver de hostname y la fábrica como infraestructura común; cada producto conserva sus modelos, migraciones y configuración inicial, pero usa la misma identidad estable del tenant y el mismo ciclo de estados. Foodie Hub, Barber u otro SaaS deben registrar su producto/namespace en Core, no compartir tablas comerciales entre bases.
+
+La incorporación productiva no requiere variables de entorno por tienda; el runtime ya compone el provider con credenciales de servicio globales. La automatización del alta sigue pendiente de un contrato administrativo de Core y de confirmar el plan/permisos de TiDB Cloud para el driver.
+
+## Pruebas disponibles
+
+- `npm run verificar:silos:reales`: levanta dos MySQL 8.4.11 con almacenamiento `tmpfs` y puertos publicados solo en loopback, genera un registro local cifrado con clave efímera, migra ambos tenants `PROVISIONING`, los activa y ejecuta las verificaciones de esquema e aislamiento. El proyecto Compose y el directorio temporal se eliminan al terminar; requiere Docker Compose y acceso para descargar la imagen.
+- `npm run verificar:puerto-compose`: comprueba offline que la salida de `docker compose port` sea una dirección IPv4 de loopback con puerto válido, como exige el ensayo real de dos MySQL.
+- `npm run verificar:silos`: verificación de solo lectura de bases distintas, esquema y migraciones comunes; requiere `TENANT_SILO_TEST_MODE=1` y al menos dos IDs descartables en `TENANT_SILO_TEST_IDS`.
+- `npm run verificar:aislamiento-silos`: inserta una fila y un usuario con IDs iguales por silo; resuelve cada dominio por Host, ejercita el adaptador Auth.js y el handler de aplicación de webhook contra las bases y rechaza una sesión o un `tenantId` cruzados. La firma HMAC del webhook se verifica con los verificadores offline separados. También confirma una transacción, revierte otra y limpia los fixtures; requiere `TENANT_SILO_ISOLATION_TEST_MODE=1`, `TENANT_SILO_ISOLATION_TEST_IDS`, hosts `localhost`/loopback y nombres de base terminados en `_test`. Valida todos los destinos antes de escribir y bloquea `NODE_ENV=production`.
+- `npm run verificar:guardas-aislamiento-silos`: prueba offline la allowlist de hosts locales y el sufijo obligatorio `_test`; no necesita registro ni conexión MySQL.
+- `npm run verificar:provisionamiento`: verifica la secuencia del orquestador, los reintentos y el estado de error con dependencias de prueba en memoria; no conecta a servicios externos.
+- `npm run verificar:reservas-stock`: comprueba expiración tenant-aware e idempotencia de liberación con un doble en memoria.
+- `npm run verificar:cron-expirar-pedidos`: invoca el handler HTTP con dependencias aisladas para comprobar el secreto Bearer, el fallo cerrado, el filtro de tenants activos y la respuesta 207 ante fallos parciales; no conecta a MySQL ni programa el scheduler.
+- `npm run verificar:registro-tenant`: verifica normalización y resolución de dominio, estado suspendido, caché TTL, coalescencia concurrente, invalidación durante una carga, errores del proveedor y que las credenciales no queden cacheadas; no conecta a bases ni a servicios externos.
+- `npm run verificar:registro-local`: cifra un fixture temporal con clave efímera y ejercita el proveedor local real: dos tenants, credenciales fuera de metadatos, unicidad de dominios/referencias/bases, invalidación de la caché interna antes de su TTL y rechazo de referencias/versiones desconocidas, archivo alterado y clave incorrecta. No lee `.env`, no modifica el registro real y no conecta a MySQL.
+- `npm run verificar:historial-migraciones`: comprueba offline que la comparación rechace nombres o checksums distintos y tolere diferente orden de lectura.
+- `npm run verificar:manifiesto-migracion-tenant`: compara el inventario y las reglas de extracción de los modelos con el schema; no accede ni copia datos.
+- `npm run verificar:transferencia-tenant`: comprueba con dobles que la fila `Tenant` mantiene identidad/dominio/estado/fechas; ejercita filtros por tenant, orden, el puente M:N, lotes de 250 filas, `Decimal`, SQL `NULL` frente a JSON `null` y rechazo de una fila alterada por hash. No conecta a MySQL ni prueba transacciones reales.
+- `npm run transferir:datos-tenant -- --planificar`: inspecciona origen y destino confirmados sin escribir filas; requiere conexiones MySQL explícitas y un destino `PROVISIONING`.
+- `npm run transferir:datos-tenant -- --ejecutar`: copia un tenant a un destino validado y verifica contenido/relaciones desde un snapshot `REPEATABLE READ`. Revalida estado y credenciales, pero no tiene un lock distribuido con el registro; no es atómico entre bases ni elimina datos ante un fallo. No reutilices una base parcial para reintentar.
+- `npm run verificar:auditoria-relaciones-tenant`: prueba fuera de línea la consulta tenant-scoped y la detección de relaciones huérfanas/cruzadas y columnas de origen ausentes; no conecta a MySQL.
+- `npm run verificar:cloudinary-tenant`: comprueba ownership de IDs públicos, carpetas de destino y rechazo de rutas históricas sin propietario; no llama a Cloudinary.
+- `npm run verificar:preflight-migraciones`: comprueba offline las guardas de IDs explícitos, confirmación, baseline y opt-in productivo.
+- `npm run verificar:planificacion-migracion-todos`: prueba el plan completo contra un registro local efímero cifrado, confirma todos los destinos sin exponer secretos y rechaza una huella obsoleta; no conecta a MySQL ni migra.
+- `npm run verificar:factory-tenant`: comprueba creación concurrente, referencias repetidas, límites, leases, TTL, rotación de credenciales y fallos con clientes falsos; no verifica conectividad MySQL.
+- `npm run verificar:auth-tenant`: comprueba que una sesión se contraste con el tenant resuelto, que IDs coincidentes de usuarios no habiliten acceso desde otro silo y que tenants suspendidos no consulten usuarios; no reemplaza una prueba HTTP de Auth.js.
+- `npm run verificar:adaptador-auth-tenant`: ejecuta los lookups del adaptador Auth.js tenant-aware y verifica creación normalizada y rechazo de vínculos a usuarios ausentes del silo; no ejecuta callbacks ni una sesión HTTP firmada.
+- `npm run verificar:callbacks-auth-tenant`: ejercita los callbacks de Auth.js con dependencias aisladas: coincidencia de tenant en el login, revalidación del usuario/rol en su silo, sesión asociada al dominio, y eliminación de claims ante suspensión, registro no disponible o usuario revocado. No reemplaza una prueba HTTP con cookie JWT firmada ni una conexión MySQL real.
+- `npm run verificar:jwt-auth-tenant`: usa el codec JWT real de Auth.js para firmar/descifrar sesiones de tenants distintos con IDs iguales y comprobar que una cookie cruzada se invalida antes de consultar el silo; no reemplaza una prueba HTTP de NextAuth ni una conexión MySQL.
+  - `npm run verificar:accion-prenda-tenant` y `npm run verificar:acciones-pago-tenant`: ejecutan la orquestación de las acciones con dependencias aisladas; comprueban sesión/rol, selección del tenant de servidor, rechazo de IDs ajenos, pertenencia del pedido, llamadas al proveedor y claves de caché tenant-aware. No reemplazan pruebas HTTP ni conectividad MySQL.
+  - `npm run verificar:oauth-tenant`: comprueba cifrado/autenticación y vigencia del state, vínculo con las cookies y el tenant de sesión, dominio, relay restringido y PKCE S256; no invoca Next ni Mercado Pago y no reemplaza una prueba HTTP de Auth.js.
+- `npm run verificar:webhook-tenant`: invoca el handler HTTP con dependencias falsas para comprobar tenant por hostname, discrepancia de `tenantId`, tenant desconocido/suspendido, `Host` ambiguo y rechazo de firma; no valida la firma real ni la persistencia en MySQL.
+- `npm run verificar:webhook-mp`: valida el HMAC con el SDK instalado y comprueba que `data.id` discordante se rechaza antes de consultar el proveedor simulado; no llama a la API real de Mercado Pago.
+- `npm run verificar:webhook-pago`: ejercita la aplicación del pago con un doble transaccional para validar aprobación idempotente, avisos fuera de orden, monto/moneda, asociación de pedido y reversión ante conflicto o fallo de stock; no prueba la atomicidad ACID de MySQL.
+- `npm run inventariar:tenant-origen`: inventario de solo lectura; requiere conexión MySQL explícita y confirmada. No debe ejecutarse contra producción ni reemplaza la revisión del informe.
+  - `npm run verificar:aislamiento`: casos heredados de IDOR y filtros `tenantId` dentro de una sola base; no prueba aislamiento físico entre silos. Requiere `TENANT_ISOLATION_TEST_MODE=1`, un `TENANT_ISOLATION_TEST_TENANT_ID` activo del registro local, destino loopback terminado en `_test` y `TENANT_ISOLATION_TEST_CONFIRM_TARGET` con la confirmación exacta `<tenantId>|<host>:<puerto>/<base>`, porque crea y elimina datos temporales.
+- `npm run migrar:silos -- --todos`: selecciona la lista completa del registro, imprime destinos y huella de confirmación y preflightea el lote completo antes del primer cambio. Requiere `TENANT_MIGRATION_CONFIRM=TODOS`; la ejecución exige la huella de destinos de `--planificar` en `TENANT_MIGRATION_CONFIRM_TARGETS`, `TENANT_MIGRATION_BASELINE_RECONCILED=1` y `TENANT_MIGRATION_REGISTRY_FROZEN_ACK=1`. Durante el lote, pausá altas y cambios del registro porque todavía no hay un lease/snapshot central.
+- `npm run migrar:silos`: aplica migraciones de forma secuencial a IDs explícitos confirmados y preflightea todos sus historiales antes del primer cambio. Ambos modos permiten tenants `ACTIVO`, `SUSPENDIDO` e `INACTIVO` si tienen un historial versionado válido; solo `PROVISIONING` puede iniciar desde una base vacía. En producción requieren opt-in explícito y confirmación de baseline.
+- Las verificaciones y migraciones rechazan su ejecución normal en `NODE_ENV=production`; `migrar:silos` y la transferencia requieren opt-in y confirmaciones explícitas. No se ejecutaron contra bases porque este entorno no tiene una configuración comprobada de bases descartables.
+
+## Cachés, archivos e imágenes
+
+Las cargas nuevas validan el tenant del servidor y la carpeta de destino; los movimientos validan el propietario de origen y la carpeta destino. Al cambiar una prenda de categoría, una imagen histórica sin propietario verificable conserva su URL y no se mueve.
+
+La identidad del tenant sigue en las claves de caché, storage y rutas de Cloudinary. Los assets nuevos permanecen debajo de `{tenantId}/...`. Las URLs históricas siguen sirviendo sus imágenes, pero no se pueden mover ni borrar desde una tienda hasta verificar su propietario y migrarlas a una ruta con tenant; las raíces históricas compartidas ya no autorizan mutaciones. Una base distinta no sustituye el aislamiento de caché, sesión ni almacenamiento de archivos.
+
+## Pendientes técnicos de esta etapa
+
+- Ningún módulo de la aplicación importa la fachada `@/lib/prisma` ni instancia un `PrismaClient` por fuera de `src/lib/tenants/prisma-factory.ts`. `npm run verificar:imports-prisma` comprueba ambos límites. Las operaciones de datos reciben el `tenantId` del contexto de servidor y usan `conPrismaTenant`.
+- La caché de metadatos reduce resoluciones de identidad; cada acceso a Prisma consulta el estado efectivo en Core y compara `versionCache`. Esto bloquea nuevos accesos tras una suspensión observada, pero una operación ya iniciada puede terminar; el contrato v1 no provee revocación de leases en curso.
+- Los límites de clientes y conexiones son por proceso de aplicación, no globales. Deben dimensionarse junto con el máximo de instancias simultáneas y el límite de conexiones de MySQL.
+- La verificación de silos coteja esquema y nombres de migración contra el repositorio, pero no prueba solicitudes funcionales con registros coincidentes entre dos bases.

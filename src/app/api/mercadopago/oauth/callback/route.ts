@@ -1,87 +1,135 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac, timingSafeEqual } from "crypto";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
+import { obtenerProveedorRegistroTenant } from "@/lib/tenants/registry/proveedor-registro";
 import { proveedorMercadoPago } from "@/lib/pagos/proveedores/mercadopago/mercadopago-proveedor";
 import { obtenerSecretoFirma } from "@/lib/mercadopago/obtener-secreto-firma";
+import {
+  crearUrlRelayCallbackOAuth,
+  procesarCallbackOAuth,
+  validarContextoCallbackOAuth,
+} from "@/lib/mercadopago/oauth/procesar-callback";
+import {
+  esSolicitudCallbackFijo,
+  obtenerUriRedireccionFija,
+} from "@/lib/mercadopago/uri-redireccion";
 
-/** Separa `<uuid>.<firma>`, recalcula el HMAC-SHA256 y compara en tiempo constante. */
-function verificarFirma(estadoFirmado: string, tenantId: string): boolean {
-  try {
-    const ultimoPunto = estadoFirmado.lastIndexOf(".");
-    if (ultimoPunto <= 0 || ultimoPunto === estadoFirmado.length - 1) return false;
+function protegerRespuesta(respuesta: NextResponse): NextResponse {
+  respuesta.headers.set("Cache-Control", "no-store");
+  respuesta.headers.set("Referrer-Policy", "no-referrer");
+  return respuesta;
+}
 
-    const uuid = estadoFirmado.slice(0, ultimoPunto);
-    const firmaRecibida = Buffer.from(estadoFirmado.slice(ultimoPunto + 1), "base64url");
-    const firmaEsperada = createHmac("sha256", obtenerSecretoFirma())
-      .update(`${tenantId}:${uuid}`)
-      .digest();
+function limpiarCookiesOAuth(respuesta: NextResponse): NextResponse {
+  const opciones = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 0,
+  };
+  respuesta.cookies.set("mp_oauth_state", "", opciones);
+  respuesta.cookies.set("mp_code_verifier", "", opciones);
+  return respuesta;
+}
 
-    if (firmaRecibida.length !== firmaEsperada.length) return false;
-    return timingSafeEqual(firmaEsperada, firmaRecibida);
-  } catch {
-    return false;
-  }
+function responderCallbackInvalido(
+  estado = 400,
+  limpiarCookies = false,
+): NextResponse {
+  const respuesta = protegerRespuesta(NextResponse.json(
+    { error: "No se pudo validar el callback OAuth" },
+    { status: estado },
+  ));
+  return limpiarCookies ? limpiarCookiesOAuth(respuesta) : respuesta;
+}
+
+function redirigirAlPanel(
+  origen: string,
+  resultado: { exito: true } | { exito: false; error: string },
+): NextResponse {
+  const url = new URL("/admin/pageConfig", origen);
+  if (resultado.exito) url.searchParams.set("mp_success", "1");
+  else url.searchParams.set("mp_error", resultado.error);
+  return limpiarCookiesOAuth(protegerRespuesta(NextResponse.redirect(url, 303)));
 }
 
 export async function GET(req: NextRequest) {
-  const url = new URL("/admin/pageConfig", req.url);
+  let secreto: string;
+  let callbackFijo: boolean;
+  let uriFija: URL | null;
+  try {
+    secreto = obtenerSecretoFirma();
+    uriFija = obtenerUriRedireccionFija();
+    callbackFijo = esSolicitudCallbackFijo(
+      req.headers.get("host") ?? "",
+      req.nextUrl.pathname,
+    );
+    if (callbackFijo && !uriFija) return responderCallbackInvalido(503);
+  } catch {
+    return responderCallbackInvalido(503);
+  }
+
+  const estadoFirmado = req.nextUrl.searchParams.get("state") ?? "";
+  const codigo = req.nextUrl.searchParams.get("code");
+  const errorProveedor = req.nextUrl.searchParams.get("error");
+  const obtenerRegistro = () => obtenerProveedorRegistroTenant();
+
+  // Mercado Pago vuelve primero al dominio fijo de la aplicación. Ese dominio
+  // solo valida el destino y hace relay; nunca puede canjear ni guardar tokens.
+  if (callbackFijo && uriFija) {
+    const validacion = await validarContextoCallbackOAuth(estadoFirmado, {
+      secreto,
+      resolverTenant: async (tenantId) =>
+        obtenerRegistro().resolverPorId(tenantId),
+      registrarError: (etapa, error) => console.error(
+        `Error en la etapa ${etapa} del relay OAuth de Mercado Pago:`,
+        error instanceof Error ? error.message : String(error),
+      ),
+    });
+    if (validacion.tipo === "invalido") {
+      return responderCallbackInvalido(validacion.status);
+    }
+
+    if (validacion.estado.origen !== uriFija.origin) {
+      const destino = crearUrlRelayCallbackOAuth(
+        estadoFirmado,
+        validacion.estado,
+        codigo,
+        errorProveedor,
+      );
+      if (!destino) return responderCallbackInvalido(400);
+      return protegerRespuesta(NextResponse.redirect(destino, 303));
+    }
+  }
 
   let contexto;
   try {
     contexto = await requiereAdmin();
   } catch {
-    url.searchParams.set("mp_error", "no_autorizado");
-    return NextResponse.redirect(url);
+    return responderCallbackInvalido(401, true);
   }
 
-  if (!contexto) {
-    url.searchParams.set("mp_error", "no_autorizado");
-    return NextResponse.redirect(url);
-  }
-
-  try {
-    const codigo = req.nextUrl.searchParams.get("code");
-    const estadoRecibido = req.nextUrl.searchParams.get("state");
-    const estadoGuardado = req.cookies.get("mp_oauth_state")?.value;
-    const codeVerifier = req.cookies.get("mp_code_verifier")?.value;
-
-    if (!codigo) {
-      url.searchParams.set("mp_error", "sin_codigo");
-      return NextResponse.redirect(url);
-    }
-
-    if (!estadoRecibido || !estadoGuardado || estadoGuardado !== estadoRecibido) {
-      url.searchParams.set("mp_error", "estado_invalido");
-      return NextResponse.redirect(url);
-    }
-
-    if (!verificarFirma(estadoRecibido, contexto.tenantId)) {
-      url.searchParams.set("mp_error", "estado_invalido");
-      return NextResponse.redirect(url);
-    }
-
-    if (!codeVerifier) {
-      url.searchParams.set("mp_error", "configuracion_incompleta");
-      return NextResponse.redirect(url);
-    }
-
-    await proveedorMercadoPago.manejarCallback(
-      contexto.tenantId,
-      codigo,
-      codeVerifier,
-    );
-
-    url.searchParams.set("mp_success", "1");
-    const respuesta = NextResponse.redirect(url);
-    respuesta.cookies.delete("mp_oauth_state");
-    respuesta.cookies.delete("mp_code_verifier");
-    return respuesta;
-  } catch (error) {
-    console.error(
-      "Error en callback de Mercado Pago:",
+  const resultado = await procesarCallbackOAuth({
+    estado: estadoFirmado,
+    estadoCookie: req.cookies.get("mp_oauth_state")?.value,
+    codeVerifier: req.cookies.get("mp_code_verifier")?.value,
+    tenantIdSesion: contexto.tenantId,
+    hostRecibido: req.headers.get("host") ?? "",
+    codigo,
+    errorProveedor,
+  }, {
+    secreto,
+    resolverTenant: (tenantId) => obtenerRegistro().resolverPorId(tenantId),
+    manejarCallback: (tenantId, codigoAutorizacion, codeVerifier) =>
+      proveedorMercadoPago.manejarCallback(tenantId, codigoAutorizacion, codeVerifier),
+    registrarError: (etapa, error) => console.error(
+      `Error en la etapa ${etapa} del callback de Mercado Pago:`,
       error instanceof Error ? error.message : String(error),
-    );
-    url.searchParams.set("mp_error", "conexion_fallida");
-    return NextResponse.redirect(url);
+    ),
+  });
+
+  if (resultado.tipo === "invalido") {
+    return responderCallbackInvalido(resultado.status, true);
   }
+  return redirigirAlPanel(resultado.origen, resultado);
 }

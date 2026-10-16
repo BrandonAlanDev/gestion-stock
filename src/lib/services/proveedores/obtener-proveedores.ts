@@ -1,9 +1,9 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerProveedores(tenantId: string) {
-  return prisma.provider.findMany({
+  return conPrismaTenant(tenantId, (prisma) => prisma.provider.findMany({
     where: { tenantId, active: true },
     orderBy: { name: "asc" },
     include: {
@@ -12,5 +12,5 @@ export async function obtenerProveedores(tenantId: string) {
         orderBy: { createdAt: "asc" },
       },
     },
-  });
+  }));
 }

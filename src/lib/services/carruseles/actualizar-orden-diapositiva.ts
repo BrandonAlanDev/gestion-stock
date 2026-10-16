@@ -1,10 +1,12 @@
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function actualizarOrdenDiapositiva(tenantId: string, id: string, order: number) {
-  const existente = await prisma.carouselSlide.findFirst({
-    where: { id, tenantId, carousel: { tenantId } },
-    select: { id: true },
+  return conPrismaTenant(tenantId, async (prisma) => {
+    const existente = await prisma.carouselSlide.findFirst({
+      where: { id, tenantId, carousel: { tenantId } },
+      select: { id: true },
+    });
+    if (!existente) throw new Error("La diapositiva no pertenece a la tienda activa");
+    return prisma.carouselSlide.update({ where: { id }, data: { order } });
   });
-  if (!existente) throw new Error("La diapositiva no pertenece a la tienda activa");
-  return prisma.carouselSlide.update({ where: { id }, data: { order } });
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 import type { DatosActualizarProveedor } from "@/lib/services/proveedores/tipos-proveedor";
 
 export async function actualizarProveedor(
@@ -10,7 +10,7 @@ export async function actualizarProveedor(
 ) {
   const contactos = [...new Set(datos.contactos.map((contacto) => contacto.trim()))];
 
-  return prisma.$transaction(async (tx) => {
+  return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
     const actualizado = await tx.provider.updateMany({
       where: { id, tenantId, active: true },
       data: { name: datos.nombre, details: datos.detalles },
@@ -53,5 +53,5 @@ export async function actualizarProveedor(
     });
     if (!proveedor) throw new Error("Proveedor no encontrado");
     return proveedor;
-  });
+  }));
 }

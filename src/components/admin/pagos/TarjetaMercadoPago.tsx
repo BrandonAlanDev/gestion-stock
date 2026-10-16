@@ -97,13 +97,15 @@ export default function TarjetaMercadoPago({
             Desconectar
           </button>
         ) : (
-          <a
-            href="/api/mercadopago/oauth/start"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#009EE3] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0088CC]"
-          >
-            <Link2 size={15} />
-            Conectar Mercado Pago
-          </a>
+          <form action="/api/mercadopago/oauth/start" method="post">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#009EE3] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0088CC]"
+            >
+              <Link2 size={15} />
+              Conectar Mercado Pago
+            </button>
+          </form>
         )}
       </div>
 

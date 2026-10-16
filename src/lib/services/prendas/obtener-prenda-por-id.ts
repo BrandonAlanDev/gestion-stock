@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma";
 import { INCLUDE_VARIANTE } from "@/lib/services/prendas/incluir-variante";
+import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPrendaPorId(tenantId: string, id: string) {
-  return prisma.garment.findFirst({
+  return conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
     where: { id, tenantId },
     include: {
       category: true,
@@ -12,5 +12,5 @@ export async function obtenerPrendaPorId(tenantId: string, id: string) {
       images: { where: { tenantId }, orderBy: { order: "asc" } },
       opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
     },
-  });
+  }));
 }

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID, randomBytes, createHmac } from "crypto";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { construirUrlAutorizacionMP } from "@/lib/mercadopago/url-autorizacion";
 import { obtenerSecretoFirma } from "@/lib/mercadopago/obtener-secreto-firma";
+import { construirOrigenSolicitud } from "@/lib/tenants/construir-origen-solicitud";
+import { normalizarHostname } from "@/lib/tenants/normalizar-hostname";
+import {
+  firmarEstadoOAuth,
+  generarDesafioPKCE,
+  generarVerificadorPKCE,
+} from "@/lib/mercadopago/oauth/seguridad-oauth";
 
 type CodigoErrorInicio =
   | "no_autorizado"
@@ -12,30 +18,22 @@ type CodigoErrorInicio =
 
 function redirigirConError(urlBase: URL, codigo: CodigoErrorInicio): NextResponse {
   urlBase.searchParams.set("mp_error", codigo);
-  return NextResponse.redirect(urlBase);
+  return NextResponse.redirect(urlBase, 303);
 }
 
-/** Firma el state con HMAC-SHA256 para ligarlo al administrador del comercio. */
-function firmarState(estado: string, tenantId: string): string {
-  return createHmac("sha256", obtenerSecretoFirma())
-    .update(`${tenantId}:${estado}`)
-    .digest("base64url");
-}
-
-function generarCodeVerifier(): string {
-  // 64 bytes -> 86 caracteres en base64url, dentro del rango 43-128.
-  return randomBytes(64).toString("base64url").replace(/=+$/, "");
-}
-
-async function generarCodeChallenge(verifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Buffer.from(hash).toString("base64url").replace(/=+$/, "");
-}
-
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const urlAdmin = new URL("/admin/pageConfig", req.url);
+
+  const hostRecibido = req.headers.get("host") ?? "";
+  const hostname = normalizarHostname(hostRecibido);
+  const origen = construirOrigenSolicitud(
+    hostRecibido,
+    process.env.NODE_ENV === "production",
+  );
+  const origenHeader = req.headers.get("origin");
+  if (!hostname || !origen || !origenHeader || origenHeader !== origen) {
+    return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
+  }
 
   let contexto;
   try {
@@ -61,31 +59,29 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const uuidEstado = randomUUID();
-    const estado = `${uuidEstado}.${firmarState(uuidEstado, contexto.tenantId)}`;
-    const codeVerifier = generarCodeVerifier();
-    const codeChallenge = await generarCodeChallenge(codeVerifier);
+    const codeVerifier = generarVerificadorPKCE();
+    const estado = firmarEstadoOAuth(
+      contexto.tenantId,
+      hostname,
+      origen,
+      obtenerSecretoFirma(),
+    );
+    const codeChallenge = generarDesafioPKCE(codeVerifier);
 
     const urlAutorizacion = await construirUrlAutorizacionMP(estado, codeChallenge);
 
-    const respuesta = NextResponse.redirect(urlAutorizacion);
-
-    respuesta.cookies.set("mp_oauth_state", estado, {
+    const respuesta = NextResponse.redirect(urlAutorizacion, 303);
+    respuesta.headers.set("Cache-Control", "no-store");
+    respuesta.headers.set("Referrer-Policy", "no-referrer");
+    const opcionesCookie = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 10,
+      sameSite: "lax" as const,
       path: "/",
-    });
-
-    respuesta.cookies.set("mp_code_verifier", codeVerifier, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 10,
-      path: "/",
-    });
-
+      maxAge: 10 * 60,
+    };
+    respuesta.cookies.set("mp_oauth_state", estado, opcionesCookie);
+    respuesta.cookies.set("mp_code_verifier", codeVerifier, opcionesCookie);
     return respuesta;
   } catch (error) {
     console.error("Error al iniciar conexión con Mercado Pago:", error);
