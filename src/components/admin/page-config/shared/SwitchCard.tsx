@@ -1,5 +1,3 @@
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
-
 interface Props {
   title: string;
   checked: boolean;
@@ -8,43 +6,22 @@ interface Props {
   ) => void;
 }
 
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
-
 export default function SwitchCard({
   title,
   checked,
   onChange,
 }: Props) {
-  const { pageConfig } = usePageConfig();
-  const colorPrimario = pageConfig.primaryColor || "#06b6d4";
-  const colorSecundario = pageConfig.secondaryColor || "#ffffff";
   return (
     <button
       type="button"
       onClick={() =>
         onChange(!checked)
       }
-      className={`
-        h-32 rounded-[2rem] border transition-all p-6 text-left
-
-      `}
-      style={checked ? {
-        color: getContrastColor(colorPrimario),
-        backgroundColor: colorPrimario.concat("44"),
-        borderColor: getContrastColor(colorPrimario)
-      } : {
-        color: "#222222",
-        backgroundColor: "#33333333",
-        borderColor: getContrastColor(colorSecundario)
-      }}
+      className={`h-32 rounded-[2rem] border p-6 text-left transition-all ${
+        checked
+          ? "border-[var(--admin-primario)] bg-[var(--admin-primario-suave)] text-[var(--admin-primario)]"
+          : "border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] text-[var(--admin-texto)]"
+      }`}
     >
       <div className="flex flex-col h-full justify-between">
         <h3 className="text-xl font-black uppercase italic tracking-tight ">
@@ -52,22 +29,13 @@ export default function SwitchCard({
         </h3>
 
         <div
-          className={`
-            w-14 h-8 rounded-full p-1 transition-all
-          `}
-          style={checked ? {
-            color: getContrastColor(colorPrimario),
-            backgroundColor: colorPrimario,
-            borderColor: getContrastColor(colorPrimario)
-          } : {
-            color: "#222222",
-            backgroundColor: "#33333333",
-            borderColor: getContrastColor(colorSecundario)
-          }}
+          className={`h-8 w-14 rounded-full p-1 transition-all ${
+            checked ? "bg-[var(--admin-primario)]" : "bg-[var(--admin-fondo-hover)]"
+          }`}
         >
           <div
             className={`
-              w-6 h-6 rounded-full bg-white transition-all
+              h-6 w-6 rounded-full bg-[var(--admin-fondo)] transition-all
               ${
                 checked
                   ? "translate-x-6"

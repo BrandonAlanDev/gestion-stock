@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { createCategory } from "@/actions/categorias/crear-categoria";
 import { updateCategory } from "@/actions/categorias/actualizar-categoria";
 import { deleteCategory } from "@/actions/categorias/eliminar-categoria";
@@ -9,91 +8,24 @@ import { X, Tag, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CategoryTriggerButton from "./CategoryTriggerButton";
 import SubCategoryManager from "./SubCategoryManager";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 interface ManageCategoryModalProps {
   sizeTypes: TalleTipoConSizes[];
   category?: CategoriaConSubs;
-  variant?: "admin" | "tienda";
   onCategoryChange?: () => void;
 }
 
-export default function ManageCategoryModal({ sizeTypes, category, variant = "tienda", onCategoryChange }: ManageCategoryModalProps) {
-  const { pageConfig } = usePageConfig();
+export default function ManageCategoryModal({ sizeTypes, category, onCategoryChange }: ManageCategoryModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const isEdit = !!category;
 
   const [formData, setFormData] = useState({ name: category?.name || "" });
 
-  const isAdmin = variant === "admin";
-
   useEffect(() => {
     if (category) setFormData({ name: category.name || "" });
   }, [category]);
-
-  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor(background);
-  const accentTextColor = getContrastColor(accent);
-  const isDarkBg = textColor === "#ffffff";
-
-  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)";
-  const innerBg = isDarkBg ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)";
-
-  const styles = {
-    overlay: isAdmin
-      ? { background: "rgba(0, 0, 0, 0.8)", backdropFilter: "blur(6px)" }
-      : { background: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(6px)" },
-    card: {
-      backgroundColor: background,
-      border: `1px solid ${overlayBorder}`,
-      borderRadius: "1rem",
-    },
-    barColor: accent,
-    titleColor: textColor,
-    titleIconColor: accent,
-    closeColor: textColor,
-    labelColor: textColor,
-    labelLetterSpacing: "0.2em",
-    input: {
-      backgroundColor: innerBg,
-      border: `1px solid ${overlayBorder}`,
-      borderRadius: "12px",
-      padding: "14px 16px",
-      color: textColor,
-      fontSize: "14px",
-      fontWeight: 500,
-      outline: "none",
-      width: "100%",
-    },
-    deleteBtn: {
-      background: "rgba(224, 80, 80, 0.08)",
-      border: "1px solid rgba(224, 80, 80, 0.25)",
-      color: "#e05050",
-      borderRadius: "12px",
-      padding: "0 16px",
-      transition: "all",
-    },
-    submitBtn: {
-      height: "48px",
-      width: "100%",
-      borderRadius: "12px",
-      fontSize: "13px",
-      border: isEdit ? `1px solid ${overlayBorder}` : "none",
-      backgroundColor: isEdit ? innerBg : accent,
-      color: isEdit ? textColor : accentTextColor,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "8px",
-      textTransform: "uppercase",
-      fontStyle: "italic",
-      fontWeight: 900,
-    },
-  };
 
   const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,42 +62,29 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
     <>
       <CategoryTriggerButton
         isEdit={isEdit}
-        primaryColor={accent}
-        innerBg={innerBg}
-        overlayBorder={overlayBorder}
-        textColor={textColor}
         onOpen={() => setIsOpen(true)}
       />
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto"
-          style={styles.overlay}
+          className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm"
         >
           <div
-            className="w-full max-w-lg my-auto relative overflow-hidden shadow-2xl"
-            style={styles.card}
+            className="relative my-auto w-full max-w-lg overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl"
           >
-            <div
-              className="absolute top-0 left-0 w-full h-1"
-              style={{ height: "4px", backgroundColor: styles.barColor }}
-            />
+            <div className="absolute left-0 top-0 h-1 w-full bg-[var(--admin-primario)]" />
 
             <div className="p-4 space-y-6 sm:p-8">
               <div className="flex justify-between items-center gap-3">
                 <h2
-                  className="text-2xl font-black uppercase italic flex items-center gap-3 tracking-tighter min-w-0"
-                  style={{ color: styles.titleColor }}
+                  className="flex min-w-0 items-center gap-3 text-2xl font-black uppercase italic tracking-tighter text-[var(--admin-texto)]"
                 >
-                  <Tag style={{ color: styles.titleIconColor }} size={24} />
+                  <Tag className="shrink-0 text-[var(--admin-primario)]" size={24} />
                   {isEdit ? "Gestionar Estructura" : "Crear Categoría"}
                 </h2>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="shrink-0"
-                  style={{ color: styles.closeColor }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.7")}
-                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
+                  className="shrink-0 rounded-lg p-1 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
                 >
                   <X size={24} />
                 </button>
@@ -174,35 +93,24 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
               <form onSubmit={handleSubmitCategory} className="space-y-4">
                 <div className="space-y-2">
                   <label
-                    className="text-[10px] font-black uppercase ml-1 opacity-70"
-                    style={{ color: styles.labelColor, letterSpacing: styles.labelLetterSpacing }}
+                    className="ml-1 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--admin-texto-suave)]"
                   >
                     Categoría Principal
                   </label>
                   <div className="flex gap-2">
                     <input
-                      style={styles.input}
+                      className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-4 py-3.5 text-sm font-medium text-[var(--admin-texto)] outline-none transition-colors placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)]"
                       value={formData.name}
                       onChange={e => setFormData({ name: e.target.value })}
                       placeholder="Ej: Ropa, Accesorios, Calzado"
                       required
-                      onFocus={e => (e.currentTarget.style.borderColor = accent)}
-                      onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
                     />
                     {isEdit && (
                       <button
                         type="button"
                         disabled={loading}
                         onClick={handleDeleteCategory}
-                        style={styles.deleteBtn}
-                        onMouseEnter={e => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#e05050";
-                          (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-                        }}
-                        onMouseLeave={e => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(224, 80, 80, 0.08)";
-                          (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
-                        }}
+                        className="rounded-xl border border-[color-mix(in_srgb,var(--admin-peligro)_30%,transparent)] bg-[var(--admin-peligro-suave)] px-4 text-[var(--admin-peligro)] transition-colors hover:bg-[var(--admin-peligro-accion)] hover:text-white"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -213,14 +121,7 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center justify-center gap-2"
-                  style={styles.submitBtn}
-                  onMouseEnter={!loading ? e => {
-                    (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
-                  } : undefined}
-                  onMouseLeave={!loading ? e => {
-                    (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-                  } : undefined}
+                  className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[13px] font-black uppercase italic transition-opacity disabled:cursor-not-allowed disabled:opacity-60 ${isEdit ? "border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] text-[var(--admin-texto)] hover:opacity-90" : "bg-[var(--admin-primario)] text-[var(--admin-primario-texto)] hover:opacity-90"}`}
                 >
                   {loading && <Loader2 className="animate-spin" size={18} />}
                   {isEdit ? "Actualizar Nombre Principal" : "Crear Categoría Madre"}
@@ -231,11 +132,6 @@ export default function ManageCategoryModal({ sizeTypes, category, variant = "ti
                 <SubCategoryManager
                   category={category}
                   sizeTypes={sizeTypes}
-                  primaryColor={accent}
-                  secondaryColor={background}
-                  textColor={textColor}
-                  overlayBorder={overlayBorder}
-                  innerBg={innerBg}
                   onCategoryChange={onCategoryChange}
                 />
               )}

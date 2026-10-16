@@ -6,15 +6,15 @@ import { Loader2, Save, AlertCircle } from "lucide-react";
 import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import ZonaImagenSeccion from "./modal/ZonaImagenSeccion";
-import ContenidoSeccion from "./modal/ContenidoSeccion";
-import AparienciaSeccion from "./modal/AparienciaSeccion";
-import BotonEnlaceSeccion from "./modal/BotonEnlaceSeccion";
-import { FORMULARIO_VACIO, LIMITES_TARJETA, type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./modal/tipos";
+import ZonaImagenSeccion from "@/components/admin/design/modal/ZonaImagenSeccion";
+import ContenidoSeccion from "@/components/admin/design/modal/ContenidoSeccion";
+import AparienciaSeccion from "@/components/admin/design/modal/AparienciaSeccion";
+import BotonEnlaceSeccion from "@/components/admin/design/modal/BotonEnlaceSeccion";
+import { FORMULARIO_VACIO, LIMITES_TARJETA, type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "@/components/admin/design/modal/tipos";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";
 
-export type { DatosTarjeta, SelectorCategoria, SelectorProducto } from "./modal/tipos";
+export type { DatosTarjeta, SelectorCategoria, SelectorProducto } from "@/components/admin/design/modal/tipos";
 
 interface Props {
   isOpen: boolean;
@@ -146,22 +146,20 @@ export default function GridModal({
         aria-modal="true"
         aria-labelledby="titulo-modal-seccion"
         className={cn(
-          "w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-oculta rounded-2xl border shadow-2xl",
+          "w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-oculta rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] text-[var(--admin-texto)] shadow-2xl",
           isMobile
             ? "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
             : "animate-slide-down"
         )}
-        style={{ backgroundColor: secondaryColor, color: textColor, borderColor: primaryColor }}
       >
         <div
-          className="flex items-center justify-between p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl"
-          style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}
+          className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 backdrop-blur"
         >
           <div>
-            <h2 id="titulo-modal-seccion" className="text-xl font-bold" style={{ color: textColor }}>
+            <h2 id="titulo-modal-seccion" className="text-xl font-bold text-[var(--admin-texto)]">
               {initialData ? "Editar" : "Nueva"} sección
             </h2>
-            <p className="text-sm" style={{ color: textColor + "80" }}>
+            <p className="text-sm text-[var(--admin-texto-suave)]">
               {initialData
                 ? "Modificá el contenido y apariencia de esta sección"
                 : "Creá y personalizá el contenido de esta sección"}
@@ -184,8 +182,6 @@ export default function GridModal({
             title={formData.title}
             subtitle={formData.subtitle}
             alCambiar={actualizar}
-            primaryColor={primaryColor}
-            textColor={textColor}
           />
 
           <AparienciaSeccion
@@ -198,7 +194,6 @@ export default function GridModal({
             buttonTextColor={formData.buttonTextColor}
             alCambiar={actualizar}
             primaryColor={primaryColor}
-            textColor={textColor}
           />
 
           <BotonEnlaceSeccion
@@ -211,36 +206,22 @@ export default function GridModal({
             categorias={categorias}
             productos={productos}
             alCambiar={actualizar}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            textColor={textColor}
           />
 
           {error && (
-            <div
-              className="p-3 rounded-lg flex items-center gap-2 text-sm"
-              style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}
-            >
+            <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
           )}
 
           <div
-            className="flex justify-end gap-3 pt-4 sticky bottom-0 backdrop-blur z-10 rounded-b-2xl"
-            style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}
+            className="sticky bottom-0 z-10 flex justify-end gap-3 rounded-b-2xl border-t border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] pt-4 backdrop-blur"
           >
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
-              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = textColor + "08";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
+              className="cursor-pointer rounded-lg border border-[var(--admin-borde)] px-4 py-2 font-medium text-[var(--admin-texto)] transition-all hover:bg-[var(--admin-fondo-hover)]"
             >
               Cancelar
             </button>
@@ -250,16 +231,9 @@ export default function GridModal({
               disabled={isSubmitting}
               aria-busy={isSubmitting}
               className={cn(
-                "px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                "flex items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
                 intentosError > 0 && "animate-shake"
               )}
-              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1";
-              }}
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {isSubmitting ? "Guardando..." : "Guardar"}

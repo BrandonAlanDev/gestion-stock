@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Cropper, { type Area } from "react-easy-crop";
 import { Check, X } from "lucide-react";
@@ -10,6 +10,7 @@ import { generarImagenRecortada } from "./utilidades-recorte";
 import type { FormaRecorte } from "./tipos";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";
+import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 
 interface EditorRecorteProps {
   abierto: boolean;
@@ -29,10 +30,17 @@ export default function EditorRecorte({
   alCancelar,
 }: EditorRecorteProps) {
   const { nivel, zIndice } = useCapa();
+  const adminActivo = useContext(ContextoTemaAdmin) !== null;
   const { pageConfig } = usePageConfig();
-  const primario = (pageConfig?.primaryColor as string) || "#06b6d4";
-  const secundario = (pageConfig?.secondaryColor as string) || "#ffffff";
-  const textoSobreSecundario = getContrastColor(secundario);
+  const primario = adminActivo
+    ? "var(--admin-primario)"
+    : (pageConfig?.primaryColor as string) || "#06b6d4";
+  const secundario = adminActivo
+    ? "var(--admin-fondo)"
+    : (pageConfig?.secondaryColor as string) || "#ffffff";
+  const textoSobreSecundario = adminActivo
+    ? "var(--admin-texto)"
+    : getContrastColor(secundario);
 
   const [recorte, setRecorte] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -84,16 +92,28 @@ export default function EditorRecorte({
   const modal = (
     <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" style={{ zIndex: zIndice }}>
       <div
-        className="w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden"
-        style={{
-          backgroundColor: secundario,
-          color: textoSobreSecundario,
-          borderColor: primario,
-        }}
+        className={`w-full max-w-2xl overflow-hidden rounded-2xl border shadow-2xl ${
+          adminActivo
+            ? "border-[var(--admin-borde)] bg-[var(--admin-fondo)] text-[var(--admin-texto)]"
+            : ""
+        }`}
+        style={
+          adminActivo
+            ? undefined
+            : {
+                backgroundColor: secundario,
+                color: textoSobreSecundario,
+                borderColor: primario,
+              }
+        }
       >
         <div
-          className="flex items-center justify-between p-4 border-b"
-          style={{ borderColor: textoSobreSecundario + "22" }}
+          className={`flex items-center justify-between border-b p-4 ${
+            adminActivo ? "border-[var(--admin-borde)]" : ""
+          }`}
+          style={
+            adminActivo ? undefined : { borderColor: textoSobreSecundario + "22" }
+          }
         >
           <h3 className="text-lg font-black uppercase">Ajustar imagen</h3>
           <button
@@ -130,12 +150,17 @@ export default function EditorRecorte({
               step={0.01}
               value={zoom}
               onChange={(evento) => setZoom(Number(evento.target.value))}
-              className="flex-1 cursor-pointer"
+              className={`flex-1 cursor-pointer ${
+                adminActivo ? "accent-[var(--admin-primario)]" : ""
+              }`}
             />
           </label>
 
           {error && (
-            <p className="text-sm" style={{ color: primario }}>
+            <p
+              className={`text-sm ${adminActivo ? "text-[var(--admin-peligro)]" : ""}`}
+              style={adminActivo ? undefined : { color: primario }}
+            >
               {error}
             </p>
           )}
@@ -144,11 +169,19 @@ export default function EditorRecorte({
             <button
               type="button"
               onClick={alCancelar}
-              className="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-              style={{
-                border: `1px solid ${textoSobreSecundario}30`,
-                color: textoSobreSecundario + "99",
-              }}
+              className={`cursor-pointer rounded-lg px-4 py-2 font-medium transition-colors ${
+                adminActivo
+                  ? "border border-[var(--admin-borde)] text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
+                  : ""
+              }`}
+              style={
+                adminActivo
+                  ? undefined
+                  : {
+                      border: `1px solid ${textoSobreSecundario}30`,
+                      color: textoSobreSecundario + "99",
+                    }
+              }
             >
               Cancelar
             </button>
@@ -156,11 +189,19 @@ export default function EditorRecorte({
               type="button"
               onClick={confirmar}
               disabled={procesando}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-black uppercase tracking-wider transition-opacity disabled:opacity-50 cursor-pointer"
-              style={{
-                backgroundColor: primario,
-                color: getContrastColor(primario),
-              }}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 font-black uppercase tracking-wider transition-opacity disabled:opacity-50 ${
+                adminActivo
+                  ? "bg-[var(--admin-primario)] text-[var(--admin-primario-texto)] hover:opacity-90"
+                  : ""
+              }`}
+              style={
+                adminActivo
+                  ? undefined
+                  : {
+                      backgroundColor: primario,
+                      color: getContrastColor(primario),
+                    }
+              }
             >
               {procesando ? (
                 "Procesando..."

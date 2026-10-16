@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import ControlesConfiguracion from "./ControlesConfiguracion";
 import { obtenerConfiguraciones } from "./registroConfiguraciones";
 
@@ -18,8 +17,6 @@ interface CarouselWizardStep2Props {
   initialSettings: Record<string, unknown>;
   onComplete: (settings: Record<string, unknown>) => void;
   onBack: () => void;
-  primaryColor: string;
-  secondaryColor: string;
   hideNav?: boolean;
   hideLayoutPicker?: boolean;
 }
@@ -30,16 +27,12 @@ export default function CarouselWizardStep2({
   initialSettings,
   onComplete,
   onBack,
-  primaryColor,
-  secondaryColor,
   hideNav = false,
   hideLayoutPicker = false,
 }: CarouselWizardStep2Props) {
   const [settings, setSettings] = useState<Record<string, unknown>>(
     initialSettings
   );
-
-  const textColor = getContrastColor(secondaryColor);
 
   useEffect(() => {
     if (hideNav) {
@@ -65,28 +58,22 @@ export default function CarouselWizardStep2({
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
-            style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "0A"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+            className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--admin-borde)] px-4 py-2 font-medium text-[var(--admin-texto-suave)] transition-all hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
           >
             <ChevronLeft className="w-4 h-4" /> Volver
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
-            style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-colors hover:opacity-90"
           >
             Continuar
           </button>
         </div>
       )}
 
-      <div className="pt-4" style={{ borderColor: primaryColor + "40" }}>
-        <h3 className="text-sm font-medium mb-4" style={{ color: textColor + "CC" }}>
+      <div className="border-t border-[var(--admin-borde)] pt-4">
+        <h3 className="mb-4 text-sm font-medium text-[var(--admin-texto)]">
           Configuración de {TYPE_LABELS[type] || type}{isShowcase ? " - galería" : ""}
         </h3>
 
@@ -96,8 +83,6 @@ export default function CarouselWizardStep2({
           definiciones={obtenerConfiguraciones(type, isShowcase ? "SHOWCASE" : "DEFAULT")}
           ajustes={settings}
           alCambiar={handleChange}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
           ocultarSeleccionLayout={hideLayoutPicker}
         />
       </div>

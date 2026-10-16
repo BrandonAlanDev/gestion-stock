@@ -34,7 +34,7 @@ export default function EditorOpcion({
           type="button"
           onClick={onEliminar}
           aria-label="Eliminar opción"
-          className="ml-auto cursor-pointer rounded-md p-1 text-[var(--admin-texto-suave)] transition hover:text-red-400"
+          className="ml-auto cursor-pointer rounded-md p-1 text-[var(--admin-texto-suave)] transition hover:text-[var(--admin-peligro)]"
         >
           <X size={16} />
         </button>
@@ -63,7 +63,7 @@ export default function EditorOpcion({
                 type="button"
                 onClick={() => onEliminarValor(indiceValor)}
                 aria-label="Quitar valor"
-                className="cursor-pointer text-[var(--admin-texto-suave)] transition hover:text-red-400"
+                className="cursor-pointer text-[var(--admin-texto-suave)] transition hover:text-[var(--admin-peligro)]"
               >
                 <X size={14} />
               </button>

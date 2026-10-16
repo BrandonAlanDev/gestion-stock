@@ -88,7 +88,7 @@ export default function SeccionMetodosPago() {
 
   if (error) {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+      <div className="flex items-start gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">
         <AlertTriangle size={16} className="shrink-0" />
         <span>{error}</span>
       </div>

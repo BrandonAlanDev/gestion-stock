@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import type { DatosTarjeta, SelectorCategoria, SelectorProducto } from "./tipos";
 import { OPCIONES_DESTINO } from "./tipos";
 
@@ -9,9 +8,6 @@ interface Props {
   linkValue: string;
   categorias: SelectorCategoria[];
   productos: SelectorProducto[];
-  primaryColor?: string;
-  secondaryColor: string;
-  textColor: string;
   alCambiar: <K extends "linkType" | "linkValue">(campo: K, valor: DatosTarjeta[K]) => void;
 }
 
@@ -20,40 +16,16 @@ export default function SelectorDestino({
   linkValue,
   categorias,
   productos,
-  primaryColor = "#06b6d4",
-  secondaryColor,
-  textColor,
   alCambiar,
 }: Props) {
-  const estiloSelect = {
-    backgroundColor: secondaryColor,
-    border: "1px solid " + textColor + "30",
-    color: textColor,
-  };
-
-  const manejarFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = primaryColor;
-    e.currentTarget.style.boxShadow = `0 0 0 2px ${primaryColor}33`;
-  };
-
-  const manejarBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = textColor + "30";
-    e.currentTarget.style.boxShadow = "none";
-  };
-
-  const estiloInput = {
-    "--input-fondo": textColor + "08",
-    "--input-borde": textColor + "30",
-    "--input-texto": textColor,
-    "--input-placeholder": textColor + "80",
-    "--input-foco": primaryColor,
-  } as CSSProperties;
+  const claseSelect = "mt-2 w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] px-4 py-2.5 text-sm text-[var(--admin-texto)] outline-none transition-all duration-200 focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20";
+  const claseOpcion = "bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)]";
+  const claseInput = "w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] px-4 py-2.5 text-sm text-[var(--admin-texto)] outline-none transition-all duration-200 placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20";
 
   return (
     <div>
       <p
-        className="text-xs font-bold uppercase tracking-[0.2em]"
-        style={{ color: textColor + "99" }}
+        className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--admin-texto-suave)]"
       >
         Destino del enlace
       </p>
@@ -64,13 +36,10 @@ export default function SelectorDestino({
           alCambiar("linkType", e.target.value as DatosTarjeta["linkType"]);
           alCambiar("linkValue", "");
         }}
-        onFocus={manejarFocus}
-        onBlur={manejarBlur}
-        className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer mt-2"
-        style={estiloSelect}
+        className={claseSelect}
       >
         {OPCIONES_DESTINO.map((opt) => (
-          <option key={opt.value} value={opt.value} style={{ backgroundColor: secondaryColor, color: textColor }}>
+          <option key={opt.value} value={opt.value} className={claseOpcion}>
             {opt.label}
           </option>
         ))}
@@ -80,16 +49,13 @@ export default function SelectorDestino({
         <select
           value={linkValue}
           onChange={(e) => alCambiar("linkValue", e.target.value)}
-          onFocus={manejarFocus}
-          onBlur={manejarBlur}
-          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer mt-2"
-          style={estiloSelect}
+          className={claseSelect}
         >
-          <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>
+          <option value="" className={claseOpcion}>
             Seleccionar categoría...
           </option>
           {categorias.map((cat) => (
-            <option key={cat.id} value={cat.id} style={{ backgroundColor: secondaryColor, color: textColor }}>
+            <option key={cat.id} value={cat.id} className={claseOpcion}>
               {cat.label}
             </option>
           ))}
@@ -100,16 +66,13 @@ export default function SelectorDestino({
         <select
           value={linkValue}
           onChange={(e) => alCambiar("linkValue", e.target.value)}
-          onFocus={manejarFocus}
-          onBlur={manejarBlur}
-          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer mt-2"
-          style={estiloSelect}
+          className={claseSelect}
         >
-          <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>
+          <option value="" className={claseOpcion}>
             Seleccionar producto...
           </option>
           {productos.map((prod) => (
-            <option key={prod.id} value={prod.id} style={{ backgroundColor: secondaryColor, color: textColor }}>
+            <option key={prod.id} value={prod.id} className={claseOpcion}>
               {prod.label}
             </option>
           ))}
@@ -123,10 +86,9 @@ export default function SelectorDestino({
             value={linkValue}
             onChange={(e) => alCambiar("linkValue", e.target.value)}
             placeholder="https://ejemplo.com"
-            style={estiloInput}
-            className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all duration-200 bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)] focus:ring-2 ring-[var(--input-foco)]/20"
+            className={claseInput}
           />
-          <p className="text-xs mt-1" style={{ color: textColor + "60" }}>
+          <p className="mt-1 text-xs text-[var(--admin-texto-suave)]">
             Debe empezar con http:// o https://
           </p>
         </div>

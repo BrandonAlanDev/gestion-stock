@@ -18,6 +18,28 @@ El modelo `Tenant` no conoce el servicio donde está alojado. La única diferenc
 
 Para conservar sesiones al mover un tenant entre servicios, ambos servicios deben ejecutar el mismo código y compartir `AUTH_SECRET`. Si el secreto cambia, las sesiones existentes dejan de ser válidas y los usuarios deben autenticarse nuevamente.
 
+## Arquitectura objetivo: una base por tenant (próximo sprint; no implementada)
+
+Se mantendrá una única aplicación Next.js, pero el almacenamiento pasará del modelo compartido anterior a una base de datos dedicada para cada tenant. Una base central actuará como directorio de control; la aplicación consultará allí qué tenant corresponde al dominio solicitado y cuál es la referencia de su base. Los datos operativos de la tienda vivirán en la base dedicada. Esta sección describe el objetivo y **no modifica las reglas operativas actuales** de las secciones siguientes.
+
+```text
+Solicitud por dominio
+  -> normalizar y validar hostname en el servidor
+  -> directorio central: dominio -> tenant, estado, referencia de base
+  -> seleccionar conexión del tenant en el servidor
+  -> autorizar y operar sobre la base dedicada
+```
+
+Principios para el diseño y la migración:
+
+1. La identidad del tenant debe mantenerse estable aunque cambie su base física. El cliente no puede elegir `tenantId`, base de datos ni credenciales; el servidor resuelve la ruta a partir del hostname validado. Si el dominio no existe, el tenant no está activo o la base no se puede resolver, la solicitud falla de forma cerrada.
+2. El directorio central conserva solamente la información necesaria para localizar y administrar tenants. La ubicación definitiva de usuarios, cuentas y sesiones requiere una decisión de diseño antes de implementar el cambio; no se debe asumir que el modelo `Tenant` actual ya representa el nuevo directorio.
+3. El acceso a datos del tenant debe concentrarse detrás de una interfaz de resolución de conexión. Habrá que limitar y gestionar clientes y pools por base, con un ciclo de vida adecuado al despliegue; crear un `PrismaClient` por solicitud no es una opción aceptable.
+4. Todas las bases de tenant deberán recibir el mismo esquema y una estrategia de aprovisionamiento, migraciones, copias de seguridad, restauración y observabilidad. Las operaciones que involucren la base central y una base de tenant no tendrán una transacción local única; su consistencia y recuperación deben diseñarse explícitamente.
+5. La migración desde la base compartida exige un plan de extracción por tenant, validación de conteos y relaciones, cambio de ruteo, comprobación de aislamiento y reversión. Hasta completar y verificar el corte, continúan vigentes los filtros y controles por `tenantId` descritos abajo. No se retiran columnas ni validaciones como preparación aislada.
+
+El trabajo del próximo sprint debe cerrar primero las decisiones pendientes sobre esquema del directorio, credenciales, autenticación y sesiones, límites de conexiones, despliegue de migraciones y procedimiento de corte. Después se podrá implementar por etapas con pruebas de dos o más tenants y de fallo de resolución.
+
 ## Resolución del tenant
 
 El hostname se normaliza en el servidor: minúsculas, sin puerto y sin punto final. La resolución sigue este orden:

@@ -43,7 +43,7 @@ export default function PanelAvanzado({
     <section className="space-y-4">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-red-400" />
+          <AlertTriangle size={16} className="text-[var(--admin-peligro)]" />
 
           <h3 className="text-sm font-semibold text-[var(--admin-texto)]">
             Configuración avanzada
@@ -55,9 +55,9 @@ export default function PanelAvanzado({
         </p>
       </div>
 
-      <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
+      <div className="space-y-3 rounded-xl border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-4">
         <div className="space-y-1">
-          <h4 className="text-sm font-semibold text-red-300">
+          <h4 className="text-sm font-semibold text-[var(--admin-peligro)]">
             Resetear configuración
           </h4>
 
@@ -71,7 +71,7 @@ export default function PanelAvanzado({
           type="button"
           onClick={handleResetear}
           disabled={pendiente}
-          className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] px-4 py-2 text-sm font-semibold text-[var(--admin-peligro)] transition hover:bg-[var(--admin-peligro-accion)] hover:text-white disabled:opacity-50"
         >
           <Trash2 size={15} />
 

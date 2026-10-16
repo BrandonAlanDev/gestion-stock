@@ -155,7 +155,7 @@ export default function FilaSeccion({
             type="button"
             onClick={alEliminar}
             title="Eliminar"
-            className={cn(estiloBotonAccion, "hover:text-red-400")}
+            className={cn(estiloBotonAccion, "hover:text-[var(--admin-peligro)]")}
           >
             <Trash2 size={15} />
           </button>

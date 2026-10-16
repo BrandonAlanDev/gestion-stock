@@ -2,25 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { X, Plus } from "lucide-react";
-import GeneralDataFields from "./page-builder/GeneralDataFields";
-import SectionEditorCard from "./page-builder/SectionEditorCard";
-import ModalFooter from "./page-builder/ModalFooter";
+import GeneralDataFields from "@/components/admin/custom-page/page-builder/GeneralDataFields";
+import SectionEditorCard from "@/components/admin/custom-page/page-builder/SectionEditorCard";
+import ModalFooter from "@/components/admin/custom-page/page-builder/ModalFooter";
 import type {
   PaginaPersonalizada,
   SeccionPaginaPersonalizada,
   ValorCampoPaginaPersonalizada,
 } from "@/types/paginas-personalizadas";
-import type { Prisma } from "../../../../generated/prisma/client";
-
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
+import type { Prisma } from "@/../generated/prisma/client";
 
 interface ItemEntrada {
   id?: string;
@@ -59,8 +49,6 @@ interface PropiedadesConstructorPagina {
   onSave: (pagina: DatosPaginaGuardado) => void;
   initialData?: PaginaEntrada | null;
   isSaving: boolean;
-  primaryColor: string;
-  secondaryColor: string;
 }
 
 function analizarConfiguracion(texto?: string): Prisma.InputJsonValue | undefined {
@@ -72,12 +60,10 @@ function analizarConfiguracion(texto?: string): Prisma.InputJsonValue | undefine
   }
 }
 
-export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSaving, primaryColor, secondaryColor }: PropiedadesConstructorPagina) {
+export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSaving }: PropiedadesConstructorPagina) {
   const [formData, setFormData] = useState<PaginaPersonalizada>({
     title: "", slug: "", subtitle: "", isActive: true, sections: []
   });
-
-  const textContrast = getContrastColor(secondaryColor);
 
   useEffect(() => {
     if (initialData && isOpen) {
@@ -173,48 +159,39 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
     >
       <div
-        className="rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
-        style={{ backgroundColor: secondaryColor }}
+        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl animate-in fade-in zoom-in-95 duration-200"
       >
         <div
-          className="p-6 flex justify-between items-center z-10 shadow-sm"
-          style={{ backgroundColor: secondaryColor, borderBottom: `1px solid ${primaryColor}20` }}
+          className="z-10 flex items-center justify-between border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-6 shadow-sm"
         >
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-black truncate" style={{ color: primaryColor }}>
+            <h2 className="truncate text-2xl font-black text-[var(--admin-texto)]">
               {initialData ? "Editar Página" : "Crear Nueva Página"}
             </h2>
-            <p className="text-sm font-medium truncate" style={{ color: textContrast }}>Configura la información, secciones y sus ítems.</p>
+            <p className="truncate text-sm font-medium text-[var(--admin-texto-suave)]">Configura la información, secciones y sus ítems.</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full transition-all hover:opacity-80"
-            style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+            className="rounded-full bg-[var(--admin-primario-suave)] p-2 text-[var(--admin-primario)] transition-colors hover:opacity-80"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1" style={{ backgroundColor: `${primaryColor}03` }}>
+        <div className="flex-1 overflow-y-auto bg-[var(--admin-fondo)] p-6">
           <form id="page-builder-form" onSubmit={handleSubmit} className="space-y-8">
             <GeneralDataFields
               formData={formData}
               onChange={setFormData}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
             />
 
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h3 className="font-bold text-lg flex items-center gap-2" style={{ color: primaryColor }}>
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-                  >
+                <h3 className="flex items-center gap-2 text-lg font-bold text-[var(--admin-texto)]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--admin-primario)] text-xs font-bold text-[var(--admin-primario-texto)]">
                     2
                   </span>
                   Constructor de Secciones
@@ -222,8 +199,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
                 <button
                   type="button"
                   onClick={addSection}
-                  className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
-                  style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+                  className="flex shrink-0 items-center gap-2 rounded-xl bg-[var(--admin-primario)] px-4 py-2 text-sm font-bold text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90"
                 >
                   <Plus size={16} /> Agregar Sección
                 </button>
@@ -240,17 +216,12 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
                     onChangeItem={updateItem}
                     onAddItem={addItem}
                     onRemoveItem={removeItem}
-                    primaryColor={primaryColor}
-                    secondaryColor={secondaryColor}
                   />
                 ))}
 
                 {formData.sections.length === 0 && (
-                  <div
-                    className="text-center py-10 rounded-2xl border border-dashed"
-                    style={{ backgroundColor: secondaryColor, borderColor: `${primaryColor}30` }}
-                  >
-                    <p className="text-sm font-medium" style={{ color: textContrast }}>
+                  <div className="rounded-2xl border border-dashed border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] py-10 text-center">
+                    <p className="text-sm font-medium text-[var(--admin-texto-suave)]">
                       Empieza agregando tu primera sección (Hero, Texto, etc.)
                     </p>
                   </div>
@@ -263,8 +234,6 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
         <ModalFooter
           onClose={onClose}
           isSaving={isSaving}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
         />
       </div>
     </div>

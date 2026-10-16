@@ -1,16 +1,15 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Crop, Upload, X } from "lucide-react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 import { compressImage } from "@/lib/image-utils";
 import { convertirArchivoBase64 as fileToBase64 } from "@/lib/utilidades/convertir-archivo-base64";
 import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import EditorRecorte from "./EditorRecorte";
 import SubidaImagenBoton from "./SubidaImagenBoton";
+import SubidaImagenZona from "./SubidaImagenZona";
 import type { FormaRecorte } from "./tipos";
-import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 interface SubidaImagenProps {
   valor: string;
@@ -51,10 +50,21 @@ export default function SubidaImagen({
   claseZona = "aspect-video",
   accionesSobreZona = false,
 }: SubidaImagenProps) {
+  const temaAdmin = useContext(ContextoTemaAdmin);
+  const adminActivo = temaAdmin !== null;
   const { pageConfig } = usePageConfig();
-  const primario = (pageConfig?.primaryColor as string) || "#06b6d4";
-  const secundario = (pageConfig?.secondaryColor as string) || "#ffffff";
-  const textoSobreSecundario = getContrastColor(secundario);
+  const primario = adminActivo
+    ? "var(--admin-primario)"
+    : (pageConfig?.primaryColor as string) || "#06b6d4";
+  const secundario = adminActivo
+    ? "var(--admin-secundario-suave)"
+    : (pageConfig?.secondaryColor as string) || "#ffffff";
+  const textoSobreSecundario = adminActivo
+    ? "var(--admin-texto)"
+    : getContrastColor(secundario);
+  const colorAyuda = adminActivo
+    ? "var(--admin-texto-suave)"
+    : textoSobreSecundario + "80";
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [imagenFuente, setImagenFuente] = useState("");
@@ -180,166 +190,34 @@ export default function SubidaImagen({
 
   if (variante === "zona") {
     return (
-      <div className="space-y-2">
-        <div
-          className="relative"
-          onDragEnter={manejarDragEnter}
-          onDragOver={manejarDragOver}
-          onDragLeave={manejarDragLeave}
-          onDrop={manejarDrop}
-        >
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={procesando || deshabilitada}
-            aria-label="Seleccionar imagen"
-            className={`group relative block w-full ${claseZona} overflow-hidden rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
-            style={{
-              borderColor: arrastrando ? primario : primario + "50",
-              backgroundColor: arrastrando ? primario + "20" : primario + "08",
-              boxShadow: arrastrando
-                ? `0 0 0 4px ${primario}33, 0 0 24px ${primario}80`
-                : undefined,
-            }}
-          >
-            {valor ? (
-              <Image src={valor} alt={etiqueta} fill sizes="(min-width: 768px) 50vw, 100vw" unoptimized={!imagenAdmiteOptimizacion(valor)} draggable={false} className="object-cover" />
-            ) : (
-              <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
-                <Upload size={32} style={{ color: primario }} />
-                <span className="text-sm font-semibold" style={{ color: textoSobreSecundario }}>
-                  Seleccionar imagen
-                </span>
-                <span className="text-xs" style={{ color: textoSobreSecundario + "80" }}>
-                  {textoAyuda} · máx {tamanoMaximoMb}MB
-                </span>
-              </span>
-            )}
-
-            {valor && contenidoSuperpuesto && (
-              <span className="pointer-events-none absolute inset-0 z-10">{contenidoSuperpuesto}</span>
-            )}
-
-            {arrastrando && !procesando && (
-              <span className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/60">
-                <span
-                  className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
-                  style={{ backgroundColor: primario, color: getContrastColor(primario) }}
-                >
-                  <Upload size={16} />
-                  Soltá la imagen aquí
-                </span>
-              </span>
-            )}
-
-            {procesando && (
-              <span className="absolute inset-0 z-20 flex items-center justify-center bg-black/50">
-                <span className="flex items-center gap-2 text-sm font-medium text-white">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Procesando…
-                </span>
-              </span>
-            )}
-
-            {valor && !procesando && !accionesSobreZona && (
-              <span className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <span className="text-sm font-medium text-white">Cambiar imagen</span>
-              </span>
-            )}
-          </button>
-
-          {valor && accionesSobreZona && !procesando && (
-            <div className="absolute right-2 top-2 z-40 flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                disabled={deshabilitada}
-                title="Cambiar imagen"
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-md transition-colors cursor-pointer"
-                style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#ffffff" }}
-              >
-                <Upload size={12} /> Cambiar
-              </button>
-              {puedeEditarRecorte && (
-                <button
-                  type="button"
-                  onClick={reabrirEditor}
-                  disabled={deshabilitada}
-                  title="Editar recorte"
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#ffffff" }}
-                >
-                  <Crop size={12} /> Recortar
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={quitarImagen}
-                disabled={deshabilitada}
-                title="Quitar imagen"
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-md transition-colors cursor-pointer"
-                style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#ffffff" }}
-              >
-                <X size={12} /> Quitar
-              </button>
-            </div>
-          )}
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={manejarSeleccion}
-          className="sr-only"
-          disabled={procesando || deshabilitada}
-        />
-
-        {valor && !accionesSobreZona && (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={deshabilitada}
-              title="Cambiar imagen"
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer"
-              style={{ color: primario, backgroundColor: primario + "14" }}
-            >
-              <Upload size={14} /> Cambiar imagen
-            </button>
-            {puedeEditarRecorte && (
-              <button
-                type="button"
-                onClick={reabrirEditor}
-                disabled={deshabilitada}
-                title="Editar recorte"
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer"
-                style={{ color: primario, backgroundColor: primario + "14" }}
-              >
-                <Crop size={14} /> Editar recorte
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={quitarImagen}
-              disabled={deshabilitada}
-              title="Quitar imagen"
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer"
-              style={{ color: textoSobreSecundario + "99" }}
-            >
-              <X size={14} /> Quitar
-            </button>
-          </div>
-        )}
-
-        {errorVisible && (
-          <p className="text-xs" style={{ color: primario }}>
-            {errorVisible}
-          </p>
-        )}
-
-        {editorRecorte}
-      </div>
+      <SubidaImagenZona
+        valor={valor}
+        etiqueta={etiqueta}
+        claseZona={claseZona}
+        procesando={procesando}
+        deshabilitada={deshabilitada}
+        arrastrando={arrastrando}
+        textoAyuda={textoAyuda}
+        tamanoMaximoMb={tamanoMaximoMb}
+        primario={primario}
+        textoSobreSecundario={textoSobreSecundario}
+        colorAyuda={colorAyuda}
+        adminActivo={adminActivo}
+        errorVisible={errorVisible}
+        contenidoSuperpuesto={contenidoSuperpuesto}
+        accionesSobreZona={accionesSobreZona}
+        puedeEditarRecorte={puedeEditarRecorte}
+        referenciaEntrada={inputRef}
+        editorRecorte={editorRecorte}
+        alSeleccionar={manejarSeleccion}
+        alEntrarArrastre={manejarDragEnter}
+        alArrastrarSobre={manejarDragOver}
+        alSalirArrastre={manejarDragLeave}
+        alSoltar={manejarDrop}
+        alAbrirSelector={() => inputRef.current?.click()}
+        alAbrirRecorte={reabrirEditor}
+        alQuitar={quitarImagen}
+      />
     );
   }
 
@@ -355,6 +233,7 @@ export default function SubidaImagen({
       tamanoMaximoMb={tamanoMaximoMb}
       primario={primario}
       textoSobreSecundario={textoSobreSecundario}
+      adminActivo={adminActivo}
       errorInterno={error}
       errorVisible={errorVisible ?? null}
       inputRef={inputRef}

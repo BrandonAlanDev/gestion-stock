@@ -1,4 +1,3 @@
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import HeroLayoutPicker from "./HeroLayoutPicker";
 import type { DefinicionConfiguracion, TipoCarousel, VarianteCarousel } from "./registroConfiguraciones";
 
@@ -8,8 +7,6 @@ interface ControlesConfiguracionProps {
   definiciones: DefinicionConfiguracion[];
   ajustes: Record<string, unknown>;
   alCambiar: (clave: string, valor: unknown) => void;
-  primaryColor: string;
-  secondaryColor: string;
   ocultarSeleccionLayout?: boolean;
 }
 
@@ -19,12 +16,8 @@ export default function ControlesConfiguracion({
   definiciones,
   ajustes,
   alCambiar,
-  primaryColor,
-  secondaryColor,
   ocultarSeleccionLayout = false,
 }: ControlesConfiguracionProps) {
-  const textColor = getContrastColor(secondaryColor);
-
   const definicionesVisibles = definiciones.filter((d) => {
     if (d.control.control === "cardsLayout" && ocultarSeleccionLayout) {
       return false;
@@ -49,8 +42,6 @@ export default function ControlesConfiguracion({
         <HeroLayoutPicker
           value={(ajustes.slideLayout as "standard" | "split" | "minimal") || "standard"}
           onChange={(v) => alCambiar("slideLayout", v)}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
         />
       );
     }
@@ -58,31 +49,23 @@ export default function ControlesConfiguracion({
       const layoutActual = (ajustes.layout as string) || "simple";
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>{d.etiqueta}</label>
+          <label className="block text-sm font-medium text-[var(--admin-texto)]">{d.etiqueta}</label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => alCambiar("layout", "simple")}
-              className="relative p-3 rounded-xl border-2 transition-all text-left cursor-pointer"
-              style={{
-                borderColor: layoutActual === "simple" ? primaryColor : textColor + "30",
-                backgroundColor: layoutActual === "simple" ? primaryColor + "15" : "transparent",
-              }}
+              className={`relative cursor-pointer rounded-xl border-2 p-3 text-left transition-all ${layoutActual === "simple" ? "border-[var(--admin-primario)] bg-[var(--admin-primario)]/10" : "border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] hover:border-[var(--admin-primario)]"}`}
             >
-              <span className="font-bold block text-sm" style={{ color: textColor }}>Simple</span>
-              <span className="text-xs block" style={{ color: textColor + "80" }}>Cuadrícula de tarjetas</span>
+              <span className="block text-sm font-bold text-[var(--admin-texto)]">Simple</span>
+              <span className="block text-xs text-[var(--admin-texto-suave)]">Cuadrícula de tarjetas</span>
             </button>
             <button
               type="button"
               onClick={() => alCambiar("layout", "offers")}
-              className="relative p-3 rounded-xl border-2 transition-all text-left cursor-pointer"
-              style={{
-                borderColor: layoutActual === "offers" ? primaryColor : textColor + "30",
-                backgroundColor: layoutActual === "offers" ? primaryColor + "15" : "transparent",
-              }}
+              className={`relative cursor-pointer rounded-xl border-2 p-3 text-left transition-all ${layoutActual === "offers" ? "border-[var(--admin-primario)] bg-[var(--admin-primario)]/10" : "border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] hover:border-[var(--admin-primario)]"}`}
             >
-              <span className="font-bold block text-sm" style={{ color: textColor }}>Ofertas</span>
-              <span className="text-xs block" style={{ color: textColor + "80" }}>Carrusel de ofertas con descuento</span>
+              <span className="block text-sm font-bold text-[var(--admin-texto)]">Ofertas</span>
+              <span className="block text-xs text-[var(--admin-texto-suave)]">Carrusel de ofertas con descuento</span>
             </button>
           </div>
         </div>
@@ -92,7 +75,7 @@ export default function ControlesConfiguracion({
       const valor = typeof ajustes[d.clave] === "number" ? (ajustes[d.clave] as number) : (d.valorPorDefecto as number);
       return (
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>
+          <label className="mb-1 block text-sm font-medium text-[var(--admin-texto)]">
             {d.etiqueta}: {control.aMostrar(valor)}{control.unidad}
           </label>
           <input
@@ -102,8 +85,7 @@ export default function ControlesConfiguracion({
             step={control.step}
             value={control.aMostrar(valor)}
             onChange={(e) => alCambiar(d.clave, control.aGuardar(Number(e.target.value)))}
-            className="w-full h-2 rounded-lg appearance-none"
-            style={{ accentColor: primaryColor, backgroundColor: textColor + "1A" }}
+            className="h-2 w-full appearance-none rounded-lg accent-[var(--admin-primario)]"
           />
         </div>
       );
@@ -115,25 +97,23 @@ export default function ControlesConfiguracion({
             type="checkbox"
             checked={(ajustes[d.clave] ?? d.valorPorDefecto) === true}
             onChange={(e) => alCambiar(d.clave, e.target.checked)}
-            className="w-4 h-4 rounded"
-            style={{ accentColor: primaryColor }}
+            className="h-4 w-4 rounded accent-[var(--admin-primario)]"
           />
-          <span className="text-sm" style={{ color: textColor }}>{d.etiqueta}</span>
+          <span className="text-sm text-[var(--admin-texto)]">{d.etiqueta}</span>
         </label>
       );
     }
     if (control.control === "select") {
       return (
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: textColor + "CC" }}>{d.etiqueta}</label>
+          <label className="mb-1 block text-sm font-medium text-[var(--admin-texto)]">{d.etiqueta}</label>
           <select
             value={(ajustes[d.clave] as string) ?? (d.valorPorDefecto as string)}
             onChange={(e) => alCambiar(d.clave, e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
-            style={{ backgroundColor: textColor + "1A", border: "1px solid " + textColor + "30", color: textColor }}
+            className="w-full rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-2 text-sm text-[var(--admin-texto)] outline-none transition-all focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20"
           >
             {control.opciones.map((opcion) => (
-              <option key={opcion.valor} value={opcion.valor} style={{ backgroundColor: secondaryColor, color: textColor }}>
+              <option key={opcion.valor} value={opcion.valor}>
                 {opcion.etiqueta}
               </option>
             ))}
@@ -151,7 +131,7 @@ export default function ControlesConfiguracion({
         const otros = grupo.definiciones.filter((d) => d.control.control !== "checkbox");
         return (
           <div key={grupo.grupo} className="space-y-3">
-            <h4 className="text-sm font-medium mb-3" style={{ color: textColor + "CC" }}>{grupo.grupo}</h4>
+            <h4 className="mb-3 text-sm font-medium text-[var(--admin-texto)]">{grupo.grupo}</h4>
             {checkboxes.length > 0 && (
               <div className="grid gap-3 md:grid-cols-2">
                 {checkboxes.map((d) => (

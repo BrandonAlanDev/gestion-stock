@@ -53,7 +53,7 @@ export default function TarjetaMercadoPago({
 
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-3">
         {metodo.conectado ? (
-          <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+          <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[var(--admin-exito)]" />
         ) : (
           <XCircle size={16} className="mt-0.5 shrink-0 text-[var(--admin-texto-suave)]" />
         )}
@@ -91,7 +91,7 @@ export default function TarjetaMercadoPago({
           <button
             type="button"
             onClick={() => setMostrarConfirmacion(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/20"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] px-4 py-2 text-sm font-semibold text-[var(--admin-peligro)] transition hover:bg-[var(--admin-peligro-accion)] hover:text-white"
           >
             <Unlink size={15} />
             Desconectar

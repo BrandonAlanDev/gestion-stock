@@ -56,9 +56,9 @@ export default function SeccionMercadoPago({ estadoInicial }: SeccionMercadoPago
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           {estado.conectada ? (
-            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+            <CheckCircle2 className="h-6 w-6 text-[var(--admin-exito)]" />
           ) : (
-            <XCircle className="h-6 w-6 text-red-500" />
+            <XCircle className="h-6 w-6 text-[var(--admin-peligro)]" />
           )}
           <div>
             <p className="font-semibold text-[var(--admin-texto)]">
@@ -97,7 +97,7 @@ export default function SeccionMercadoPago({ estadoInicial }: SeccionMercadoPago
       )}
 
       {!estado.conectada && !conexionDisponible && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+        <div className="flex items-start gap-2 rounded-lg border border-[var(--admin-aviso)] bg-[var(--admin-aviso-suave)] p-3 text-xs text-[var(--admin-aviso)]">
           <AlertTriangle size={16} className="shrink-0" />
           <span>
             Faltan variables de entorno para conectarte (
@@ -112,7 +112,7 @@ export default function SeccionMercadoPago({ estadoInicial }: SeccionMercadoPago
           <button
             onClick={() => setMostrarConfirmacion(true)}
             disabled={pendiente}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] px-5 py-2.5 text-sm font-semibold text-[var(--admin-peligro)] transition hover:bg-[var(--admin-peligro-accion)] hover:text-white disabled:opacity-50"
           >
             {pendiente ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
             Desconectar cuenta

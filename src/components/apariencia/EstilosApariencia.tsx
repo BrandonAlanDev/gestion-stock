@@ -11,6 +11,8 @@ export default function EstilosApariencia() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
+
     let activo = true;
 
     void getPageConfig().then((resultado) => {

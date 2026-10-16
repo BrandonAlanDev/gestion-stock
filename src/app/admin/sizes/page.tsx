@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { addSizeToType } from "@/actions/talles/agregar-talle-a-tipo";
 import { createSizeType } from "@/actions/talles/crear-tipo-talle";
 import { deleteSize } from "@/actions/talles/eliminar-talle";
@@ -18,19 +17,7 @@ type TiposTalle = Awaited<ReturnType<typeof getSizeTypes>>;
 type TipoTalle = TiposTalle[number];
 type Talle = TipoTalle["sizes"][number];
 
-// --- UTILIDAD DE CONTRASTE ---
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
-
 export default function SizesPage() {
-  const { pageConfig } = usePageConfig();
   const [sizeTypes, setSizeTypes] = useState<TiposTalle>([]);
   const [newTypeName, setNewTypeName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,13 +26,6 @@ export default function SizesPage() {
   // Estados de modales
   const [typeModal, setTypeModal] = useState<{ isOpen: boolean; data: TipoTalle | null }>({ isOpen: false, data: null });
   const [sizeModal, setSizeModal] = useState<{ isOpen: boolean; typeId: string; data: Talle | null }>({ isOpen: false, typeId: "", data: null });
-
-  // INVERSIÓN: Fondo = secondary, Acento = primary
-  const background = pageConfig?.secondaryColor || "#00b4d8";
-  const accent = pageConfig?.primaryColor || "#FFFFFF";
-  const textColor = getContrastColor(background);
-  const accentTextColor = getContrastColor(accent);
-  const colors = { bg: background, accent, text: textColor, accentText: accentTextColor };
 
   const fetchSizes = async () => {
     setLoading(true);
@@ -113,19 +93,16 @@ export default function SizesPage() {
   };
 
   return (
-    <div 
-      style={{ backgroundColor: background, color: textColor, minHeight: "100vh" }}
-      className="transition-colors duration-200 p-6 sm:p-8 pt-12 w-full"
-    >
+    <div className="min-h-screen w-full bg-[var(--admin-fondo)] p-6 pt-12 text-[var(--admin-texto)] transition-colors duration-200 sm:p-8">
       <div className="p-0 max-w-6xl mx-auto space-y-8 pt-12 sm:p-8">
         
-        <div className="flex justify-between items-end border-b pb-6" style={{ borderColor: `${textColor}20` }}>
+        <div className="flex items-end justify-between border-b border-[var(--admin-borde)] pb-6">
           <div>
-            <h1 className="text-3xl font-black uppercase italic tracking-tighter flex items-center gap-3">
-              <Ruler style={{ color: accent }} size={32} />
+            <h1 className="flex items-center gap-3 text-3xl font-black uppercase italic tracking-tighter text-[var(--admin-texto)]">
+              <Ruler className="text-[var(--admin-primario)]" size={32} />
               Gestión de Talles
             </h1>
-            <p className="text-opacity-60 text-xs uppercase tracking-[0.3em] mt-2 font-light" style={{ color: textColor }}>
+            <p className="mt-2 text-xs font-light uppercase tracking-[0.3em] text-[var(--admin-texto-suave)]">
               Configura las curvas de talles para tus categorías
             </p>
           </div>
@@ -134,23 +111,22 @@ export default function SizesPage() {
         {/* Creador Rápido de Grupos */}
         <form 
           onSubmit={handleCreateGroup} 
-          className="bg-black/10 border border-white/5 p-6 rounded-[1.0rem] shadow-xl relative overflow-hidden"
+          className="relative overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 shadow-xl"
         >
-          <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: accent }} />
-          <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: accent }}>
+          <div className="absolute left-0 top-0 h-full w-1 bg-[var(--admin-primario)]" />
+          <h3 className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--admin-primario)]">
             <Layers size={14} /> Nuevo Grupo
           </h3>
           <div className="flex flex-col gap-3 sm:flex-row">
             <input 
-              className="flex-1 w-full bg-black/20 border border-white/10 rounded-[1.0rem] p-3 text-sm placeholder:opacity-50 focus:ring-1 outline-none"
+              className="w-full flex-1 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-1 focus:ring-[var(--admin-primario)]"
               placeholder="Nombre del grupo (ej: Calzados, Remeras...)"
               value={newTypeName}
               onChange={e => setNewTypeName(e.target.value)}
             />
             <button 
               type="submit" 
-              className="w-full sm:w-auto font-bold uppercase tracking-tighter px-8 rounded-[1.0rem] hover:opacity-90 transition-all shadow-md text-sm"
-              style={{ backgroundColor: accent, color: accentTextColor }}
+              className="w-full rounded-xl bg-[var(--admin-primario)] px-8 text-sm font-bold uppercase tracking-tighter text-[var(--admin-primario-texto)] shadow-md transition-all hover:opacity-90 sm:w-auto"
             >
               Crear Grupo
             </button>
@@ -162,24 +138,24 @@ export default function SizesPage() {
           {loading ? (
             <div className="col-span-full text-center py-20 animate-pulse">Sincronizando curvas...</div>
           ) : sizeTypes.map(type => (
-            <div key={type.id} className="bg-black/10 border border-white/5 rounded-[1.0rem] p-6 space-y-6 shadow-md transition-all relative">
+            <div key={type.id} className="relative space-y-6 rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 shadow-md transition-all">
               
               {/* Header del Grupo */}
-              <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                <h3 className="font-black text-lg italic uppercase tracking-tighter flex items-center gap-2">
-                  <ChevronRight style={{ color: accent }} size={18} />
+              <div className="flex items-center justify-between border-b border-[var(--admin-borde)] pb-4">
+                <h3 className="flex items-center gap-2 text-lg font-black italic uppercase tracking-tighter text-[var(--admin-texto)]">
+                  <ChevronRight className="text-[var(--admin-primario)]" size={18} />
                   {type.name}
                 </h3>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setTypeModal({ isOpen: true, data: type })} 
-                    className="opacity-50 hover:text-blue-400 transition-colors"
+                    className="opacity-50 transition-colors hover:text-[var(--admin-primario)]"
                   >
                     <Edit size={16} />
                   </button>
                   <button 
                     onClick={() => handleDeleteGroup(type.id, type.name)} 
-                    className="opacity-50 hover:text-red-500 transition-colors"
+                    className="opacity-50 transition-colors hover:text-[var(--admin-peligro)]"
                   >
                     {isDeleting === type.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                   </button>
@@ -191,13 +167,13 @@ export default function SizesPage() {
                 {type.sizes
                   .sort((a, b) => a.order - b.order) // Ordenar por campo order
                   .map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-xl border border-white/5 group">
-                    <span className="text-xs font-black">{s.value}</span>
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-2 gap-1 border-l border-white/10 pl-2">
-                      <button onClick={() => setSizeModal({ isOpen: true, typeId: type.id, data: s })} className="hover:text-blue-400">
+                  <div key={s.id} className="group flex items-center gap-2 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-1.5">
+                    <span className="text-xs font-black text-[var(--admin-texto)]">{s.value}</span>
+                    <div className="ml-2 flex items-center gap-1 border-l border-[var(--admin-borde)] pl-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button onClick={() => setSizeModal({ isOpen: true, typeId: type.id, data: s })} className="hover:text-[var(--admin-primario)]">
                         <Edit size={12} />
                       </button>
-                      <button onClick={() => handleDeleteSize(s.id)} className="hover:text-red-500">
+                      <button onClick={() => handleDeleteSize(s.id)} className="hover:text-[var(--admin-peligro)]">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -207,7 +183,7 @@ export default function SizesPage() {
                 {/* Botón Agregar Talle */}
                 <button 
                   onClick={() => setSizeModal({ isOpen: true, typeId: type.id, data: null })}
-                  className="flex items-center gap-1 bg-black/10 hover:bg-black/30 border border-dashed border-white/20 px-3 py-1.5 rounded-xl transition-all ml-1"
+                  className="ml-1 flex items-center gap-1 rounded-xl border border-dashed border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-1.5 text-[var(--admin-texto-suave)] transition-all hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
                 >
                   <Plus size={12} />
                   <span className="text-xs font-bold opacity-70">Agregar</span>
@@ -225,7 +201,6 @@ export default function SizesPage() {
         onClose={() => setTypeModal({ isOpen: false, data: null })} 
         initialData={typeModal.data}
         onSave={handleUpdateGroup}
-        colors={colors}
       />
       
       <SizeModal 
@@ -234,7 +209,6 @@ export default function SizesPage() {
         sizeTypeId={sizeModal.typeId}
         initialData={sizeModal.data}
         onSave={handleSaveSize}
-        colors={colors}
       />
 
     </div>

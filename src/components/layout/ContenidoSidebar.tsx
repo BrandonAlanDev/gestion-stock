@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import BotonTemaAdmin from "@/components/admin/tema/BotonTemaAdmin";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import {
@@ -99,6 +100,10 @@ export default function ContenidoSidebar({
           {storeName}
         </span>
       </Link>
+
+      <div className="mt-3">
+        <BotonTemaAdmin colapsado={colapsado} />
+      </div>
 
       {sesionDelTenant?.user && (
         <div className={`group relative flex items-center py-2 rounded-xl transition-all select-none ${colapsado ? "gap-0 px-0" : "gap-3 px-1.5"}`}>
@@ -223,7 +228,7 @@ export default function ContenidoSidebar({
           <button
             onClick={handleLogout}
             title="Cerrar Sesión"
-            className={`group relative flex items-center w-full rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-3 pl-4 pr-4 py-3"}`}
+            className={`group relative flex items-center w-full rounded-xl text-xs font-bold text-[var(--admin-peligro)] hover:bg-[var(--admin-peligro-suave)] transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-3 pl-4 pr-4 py-3"}`}
           >
             <LogOut size={16} className="shrink-0" />
             <span className={etiquetaClases("max-w-32")}>Cerrar Sesión</span>

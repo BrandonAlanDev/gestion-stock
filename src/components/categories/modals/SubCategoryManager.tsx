@@ -5,28 +5,17 @@ import { Layers, Plus, X, Loader2 } from "lucide-react";
 import { createSubCategory } from "@/actions/categorias/crear-subcategoria";
 import { deleteSubCategory } from "@/actions/categorias/eliminar-subcategoria";
 import { toast } from "sonner";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 interface SubCategoryManagerProps {
   category: CategoriaConSubs;
   sizeTypes: TalleTipoConSizes[];
-  primaryColor: string;
-  secondaryColor: string;
-  textColor: string;
-  overlayBorder: string;
-  innerBg: string;
   onCategoryChange?: () => void;
 }
 
 export default function SubCategoryManager({
   category,
   sizeTypes,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  overlayBorder,
-  innerBg,
   onCategoryChange,
 }: SubCategoryManagerProps) {
   const [subLoading, setSubLoading] = useState(false);
@@ -59,12 +48,11 @@ export default function SubCategoryManager({
   };
 
   return (
-    <div className="space-y-4 pt-6 border-t" style={{ borderColor: overlayBorder }}>
+    <div className="space-y-4 border-t border-[var(--admin-borde)] pt-6">
       <h3
-        className="text-xs font-black uppercase tracking-widest flex items-center gap-2"
-        style={{ color: textColor }}
+        className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[var(--admin-texto)]"
       >
-        <Layers size={14} style={{ color: primaryColor }} />
+        <Layers size={14} className="text-[var(--admin-primario)]" />
         Subcategorías y Curvas de Talles
       </h3>
 
@@ -72,40 +60,27 @@ export default function SubCategoryManager({
         {category.subCategories?.map((sub) => (
           <div
             key={sub.id}
-            className="flex justify-between items-center px-4 py-2.5"
-            style={{
-              backgroundColor: innerBg,
-              border: `1px solid ${overlayBorder}`,
-              borderRadius: "12px",
-            }}
+            className="flex items-center justify-between rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-2.5"
           >
             <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase" style={{ color: textColor }}>
+              <span className="text-xs font-bold uppercase text-[var(--admin-texto)]">
                 {sub.name}
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider opacity-60" style={{ color: textColor }}>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--admin-texto-suave)]">
                 Talles: {sub.sizeType?.name || "Estándar / Único"}
               </span>
             </div>
             <button
               type="button"
               onClick={() => handleDeleteSub(sub.id)}
-              style={{ color: textColor, opacity: 0.4 }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = "#e05050";
-                (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = textColor;
-                (e.currentTarget as HTMLButtonElement).style.opacity = "0.4";
-              }}
+              className="rounded-md p-1 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-peligro-suave)] hover:text-[var(--admin-peligro)]"
             >
               <X size={14} />
             </button>
           </div>
         ))}
         {(!category.subCategories || category.subCategories.length === 0) && (
-          <p className="text-[11px] italic pl-1 opacity-50" style={{ color: textColor }}>
+          <p className="pl-1 text-[11px] italic text-[var(--admin-texto-suave)]">
             No hay subcategorías en este grupo.
           </p>
         )}
@@ -113,58 +88,28 @@ export default function SubCategoryManager({
 
       <form
         onSubmit={handleAddSubCategory}
-        className="space-y-3 p-4"
-        style={{
-          backgroundColor: innerBg,
-          border: `1px solid ${overlayBorder}`,
-          borderRadius: "16px",
-        }}
+        className="space-y-3 rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-4"
       >
-        <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: primaryColor }}>
+        <span className="text-[9px] font-black uppercase tracking-wider text-[var(--admin-primario)]">
           + Vincular Subgrupo
         </span>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input
-            className="w-full"
-            style={{
-              backgroundColor: innerBg,
-              border: `1px solid ${overlayBorder}`,
-              borderRadius: "12px",
-              padding: "14px 16px",
-              color: textColor,
-              fontSize: "14px",
-              fontWeight: 500,
-              outline: "none",
-            }}
+            className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-4 py-3.5 text-sm font-medium text-[var(--admin-texto)] outline-none transition-colors placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)]"
             value={subData.name}
             onChange={e => setSubData({ ...subData, name: e.target.value })}
             placeholder="Nombre (Ej: Adultos)"
             required
-            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
-            onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
           />
           <select
-            className="w-full"
-            style={{
-              backgroundColor: secondaryColor,
-              border: `1px solid ${overlayBorder}`,
-              borderRadius: "12px",
-              padding: "14px 16px",
-              color: textColor,
-              fontSize: "14px",
-              fontWeight: 500,
-              outline: "none",
-              cursor: "pointer",
-            }}
+            className="w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-4 py-3.5 text-sm font-medium text-[var(--admin-texto)] outline-none transition-colors focus:border-[var(--admin-primario)]"
             value={subData.sizeTypeId}
             onChange={e => setSubData({ ...subData, sizeTypeId: e.target.value })}
-            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
-            onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
           >
-            <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>Curva estándar...</option>
+            <option value="">Curva estándar...</option>
             {sizeTypes.map((st) => (
-              <option key={st.id} value={st.id} style={{ backgroundColor: secondaryColor, color: textColor }}>{st.name}</option>
+              <option key={st.id} value={st.id}>{st.name}</option>
             ))}
           </select>
         </div>
@@ -172,27 +117,7 @@ export default function SubCategoryManager({
         <button
           type="submit"
           disabled={subLoading || !subData.name}
-          className="flex items-center justify-center gap-1"
-          style={{
-            backgroundColor: primaryColor,
-            color: getContrastColor(primaryColor),
-            borderRadius: "10px",
-            border: "none",
-            cursor: subLoading || !subData.name ? "not-allowed" : "pointer",
-            fontSize: "10px",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            padding: "8px 0",
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
-            opacity: subLoading || !subData.name ? 0.6 : 1,
-          }}
-          onMouseEnter={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9") : undefined}
-          onMouseLeave={!subLoading && subData.name ? e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1") : undefined}
+          className="flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--admin-primario)] py-2 text-[10px] font-extrabold uppercase tracking-wider text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {subLoading && <Loader2 className="animate-spin" size={12} />}
           <Plus size={12} /> Confirmar Subgrupo

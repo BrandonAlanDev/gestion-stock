@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save } from "lucide-react";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import CarouselWizardStep2 from "./CarouselWizardStep2";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { updateCarousel } from "@/actions/carousel/carousel.actions";
 import { toast } from "sonner";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
@@ -20,11 +18,6 @@ interface CarouselSettingsModalProps {
 }
 
 export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSave }: CarouselSettingsModalProps) {
-  const { pageConfig } = usePageConfig();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
-  const textColor = getContrastColor(secondaryColor);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [settings, setSettings] = useState<Record<string, unknown>>(carousel.settings || {});
   const { nivel, zIndice } = useCapa();
@@ -75,18 +68,16 @@ export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSav
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl" style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}>
-        <div className="flex items-center justify-between p-4 border-b sticky top-0 backdrop-blur z-10 rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor + "40" }}>
-          <h2 className="min-w-0 flex-1 truncate text-xl font-bold" style={{ color: textColor }}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" style={{ zIndex: zIndice }}>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 backdrop-blur">
+          <h2 className="min-w-0 flex-1 truncate text-xl font-bold text-[var(--admin-texto)]">
             Editar configuración
-            <span className="ml-2 inline-block max-w-[60%] truncate px-2 py-0.5 align-middle text-xs font-medium rounded-full" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
+            <span className="ml-2 inline-block max-w-[60%] truncate rounded-full bg-[var(--admin-primario-suave)] px-2 py-0.5 align-middle text-xs font-medium text-[var(--admin-primario)]">
               {carousel.title || carousel.type}
             </span>
           </h2>
-          <button onClick={onClose} className="shrink-0 p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "99" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}>
+          <button onClick={onClose} className="shrink-0 cursor-pointer rounded-lg p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -98,22 +89,17 @@ export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSav
             initialSettings={settings}
             onComplete={(newSettings) => setSettings(newSettings)}
             onBack={() => {}}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
             hideNav={true}
             hideLayoutPicker={true}
           />
         </div>
 
-        <div className="flex justify-end gap-3 p-4 border-t sticky bottom-0 backdrop-blur z-10 rounded-b-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor + "40" }}>
+        <div className="sticky bottom-0 z-10 flex justify-end gap-3 rounded-b-2xl border-t border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 backdrop-blur">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 cursor-pointer"
-            style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-            onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = textColor + "0A"; }}
-            onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = "transparent"; }}
+            className="cursor-pointer rounded-lg border border-[var(--admin-borde)] px-4 py-2 font-medium text-[var(--admin-texto-suave)] transition-all hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)] disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -121,10 +107,7 @@ export default function CarouselSettingsModal({ isOpen, onClose, carousel, onSav
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-            onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9"; }}
-            onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1"; }}
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Guardar cambios

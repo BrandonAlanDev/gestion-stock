@@ -1,6 +1,5 @@
 "use client";
 
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import ManageCategoryModal from "@/components/categories/modals/ManageCategoryModal";
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
@@ -8,11 +7,9 @@ import { Tag, Layers, FolderDot } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { getCategories } from "@/actions/categorias/obtener-categorias";
 import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
 
 export default function CategoriesAdminPage() {
-  const { pageConfig } = usePageConfig();
   const [categories, setCategories] = useState<CategoriaConSubs[]>([]);
   const [sizeTypes, setSizeTypes] = useState<TalleTipoConSizes[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -30,32 +27,21 @@ export default function CategoriesAdminPage() {
     });
   }, []);
 
-  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor(background);
-  const isDarkBg = textColor === "#ffffff";
-
-  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
-  const innerCardBg = isDarkBg ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.02)";
-  const cardBg = isDarkBg ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.03)";
-
   if (!mounted) return null;
 
   return (
-    <div className="p-6 sm:p-8 w-full" style={{ backgroundColor: background, color: textColor }}>
+    <div className="min-h-screen w-full bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] sm:p-8">
       {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between my-6 sm:my-12">
         <div>
           <h1
-            className="text-3xl font-black uppercase italic flex items-center gap-3"
-            style={{ color: textColor }}
+            className="flex items-center gap-3 text-3xl font-black uppercase italic text-[var(--admin-texto)]"
           >
-            <Tag style={{ color: accent }} />
+            <Tag className="text-[var(--admin-primario)]" />
             Estructura de Catálogo
           </h1>
           <p
-            className="text-[10px] font-black uppercase mt-1 opacity-50"
-            style={{ color: textColor, letterSpacing: "0.4em" }}
+            className="mt-1 text-[10px] font-black uppercase tracking-[0.4em] text-[var(--admin-texto-suave)]"
           >
             Gestión de categorías y subgrupos
           </p>
@@ -68,24 +54,12 @@ export default function CategoriesAdminPage() {
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="flex flex-col relative border shadow-sm"
-            style={{
-              backgroundColor: cardBg,
-              borderColor: overlayBorder,
-              borderRadius: "1rem",
-              padding: "1.5rem",
-            }}
+            className="relative flex flex-col rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 shadow-sm"
           >
             {/* Badge + edit */}
             <div className="flex justify-between items-start mb-4">
               <div
-                className="flex items-center gap-2 px-3 py-1 text-[9px] font-black uppercase border"
-                style={{
-                  color: accent,
-                  backgroundColor: innerCardBg,
-                  borderColor: overlayBorder,
-                  borderRadius: "8px",
-                }}
+                className="flex items-center gap-2 rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-1 text-[9px] font-black uppercase text-[var(--admin-primario)]"
               >
                 <FolderDot size={12} />
                 Categoría Principal
@@ -95,8 +69,7 @@ export default function CategoriesAdminPage() {
 
             {/* Nombre categoría */}
             <h3
-              className="text-2xl font-black uppercase italic mb-6"
-              style={{ color: textColor }}
+              className="mb-6 text-2xl font-black uppercase italic text-[var(--admin-texto)]"
             >
               {cat.name}
             </h3>
@@ -104,8 +77,7 @@ export default function CategoriesAdminPage() {
             {/* Subcategorías */}
             <div className="flex-1 space-y-3">
               <h4
-                className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 opacity-60"
-                style={{ color: textColor }}
+                className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[var(--admin-texto-suave)]"
               >
                 <Layers size={12} /> Subcategorías Actuales
               </h4>
@@ -114,23 +86,16 @@ export default function CategoriesAdminPage() {
                 {cat.subCategories?.map((sub) => (
                   <div
                     key={sub.id}
-                    className="flex justify-between items-center p-3 border"
-                    style={{
-                      backgroundColor: innerCardBg,
-                      borderColor: overlayBorder,
-                      borderRadius: "14px",
-                    }}
+                    className="flex items-center justify-between rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3"
                   >
                     <div>
                       <p
-                        className="text-xs font-bold uppercase"
-                        style={{ color: textColor }}
+                        className="text-xs font-bold uppercase text-[var(--admin-texto)]"
                       >
                         {sub.name}
                       </p>
                       <p
-                        className="text-[8px] font-black uppercase mt-0.5"
-                        style={{ color: accent }}
+                        className="mt-0.5 text-[8px] font-black uppercase text-[var(--admin-primario)]"
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
@@ -140,7 +105,7 @@ export default function CategoriesAdminPage() {
                 ))}
 
                 {(!cat.subCategories || cat.subCategories.length === 0) && (
-                  <p className="text-[10px] italic px-1 opacity-40" style={{ color: textColor }}>
+                  <p className="px-1 text-[10px] italic text-[var(--admin-texto-suave)]">
                     No hay subcategorías registradas.
                   </p>
                 )}
@@ -148,7 +113,7 @@ export default function CategoriesAdminPage() {
             </div>
 
             {/* Formulario agregar subcategoría */}
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: `1px solid ${overlayBorder}` }}>
+            <div className="mt-6 border-t border-[var(--admin-borde)] pt-6">
               <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} onSuccess={refreshCategories} />
             </div>
           </div>

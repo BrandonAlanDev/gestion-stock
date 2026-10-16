@@ -6,8 +6,6 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import SubidaImagen from "@/components/imagen/SubidaImagen";
 import type { FormaRecorte } from "@/components/imagen/tipos";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 interface Props {
   label: string;
@@ -28,10 +26,6 @@ export default function ImageUploader({
 }: Props) {
   const [subiendo, setSubiendo] = useState(false);
   const operacionRef = useRef(0);
-  const pageConfig = usePageConfig();
-  const pagina = pageConfig?.pageConfig as Record<string, string> | undefined;
-  const primario = pagina?.primaryColor || "#06b6d4";
-  const secundario = pagina?.secondaryColor || "#ffffff";
 
   const base64AFile = (dataUrl: string): File => {
     const [meta, contenido] = dataUrl.split(",");
@@ -87,30 +81,20 @@ export default function ImageUploader({
   };
 
   return (
-    <div
-      className="flex flex-col gap-2"
-      style={{ color: getContrastColor(secundario) }}
-    >
+    <div className="flex flex-col gap-2 text-[var(--admin-texto)]">
       <label
-        className="text-[10px] uppercase tracking-[0.3em] font-black block mb-3"
-        style={{ color: getContrastColor(secundario) }}
+        className="mb-3 block text-[10px] font-black uppercase tracking-[0.3em] text-[var(--admin-texto-suave)]"
       >
         {label}
       </label>
 
-      <div
-        className="rounded-[2rem] border overflow-hidden"
-        style={{
-          borderColor: getContrastColor(primario),
-          backgroundColor: primario.concat("33"),
-        }}
-      >
+      <div className="overflow-hidden rounded-[2rem] border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)]">
         <div className="aspect-video relative flex items-center justify-center">
           {value ? (
             <Image src={value} alt={label} fill className="object-cover" />
           ) : (
-            <div className="text-center">
-              <ImageIcon size={42} className="mx-auto mb-3" />
+            <div className="text-center text-[var(--admin-texto-suave)]">
+              <ImageIcon size={42} className="mx-auto mb-3 text-[var(--admin-primario)]" />
               <p className="text-[10px] uppercase tracking-[0.3em] font-black">
                 Sin Imagen
               </p>
@@ -118,13 +102,7 @@ export default function ImageUploader({
           )}
         </div>
 
-        <div
-          className="p-4 border-t"
-          style={{
-            borderColor: getContrastColor(primario),
-            backgroundColor: secundario,
-          }}
-        >
+        <div className="border-t border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4">
           <SubidaImagen
             valor={value}
             alCambiar={manejarCambio}

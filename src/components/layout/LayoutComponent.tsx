@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
@@ -11,8 +11,10 @@ import CartSidebar from "@/components/cart/CartSidebar";
 import { CartProvider } from "@/contextos/carrito/proveedor-carrito";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import { useTenantId } from "@/hooks/tenants/use-tenant-id";
+import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
+  const temaAdmin = useContext(ContextoTemaAdmin);
   const { isCartOpen, closeCart } = useCart();
   const tenantId = useTenantId();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -73,7 +75,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           onClose={closeCart}
         />
       )}
-      <Toaster richColors position="top-right" closeButton />
+      <Toaster
+        theme={temaAdmin?.tema === "claro" ? "light" : "dark"}
+        richColors
+        position="top-right"
+        closeButton
+      />
     </div>
   );
 }

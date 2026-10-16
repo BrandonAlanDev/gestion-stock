@@ -101,7 +101,7 @@ export default function ZonaImagenSeccion({
         contenidoSuperpuesto={contenidoSuperpuesto ?? undefined}
         accionesSobreZona
       />
-      <p className="text-xs" style={{ color: textColor + "60" }}>
+      <p className="text-xs text-[var(--admin-texto-suave)]">
         Vista previa aproximada
       </p>
     </div>

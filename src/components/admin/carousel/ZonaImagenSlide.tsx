@@ -16,8 +16,6 @@ interface ZonaImagenSlideProps {
   textoBoton: string;
   url: string;
   primaryColor: string;
-  secondaryColor: string;
-  textColor: string;
 }
 
 export default function ZonaImagenSlide({
@@ -33,7 +31,6 @@ export default function ZonaImagenSlide({
   textoBoton,
   url,
   primaryColor,
-  textColor,
 }: ZonaImagenSlideProps) {
   const mostrarPreview = Boolean(imagen && showText);
 
@@ -86,7 +83,7 @@ export default function ZonaImagenSlide({
         alCambiarEditorAbierto={alCambiarEditorAbierto}
         contenidoSuperpuesto={contenidoSuperpuesto ?? undefined}
       />
-      <p className="text-xs" style={{ color: textColor + "60" }}>
+      <p className="text-xs text-[var(--admin-texto-suave)]">
         {imagen ? "Vista previa aproximada del slide" : "La imagen es obligatoria"}
       </p>
     </div>

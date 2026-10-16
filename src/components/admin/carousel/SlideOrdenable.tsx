@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { GripVertical, Image as ImageIcon, Link, Edit, Trash2 } from "lucide-react";
 import type { SlideWizardData } from "@/types/carousel";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
@@ -12,18 +11,13 @@ interface SlideOrdenableProps {
   slide: SlideWizardData;
   onEdit?: (slide: SlideWizardData) => void;
   onDelete: (id: string) => void;
-  primaryColor: string;
-  secondaryColor: string;
 }
 
 export default function SlideOrdenable({
   slide,
   onEdit,
   onDelete,
-  primaryColor,
-  secondaryColor,
 }: SlideOrdenableProps) {
-  const textColor = getContrastColor(secondaryColor);
   const {
     attributes,
     listeners,
@@ -39,27 +33,24 @@ export default function SlideOrdenable({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const borderColor = primaryColor + "40";
-  const iconColor = textColor + "80";
-
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, backgroundColor: primaryColor + "10", borderColor, color: textColor }}
-      className="group relative rounded-xl p-3 transition-colors"
+      style={style}
+      className="group relative rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-3 text-[var(--admin-texto)] transition-colors"
     >
       <div
         {...attributes}
         {...listeners}
         className="flex items-start gap-3 cursor-grab active:cursor-grabbing"
       >
-        <GripVertical className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: iconColor }} />
+        <GripVertical className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--admin-texto-suave)]" />
 
-        <div className="relative w-16 h-12 sm:w-24 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden" style={{ backgroundColor: primaryColor + "15" }}>
+        <div className="relative h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--admin-fondo-hover)] sm:h-16 sm:w-24">
           {slide.image ? (
             <Image src={slide.image} alt="" fill sizes="(min-width: 640px) 96px, 64px" unoptimized={!imagenAdmiteOptimizacion(slide.image)} className="object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ color: iconColor }}>
+            <div className="flex h-full w-full items-center justify-center text-[var(--admin-texto-suave)]">
               <ImageIcon className="w-8 h-8" />
             </div>
           )}
@@ -67,15 +58,15 @@ export default function SlideOrdenable({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
+            <span className="rounded bg-[var(--admin-primario-suave)] px-2 py-0.5 text-xs font-medium text-[var(--admin-primario)]">
               #{slide.order + 1}
             </span>
-            <h4 className="font-medium truncate" style={{ color: textColor }}>{slide.title || "Sin título"}</h4>
+            <h4 className="truncate font-medium text-[var(--admin-texto)]">{slide.title || "Sin título"}</h4>
           </div>
-          <p className="text-sm truncate" style={{ color: textColor + "99" }}>{slide.subtitle || slide.description || "Sin descripción"}</p>
-          <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: textColor + "80" }}>
-            {slide.ctaText && <span className="flex items-center gap-1"><Link className="w-3 h-3" style={{ color: primaryColor }} /> {slide.ctaText}</span>}
-            {slide.url && <span className="flex items-center gap-1"><ImageIcon className="w-3 h-3" style={{ color: primaryColor }} /> Enlace configurado</span>}
+          <p className="truncate text-sm text-[var(--admin-texto-suave)]">{slide.subtitle || slide.description || "Sin descripción"}</p>
+          <div className="mt-2 flex items-center gap-2 text-xs text-[var(--admin-texto-suave)]">
+            {slide.ctaText && <span className="flex items-center gap-1"><Link className="h-3 w-3 text-[var(--admin-primario)]" /> {slide.ctaText}</span>}
+            {slide.url && <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3 text-[var(--admin-primario)]" /> Enlace configurado</span>}
           </div>
         </div>
 
@@ -84,9 +75,7 @@ export default function SlideOrdenable({
             <button
               type="button"
               onClick={() => onEdit(slide)}
-              className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "20"; e.currentTarget.style.color = primaryColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
+              className="cursor-pointer rounded-lg p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]"
               title="Editar"
             >
               <Edit className="w-4 h-4" />
@@ -95,9 +84,7 @@ export default function SlideOrdenable({
           <button
             type="button"
             onClick={() => onDelete(slide.id)}
-            className="p-2 rounded-lg transition-colors cursor-pointer" style={{ color: textColor + "80" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "#ef4444"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "80"; }}
+            className="cursor-pointer rounded-lg p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-peligro-suave)] hover:text-[var(--admin-peligro)]"
             title="Eliminar"
           >
             <Trash2 className="w-4 h-4" />

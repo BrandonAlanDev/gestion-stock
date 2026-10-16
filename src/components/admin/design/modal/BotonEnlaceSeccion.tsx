@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
 import { Link2, Image as IconoImagen, MousePointerClick } from "lucide-react";
 import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import AcordeonSeccion from "./AcordeonSeccion";
@@ -26,9 +25,6 @@ interface BotonEnlaceSeccionProps {
     campo: K,
     valor: DatosTarjeta[K]
   ) => void;
-  primaryColor: string;
-  secondaryColor: string;
-  textColor: string;
 }
 
 export default function BotonEnlaceSeccion({
@@ -41,20 +37,8 @@ export default function BotonEnlaceSeccion({
   categorias,
   productos,
   alCambiar,
-  primaryColor,
-  secondaryColor,
-  textColor,
 }: BotonEnlaceSeccionProps) {
-  const [opcionEnHover, setOpcionEnHover] = useState<string | null>(null);
   const excedeLimite = buttonText.length > LIMITES_TARJETA.boton;
-
-  const estiloInput = {
-    "--input-fondo": textColor + "08",
-    "--input-borde": textColor + "30",
-    "--input-texto": textColor,
-    "--input-placeholder": textColor + "80",
-    "--input-foco": primaryColor,
-  } as CSSProperties;
 
   return (
     <AcordeonSeccion
@@ -63,22 +47,17 @@ export default function BotonEnlaceSeccion({
       titulo="Botón y enlace"
       icono={Link2}
       id="panel-boton-enlace"
-      textColor={textColor}
     >
       <div className="space-y-3">
-        <p
-          className="text-xs font-bold uppercase tracking-[0.2em]"
-          style={{ color: textColor + "99" }}
-        >
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--admin-texto-suave)]">
           Click en
         </p>
-        <p className="text-xs" style={{ color: textColor + "80" }}>
+        <p className="text-xs text-[var(--admin-texto-suave)]">
           ¿Qué elemento abre el enlace?
         </p>
         <div className="grid grid-cols-2 gap-3">
           {OPCIONES_ENLACE.map((opt) => {
             const seleccionada = linkStyle === opt.value;
-            const enHover = opcionEnHover === opt.value;
             const Icono = opt.value === "IMAGE" ? IconoImagen : MousePointerClick;
             return (
               <button
@@ -86,21 +65,12 @@ export default function BotonEnlaceSeccion({
                 type="button"
                 aria-pressed={seleccionada}
                 onClick={() => alCambiar("linkStyle", opt.value as DatosTarjeta["linkStyle"])}
-                onMouseEnter={() => setOpcionEnHover(opt.value)}
-                onMouseLeave={() => setOpcionEnHover(null)}
-                className="flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer"
-                style={
+                className={cn(
+                  "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200",
                   seleccionada
-                    ? {
-                        borderColor: primaryColor,
-                        backgroundColor: primaryColor + "0D",
-                        color: primaryColor,
-                      }
-                    : {
-                        borderColor: enHover ? textColor + "40" : textColor + "20",
-                        color: textColor + "80",
-                      }
-                }
+                    ? "border-[var(--admin-primario)] bg-[var(--admin-fondo-hover)] text-[var(--admin-primario)]"
+                    : "border-[var(--admin-borde)] text-[var(--admin-texto-suave)] hover:border-[var(--admin-primario)]"
+                )}
               >
                 <Icono size={22} />
                 <span className="text-sm font-semibold">{opt.label}</span>
@@ -112,13 +82,11 @@ export default function BotonEnlaceSeccion({
 
       <div className="space-y-1">
         <label
-          className="flex items-center justify-between gap-2 text-sm font-medium"
-          style={{ color: textColor + "CC" }}
+          className="flex items-center justify-between gap-2 text-sm font-medium text-[var(--admin-texto)]"
         >
           <span>Texto del botón</span>
           <span
-            className={cn("font-mono text-xs", excedeLimite && "text-red-400")}
-            style={excedeLimite ? undefined : { color: textColor + "80" }}
+            className={cn("font-mono text-xs text-[var(--admin-texto-suave)]", excedeLimite && "text-[var(--admin-peligro)]")}
           >
             {buttonText.length}/{LIMITES_TARJETA.boton}
           </span>
@@ -128,14 +96,13 @@ export default function BotonEnlaceSeccion({
           value={buttonText}
           onChange={(e) => alCambiar("buttonText", e.target.value)}
           placeholder="Ej: Ver más"
-          style={estiloInput}
           className={cn(
-            "w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all duration-200 bg-[var(--input-fondo)] border-[var(--input-borde)] text-[var(--input-texto)] placeholder:text-[var(--input-placeholder)] focus:border-[var(--input-foco)] focus:ring-2 ring-[var(--input-foco)]/20",
-            excedeLimite && "border-red-500/50 focus:border-red-500"
+            "w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] px-4 py-2.5 text-sm text-[var(--admin-texto)] outline-none transition-all duration-200 placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20",
+            excedeLimite && "border-[var(--admin-peligro)] focus:border-[var(--admin-peligro)]"
           )}
         />
         {excedeLimite && (
-          <p className="text-xs text-red-400">
+          <p className="text-xs text-[var(--admin-peligro)]">
             Excede el límite de {LIMITES_TARJETA.boton} caracteres
           </p>
         )}
@@ -146,9 +113,6 @@ export default function BotonEnlaceSeccion({
         linkValue={linkValue}
         categorias={categorias}
         productos={productos}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-        textColor={textColor}
         alCambiar={alCambiar}
       />
     </AcordeonSeccion>

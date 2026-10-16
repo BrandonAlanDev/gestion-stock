@@ -55,7 +55,7 @@ export default function CampoEtiquetas({ etiquetas, onAgregar, onEliminar }: Pro
                 type="button"
                 onClick={() => onEliminar(etiqueta)}
                 aria-label={`Quitar ${etiqueta}`}
-                className="cursor-pointer text-[var(--admin-texto-suave)] transition hover:text-red-400"
+                className="cursor-pointer text-[var(--admin-texto-suave)] transition hover:text-[var(--admin-peligro)]"
               >
                 <X size={12} />
               </button>

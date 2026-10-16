@@ -17,9 +17,6 @@ interface LinkTypeSelectorProps {
   onChange: (field: string, value: unknown) => void;
   products: { id: string; name: string }[];
   categories: { id: string; name: string }[];
-  primaryColor: string;
-  textColor: string;
-  secondaryColor: string;
 }
 
 export default function LinkTypeSelector({
@@ -28,60 +25,35 @@ export default function LinkTypeSelector({
   onChange,
   products,
   categories,
-  primaryColor,
-  textColor,
-  secondaryColor,
 }: LinkTypeSelectorProps) {
-  const estiloSelect = {
-    backgroundColor: secondaryColor,
-    border: "1px solid " + textColor + "30",
-    color: textColor,
-  };
-
-  const manejarFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = primaryColor;
-    e.currentTarget.style.boxShadow = `0 0 0 2px ${primaryColor}33`;
-  };
-
-  const manejarBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = textColor + "30";
-    e.currentTarget.style.boxShadow = "none";
-  };
-
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>Destino del enlace</label>
+        <label className="block text-sm font-medium text-[var(--admin-texto)]">Destino del enlace</label>
         <select
           value={linkType}
           onChange={(e) => onChange("linkType", e.target.value)}
-          onFocus={manejarFocus}
-          onBlur={manejarBlur}
-          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer"
-          style={estiloSelect}
+          className="w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-4 py-2.5 text-sm text-[var(--admin-texto)] outline-none transition-all duration-200 focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20"
         >
           {LINK_TYPES.map((t) => (
-            <option key={t.value} value={t.value} style={{ backgroundColor: secondaryColor, color: textColor }}>{t.label}</option>
+            <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
       </div>
 
       {(linkType === "CATEGORY" || linkType === "PRODUCT") && (
         <div className="space-y-1">
-          <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>
+          <label className="block text-sm font-medium text-[var(--admin-texto)]">
             {linkType === "CATEGORY" ? "Seleccionar categoría" : "Seleccionar producto"}
           </label>
           <select
             value={url}
             onChange={(e) => onChange("url", e.target.value)}
-            onFocus={manejarFocus}
-            onBlur={manejarBlur}
-            className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 cursor-pointer"
-            style={estiloSelect}
+            className="w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-4 py-2.5 text-sm text-[var(--admin-texto)] outline-none transition-all duration-200 focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20"
           >
-            <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>-- Seleccionar --</option>
+            <option value="">-- Seleccionar --</option>
             {(linkType === "CATEGORY" ? categories : products).map((item) => (
-              <option key={item.id} value={item.id} style={{ backgroundColor: secondaryColor, color: textColor }}>{item.name}</option>
+              <option key={item.id} value={item.id}>{item.name}</option>
             ))}
           </select>
         </div>
@@ -89,7 +61,7 @@ export default function LinkTypeSelector({
 
       {linkType === "EXTERNAL" && (
         <div className="space-y-2 relative">
-          <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>
+          <label className="block text-sm font-medium text-[var(--admin-texto)]">
             URL completa
           </label>
           <div className="relative">
@@ -97,26 +69,24 @@ export default function LinkTypeSelector({
               value={url}
               onChange={(value) => onChange("url", value)}
               placeholder="https://..."
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
               className={cn(
                 url && !url.startsWith("http")
-                  ? "border-red-500/50 focus:border-red-500"
+                  ? "border-[var(--admin-peligro)] focus:border-[var(--admin-peligro)]"
                   : ""
               )}
             />
             {url && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 {url.startsWith("http") ? (
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle className="w-5 h-5 text-[var(--admin-exito)]" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <AlertCircle className="w-5 h-5 text-[var(--admin-peligro)]" />
                 )}
               </div>
             )}
           </div>
           {url && !url.startsWith("http") && (
-            <p className="text-xs text-red-400 flex items-center gap-1">
+            <p className="flex items-center gap-1 text-xs text-[var(--admin-peligro)]">
               <AlertCircle className="w-3 h-3" /> La URL debe empezar con http:// o https://
             </p>
           )}

@@ -1,43 +1,19 @@
 "use client";
 
 import { Edit2 } from "lucide-react";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 export default function CategoryTriggerButton({
   isEdit,
-  primaryColor,
-  innerBg,
-  overlayBorder,
-  textColor,
   onOpen,
 }: {
   isEdit: boolean;
-  primaryColor: string;
-  innerBg: string;
-  overlayBorder: string;
-  textColor: string;
   onOpen: () => void;
 }) {
   if (isEdit) {
     return (
       <button
         onClick={onOpen}
-        className="transition-all"
-        style={{
-          padding: "10px",
-          backgroundColor: innerBg,
-          border: `1px solid ${overlayBorder}`,
-          borderRadius: "12px",
-          color: textColor,
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = primaryColor;
-          (e.currentTarget as HTMLButtonElement).style.color = primaryColor;
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = overlayBorder;
-          (e.currentTarget as HTMLButtonElement).style.color = textColor;
-        }}
+        className="rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-2.5 text-[var(--admin-texto-suave)] transition-colors hover:border-[var(--admin-primario)] hover:text-[var(--admin-primario)]"
       >
         <Edit2 size={16} />
       </button>
@@ -47,18 +23,7 @@ export default function CategoryTriggerButton({
   return (
     <button
       onClick={onOpen}
-      className="font-black uppercase italic tracking-tighter transition-all"
-      style={{
-        backgroundColor: primaryColor,
-        color: getContrastColor(primaryColor),
-        borderRadius: "12px",
-        padding: "10px 20px",
-        fontSize: "13px",
-        border: "none",
-        cursor: "pointer",
-      }}
-      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9")}
-      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
+      className="rounded-xl bg-[var(--admin-primario)] px-5 py-2.5 text-[13px] font-black uppercase italic tracking-tighter text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90"
     >
       + Nueva Categoría
     </button>

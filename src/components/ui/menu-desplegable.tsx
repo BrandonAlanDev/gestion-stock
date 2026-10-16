@@ -69,7 +69,7 @@ export default function MenuDesplegable({
               }}
               className={combinarClases(
                 "flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[var(--admin-fondo-hover)]",
-                elemento.peligroso ? "text-red-400" : "text-[var(--admin-texto)]"
+                elemento.peligroso ? "text-[var(--admin-peligro)]" : "text-[var(--admin-texto)]"
               )}
             >
               {elemento.icono && <elemento.icono size={15} />}

@@ -11,7 +11,6 @@ import { CSS } from "@dnd-kit/utilities";
 import GridModal, { type DatosTarjeta, type SelectorCategoria, type SelectorProducto } from "./GridModal";
 import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import { actualizarSeccionDestacada } from "@/actions/page-config/secciones-destacadas.actions";
 
@@ -82,50 +81,45 @@ function normalizarGrid(grid: GridConfig): GridLocal {
   };
 }
 
-function SortableGridItem({ grid, primaryColor, secondaryColor, onEdit, onRemove }: {
+function SortableGridItem({ grid, onEdit, onRemove }: {
   grid: GridLocal;
-  primaryColor: string;
-  secondaryColor: string;
   onEdit: () => void;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: grid.id });
-  const textColor = getContrastColor(secondaryColor);
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    backgroundColor: textColor.concat("05"),
-    borderColor: textColor.concat("22"),
   };
 
   return (
     <div
       ref={setNodeRef}
       style={dragStyle}
-      className="flex items-center gap-4 p-4 border rounded-xl"
+      className="flex items-center gap-4 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 text-[var(--admin-texto)]"
     >
-      <button {...attributes} {...listeners} className="cursor-grab p-1 opacity-50 hover:opacity-100 transition-opacity">
+      <button {...attributes} {...listeners} className="cursor-grab p-1 text-[var(--admin-texto-suave)] opacity-70 transition-opacity hover:opacity-100">
         <GripVertical size={20} />
       </button>
       {grid.image ? (
         <Image src={grid.image} width={64} height={64} unoptimized={!imagenAdmiteOptimizacion(grid.image)} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg" alt="" />
       ) : (
-        <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-lg bg-black/10" />
+        <div className="w-14 h-14 shrink-0 rounded-lg bg-[var(--admin-fondo-hover)] sm:h-16 sm:w-16" />
       )}
       <div className="flex-1 min-w-0">
         <p className="font-bold truncate">{grid.title}</p>
-        <p className="text-xs opacity-60">{grid.subtitle}</p>
+        <p className="text-xs text-[var(--admin-texto-suave)]">{grid.subtitle}</p>
         <div className="flex gap-2 mt-1 flex-wrap">
-          {grid.subtitleDim && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Gris</span>}
-          {grid.subtitleNeon && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Neón</span>}
-          {grid.linkStyle === "BUTTON" && <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>Botón: {grid.buttonVariant}</span>}
+          {grid.subtitleDim && <span className="rounded bg-[var(--admin-fondo-hover)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--admin-texto-suave)]">Gris</span>}
+          {grid.subtitleNeon && <span className="rounded bg-[var(--admin-fondo-hover)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--admin-texto-suave)]">Neón</span>}
+          {grid.linkStyle === "BUTTON" && <span className="rounded bg-[var(--admin-fondo-hover)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--admin-texto-suave)]">Botón: {grid.buttonVariant}</span>}
         </div>
       </div>
-      <button onClick={onEdit} className="p-2 opacity-70 hover:opacity-100 transition-opacity">
+      <button onClick={onEdit} aria-label="Editar sección" className="p-2 text-[var(--admin-texto-suave)] opacity-80 transition-opacity hover:opacity-100">
         <Pencil size={18} />
       </button>
-      <button onClick={onRemove} className="p-2 text-red-500 hover:text-red-600 transition-colors">
+      <button onClick={onRemove} aria-label="Eliminar sección" className="p-2 text-[var(--admin-peligro-accion)] transition-colors hover:opacity-80">
         <Trash2 size={18} />
       </button>
     </div>
@@ -254,36 +248,26 @@ export default function HomeSectionsDesign({
 
   return (
     <section
-      className="space-y-8 rounded-[2rem] border p-4 shadow-sm sm:p-8"
-      style={{
-        backgroundColor: secondaryColor,
-        color: getContrastColor(secondaryColor),
-        borderColor: getContrastColor(secondaryColor).concat("22")
-      }}
+      className="space-y-8 rounded-[2rem] border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-4 text-[var(--admin-texto)] shadow-sm sm:p-8"
     >
       {/* 1. SECTOR DE DISEÑO */}
       <div>
         <h2
-          className="text-xl font-black uppercase italic mb-6"
-          style={{ color: primaryColor }}
+          className="mb-6 text-xl font-black uppercase italic text-[var(--admin-texto)]"
         >
           Sección Destacada
         </h2>
 
         {/* Título editable */}
         <div className="mb-6">
-          <label className="text-xs font-black uppercase tracking-[0.3em] mb-2 block" style={{ color: getContrastColor(secondaryColor) }}>
+          <label className="mb-2 block text-xs font-black uppercase tracking-[0.3em] text-[var(--admin-texto-suave)]">
             Título de la sección
           </label>
           <input
             type="text"
             value={sectionTitle}
             onChange={(e) => setSectionTitle(e.target.value)}
-            className="w-full p-4 rounded-xl border bg-transparent font-bold"
-            style={{
-              borderColor: getContrastColor(secondaryColor).concat("44"),
-              color: getContrastColor(secondaryColor),
-            }}
+            className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 font-bold text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)] focus:ring-2 focus:ring-[var(--admin-primario)]/20"
             placeholder="Dejalo vacío para ocultarlo"
           />
         </div>
@@ -297,12 +281,7 @@ export default function HomeSectionsDesign({
                 type="button"
                 onClick={() => setLayout(type)}
                 aria-pressed={isSelected}
-                className="cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 hover:opacity-90 flex flex-col items-center justify-center gap-3"
-                style={{
-                  borderColor: isSelected ? primaryColor : getContrastColor(secondaryColor).concat("22"),
-                  backgroundColor: isSelected ? primaryColor.concat("15") : "transparent",
-                  color: isSelected ? primaryColor : getContrastColor(secondaryColor),
-                }}
+                className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 transition-all duration-200 hover:opacity-90 ${isSelected ? "border-[var(--admin-primario)] bg-[var(--admin-fondo-hover)] text-[var(--admin-primario)]" : "border-[var(--admin-borde)] text-[var(--admin-texto)] hover:border-[var(--admin-primario)]"}`}
               >
                 {type === "grid" && <Grid2X2 size={40} className="shrink-0" />}
                 {type === "collage" && <LayoutDashboard size={40} className="shrink-0" />}
@@ -317,7 +296,7 @@ export default function HomeSectionsDesign({
       </div>
 
       {/* 2. SECTOR DE SECCIONES (Grids) */}
-      <div className="border-t pt-8" style={{ borderColor: getContrastColor(secondaryColor).concat("22") }}>
+      <div className="border-t border-[var(--admin-borde)] pt-8">
         <h3 className="font-bold mb-4">Secciones actuales ({grids.length})</h3>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={grids.map((g) => g.id)} strategy={verticalListSortingStrategy}>
@@ -326,8 +305,6 @@ export default function HomeSectionsDesign({
                 <SortableGridItem
                   key={grid.id}
                   grid={grid}
-                  primaryColor={primaryColor}
-                  secondaryColor={secondaryColor}
                   onEdit={() => { setEditingGrid(grid); setIsModalOpen(true); }}
                   onRemove={() => handleRemove(grid.id)}
                 />
@@ -338,11 +315,7 @@ export default function HomeSectionsDesign({
 
         <button
           onClick={() => { setEditingGrid(null); setIsModalOpen(true); }}
-          className="w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 transition-all opacity-80 hover:opacity-100"
-          style={{
-            borderColor: getContrastColor(secondaryColor).concat("44"),
-            backgroundColor: getContrastColor(secondaryColor).concat("05")
-          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--admin-borde)] py-4 text-[var(--admin-texto-suave)] opacity-80 transition-all hover:border-[var(--admin-primario)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)] hover:opacity-100"
         >
           <Plus size={20} /> Agregar Nueva Sección
         </button>
@@ -351,11 +324,7 @@ export default function HomeSectionsDesign({
       <button
         onClick={handleSave}
         disabled={isPending}
-        className="w-full h-14 font-black rounded-2xl transition-opacity hover:opacity-90 uppercase tracking-wider"
-        style={{
-          backgroundColor: primaryColor,
-          color: getContrastColor(primaryColor)
-        }}
+        className="h-14 w-full rounded-2xl bg-[var(--admin-primario)] font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isPending ? "Guardando..." : "Guardar Todo"}
       </button>

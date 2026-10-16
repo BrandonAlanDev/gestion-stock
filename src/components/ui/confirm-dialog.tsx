@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
+import { useContext } from "react";
+import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 
 interface ConfirmDialogProps {
   title: string;
@@ -23,12 +25,32 @@ export default function ConfirmDialog({
   useBloqueoScroll(true);
 
   const { pageConfig } = usePageConfig();
-  const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const textColor = getContrastColor(background);
-  const isDarkBg = textColor === "#ffffff";
-  const inputBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-  const overlayBorder = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-  const mutedColor = textColor + "99";
+  const contextoTemaAdmin = useContext(ContextoTemaAdmin);
+  const adminActivo = contextoTemaAdmin !== null;
+  const temaOscuro = contextoTemaAdmin?.tema === "oscuro";
+  const background = adminActivo
+    ? "var(--admin-fondo-opaco)"
+    : (pageConfig?.secondaryColor as string) || "#00b4d8";
+  const textColor = adminActivo
+    ? "var(--admin-texto)"
+    : getContrastColor(background);
+  const isDarkBg = adminActivo
+    ? temaOscuro
+    : textColor === "#ffffff";
+  const inputBg = adminActivo
+    ? "var(--admin-fondo-suave)"
+    : isDarkBg
+      ? "rgba(255,255,255,0.06)"
+      : "rgba(0,0,0,0.04)";
+  const overlayBorder = adminActivo
+    ? "var(--admin-borde)"
+    : isDarkBg
+      ? "rgba(255,255,255,0.12)"
+      : "rgba(0,0,0,0.08)";
+  const mutedColor = adminActivo
+    ? "var(--admin-texto-suave)"
+    : textColor + "99";
+  const colorPeligro = adminActivo ? "var(--admin-peligro-accion)" : "#ef4444";
 
   return (
     <div
@@ -66,7 +88,7 @@ export default function ConfirmDialog({
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg text-sm font-bold uppercase text-white cursor-pointer"
-            style={{ background: "#ef4444" }}
+            style={{ background: colorPeligro }}
           >
             {textoConfirmar ?? "Eliminar"}
           </button>

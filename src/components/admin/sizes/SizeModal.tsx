@@ -9,10 +9,10 @@ interface SizeModalProps {
   onSave: (data: { id?: string; sizeTypeId: string; value: string; order: number }) => Promise<void>;
   sizeTypeId: string;
   initialData?: { id: string; value: string; order: number } | null;
-  colors: { bg: string; accent: string; text: string; accentText: string };
+  colors?: { bg: string; accent: string; text: string; accentText: string };
 }
 
-export default function SizeModal({ isOpen, onClose, onSave, sizeTypeId, initialData, colors }: SizeModalProps) {
+export default function SizeModal({ isOpen, onClose, onSave, sizeTypeId, initialData }: SizeModalProps) {
   const [value, setValue] = useState("");
   const [order, setOrder] = useState("0");
   const [loading, setLoading] = useState(false);
@@ -44,11 +44,8 @@ export default function SizeModal({ isOpen, onClose, onSave, sizeTypeId, initial
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div 
-        className="w-full max-w-sm p-6 rounded-2xl shadow-2xl relative border border-white/10"
-        style={{ backgroundColor: colors.bg, color: colors.text }}
-      >
-        <button onClick={onClose} className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity">
+      <div className="relative w-full max-w-sm rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] shadow-2xl">
+        <button onClick={onClose} className="absolute right-4 top-4 text-[var(--admin-texto-suave)] transition-opacity hover:text-[var(--admin-texto)]">
           <X size={20} />
         </button>
         <h2 className="text-xl font-black uppercase italic mb-6">
@@ -56,33 +53,32 @@ export default function SizeModal({ isOpen, onClose, onSave, sizeTypeId, initial
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2 opacity-80">Valor (ej: XL, 42)</label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--admin-texto-suave)]">Valor (ej: XL, 42)</label>
             <input
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 rounded-xl p-3 outline-none focus:ring-1 uppercase"
+              className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-3 text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-1 focus:ring-[var(--admin-primario)] uppercase"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2 opacity-80">Orden de visualización</label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--admin-texto-suave)]">Orden de visualización</label>
             <input
               type="number"
               value={order}
               onChange={(e) => setOrder(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 rounded-xl p-3 outline-none focus:ring-1"
+              className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-3 text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-1 focus:ring-[var(--admin-primario)]"
             />
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-5 py-2 rounded-xl bg-black/20 text-sm font-bold">
+            <button type="button" onClick={onClose} className="rounded-xl bg-[var(--admin-fondo-suave)] px-5 py-2 text-sm font-bold text-[var(--admin-texto)] transition hover:bg-[var(--admin-fondo-hover)]">
               Cancelar
             </button>
             <button 
               type="submit" 
               disabled={loading}
-              className="px-5 py-2 rounded-xl text-sm font-bold uppercase flex items-center gap-2"
-              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="flex items-center gap-2 rounded-xl bg-[var(--admin-primario)] px-5 py-2 text-sm font-bold uppercase text-[var(--admin-primario-texto)] transition hover:opacity-90 disabled:opacity-50"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               Guardar

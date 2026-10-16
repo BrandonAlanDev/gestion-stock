@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertTriangle } from "lucide-react";
 import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 
 const TYPE_LABELS: Record<string, string> = {
   HERO: "Portada principal",
@@ -16,7 +15,6 @@ import CarouselWizardStep2 from "./CarouselWizardStep2";
 import CarouselWizardStep3 from "./CarouselWizardStep3";
 import SlideEditor from "./SlideEditor";
 import type { SlideFormData } from "./SlideEditor";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { ContextoCapas } from "@/contextos/capas/contexto-capas";
 import { useCapa } from "@/contextos/capas/use-capa";
 import type { CarouselWizardData, SlideWizardData, CarouselType } from "@/types/carousel";
@@ -52,11 +50,6 @@ const DEFAULT_WIZARD_DATA: CarouselWizardData = {
 };
 
 export default function CarouselWizard({ isOpen, onClose, onSave, initialData }: CarouselWizardProps) {
-  const { pageConfig } = usePageConfig();
-  const primaryColor = pageConfig?.primaryColor || "#06b6d4";
-  const secondaryColor = pageConfig?.secondaryColor || "#fafafa";
-  const textColor = getContrastColor(secondaryColor);
-
   const { nivel, zIndice } = useCapa();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,18 +174,17 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ zIndex: zIndice }}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" style={{ zIndex: zIndice }}>
         <div
           className={cn(
-            "w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl"
+            "max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl"
           )}
-          style={{ backgroundColor: secondaryColor, borderColor: primaryColor, color: textColor }}
       >
-        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: primaryColor + "40" }}>
+        <div className="flex items-center justify-between border-b border-[var(--admin-borde)] p-4">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <h2 className="min-w-0 truncate text-xl font-bold" style={{ color: textColor }}>
+            <h2 className="min-w-0 truncate text-xl font-bold text-[var(--admin-texto)]">
               {initialData ? "Editar" : "Nueva"} sección
-              <span className="hidden px-2 py-0.5 text-xs font-medium rounded-full sm:inline" style={{ backgroundColor: primaryColor + "20", color: primaryColor }}>
+              <span className="hidden rounded-full bg-[var(--admin-primario)]/15 px-2 py-0.5 text-xs font-medium text-[var(--admin-primario)] sm:inline">
                 {TYPE_LABELS[wizardData.type] || wizardData.type}
               </span>
             </h2>
@@ -201,17 +193,16 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
                 <div key={i} className="flex items-center gap-1">
                   <span
                     className={cn(
-                      "px-3 py-1 text-xs font-medium rounded-full transition-colors"
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      i + 1 <= step
+                        ? "bg-[var(--admin-primario)]/15 text-[var(--admin-primario)]"
+                        : "bg-[var(--admin-fondo-suave)] text-[var(--admin-texto-suave)]"
                     )}
-                    style={{
-                      backgroundColor: i + 1 < step ? primaryColor + "20" : i + 1 === step ? primaryColor + "20" : textColor + "1A",
-                      color: i + 1 < step ? primaryColor : i + 1 === step ? primaryColor : textColor + "80",
-                    }}
                   >
                     {i + 1}
                   </span>
                   {i < STEP_TITLES.length - 1 && (
-                    <span className={cn("w-8 h-0.5 transition-colors")} style={{ backgroundColor: i + 1 < step ? primaryColor : textColor + "1A" }} />
+                    <span className={cn("h-0.5 w-8 transition-colors", i + 1 < step ? "bg-[var(--admin-primario)]" : "bg-[var(--admin-borde)]")} />
                   )}
                 </div>
               ))}
@@ -219,10 +210,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
           </div>
           <button
             onClick={handleClose}
-            className="shrink-0 p-2 rounded-lg transition-colors cursor-pointer"
-            style={{ color: textColor + "99" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}
+            className="shrink-0 rounded-lg p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -235,8 +223,6 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
               initialTitle={initialData?.title}
               initialHeroStyle={initialData?.settings?.heroStyle}
               onComplete={handleStep1Complete}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
             />
           )}
 
@@ -247,8 +233,6 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
               initialSettings={wizardData.settings}
               onComplete={handleStep2Complete}
               onBack={() => setStep(1)}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
             />
           )}
 
@@ -260,35 +244,29 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
               onSlideDelete={handleSlideDelete}
               onSlidesReorder={handleSlidesReorder}
               onBack={() => setStep(2)}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
             />
           )}
 
           {error && (
-            <div className="p-3 rounded-lg flex items-center gap-2 text-sm" style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}>
+            <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: primaryColor + "40" }}>
+          <div className="flex justify-end gap-3 border-t border-[var(--admin-borde)] pt-4">
             <button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 cursor-pointer"
-              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = textColor + "0A"; }}
-              onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = "transparent"; }}
+              className="cursor-pointer rounded-lg border border-[var(--admin-borde)] px-4 py-2 font-medium text-[var(--admin-texto-suave)] transition-all hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)] disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9"; }}
               onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1"; }}
             >
@@ -305,7 +283,7 @@ export default function CarouselWizard({ isOpen, onClose, onSave, initialData }:
     <ContextoCapas.Provider value={nivel + 1}>
       {modalContent}
       {editingSlide && (
-        <SlideEditor
+            <SlideEditor
           isOpen={true}
           onClose={() => setEditingSlide(null)}
           onSave={handleSlideEditorSave}

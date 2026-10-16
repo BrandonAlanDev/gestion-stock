@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateContactConfig } from "@/actions/page-config/contact.actions";
-import Input from "./shared/Input";
+import Input from "@/components/admin/page-config/shared/Input";
 
 interface Props {
   config?: {
@@ -16,17 +16,7 @@ interface Props {
   primaryColor?: string;
   secondaryColor?: string;
 }
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
-
-export default function ContactSection({ config, primaryColor, secondaryColor }: Props) {
+export default function ContactSection({ config }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const [form, setForm] = useState({
@@ -54,21 +44,9 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
 
   return (
 
-    <section className="rounded-[2rem] border overflow-hidden"
-      style={{
-        backgroundColor:secondaryColor || "black",
-        color:getContrastColor(secondaryColor || "black"),
-        borderColor:getContrastColor(secondaryColor || "black")
-      }}
-    >
-      <div className="border-b border-neutral-900 px-4 py-4 sm:px-8 sm:py-6 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400"
-          style={{
-            backgroundColor:primaryColor?.concat("33"),
-            color:primaryColor || "black",
-            borderColor:primaryColor || "black"
-          }}
-        >
+    <section className="overflow-hidden rounded-[2rem] border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] text-[var(--admin-texto)]">
+      <div className="flex items-center gap-4 border-b border-[var(--admin-borde)] px-4 py-4 sm:px-8 sm:py-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--admin-primario-suave)] bg-[var(--admin-primario-suave)] text-[var(--admin-primario)]">
           <Phone size={22} />
         </div>
 
@@ -106,11 +84,7 @@ export default function ContactSection({ config, primaryColor, secondaryColor }:
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="w-full sm:w-auto justify-center h-14 px-8 rounded-2xl font-black uppercase tracking-[0.25em] text-xs flex items-center gap-3 hover:cursor-pointer opacity-90 hover:opacity-100 transition"
-          style={{
-            backgroundColor: primaryColor || "black",
-            color: getContrastColor(primaryColor || "black"),
-          }}>
+          className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-[var(--admin-primario)] px-8 text-xs font-black uppercase tracking-[0.25em] text-[var(--admin-primario-texto)] opacity-90 transition hover:cursor-pointer hover:opacity-100 disabled:opacity-50 sm:w-auto">
           <Save size={18} />
           {isPending ? "Guardando..." : "Guardar Contacto"}
         </button>

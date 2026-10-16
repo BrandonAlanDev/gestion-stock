@@ -1,75 +1,45 @@
-### Idioma
+# Instrucciones para agentes — gestion-stock
 
-- Todo el código, comentarios, mensajes de UI y nombres de archivos/carpetas deben estar en **español**.
-- Excepciones (solo cuando el requisito técnico o el uso universal lo exige):
-  - APIs de librerías y del sistema: `useSession`, `signIn`, `PrismaClient`, `fetch`, `Request`, `onDelete`, `GoogleProvider`, etc.
-  - Modelos de base de datos de next-auth: `user`, `account`, `user_role` (nombres exactos exigidos por el adaptador).
-  - Nombres universales compartidos por ambos idiomas: `footer`, `header`, `hero`, `layout`, `page`, `route`, `hook`, `middleware`, `proxy`, `server.js`, `next.config.ts`, etc.
-  - Paquetes npm y nombres exportados por librerías de terceros (lucide-react, radix-ui, etc.).
-- Regla ESLint activa: `@typescript-eslint/no-explicit-any: error` — prohibido usar `any`.
+Estas instrucciones rigen el repositorio completo. Para entender una zona concreta, consultá el código y la documentación pertinente: `ARCHITECTURE.md` para el mapa de capas, `MULTI_TENANCY.md` para aislamiento y `README.md` para puesta en marcha. Si difieren del comportamiento actual, verificá el código antes de cambiarlo y actualizá la documentación afectada.
 
-## Reglas de construcción (PERMANENTES — no eliminar, no saltar)
+## Proyecto y arquitectura
 
-Estas reglas se agregan a las anteriores y son de cumplimiento obligatorio para TODO código nuevo y
-toda modificación. No pueden borrarse, atenuarse ni saltarse nunca.
+- Aplicación única de Next.js App Router con React, TypeScript estricto, Prisma y MySQL/MariaDB. La arquitectura elegida es un **monolito modular por capacidades de negocio** (catálogo, inventario, tienda, pedidos, pagos, configuración y tenants), con despliegue conjunto y límites de dominio claros. No introduzcas servicios separados por defecto.
+- Respetá la organización existente: `src/app/` define rutas, layouts y handlers; `src/components/` contiene interfaz; `src/actions/` expone operaciones del servidor; `src/lib/` contiene servicios, acceso a datos e infraestructura. Dentro de esas áreas, agrupá por dominio. `src/hooks/`, `src/contextos/` y `src/types/` alojan piezas compartidas cuando corresponda.
+- Las rutas y los componentes de interfaz coordinan la presentación. Las Server Actions y los route handlers validan entradas, aplican autenticación y autorización, coordinan la operación e invalidan caché cuando corresponde. Los servicios encapsulan lógica o consultas reutilizables y reciben sus dependencias de forma explícita. Una consulta simple no exige crear una capa o archivo adicional.
+- Mantené las dependencias entre dominios explícitas. Extraé código a `src/lib/` compartido cuando tenga uso real en más de un dominio; evitá tanto la duplicación como las abstracciones preventivas. Evolucioná la estructura al tocar cada función, sin migraciones masivas ajenas a la tarea.
+- Conservá las convenciones que impone Next.js (`page.tsx`, `layout.tsx`, `route.ts`, etc.) y los archivos de configuración necesarios en sus ubicaciones previstas. Usá `@/` para imports desde `src/` entre carpetas; los relativos locales son válidos si mantienen la lectura clara.
 
-1. **Máximo UNA función exportada por archivo de código.** Un archivo (ts/tsx/js/jsx) puede exportar
-   una sola función (solo se puede saltear esta reglas archivos que sean de tipo clase como los actions que tienen su crud y su logica del mismo tipo), componente React o hook. Si se necesitan más, se crean archivos adicionales.
-   - Excluidos: archivos de constantes, tipos e interfaces (no exportan funciones).
-   - Los closures internos de un componente (event handlers, callbacks) no cuentan como funciones del
-     archivo; si un helper deja de ser trivial, se mueve a su propio archivo.
-2. **Tamaño máximo de archivo: 400 líneas (objetivo: 300).** Ningún archivo de código puede superar
-   las 400 líneas. Si lo supera, debe desglosarse en archivos con responsabilidad única.
-3. **Regla del boy scout:** cualquier archivo existente que se modifique y quede fuera de límites
-   (varias funciones exportadas o más de 400 líneas) debe desglosarse en la misma tanda de cambios.
-4. Los documentos `.md` (documentación, planificación) no están sujetos a los límites de líneas.
+## Invariantes del negocio
 
-## Organización por carpetas (PERMANENTE — no eliminar, no saltar)
+- El `tenantId` autorizado se obtiene en el servidor, nunca de un valor del cliente como prueba de autorización. En fronteras públicas usá los controles de tenant activo; en operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
+- Toda consulta o mutación de datos de negocio debe quedar acotada al tenant, incluida la validación de IDs y relaciones recibidos del cliente. Los servicios reciben el `tenantId` explícito. Conservá el tenant en claves de caché, almacenamiento del cliente y rutas de Cloudinary. Consultá `MULTI_TENANCY.md` al modificar estas rutas.
+- Mantené atómicas las operaciones que cambian stock y movimientos. En pedidos, pagos y callbacks externos, preservá los controles existentes de autorización, consistencia e idempotencia; verificá su flujo antes de editarlo.
+- `prisma/schema.prisma` es la fuente de verdad del modelo. No edites `generated/` ni `.next/` manualmente. No ejecutes cambios de esquema contra una base compartida sin conocer el entorno y el alcance.
 
-Esta regla complementa las reglas de construcción y es de cumplimiento obligatorio para TODO
-código nuevo y toda modificación. Su objetivo es mantener una arquitectura ordenada y predecible.
+## Arquitectura objetivo del próximo sprint (todavía no implementada)
 
-1. **Todo archivo de código debe vivir dentro de una carpeta que indique su dominio o propósito.**
-   Está PROHIBIDO dejar archivos sueltos en la raíz de `src/` o en carpetas de dominio.
-   - Si el archivo pertenece a un dominio existente, se coloca en su carpeta de dominio.
-   - Si el dominio no existe, se crea una carpeta nueva con nombre descriptivo.
-2. **Esquema de referencia de `src/`:**
-   - `src/app/` — solo archivos de ruta de Next.js (`page`, `layout`, `route`, `loading`, `error`,
-     `not-found`, `manifest`, `robots`, `sitemap`) y archivos propios del framework (`auth.ts`,
-     `proxy.ts`). Los componentes de interfaz NO viven acá.
-   - `src/components/<dominio>/` — componentes por dominio: `comunes/`, `ui/`, `inicio/`,
-   - `src/actions/<dominio>/` — server actions por dominio: `clientes/`, `presupuestos/`,
-     `mensajes/`, `administradores/`, `contacto/`, `sesion/`.
-   - `src/lib/` — lógica compartida e infraestructura (`utilidades/`, `datos-estructurados/`,
-     configuración, validaciones, prisma, etc.).
-   - `src/hooks/`, `src/contextos/`, `src/types/` — hooks, contextos y tipos globales.
-3. **Archivo nuevo:** si no existe la carpeta de su dominio, se crea. Está prohibido crear un
-   archivo de código en un lugar que no sea su carpeta de dominio.
-4. **Regla del boy scout aplicada a la organización:** si durante una modificación se detecta un
-   archivo suelto (fuera de su carpeta de dominio), se lo mueve a su carpeta y se actualizan sus
-   imports en la misma tanda de cambios.
-5. **Los imports usan el alias `@/`** (mapeado a `src/`). Nunca se usan imports relativos para
-   cruzar dominios; los relativos solo se permiten dentro de una misma carpeta si es estrictamente
-   necesario.
+- Se mantendrá una sola aplicación Next.js, pero se migrará a **una base de datos por tenant**. Una base central funcionará como directorio: a partir del dominio normalizado resolverá la identidad del tenant, su estado y la referencia a su base de datos. Los datos operativos de cada tienda residirán en su propia base.
+- La resolución y selección de la conexión ocurrirán exclusivamente en el servidor, antes de consultar datos del tenant. Un dominio desconocido, inactivo o sin base válida debe fallar de forma cerrada; nunca debe usar una base por defecto ni aceptar un destino de conexión indicado por el cliente.
+- Hasta completar la migración, siguen vigentes el `tenantId`, los filtros, las validaciones y el `PrismaClient` compartido actuales. No elimines estas protecciones ni presentes la arquitectura objetivo como comportamiento existente.
+- Cuando se implemente, centralizá el acceso a la base del tenant detrás de una interfaz explícita. Diseñá el ciclo de vida y los límites de las conexiones por tenant; evitá crear un cliente y un pool nuevos por solicitud. Mantené la identidad del tenant en autorización, caché, almacenamiento y assets aunque cambie su base física.
+- Antes del corte, definí y verificá el esquema del directorio central, la ubicación de usuarios y sesiones, el manejo de credenciales, el aprovisionamiento y las migraciones por tenant, el traslado de datos, la reversión y las pruebas de aislamiento. `MULTI_TENANCY.md` detalla la transición prevista.
 
-## Uso de subagentes (OBLIGATORIO)
+## Código y alcance de los cambios
 
-1. **Desglose obligatorio:** toda tarea o fase que se pueda desglosar en sub-tareas debe
-   ejecutarse mediante subagentes (`task` tool). Nunca ejecutar directamente trabajo que
-   pueda paralelizarse o delegarse.
-2. **Prompts detallados:** cada subagente debe recibir el prompt más detallado y con el mayor
-   contexto posible: objetivo, alcance exacto, archivos involucrados, patrones del proyecto,
-   y TODAS las reglas de comportamiento de este documento (idioma, arquitectura, capas,
-   límites de líneas, una función por archivo, imports con `@/`, etc.).
-3. **Paralelización:** lanzar varios subagentes en paralelo cuando las sub-tareas sean
-   independientes entre sí (un solo mensaje con múltiples llamadas a `task`).
-4. **Agente verificador global:** cuando una fase requiera muchos subagentes (3 o más) y
-   toque código compartido entre ellos, tras completar los subagentes se debe lanzar un
-   agente verificador (`verificador`) que revise TODO el código producido en la fase,
-   detecte fallas, incoherencias, violaciones de las reglas de este documento y archivos
-   fuera de límites, y las repare. El verificador es el último paso de la fase y su
-   aprobación es requisito para dar la fase por terminada. La unica exepción es solo si 
-   es una armado de un plan no se va a requerir de un agente verificador global.
-5. **Nunca delegar la coordinación:** la orquestación de subagentes, la definición de
-   interfaces entre sub-tareas y la decisión final sobre resultados siempre las hace el
-   agente principal, no los subagentes.
+- Escribí textos de interfaz y comentarios nuevos en español. Para nombres de código, seguí la convención del módulo existente y conservá nombres exigidos por frameworks, bibliotecas o esquemas. No renombres símbolos existentes solo para uniformar el idioma.
+- Respetá TypeScript estricto y ESLint; evitá `any` explícito. Validá datos externos en la frontera con los esquemas o patrones existentes.
+- Un archivo debe tener una responsabilidad comprensible. Puede exportar varias funciones relacionadas y no tiene un máximo universal de líneas. Dividilo cuando mezcle responsabilidades, dificulte entender cambios o pruebas, o genere acoplamiento; no lo fragmentes solo para cumplir una cifra.
+- Limitá cada cambio al problema pedido y a las correcciones necesarias para que funcione. Si detectás deuda no relacionada, registrala o mencionála sin convertir un ajuste pequeño en una refactorización extensa. Conservá el comportamiento público salvo que el pedido lo cambie.
+
+## Subagentes
+
+- La delegación es opcional. Usá subagentes cuando el usuario la solicite o las instrucciones aplicables lo indiquen, y el trabajo tenga partes independientes, alcance claro o análisis aislado que aporte valor. Para cambios locales o pasos secuenciales, trabajá directamente.
+- Si delegás, definí objetivo, límites, archivos o dominios, entregable y verificaciones para cada subagente. Evitá ediciones simultáneas sobre los mismos archivos. El agente principal integra, revisa y responde por el resultado.
+- La cantidad de subagentes y la revisión adicional dependen del riesgo y de la independencia de las tareas; no hay umbrales automáticos ni obligación de un agente verificador. Para revisión, probá primero con las herramientas y pruebas pertinentes.
+
+## Verificación
+
+- Revisá el diff y ejecutá la comprobación más pequeña que cubra el cambio. Para código TypeScript, usá el lint y la comprobación de tipos pertinentes (`npm run lint`, `npx tsc --noEmit`) según el alcance; para cambios de integración o build, considerá `npm run build` si el entorno está configurado.
+- Si cambiás aislamiento multi-tenant, ejecutá `npm run verificar:aislamiento` con una base de pruebas configurada y comprobá los casos afectados. No tomes el éxito del lint como prueba de seguridad entre tenants.
+- Para cambios solo de documentación, verificá rutas, comandos y coherencia con el código; no ejecutes una batería de pruebas sin relación con el cambio. Informá qué verificaste y cualquier limitación real.

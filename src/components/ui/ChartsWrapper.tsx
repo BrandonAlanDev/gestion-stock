@@ -4,6 +4,8 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { AlertTriangle, Package, TrendingUp, ArrowUpDown, ShoppingBag } from "lucide-react";
+import { useContext } from "react";
+import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 
 interface Stats {
   salesChart: { name: string; Unidades: number; Ingresos: number }[];
@@ -11,31 +13,39 @@ interface Stats {
   totals: { totalGarments: number; totalMovementsOut: number; totalMovementsIn: number; lowStockCount: number };
 }
 
-export default function ChartWrapper({ stats }: { stats: Stats }) {
+export default function ChartWrapper({
+  stats,
+  modoAdmin = false,
+}: {
+  stats: Stats;
+  modoAdmin?: boolean;
+}) {
   const { pageConfig } = usePageConfig();
+  const contextoTemaAdmin = useContext(ContextoTemaAdmin);
+  const temaOscuro = contextoTemaAdmin?.tema === "oscuro";
   const background = (pageConfig?.secondaryColor as string) || "#00b4d8";
-  const accent = (pageConfig?.primaryColor as string) || "#FFFFFF";
-  const textColor = getContrastColor(background);
-  const isDarkBg = textColor === "#ffffff";
+  const accent = modoAdmin ? "var(--admin-primario)" : (pageConfig?.primaryColor as string) || "#FFFFFF";
+  const textColor = modoAdmin ? "var(--admin-texto)" : getContrastColor(background);
+  const isDarkBg = modoAdmin ? temaOscuro : textColor === "#ffffff";
 
-  const cardBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-  const borderColor = isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-  const mutedColor = textColor + "B3";
+  const cardBg = modoAdmin ? "var(--admin-fondo-opaco)" : isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+  const borderColor = modoAdmin ? "var(--admin-borde)" : isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const mutedColor = modoAdmin ? "var(--admin-texto-suave)" : textColor + "B3";
 
   const { salesChart, totals } = stats;
 
   const statCards = [
     { label: "Productos activos", value: totals.totalGarments, icon: Package, color: accent },
-    { label: "Ventas totales", value: totals.totalMovementsOut, icon: TrendingUp, color: isDarkBg ? "#10b981" : "#059669" },
-    { label: "Ingresos de stock", value: totals.totalMovementsIn, icon: ArrowUpDown, color: isDarkBg ? "#8b5cf6" : "#6d28d9" },
+    { label: "Ventas totales", value: totals.totalMovementsOut, icon: TrendingUp, color: modoAdmin ? "var(--admin-exito)" : isDarkBg ? "#10b981" : "#059669" },
+    { label: "Ingresos de stock", value: totals.totalMovementsIn, icon: ArrowUpDown, color: modoAdmin ? "var(--admin-acento)" : isDarkBg ? "#8b5cf6" : "#6d28d9" },
     {
       label: "Stock crítico",
       value: totals.lowStockCount,
       icon: AlertTriangle,
       color:
         totals.lowStockCount > 0
-          ? isDarkBg ? "#ef4444" : "#b91c1c"
-          : isDarkBg ? "#10b981" : "#059669",
+          ? modoAdmin ? "var(--admin-peligro)" : isDarkBg ? "#ef4444" : "#b91c1c"
+          : modoAdmin ? "var(--admin-exito)" : isDarkBg ? "#10b981" : "#059669",
     },
   ];
 
@@ -77,7 +87,7 @@ export default function ChartWrapper({ stats }: { stats: Stats }) {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={borderColor} />
                 <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: mutedColor }} />
                 <YAxis yAxisId="left" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: mutedColor }} />
-                <Tooltip contentStyle={{ background: isDarkBg ? "#181818" : "#ffffff", border: `1px solid ${borderColor}`, borderRadius: "12px", color: isDarkBg ? "#fff" : "#000" }} />
+                <Tooltip contentStyle={{ background: modoAdmin ? "var(--admin-fondo-opaco)" : isDarkBg ? "#181818" : "#ffffff", border: `1px solid ${borderColor}`, borderRadius: "12px", color: modoAdmin ? "var(--admin-texto)" : isDarkBg ? "#fff" : "#000" }} />
                 <Bar yAxisId="left" dataKey="Unidades" fill={accent} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

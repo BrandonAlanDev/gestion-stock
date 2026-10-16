@@ -126,6 +126,133 @@
   --ring: 38 92% 55%;
 }
 
+/* Paletas propias del área de administración. */
+[data-tema-admin="claro"] {
+  color-scheme: light;
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --admin-fondo: #f8fafc;
+  --admin-fondo-opaco: #ffffff;
+  --admin-fondo-suave: #f1f5f9;
+  --admin-fondo-hover: #e2e8f0;
+  --admin-borde: #cbd5e1;
+  --admin-texto: #0f172a;
+  --admin-texto-suave: #475569;
+  --admin-primario: #2563eb;
+  --admin-primario-texto: #ffffff;
+  --admin-primario-suave: #dbeafe;
+  --admin-secundario: #475569;
+  --admin-secundario-texto: #ffffff;
+  --admin-secundario-suave: #e2e8f0;
+  --admin-acento: #7c3aed;
+  --admin-acento-suave: #ede9fe;
+  --admin-exito: #047857;
+  --admin-exito-suave: #d1fae5;
+  --admin-aviso: #92400e;
+  --admin-aviso-suave: #fef3c7;
+  --admin-peligro: #b91c1c;
+  --admin-peligro-suave: #fee2e2;
+  --admin-peligro-accion: #dc2626;
+  --admin-info: #0369a1;
+  --admin-info-suave: #e0f2fe;
+
+  --color-primario: var(--admin-primario);
+  --color-secundario: var(--admin-secundario-suave);
+  --color-fondo-sitio: var(--admin-fondo);
+  --texto-sobre-primario: var(--admin-primario-texto);
+  --texto-sobre-secundario: var(--admin-texto);
+  --texto-sobre-fondo: var(--admin-texto);
+  --superficie-fondo: var(--admin-fondo-opaco);
+  --superficie-imagen: #ffffff;
+  --fuente-principal: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --fuente-secundaria: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 262 83% 58%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+}
+
+[data-tema-admin="oscuro"] {
+  color-scheme: dark;
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --admin-fondo: #0b1220;
+  --admin-fondo-opaco: #111827;
+  --admin-fondo-suave: #172033;
+  --admin-fondo-hover: #1e293b;
+  --admin-borde: #334155;
+  --admin-texto: #f1f5f9;
+  --admin-texto-suave: #94a3b8;
+  --admin-primario: #60a5fa;
+  --admin-primario-texto: #0b1220;
+  --admin-primario-suave: #1e3a5f;
+  --admin-secundario: #334155;
+  --admin-secundario-texto: #f1f5f9;
+  --admin-secundario-suave: #1e293b;
+  --admin-acento: #a78bfa;
+  --admin-acento-suave: #312e5a;
+  --admin-exito: #6ee7b7;
+  --admin-exito-suave: #064e3b;
+  --admin-aviso: #fde68a;
+  --admin-aviso-suave: #78350f;
+  --admin-peligro: #fca5a5;
+  --admin-peligro-suave: #7f1d1d;
+  --admin-peligro-accion: #b91c1c;
+  --admin-info: #7dd3fc;
+  --admin-info-suave: #0c4a6e;
+
+  --color-primario: var(--admin-primario);
+  --color-secundario: var(--admin-secundario-suave);
+  --color-fondo-sitio: var(--admin-fondo);
+  --texto-sobre-primario: var(--admin-primario-texto);
+  --texto-sobre-secundario: var(--admin-texto);
+  --texto-sobre-fondo: var(--admin-texto);
+  --superficie-fondo: var(--admin-fondo-opaco);
+  --superficie-imagen: #ffffff;
+  --fuente-principal: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --fuente-secundaria: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+
+  --background: 222 47% 7%;
+  --foreground: 210 40% 96%;
+  --card: 217 33% 12%;
+  --card-foreground: 210 40% 96%;
+  --popover: 217 33% 12%;
+  --popover-foreground: 210 40% 96%;
+  --primary: 213 94% 68%;
+  --primary-foreground: 222 47% 7%;
+  --secondary: 215 28% 17%;
+  --secondary-foreground: 210 40% 96%;
+  --muted: 215 28% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 255 92% 76%;
+  --accent-foreground: 222 47% 7%;
+  --destructive: 0 91% 71%;
+  --destructive-foreground: 222 47% 7%;
+  --border: 215 25% 27%;
+  --input: 215 25% 27%;
+  --ring: 213 94% 68%;
+}
+
+.admin-tema {
+  background-color: var(--admin-fondo);
+  color: var(--admin-texto);
+  font-family: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+}
+
 .glass-dark {
   background: hsl(0 0% 10% / 0.6);
   backdrop-filter: blur(20px);
@@ -259,6 +386,6 @@ h3 {
   width: 5px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primario);
+  background: var(--admin-primario, var(--color-primario));
   border-radius: 10px;
 }

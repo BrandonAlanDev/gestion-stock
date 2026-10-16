@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { createSubCategory } from "@/actions/categorias/crear-subcategoria";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,32 +11,10 @@ interface Props {
   onSuccess?: () => void;
 }
 
-// --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
-
 export default function AddSubCategoryForm({ categoryId, sizeTypes, onSuccess }: Props) {
-  const pageConfig = usePageConfig();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [sizeTypeId, setSizeTypeId] = useState("");
-
-  // Variables dinámicas desde el Provider
-  const primaryColor = pageConfig?.pageConfig?.primaryColor || "#0d5c63";
-  const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#FFFFFF";
-  const textColor = getContrastColor(secondaryColor);
-  const isDarkBg = textColor === "#ffffff";
-
-  // Tokens de estilo reactivos
-  const overlayBorder = isDarkBg ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)";
-  const fieldBg = isDarkBg ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)";
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,58 +39,35 @@ export default function AddSubCategoryForm({ categoryId, sizeTypes, onSuccess }:
     }
   };
 
-  const fieldStyle: React.CSSProperties = {
-    backgroundColor: fieldBg,
-    border: `1px solid ${overlayBorder}`,
-    borderRadius: "12px",
-    padding: "10px 12px",
-    fontSize: "12px",
-    color: textColor,
-    outline: "none",
-    transition: "border-color 0.15s",
-  };
-
   return (
     <form
       onSubmit={handleAdd}
-      className="space-y-3"
-      style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: `1px solid ${overlayBorder}` }}
+      className="mt-4 space-y-3 border-t border-[var(--admin-borde)] pt-4"
     >
       <p
-        className="text-[9px] font-black uppercase tracking-widest mb-2"
-        style={{ color: primaryColor }}
+        className="mb-2 text-[9px] font-black uppercase tracking-widest text-[var(--admin-primario)]"
       >
         + Nuevo Subgrupo
       </p>
 
       <div className="flex flex-col gap-2">
         <input
-          style={fieldStyle}
+          className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-2.5 text-xs text-[var(--admin-texto)] outline-none transition-colors placeholder:text-[var(--admin-texto-suave)] focus:border-[var(--admin-primario)]"
           placeholder="Nombre de la subcategoría"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
-          onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
         />
 
         <div className="flex gap-2">
           <select
-            style={{ 
-              ...fieldStyle, 
-              flex: 1, 
-              cursor: "pointer", 
-              color: textColor,
-              opacity: sizeTypeId ? 1 : 0.6 
-            }}
+            className={`min-w-0 flex-1 cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-2.5 text-xs text-[var(--admin-texto)] outline-none transition-colors focus:border-[var(--admin-primario)] ${sizeTypeId ? "opacity-100" : "opacity-60"}`}
             value={sizeTypeId}
             onChange={(e) => setSizeTypeId(e.target.value)}
-            onFocus={e => (e.currentTarget.style.borderColor = primaryColor)}
-            onBlur={e => (e.currentTarget.style.borderColor = overlayBorder)}
           >
-            <option value="" style={{ backgroundColor: secondaryColor, color: textColor }}>Talle estándar...</option>
+            <option value="">Talle estándar...</option>
             {sizeTypes.map((st) => (
-              <option key={st.id} value={st.id} style={{ backgroundColor: secondaryColor, color: textColor }}>
+              <option key={st.id} value={st.id}>
                 {st.name}
               </option>
             ))}
@@ -122,27 +76,7 @@ export default function AddSubCategoryForm({ categoryId, sizeTypes, onSuccess }:
           <button
             type="submit"
             disabled={loading || !name}
-            className="transition-all"
-            style={{
-              backgroundColor: loading || !name ? fieldBg : primaryColor,
-              color: loading || !name ? textColor : getContrastColor(primaryColor),
-              padding: "10px",
-              borderRadius: "12px",
-              border: "none",
-              cursor: loading || !name ? "not-allowed" : "pointer",
-              opacity: loading || !name ? 0.4 : 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onMouseEnter={e => {
-              if (!loading && name)
-                (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
-            }}
-            onMouseLeave={e => {
-              if (!loading && name)
-                (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-            }}
+            className="flex items-center justify-center rounded-xl bg-[var(--admin-primario)] p-2.5 text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--admin-fondo-hover)] disabled:text-[var(--admin-texto-suave)] disabled:opacity-70"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
           </button>

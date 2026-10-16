@@ -19,22 +19,11 @@ type DatosPagina = Parameters<typeof actualizarContenidoPaginaPersonalizada>[1] 
   slug: string;
 };
 
-function getContrastColor(hexColor: string) {
-  if (!hexColor) return "#000000";
-  const hex = hexColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16) || 0;
-  const g = parseInt(hex.substring(2, 4), 16) || 0;
-  const b = parseInt(hex.substring(4, 6), 16) || 0;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#ffffff";
-}
-
 export default function CustomPagesPage() {
   const pageConfig = usePageConfig();
 
   const primaryColor = pageConfig?.pageConfig?.primaryColor || "#000";
   const secondaryColor = pageConfig?.pageConfig?.secondaryColor || "#fff";
-  const contrastColor = getContrastColor(primaryColor);
 
   const [pages, setPages] = useState<PaginaCustomizada[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,57 +115,49 @@ export default function CustomPagesPage() {
 
   return (
     <>
-      <div
-
-        className="p-6 sm:p-8 w-full transition-colors duration-200 min-h-screen mt-12"
-        style={{ backgroundColor: secondaryColor }}
-      >
+      <div className="mt-12 min-h-screen w-full bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] transition-colors duration-200 sm:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
 
-          <div className="rounded-[1.0rem] border backdrop-blur-xl p-6">
+          <div className="rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 backdrop-blur-xl">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="flex flex-row gap-2 items-center">
-                  <span style={{ color:  primaryColor }}><Settings size={28} /></span>
-                  <h1 className="font-black text-3xl" style={{ color: primaryColor }}>
+                  <span className="text-[var(--admin-primario)]"><Settings size={28} /></span>
+                  <h1 className="text-3xl font-black text-[var(--admin-texto)]">
                     Páginas Dinámicas
                   </h1>
                 </div>
-                <p className="text-sm mt-1 font-medium" style={{ color: getContrastColor(secondaryColor) }}>
+                <p className="mt-1 text-sm font-medium text-[var(--admin-texto-suave)]">
                   Gestiona el contenido estructurado de las landing pages.
                 </p>
               </div>
 
               <button
                 onClick={handleOpenCreate}
-                className="flex items-center gap-2 px-6 py-3 rounded-[1.0rem] font-bold transition-transform active:scale-95 shadow-md hover:opacity-90"
-                style={{ backgroundColor: primaryColor, color: contrastColor }}
+                className="flex items-center gap-2 rounded-xl bg-[var(--admin-primario)] px-6 py-3 font-bold text-[var(--admin-primario-texto)] shadow-md transition-transform hover:opacity-90 active:scale-95"
               >
                 <Plus size={20} />
                 Crear Página
               </button>
             </div>
           </div>
-          <div className="rounded-[1.0rem] border overflow-hidden shadow-sm" >
+          <div className="overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] shadow-sm">
             {pages.map((page) => (
               <div
                 key={page.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border-b last:border-b-0 transition-colors gap-3"
+                className="flex flex-col items-start justify-between gap-3 border-b border-[var(--admin-borde)] p-3 transition-colors last:border-b-0 hover:bg-[var(--admin-fondo-hover)] sm:flex-row sm:items-center"
               >
                 {/* Izquierda: ícono + título + slug */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[1.0rem] flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${primaryColor}15` }}
-                  >
-                    <Globe size={20} color={primaryColor} className="sm:size-[22px]" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--admin-primario-suave)] sm:h-12 sm:w-12">
+                    <Globe size={20} className="text-[var(--admin-primario)] sm:size-[22px]" />
                   </div>
 
                   <div className="min-w-0">
-                    <h3 style={{ color: primaryColor }} className="font-bold text-base sm:text-lg leading-tight truncate">
+                    <h3 className="truncate text-base font-bold leading-tight text-[var(--admin-texto)] sm:text-lg">
                       {page.title}
                     </h3>
-                    <p className="text-sm font-medium" style={{ color: getContrastColor(secondaryColor) }}>
+                    <p className="text-sm font-medium text-[var(--admin-texto-suave)]">
                       {`/page/?title=${page.slug}    `}{"  •  "}{page.sections?.length || 0} secciones
                     </p>
                   </div>
@@ -185,11 +166,7 @@ export default function CustomPagesPage() {
                 {/* Derecha: estado + botones */}
                 <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   <span
-                    className="px-3 py-1 rounded-[1.0rem] text-xs font-black tracking-wide"
-                    style={{
-                      backgroundColor: page.isActive ? "#22c55e20" : "#ef444420",
-                      color: page.isActive ? "#16a34a" : "#dc2626",
-                    }}
+                    className={`rounded-[1rem] px-3 py-1 text-xs font-black tracking-wide ${page.isActive ? "bg-[var(--admin-exito-suave)] text-[var(--admin-exito)]" : "bg-[var(--admin-secundario-suave)] text-[var(--admin-texto-suave)]"}`}
                   >
                     {page.isActive ? "ACTIVA" : "INACTIVA"}
                   </span>
@@ -197,15 +174,7 @@ export default function CustomPagesPage() {
                   <div className="flex items-center gap-1 sm:gap-2">
                     <button
                       onClick={() => handleOpenView(page)}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = `${primaryColor}20`;
-                        e.currentTarget.style.color = primaryColor;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '';
-                        e.currentTarget.style.color = '';
-                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)] sm:h-10 sm:w-10"
                       title="Ver estructura"
                     >
                       <Eye size={16} className="sm:size-[18px]" />
@@ -213,15 +182,7 @@ export default function CustomPagesPage() {
 
                     <button
                       onClick={() => handleOpenEdit(page)}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = `${primaryColor}20`;
-                        e.currentTarget.style.color = primaryColor;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '';
-                        e.currentTarget.style.color = '';
-                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)] sm:h-10 sm:w-10"
                       title="Editar constructor"
                     >
                       <Pencil size={16} className="sm:size-[18px]" />
@@ -229,15 +190,7 @@ export default function CustomPagesPage() {
 
                     <button
                       onClick={() => handleOpenDelete(page)}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-[1.0rem] flex items-center justify-center text-gray-500 transition-colors border border-transparent"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ef444420';
-                        e.currentTarget.style.color = '#ef4444';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '';
-                        e.currentTarget.style.color = '';
-                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-peligro-suave)] hover:text-[var(--admin-peligro)] sm:h-10 sm:w-10"
                       title="Eliminar"
                     >
                       <Trash2 size={16} className="sm:size-[18px]" />
@@ -248,12 +201,12 @@ export default function CustomPagesPage() {
             ))}
 
             {!loading && pages.length === 0 && (
-              <div className="p-16 text-center flex flex-col items-center">
-                <div className="w-16 h-16 rounded-[1.0rem] flex items-center justify-center mb-4" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+              <div className="flex flex-col items-center p-16 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--admin-primario-suave)] text-[var(--admin-primario)]">
                   <Globe size={32} />
                 </div>
-                <h3 className="font-black text-xl text-gray-700">No hay páginas dinámicas creadas</h3>
-                <p className="text-gray-500 mt-2 max-w-sm">
+                <h3 className="text-xl font-black text-[var(--admin-texto)]">No hay páginas dinámicas creadas</h3>
+                <p className="mt-2 max-w-sm text-[var(--admin-texto-suave)]">
                   Utiliza el botón de &quot;Crear Página&quot; para comenzar a armar tu primera landing page modular.
                 </p>
               </div>
@@ -268,8 +221,6 @@ export default function CustomPagesPage() {
         initialData={selectedPage}
         onSave={handleSavePage}
         isSaving={isProcessing}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
       />
 
       <ViewPageModal
@@ -286,8 +237,6 @@ export default function CustomPagesPage() {
         onConfirm={handleDeleteConfirm}
         itemName={selectedPage?.title}
         isDeleting={isProcessing}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
       />
     </>
   );

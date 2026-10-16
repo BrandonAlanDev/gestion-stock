@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Save, AlertCircle } from "lucide-react";
 import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
-import { obtenerColorContraste as getContrastColor } from "@/lib/utilidades/obtener-color-contraste";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { useOpcionesEnlace } from "./useOpcionesEnlace";
 import { normalizarValorEnlace } from "@/lib/enlaces/normalizar-valor-enlace";
@@ -61,8 +60,6 @@ export default function SlideEditor({
   const { productos, categorias } = useOpcionesEnlace();
   const { nivel, zIndice } = useCapa();
   const primaryColor = (pageConfig?.primaryColor as string) || "#06b6d4";
-  const secondaryColor = (pageConfig?.secondaryColor as string) || "#fafafa";
-  const textColor = getContrastColor(secondaryColor);
 
   const [formData, setFormData] = useState<SlideFormData>({
     image: "",
@@ -206,25 +203,21 @@ export default function SlideEditor({
         aria-modal="true"
         aria-labelledby="titulo-modal-slide"
         className={cn(
-          "w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl",
+          "max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl",
           isMobile
             ? "fixed bottom-0 left-0 right-0 rounded-t-2xl rounded-b-none h-[90vh] animate-slide-up"
             : "animate-slide-down"
         )}
-        style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
       >
-        <div className="flex items-center justify-between p-4 sticky top-0 z-10 backdrop-blur rounded-t-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
-          <h2 id="titulo-modal-slide" className="text-xl font-bold" style={{ color: textColor }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-4 backdrop-blur">
+          <h2 id="titulo-modal-slide" className="text-xl font-bold text-[var(--admin-texto)]">
             {initialData ? "Editar" : "Nueva"} imagen
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar ventana"
-            className="p-2 rounded-lg transition-colors cursor-pointer"
-            style={{ color: textColor + "99" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor + "1A"; e.currentTarget.style.color = primaryColor; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = textColor + "99"; }}
+            className="cursor-pointer rounded-lg p-2 text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -233,8 +226,8 @@ export default function SlideEditor({
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
             <div className="space-y-1">
-              <label className="block text-sm font-medium" style={{ color: textColor + "CC" }}>
-                Imagen <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-[var(--admin-texto)]">
+                Imagen <span className="text-[var(--admin-peligro)]">*</span>
               </label>
               <ZonaImagenSlide
                 imagen={formData.image}
@@ -249,8 +242,6 @@ export default function SlideEditor({
                 textoBoton={formData.ctaText}
                 url={formData.url}
                 primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
-                textColor={textColor}
               />
             </div>
 
@@ -261,9 +252,6 @@ export default function SlideEditor({
                 getCharCount={getCharCount}
                 isOverLimit={isOverLimit}
                 limites={LIMITS}
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
-                textColor={textColor}
               />
 
               <OpcionesAvanzadasSlide
@@ -277,13 +265,10 @@ export default function SlideEditor({
                 alCambiarShowText={() => setShowText(!showText)}
                 hideButton={hideButton}
                 alCambiarHideButton={() => setHideButton(!hideButton)}
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
-                textColor={textColor}
               />
 
               {error && (
-                <div className="p-3 rounded-lg flex items-center gap-2 text-sm" style={{ backgroundColor: primaryColor + "1A", borderColor: primaryColor + "50", color: primaryColor }}>
+                <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   {error}
                 </div>
@@ -291,14 +276,11 @@ export default function SlideEditor({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 z-10 backdrop-blur rounded-b-2xl" style={{ backgroundColor: secondaryColor + "F0", borderColor: primaryColor }}>
+          <div className="sticky bottom-0 z-10 flex justify-end gap-3 rounded-b-2xl border-t border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] pt-4 backdrop-blur">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
-              style={{ backgroundColor: "transparent", border: "1px solid", borderColor: textColor + "30", color: textColor + "99" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = textColor + "08"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              className="cursor-pointer rounded-lg border border-[var(--admin-borde)] px-4 py-2 font-medium text-[var(--admin-texto-suave)] transition-all hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
             >
               Cancelar
             </button>
@@ -306,10 +288,7 @@ export default function SlideEditor({
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="px-4 py-2 rounded-lg font-black uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-              onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "0.9"; }}
-              onMouseLeave={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.opacity = "1"; }}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--admin-primario)] px-4 py-2 font-black uppercase tracking-wider text-[var(--admin-primario-texto)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {initialData ? "Actualizar" : "Crear"}

@@ -16,6 +16,7 @@ interface SubidaImagenBotonProps {
   tamanoMaximoMb: number;
   primario: string;
   textoSobreSecundario: string;
+  adminActivo: boolean;
   errorInterno: string | null;
   errorVisible: string | null;
   inputRef: RefObject<HTMLInputElement | null>;
@@ -36,6 +37,7 @@ export default function SubidaImagenBoton({
   tamanoMaximoMb,
   primario,
   textoSobreSecundario,
+  adminActivo,
   errorInterno,
   errorVisible,
   inputRef,
@@ -51,12 +53,20 @@ export default function SubidaImagenBoton({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={procesando || deshabilitada}
-          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 cursor-pointer"
-          style={{
-            backgroundColor: primario + "1A",
-            border: `1px solid ${primario}40`,
-            color: primario,
-          }}
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 ${
+            adminActivo
+              ? "border border-[var(--admin-borde)] bg-[var(--admin-primario-suave)] text-[var(--admin-primario)] hover:opacity-80"
+              : ""
+          }`}
+          style={
+            adminActivo
+              ? undefined
+              : {
+                  backgroundColor: primario + "1A",
+                  border: `1px solid ${primario}40`,
+                  color: primario,
+                }
+          }
         >
           {procesando ? (
             <span className="flex items-center gap-2">
@@ -67,7 +77,11 @@ export default function SubidaImagenBoton({
             <>
               <Upload size={16} />
               {etiqueta}
-              {obligatoria && <span className="text-red-500">*</span>}
+              {obligatoria && (
+                <span className={adminActivo ? "text-[var(--admin-peligro)]" : "text-red-500"}>
+                  *
+                </span>
+              )}
             </>
           )}
         </button>
@@ -83,11 +97,19 @@ export default function SubidaImagenBoton({
         {valor && (
           <div className="flex items-center gap-2 flex-wrap">
             <div
-              className="relative h-16 w-16 overflow-hidden rounded-lg border"
-              style={{
-                borderColor: primario + "40",
-                backgroundColor: primario + "10",
-              }}
+              className={`relative h-16 w-16 overflow-hidden rounded-lg border ${
+                adminActivo
+                  ? "border-[var(--admin-borde)] bg-[var(--admin-fondo)]"
+                  : ""
+              }`}
+              style={
+                adminActivo
+                  ? undefined
+                  : {
+                      borderColor: primario + "40",
+                      backgroundColor: primario + "10",
+                    }
+              }
             >
               <Image
                 src={valor}
@@ -105,8 +127,16 @@ export default function SubidaImagenBoton({
                 onClick={reabrirEditor}
                 disabled={deshabilitada}
                 title="Editar recorte"
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer"
-                style={{ color: primario, backgroundColor: primario + "14" }}
+                className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                  adminActivo
+                    ? "bg-[var(--admin-primario-suave)] text-[var(--admin-primario)] hover:opacity-80"
+                    : ""
+                }`}
+                style={
+                  adminActivo
+                    ? undefined
+                    : { color: primario, backgroundColor: primario + "14" }
+                }
               >
                 <Crop size={14} /> Editar recorte
               </button>
@@ -116,8 +146,16 @@ export default function SubidaImagenBoton({
               onClick={quitarImagen}
               disabled={deshabilitada}
               title="Quitar imagen"
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer"
-              style={{ color: textoSobreSecundario + "99" }}
+              className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                adminActivo
+                  ? "text-[var(--admin-texto-suave)] hover:text-[var(--admin-texto)]"
+                  : ""
+              }`}
+              style={
+                adminActivo
+                  ? undefined
+                  : { color: textoSobreSecundario + "99" }
+              }
             >
               <X size={14} /> Quitar
             </button>
@@ -126,12 +164,18 @@ export default function SubidaImagenBoton({
       </div>
 
       {!valor && !errorInterno && (
-        <p className="text-xs" style={{ color: textoSobreSecundario + "60" }}>
+        <p
+          className={`text-xs ${adminActivo ? "text-[var(--admin-texto-suave)]" : ""}`}
+          style={adminActivo ? undefined : { color: textoSobreSecundario + "60" }}
+        >
           {textoAyuda} · máx {tamanoMaximoMb}MB
         </p>
       )}
       {errorVisible && (
-        <p className="text-xs" style={{ color: primario }}>
+        <p
+          className={`text-xs ${adminActivo ? "text-[var(--admin-peligro)]" : ""}`}
+          style={adminActivo ? undefined : { color: primario }}
+        >
           {errorVisible}
         </p>
       )}

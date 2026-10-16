@@ -121,7 +121,7 @@ export default function FilaProducto({
           ) : (
             <span
               className={`text-sm font-medium ${
-                producto.stockTotal <= 0 ? "text-red-400" : "text-[var(--admin-texto)]"
+                producto.stockTotal <= 0 ? "text-[var(--admin-peligro)]" : "text-[var(--admin-texto)]"
               }`}
             >
               {formatearNumero(producto.stockTotal)}

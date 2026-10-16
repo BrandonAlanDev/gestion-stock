@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getPageConfig } from "@/actions/page-config/general.actions";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 import { ProveedorConfiguracionPagina } from "@/components/providers/ProveedorConfiguracionPagina";
-import ProveedorColoresAdmin from "@/components/providers/ProveedorColoresAdmin";
+import ProveedorTemaAdmin from "@/components/admin/tema/ProveedorTemaAdmin";
 import { obtenerTenantActual } from "@/lib/tenants/obtener-tenant-actual";
 import { requerirAdministradorTenant } from "@/lib/tenants/requerir-administrador-tenant";
 import type { ContextoTenant } from "@/types/tenants";
@@ -31,10 +31,12 @@ export default async function AdminLayout({
 
   return (
     <ProveedorConfiguracionPagina pageConfig={{ ok: true, pageConfig }}>
-      <LayoutComponent>
-        <RouteLoader />
-        <ProveedorColoresAdmin>{children}</ProveedorColoresAdmin>
-      </LayoutComponent>
+      <ProveedorTemaAdmin>
+        <LayoutComponent>
+          <RouteLoader />
+          {children}
+        </LayoutComponent>
+      </ProveedorTemaAdmin>
     </ProveedorConfiguracionPagina>
   );
 }
