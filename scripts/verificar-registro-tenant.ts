@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { conPrismaTenant } from "../src/lib/tenants/prisma-factory";
+import { conPrismaTenant } from "../src/lib/prisma";
 import { normalizarHostname } from "../src/lib/tenants/normalizar-hostname";
 import { construirOrigenSolicitud } from "../src/lib/tenants/construir-origen-solicitud";
 import { ProveedorRegistroCacheado } from "../src/lib/tenants/registry/proveedor-cacheado";
@@ -195,6 +195,32 @@ async function verificarCredencialesNoCacheadas(): Promise<void> {
   assert.equal(consultas, 2, "Las credenciales no deben guardarse en la caché de metadata");
 }
 
+async function verificarEstadoVigenteConPlazoCorto(): Promise<void> {
+  let ahora = 100;
+  let consultas = 0;
+  let suspendido = false;
+  const cache = new ProveedorRegistroCacheado(crearProveedor({
+    async verificarAcceso() {
+      consultas += 1;
+      if (suspendido) throw new Error("tenant suspendido");
+      return 7;
+    },
+  }), 30_000, () => ahora);
+
+  assert.deepEqual(await Promise.all([
+    cache.verificarAcceso("cliente-a"),
+    cache.verificarAcceso("cliente-a"),
+  ]), [7, 7]);
+  assert.equal(consultas, 1, "Las consultas simultáneas al estado deben compartir solicitud");
+  suspendido = true;
+  assert.equal(await cache.verificarAcceso("cliente-a"), 7);
+  ahora += 5_001;
+  await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
+  assert.equal(consultas, 2, "El estado debe revalidarse tras el plazo corto");
+  await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
+  assert.equal(consultas, 3, "Un fallo de estado no debe quedar cacheado como activo");
+}
+
 async function verificarFallosSinFallback(): Promise<void> {
   let operacionEjecutada = false;
   configurarProveedorRegistroTenant(crearProveedor({
@@ -231,6 +257,7 @@ async function main(): Promise<void> {
   await verificarInvalidacionDuranteCarga();
   await verificarValidacionDeRespuestasYFallos();
   await verificarCredencialesNoCacheadas();
+  await verificarEstadoVigenteConPlazoCorto();
   await verificarFallosSinFallback();
   console.log("Registro tenant: dominios, estados, caché, invalidación y fallos verificados.");
 }

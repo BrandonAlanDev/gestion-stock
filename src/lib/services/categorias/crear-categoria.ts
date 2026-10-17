@@ -1,7 +1,7 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function crearCategoria(tenantId: string, nombre: string) {
-  return conPrisma((prisma) =>
+  return conPrismaTenant(tenantId, (prisma) =>
     prisma.category.create({ data: { name: nombre } }),
   );
 }

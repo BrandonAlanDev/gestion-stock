@@ -1,10 +1,10 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import type { EntradaActualizarCarrusel } from "@/lib/services/carruseles/tipos";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 export async function actualizarCarrusel(tenantId: string, datos: EntradaActualizarCarrusel) {
   const { id, slides, ...cambios } = datos;
-  return conPrisma(async (prisma) => {
+  return conPrismaTenant(tenantId, async (prisma) => {
     const existente = await prisma.carousel.findFirst({ where: { id }, select: { id: true } });
     if (!existente) throw new Error("El carrusel no pertenece a la tienda activa");
 

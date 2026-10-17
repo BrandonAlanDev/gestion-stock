@@ -1,11 +1,10 @@
 import "server-only";
 
 import { DEFAULT_VALUES } from "@/actions/page-config/shared/defaults";
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function getOrCreatePageConfig(tenantId: string) {
-  void tenantId;
-  return conPrisma((prisma) =>
+  return conPrismaTenant(tenantId, (prisma) =>
     prisma.pageConfig.upsert({
       where: { clave: "principal" },
       update: {},

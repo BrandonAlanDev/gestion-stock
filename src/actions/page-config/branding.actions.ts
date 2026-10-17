@@ -4,7 +4,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import { conPrisma } from "@/lib/prisma";
+import { conPrisma, conPrismaTenant } from "@/lib/prisma";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
@@ -105,11 +105,11 @@ export async function updateBrandingConfig(data: BrandingInput) {
   }
 }
 
-async function obtenerBrandingCacheado() {
+async function obtenerBrandingCacheado(tenantId: string) {
  return unstable_cache(
   async () => {
     try {
-      const branding = await conPrisma((prisma) =>
+      const branding = await conPrismaTenant(tenantId, (prisma) =>
         prisma.pageConfig.findFirst({
           where: {},
           select: {
@@ -154,7 +154,7 @@ async function obtenerBrandingCacheado() {
       };
     }
   },
-  [`branding-config`],
+  [`tenant:${tenantId}:branding-config`],
   {
     revalidate: 3600,
     tags: [`branding-config`],
@@ -165,5 +165,5 @@ async function obtenerBrandingCacheado() {
 export async function getBrandingConfig() {
   const { id: tenantId } = await requiereTenantActivo();
   await getOrCreatePageConfig(tenantId);
-  return obtenerBrandingCacheado();
+  return obtenerBrandingCacheado(tenantId);
 }

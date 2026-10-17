@@ -2,10 +2,16 @@ import "server-only";
 
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
+import type { TenantPublico } from "@/types/tenants";
+
+interface TenantProgramable {
+  tenant: Pick<TenantPublico, "id" | "estado">;
+}
 
 interface DependenciasHandlerCron {
   obtenerSecreto(): string | undefined;
-  expirarPedidos(): Promise<number>;
+  listarTenants(): Promise<TenantProgramable[]>;
+  expirarPedidos(tenantId: string): Promise<number>;
 }
 
 function tokenAutorizado(request: NextRequest, secreto: string): boolean {
@@ -16,7 +22,7 @@ function tokenAutorizado(request: NextRequest, secreto: string): boolean {
   return recibido.length === esperado.length && timingSafeEqual(recibido, esperado);
 }
 
-/** Compone el endpoint autorizado para expirar reservas. */
+/** Compone el endpoint para verificar su autorización y selección de tenants. */
 export function crearHandlerCronExpirarPedidos(dependencias: DependenciasHandlerCron) {
   return async function GET(request: NextRequest): Promise<NextResponse> {
     const secreto = dependencias.obtenerSecreto();
@@ -28,10 +34,26 @@ export function crearHandlerCronExpirarPedidos(dependencias: DependenciasHandler
     }
 
     try {
-      const pedidosExpirados = await dependencias.expirarPedidos();
-      return NextResponse.json({ pedidosExpirados }, { status: 200 });
+      const tenants = await dependencias.listarTenants();
+      const activos = tenants.filter(({ tenant }) => tenant.estado === "ACTIVO");
+      let totalExpirados = 0;
+      let errores = 0;
+
+      for (const { tenant } of activos) {
+        try {
+          totalExpirados += await dependencias.expirarPedidos(tenant.id);
+        } catch {
+          errores += 1;
+          console.error("Falló la expiración de pedidos para un tenant", tenant.id);
+        }
+      }
+
+      return NextResponse.json(
+        { tenantsProcesados: activos.length, pedidosExpirados: totalExpirados, errores },
+        { status: errores > 0 ? 207 : 200 },
+      );
     } catch {
-      return NextResponse.json({ error: "No se pudieron expirar los pedidos" }, { status: 500 });
+      return NextResponse.json({ error: "No se pudo resolver el registro de tenants" }, { status: 503 });
     }
   };
 }

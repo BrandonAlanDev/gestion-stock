@@ -1,15 +1,14 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function getColors(tenantId: string) {
-  void tenantId;
-  return conPrisma((prisma) => prisma.color.findMany({
+  return conPrismaTenant(tenantId, (prisma) => prisma.color.findMany({
     where: { active: true },
     orderBy: { name: "asc" },
   }));
 }
 
 export async function createColor(tenantId: string, name: string, hex?: string) {
-  return conPrisma((prisma) =>
+  return conPrismaTenant(tenantId, (prisma) =>
     prisma.color.create({ data: { name, hex } }),
   );
 }

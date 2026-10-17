@@ -4,7 +4,7 @@ import * as servicioTalles from "@/lib/services/size-service";
 export async function obtenerTiposTalleCacheados(tenantId: string) {
   return unstable_cache(
     () => servicioTalles.getSizeTypes(tenantId),
-    [`sizeTypes`],
+    [`tenant:${tenantId}:sizeTypes`],
     { revalidate: 3600, tags: [`sizeTypes`] }
   )();
 }

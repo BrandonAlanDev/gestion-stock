@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import { URL_TOKEN_MP } from "./constantes";
 import type { RespuestaTokenMP } from "@/types/mercadopago";
 
@@ -9,8 +9,7 @@ import type { RespuestaTokenMP } from "@/types/mercadopago";
  * refresh_token, y persiste el nuevo conjunto de tokens. Devuelve el token nuevo.
  */
 export async function renovarTokenMP(tenantId: string): Promise<string> {
-  void tenantId;
-  const cuenta = await conPrisma((prisma) =>
+  const cuenta = await conPrismaTenant(tenantId, (prisma) =>
     prisma.cuentaMercadoPago.findUnique({ where: { clave: "principal" } }),
   );
 
@@ -44,7 +43,7 @@ export async function renovarTokenMP(tenantId: string): Promise<string> {
     );
   }
 
-  await conPrisma((prisma) =>
+  await conPrismaTenant(tenantId, (prisma) =>
     prisma.cuentaMercadoPago.update({
       where: { clave: "principal" },
       data: {

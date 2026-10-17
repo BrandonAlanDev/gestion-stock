@@ -1,9 +1,9 @@
 import "server-only";
 
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function eliminarProveedor(tenantId: string, id: string) {
-  return conPrisma((prisma) => prisma.$transaction(async (tx) => {
+  return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
     const proveedor = await tx.provider.findFirst({
       where: { id, active: true },
       select: { id: true },

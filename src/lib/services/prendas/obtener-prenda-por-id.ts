@@ -1,8 +1,8 @@
 import { INCLUDE_VARIANTE } from "@/lib/services/prendas/incluir-variante";
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function obtenerPrendaPorId(tenantId: string, id: string) {
-  return conPrisma((prisma) => prisma.garment.findFirst({
+  return conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
     where: { id },
     include: {
       category: true,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { ID_TIENDA } from "@/lib/tenants/obtener-tenant-publico";
 import { proveedorMercadoPago } from "@/lib/pagos/proveedores/mercadopago/mercadopago-proveedor";
 import { obtenerSecretoFirma } from "@/lib/mercadopago/obtener-secreto-firma";
 import {
@@ -94,8 +93,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  let tenantId: string;
   try {
-    await requiereAdmin();
+    ({ tenantId } = await requiereAdmin());
   } catch {
     return responderCallbackInvalido(401, true);
   }
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
   }, {
     secreto,
     manejarCallback: (codigoAutorizacion, codeVerifier) =>
-      proveedorMercadoPago.manejarCallback(ID_TIENDA, codigoAutorizacion, codeVerifier),
+      proveedorMercadoPago.manejarCallback(tenantId, codigoAutorizacion, codeVerifier),
     registrarError: (error) => console.error(
       "Error en el intercambio OAuth de Mercado Pago:",
       error instanceof Error ? error.message : String(error),

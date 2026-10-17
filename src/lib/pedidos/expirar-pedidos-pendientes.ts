@@ -2,6 +2,7 @@ import "server-only";
 
 import type { PrismaClient } from "@/../generated/prisma/client";
 import { conPrisma } from "@/lib/prisma";
+import { conContextoTenantRuntime } from "@/lib/tenants/contexto-tenant-runtime";
 import { liberarReservaStockPedido } from "./gestionar-reserva-stock";
 
 type EjecutarConPrisma = <T>(
@@ -73,3 +74,7 @@ export const expirarPedidosPendientes = crearExpiradorPedidosPendientes({
   conPrisma,
   liberarReservaStockPedido,
 });
+
+export function expirarPedidosPendientesTenant(tenantId: string, ahora = new Date()): Promise<number> {
+  return conContextoTenantRuntime(tenantId, () => expirarPedidosPendientes(ahora));
+}

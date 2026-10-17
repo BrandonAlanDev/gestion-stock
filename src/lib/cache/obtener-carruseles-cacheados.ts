@@ -4,7 +4,7 @@ import { obtenerCarruseles } from "@/lib/services/carruseles/obtener-carruseles"
 export async function obtenerCarruselesCacheados(tenantId: string) {
   return unstable_cache(
     () => obtenerCarruseles(tenantId, undefined, true),
-    [`carousels`],
+    [`tenant:${tenantId}:carousels`],
     { revalidate: 3600, tags: [`carousels`] }
   )();
 }

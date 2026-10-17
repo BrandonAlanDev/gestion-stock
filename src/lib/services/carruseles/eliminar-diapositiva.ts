@@ -1,7 +1,7 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function eliminarDiapositiva(tenantId: string, id: string) {
-  return conPrisma(async (prisma) => {
+  return conPrismaTenant(tenantId, async (prisma) => {
     const existente = await prisma.carouselSlide.findFirst({
       where: { id, carousel: {} },
       select: { id: true },

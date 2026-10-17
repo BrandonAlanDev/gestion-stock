@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import type { RespuestaTokenMP, OpcionesGuardarCuentaMP } from "@/types/mercadopago";
 
 /**
@@ -16,7 +16,7 @@ export async function guardarCuentaMP(
     ? new Date(Date.now() + datos.expires_in * 1000)
     : null;
 
-  await conPrisma((prisma) => prisma.cuentaMercadoPago.upsert({
+  await conPrismaTenant(tenantId, (prisma) => prisma.cuentaMercadoPago.upsert({
     where: { clave: "principal" },
     create: {
       accessToken: datos.access_token,

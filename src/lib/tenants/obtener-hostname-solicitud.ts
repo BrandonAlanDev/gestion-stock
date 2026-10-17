@@ -1,13 +1,13 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { normalizarHostname } from "@/lib/tenants/normalizar-hostname";
+import { resolverHostnameTenant } from "@/lib/tenants/resolver-hostname-tenant";
 
 export async function obtenerHostnameSolicitud(): Promise<string | null> {
   const cabeceras = await headers();
-  // Host es la cabecera que recibe la solicitud. No se toma x-forwarded-host
-  // como autoridad porque puede ser controlada por el cliente si el proxy no
-  // la sobrescribe de forma confiable.
+  // Host es la autoridad de la solicitud; en desarrollo local puede usarse
+  // el dominio fijo configurado en el servidor para probar otro cliente.
+  // No se toma x-forwarded-host porque el cliente podría controlarlo.
   const host = cabeceras.get("host") ?? "";
-  return normalizarHostname(host);
+  return resolverHostnameTenant(host);
 }

@@ -4,7 +4,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { conPrisma } from "@/lib/prisma";
 import { obtenerContextoTenant } from "@/lib/tenants/obtener-contexto-tenant";
-import { obtenerHostnameSolicitud } from "@/lib/tenants/obtener-hostname-solicitud";
+import { normalizarHostname } from "@/lib/tenants/normalizar-hostname";
 import { construirOrigenSolicitud } from "@/lib/tenants/construir-origen-solicitud";
 import { crearPedidoDesdeCarrito } from "@/lib/pedidos/crear-pedido";
 import { liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
@@ -17,10 +17,10 @@ import type { MetodoPagoId } from "@/lib/pagos/tipos";
 export type { ResultadoIniciarPago } from "@/lib/actions/pago/crear-accion-iniciar-pago";
 
 async function obtenerBaseUrl(): Promise<string> {
-  const host = await obtenerHostnameSolicitud();
-  if (!host) throw new Error("No se pudo determinar la URL base de la tienda");
   const cabeceras = await headers();
   const hostRecibido = cabeceras.get("host") ?? "";
+  const host = normalizarHostname(hostRecibido);
+  if (!host) throw new Error("No se pudo determinar la URL base de la tienda");
   const origen = construirOrigenSolicitud(
     hostRecibido,
     process.env.NODE_ENV === "production",

@@ -4,7 +4,7 @@ Estas instrucciones rigen el repositorio completo. Consultá `ARCHITECTURE.md` p
 
 ## Proyecto y arquitectura
 
-- Aplicación única de Next.js App Router con React, TypeScript estricto, Prisma y MySQL/MariaDB. La arquitectura elegida es un **monolito modular por capacidades de negocio** (catálogo, inventario, tienda, pedidos, pagos y configuración), con despliegue conjunto y una base de datos por instancia. No introduzcas servicios separados por defecto.
+- Aplicación única de Next.js App Router con React, TypeScript estricto, Prisma y MySQL/MariaDB. La arquitectura elegida es un **monolito modular por capacidades de negocio** (catálogo, inventario, tienda, pedidos, pagos y configuración), con despliegue conjunto y una base de datos por cliente. Logabyte Core mantiene el registro central de dominios y conexiones; no introduzcas otros servicios separados por defecto.
 - Respetá la organización existente: `src/app/` define rutas, layouts y handlers; `src/components/` contiene interfaz; `src/actions/` expone operaciones del servidor; `src/lib/` contiene servicios, acceso a datos e infraestructura. Dentro de esas áreas, agrupá por dominio. `src/hooks/`, `src/contextos/` y `src/types/` alojan piezas compartidas cuando corresponda.
 - Las rutas y los componentes de interfaz coordinan la presentación. Las Server Actions y los route handlers validan entradas, aplican autenticación y autorización, coordinan la operación e invalidan caché cuando corresponde. Los servicios encapsulan lógica o consultas reutilizables y reciben sus dependencias de forma explícita. Una consulta simple no exige crear una capa o archivo adicional.
 - Mantené las dependencias entre dominios explícitas. Extraé código a `src/lib/` compartido cuando tenga uso real en más de un dominio; evitá tanto la duplicación como las abstracciones preventivas. Evolucioná la estructura al tocar cada función, sin migraciones masivas ajenas a la tarea.
@@ -12,14 +12,14 @@ Estas instrucciones rigen el repositorio completo. Consultá `ARCHITECTURE.md` p
 
 ## Invariantes del negocio
 
-- La conexión de datos se obtiene de `DATABASE_URL` en el servidor. Nunca aceptes destinos de conexión enviados por clientes. En operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
-- Validá IDs y relaciones recibidos del cliente antes de mutar datos. Mantené las claves de caché y las invalidaciones coherentes con la base única.
+- El servidor resuelve el dominio mediante Logabyte Core y obtiene allí la referencia de conexión del cliente; `DATABASE_URL` solo configura Prisma CLI para una base elegida explícitamente. Nunca aceptes destinos de conexión enviados por clientes. En operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
+- Validá IDs y relaciones recibidos del cliente antes de mutar datos. Mantené las claves de caché separadas por cliente y las invalidaciones coherentes con el alcance de cada base.
 - Mantené atómicas las operaciones que cambian stock y movimientos. En pedidos, pagos y callbacks externos, preservá los controles existentes de autorización, consistencia e idempotencia; verificá su flujo antes de editarlo.
 - `prisma/schema.prisma` es la fuente de verdad del modelo. No edites `generated/` ni `.next/` manualmente. No ejecutes cambios de esquema contra una base compartida sin conocer el entorno y el alcance.
 
-## Base única y migraciones
+## Bases por cliente y migraciones
 
-- Se mantiene una sola aplicación Next.js y una sola base MySQL compatible por despliegue. Reutilizá un cliente Prisma por proceso; no crees uno por solicitud.
+- Se mantiene una sola aplicación Next.js y una base MySQL compatible por cliente. Reutilizá clientes Prisma por proceso y por identidad/version de conexión; no crees uno por solicitud. Fallá cerrado si Core no confirma el cliente activo.
 - El baseline activo está en `prisma/migrations-base-unica/`. Aplicá las migraciones configuradas por `prisma.config.ts`.
 - Antes de aplicar migraciones a una base con datos, compará su DDL e historial, definí respaldo y reversión. Nunca reinicies una base sin confirmar que es descartable.
 

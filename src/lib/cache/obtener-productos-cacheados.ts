@@ -35,6 +35,7 @@ export async function obtenerProductosCacheados(
         subCategoryId
       ),
     [
+      `tenant:${tenantId}`,
       `products`,
       String(paginaSegura),
       String(limiteSeguro),

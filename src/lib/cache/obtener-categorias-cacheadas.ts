@@ -4,7 +4,7 @@ import { obtenerCategoriasCompletas } from "@/lib/services/categorias/obtener-ca
 export async function obtenerCategoriasCacheadas(tenantId: string) {
   return unstable_cache(
     () => obtenerCategoriasCompletas(tenantId),
-    [`categories`],
+    [`tenant:${tenantId}:categories`],
     { revalidate: 3600, tags: [`categories`] }
   )();
 }

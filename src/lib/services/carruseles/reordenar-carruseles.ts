@@ -1,8 +1,8 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function reordenarCarruseles(tenantId: string, ids: string[]) {
   if (new Set(ids).size !== ids.length) throw new Error("El orden contiene carruseles repetidos");
-  return conPrisma(async (prisma) => {
+  return conPrismaTenant(tenantId, async (prisma) => {
     const existentes = await prisma.carousel.count({ where: { id: { in: ids } } });
     if (existentes !== ids.length) throw new Error("Hay carruseles de otra tienda");
     return prisma.$transaction(async (transaccion) => {

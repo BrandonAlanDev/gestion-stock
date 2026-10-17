@@ -3,7 +3,7 @@ import { ClienteLogabyteCore, ErrorLogabyteCore } from "../src/lib/tenants/regis
 import { ProveedorLogabyteCore } from "../src/lib/tenants/registry/proveedor-logabyte-core";
 import { ProveedorRegistroCacheado } from "../src/lib/tenants/registry/proveedor-cacheado";
 import { configurarProveedorRegistroTenant } from "../src/lib/tenants/registry/proveedor-registro";
-import { conPrismaTenant } from "../src/lib/tenants/prisma-factory";
+import { conPrismaTenant } from "../src/lib/prisma";
 
 const token = "lbcore_abcdef123456.abcdefghijklmnopqrstuvwxyz0123456789ABCDE";
 const solicitudes: string[] = [];
@@ -99,6 +99,7 @@ async function ejecutar(): Promise<void> {
   await assert.rejects(conPrismaTenant("inexistente", async () => { entroEnBase = true; }), /no está disponible/);
   assert.equal(entroEnBase, false);
   fallar = true;
+  registro.invalidar();
   await assert.rejects(registro.verificarAcceso("primero"), (error: unknown) => error instanceof ErrorLogabyteCore && error.codigo === "RED" && !error.message.includes("detalle privado"));
   fallar = false;
   timeout = true;

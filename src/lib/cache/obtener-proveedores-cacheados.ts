@@ -4,7 +4,7 @@ import { obtenerProveedores } from "@/lib/services/proveedores/obtener-proveedor
 export async function obtenerProveedoresCacheados(tenantId: string) {
   return unstable_cache(
     () => obtenerProveedores(tenantId),
-    [`providers`],
+    [`tenant:${tenantId}:providers`],
     { revalidate: 3600, tags: [`providers`] }
   )();
 }

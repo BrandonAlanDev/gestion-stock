@@ -1,4 +1,4 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 import type { CarouselType } from "@/types/carousel";
 
@@ -11,7 +11,7 @@ export async function obtenerCarruseles(
     ? TIPOS_CARRUSEL_ADMITIDOS.filter((tipoAdmitido) => tipoAdmitido === tipo)
     : [...TIPOS_CARRUSEL_ADMITIDOS];
 
-  return conPrisma((prisma) => prisma.carousel.findMany({
+  return conPrismaTenant(tenantId, (prisma) => prisma.carousel.findMany({
     where: {
       ...(soloActivos ? { active: true } : {}),
       type: { in: tipos },

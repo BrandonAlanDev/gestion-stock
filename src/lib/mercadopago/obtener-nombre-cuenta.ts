@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import { obtenerCuentaMP } from "./obtener-cuenta";
 import { obtenerTokenAccesoMP } from "./obtener-token-acceso";
 
@@ -43,7 +43,7 @@ export async function obtenerNombreCuentaMP(tenantId: string): Promise<string | 
 
     const nombre = construirNombreCuenta(datos as Record<string, unknown>);
     if (nombre) {
-      await conPrisma((prisma) =>
+      await conPrismaTenant(tenantId, (prisma) =>
         prisma.cuentaMercadoPago.update({
           where: { clave: "principal" },
           data: { nombreNegocio: nombre },

@@ -23,7 +23,7 @@ function crearCallbacks(
   buscarUsuario: (
     tenantId: string,
     usuarioId: string,
-  ) => Promise<{ id: string; tenantId: string; role: "ADMIN" | "USER"; telefono: string | null; image: string | null } | null>,
+  ) => Promise<{ id: string; role: "ADMIN" | "USER"; telefono: string | null; image: string | null } | null>,
   obtenerTenant: () => Promise<TenantPublico> = async () => TENANT_A,
   obtenerHostname: () => Promise<string | null> = async () => "a.example.com",
 ) {
@@ -103,9 +103,13 @@ async function ejecutarCallbackSesion(
 }
 
 async function verificarSignInAislado(): Promise<void> {
-  const { callbacks } = crearCallbacks(async () => null);
-  const usuarioA = { id: "usuario-a", tenantId: TENANT_A.id } as User;
-  const usuarioB = { id: "usuario-b", tenantId: "tenant-b" } as User;
+  const { callbacks } = crearCallbacks(async (tenantId, usuarioId) =>
+    tenantId === TENANT_A.id && usuarioId === "usuario-a"
+      ? { id: usuarioId, role: "USER", telefono: null, image: null }
+      : null,
+  );
+  const usuarioA = { id: "usuario-a" } as User;
+  const usuarioB = { id: "usuario-b" } as User;
   const usuarioSinTenant = { id: "usuario-sin-tenant" } as User;
 
   assert.equal(await ejecutarSignIn(callbacks, usuarioA), true);
@@ -122,7 +126,6 @@ async function verificarSignInAislado(): Promise<void> {
 async function verificarRevalidacionEnSilo(): Promise<void> {
   const { callbacks, tenantsConsultados } = crearCallbacks(async (tenantId, usuarioId) => ({
     id: usuarioId,
-    tenantId,
     role: "USER",
     telefono: "111",
     image: null,
@@ -156,7 +159,6 @@ async function verificarRevalidacionEnSilo(): Promise<void> {
 async function verificarNuevoLoginVinculaHostActual(): Promise<void> {
   const { callbacks } = crearCallbacks(async (tenantId, usuarioId) => ({
     id: usuarioId,
-    tenantId,
     role: "USER",
     telefono: null,
     image: null,

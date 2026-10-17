@@ -1,5 +1,5 @@
 import { Prisma } from "@/../generated/prisma/client";
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import type {
   EstadoProducto,
   FiltroStock,
@@ -149,7 +149,7 @@ export async function obtenerProductosAdmin(
     ) AS subconsulta
   `;
 
-  return conPrisma(async (prisma) => {
+  return conPrismaTenant(tenantId, async (prisma) => {
     const [filasCrudas, conteo] = await Promise.all([
       prisma.$queryRaw<FilaCrudaConsulta[]>(consultaFilas),
       prisma.$queryRaw<Array<{ total: string | number }>>(consultaTotal),

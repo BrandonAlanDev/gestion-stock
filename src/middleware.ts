@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import { NextResponse } from "next/server";
+import { resolverHostnameTenant } from "@/lib/tenants/resolver-hostname-tenant";
 
 const { auth } = NextAuth(authConfig);
 
@@ -26,7 +27,12 @@ const RUTAS_ADMIN_VALIDAS = new Set([
 const RUTAS_GESTION = ["/dashboard", "/provider", "/sizes", "/movements"];
 
 export default auth(async (solicitud) => {
-  const estaAutenticado = Boolean(solicitud.auth?.user?.id);
+  const hostname = resolverHostnameTenant(solicitud.headers.get("host") ?? "");
+  const estaAutenticado = Boolean(
+    solicitud.auth?.user?.id &&
+    hostname &&
+    solicitud.auth.user.tenantHost === hostname,
+  );
   const rolUsuario = estaAutenticado ? solicitud.auth?.user?.role : undefined;
   const { nextUrl } = solicitud;
 

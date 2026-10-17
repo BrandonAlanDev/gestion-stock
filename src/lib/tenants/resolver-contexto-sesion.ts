@@ -27,7 +27,8 @@ export async function resolverContextoSesionTenant(
   if (
     !tenant ||
     tenant.estado !== "ACTIVO" ||
-    !usuarioId
+    !usuarioId ||
+    identidadSesion?.tenantId !== tenant.id
   ) {
     return null;
   }

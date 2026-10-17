@@ -1,7 +1,7 @@
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export async function contarSubcategorias(tenantId: string, categoriaId: string) {
-  return conPrisma((prisma) =>
+  return conPrismaTenant(tenantId, (prisma) =>
     prisma.subCategory.count({ where: { categoryId: categoriaId } }),
   );
 }
