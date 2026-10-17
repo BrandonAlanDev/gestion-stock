@@ -5,13 +5,12 @@ import type { Prisma } from "../../../../generated/prisma/client";
 export async function crearCarrusel(tenantId: string, datos: EntradaCrearCarrusel) {
   return conPrismaTenant(tenantId, async (prisma) => {
     const configuracion = await prisma.pageConfig.findUnique({
-      where: { tenantId },
+      where: { clave: "principal" },
       select: { id: true },
     });
     if (!configuracion) throw new Error("La configuración de la tienda no existe");
     return prisma.carousel.create({
     data: {
-      tenantId,
       type: datos.type,
       title: datos.title,
       active: datos.active,
@@ -21,12 +20,11 @@ export async function crearCarrusel(tenantId: string, datos: EntradaCrearCarruse
       slides: {
         create: datos.slides.map((diapositiva) => ({
           ...diapositiva,
-          tenantId,
           config: diapositiva.config as Prisma.InputJsonValue | undefined,
         })),
       },
     },
-    include: { slides: { where: { tenantId }, orderBy: { order: "asc" } } },
+    include: { slides: { where: {}, orderBy: { order: "asc" } } },
     });
   });
 }

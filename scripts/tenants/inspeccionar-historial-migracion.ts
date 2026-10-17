@@ -3,7 +3,6 @@ import { PrismaClient } from "../../generated/prisma/client";
 import type { CredencialesBaseTenant } from "../../src/lib/tenants/registry/types";
 import {
   validarHistorialAntesDeDeploy,
-  type EstadoTenantMigrable,
   type MigracionVersionada,
 } from "./comparar-migraciones";
 
@@ -27,7 +26,6 @@ export interface ResultadoPreflightMigracion {
 export async function inspeccionarHistorialMigracionTenant(
   credenciales: CredencialesBaseTenant,
   migracionesVersionadas: readonly MigracionVersionada[],
-  estadoTenant: EstadoTenantMigrable,
 ): Promise<ResultadoPreflightMigracion> {
   const adapter = new PrismaMariaDb({
     host: credenciales.host,
@@ -93,7 +91,6 @@ export async function inspeccionarHistorialMigracionTenant(
       historial,
       migracionesVersionadas,
       objetosPersistentes > 0,
-      estadoTenant,
     );
 
     return {

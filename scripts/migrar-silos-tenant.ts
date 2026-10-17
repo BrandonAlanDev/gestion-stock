@@ -233,7 +233,6 @@ async function main(): Promise<void> {
     const preflight = await inspeccionarHistorialMigracionTenant(
       credenciales,
       migracionesVersionadas,
-      estado,
     );
     estadoPreflightPorTenant.set(tenantId, {
       estado,

@@ -2,19 +2,19 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerCategoriaConProductos(tenantId: string, nombreCategoria: string) {
   return conPrismaTenant(tenantId, (prisma) => prisma.category.findFirst({
-    where: { tenantId, name: nombreCategoria, active: true },
+    where: { name: nombreCategoria, active: true },
     include: {
       subCategories: {
-        where: { tenantId, active: true },
+        where: { active: true },
         orderBy: { name: "asc" },
       },
       garments: {
-        where: { tenantId, active: true },
+        where: { active: true },
         orderBy: { name: "asc" },
         include: {
-          images: { where: { tenantId }, orderBy: { order: "asc" } },
+          images: { where: {}, orderBy: { order: "asc" } },
           variants: {
-            where: { tenantId },
+            where: {},
             include: {
               size: true,
               color: true,
@@ -23,7 +23,7 @@ export async function obtenerCategoriaConProductos(tenantId: string, nombreCateg
             orderBy: { size: { order: "asc" } },
           },
           subCategory: true,
-          opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+          opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
         },
       },
       _count: { select: { garments: { where: { active: true } } } },

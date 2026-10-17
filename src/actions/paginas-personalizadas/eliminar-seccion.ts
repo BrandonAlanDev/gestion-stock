@@ -6,6 +6,6 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function eliminarSeccionPersonalizada(id: string) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) =>
-    prisma.customSection.deleteMany({ where: { id, tenantId } }),
+    prisma.customSection.deleteMany({ where: { id } }),
   );
 }

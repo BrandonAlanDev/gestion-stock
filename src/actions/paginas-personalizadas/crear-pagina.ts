@@ -7,6 +7,6 @@ import type { EntradaCrearPagina } from "@/types/paginas-personalizadas/entradas
 export async function crearPaginaPersonalizada(datos: EntradaCrearPagina) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) =>
-    prisma.customPage.create({ data: { ...datos, tenantId } }),
+    prisma.customPage.create({ data: { ...datos } }),
   );
 }

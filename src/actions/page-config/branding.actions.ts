@@ -66,11 +66,11 @@ export async function updateBrandingConfig(data: BrandingInput) {
     const pageConfigActualizado = await conPrismaTenant(contexto.tenantId, (prisma) =>
       pageConfig
         ? prisma.pageConfig.update({
-            where: { id: pageConfig.id, tenantId: contexto.tenantId },
+            where: { id: pageConfig.id },
             data: payload,
           })
         : prisma.pageConfig.create({
-            data: { ...payload, tenantId: contexto.tenantId },
+            data: { ...payload },
           }),
     );
 
@@ -111,7 +111,7 @@ async function obtenerBrandingCacheado(tenantId: string) {
     try {
       const branding = await conPrismaTenant(tenantId, (prisma) =>
         prisma.pageConfig.findFirst({
-          where: { tenantId },
+          where: {},
           select: {
           storeName: true,
           slogan: true,
@@ -123,7 +123,7 @@ async function obtenerBrandingCacheado(tenantId: string) {
           bgColor: true,
 
           banners: {
-            where: { tenantId },
+            where: {},
             orderBy: {
               order: "asc",
             },

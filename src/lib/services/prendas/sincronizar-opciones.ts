@@ -10,20 +10,18 @@ export async function sincronizarOpciones(
   garmentId: string,
   opciones: OpcionProductoFormulario[]
 ): Promise<Map<string, string>> {
-  await tx.garmentOption.deleteMany({ where: { garmentId, tenantId } });
+  await tx.garmentOption.deleteMany({ where: { garmentId } });
 
   const resolver = new Map<string, string>();
   let posicionOpcion = 0;
   for (const opcion of opciones) {
     const creada = await tx.garmentOption.create({
       data: {
-        tenantId,
         garmentId,
         name: opcion.name,
         position: posicionOpcion,
         values: {
           create: opcion.values.map((valor, indice) => ({
-            tenantId,
             value: valor,
             position: indice,
           })),

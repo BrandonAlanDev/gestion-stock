@@ -21,14 +21,14 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
   const prendaExistente = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
-    where: { id, tenantId },
+    where: { id },
     include: {
-      images: { where: { tenantId }, orderBy: { order: "asc" } },
+      images: { where: {}, orderBy: { order: "asc" } },
       variants: {
-        where: { tenantId },
+        where: {},
         include: { optionValues: { include: { optionValue: { include: { option: true } } } } },
       },
-      opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+      opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
     },
   }));
   if (!prendaExistente) return { error: "El producto no existe." };

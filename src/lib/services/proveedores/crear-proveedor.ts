@@ -9,17 +9,15 @@ export async function crearProveedor(
 ) {
   return conPrismaTenant(tenantId, (prisma) => prisma.provider.create({
     data: {
-      tenantId,
       name: datos.nombre,
       details: datos.detalles,
       contacts: {
         create: datos.contactos.map(({ contacto, tipo }) => ({
-          tenantId,
           contact: contacto,
           type: tipo,
         })),
       },
     },
-    include: { contacts: { where: { tenantId, active: true } } },
+    include: { contacts: { where: { active: true } } },
   }));
 }

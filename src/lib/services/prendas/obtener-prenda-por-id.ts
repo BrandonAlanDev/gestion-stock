@@ -3,14 +3,14 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerPrendaPorId(tenantId: string, id: string) {
   return conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
-    where: { id, tenantId },
+    where: { id },
     include: {
       category: true,
       subCategory: true,
-      variants: { where: { tenantId }, include: INCLUDE_VARIANTE },
-      supplier: { include: { contacts: { where: { tenantId, active: true } } } },
-      images: { where: { tenantId }, orderBy: { order: "asc" } },
-      opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+      variants: { where: {}, include: INCLUDE_VARIANTE },
+      supplier: { include: { contacts: { where: { active: true } } } },
+      images: { where: {}, orderBy: { order: "asc" } },
+      opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
     },
   }));
 }

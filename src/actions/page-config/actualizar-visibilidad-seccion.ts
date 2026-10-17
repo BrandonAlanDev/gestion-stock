@@ -12,9 +12,9 @@ export interface DatosVisibilidadSeccion {
 export async function actualizarVisibilidadSeccion(datos: DatosVisibilidadSeccion) {
   try {
     const { pageConfig } = await requerirPageConfigAdministrador();
-    await conPrismaTenant(pageConfig.tenantId, (prisma) =>
+    await conPrismaTenant("tienda", (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: pageConfig.tenantId },
+        where: { id: pageConfig.id },
         data: {
           featuredLayout: datos.featuredLayout
             ? (datos.featuredLayout.toUpperCase() as PageConfig_featuredLayout)

@@ -11,7 +11,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
     async () => {
   try {
     const pageConfig = await conPrismaTenant(tenantId, (prisma) => prisma.pageConfig.findFirst({
-      where: { tenantId },
+      where: {},
       select: {
         storeName: true,
         slogan: true,
@@ -65,7 +65,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
 
         // Mantenemos tus banners
         banners: {
-          where: { tenantId },
+          where: {},
           orderBy: {
             order: "asc",
           },
@@ -81,7 +81,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
             active: true,
             featuredLayout: true,
             grids: {
-              where: { tenantId },
+              where: {},
               orderBy: [{
                 order: "asc",
               },{
@@ -92,7 +92,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         },
 
         carousels: {
-          where: { tenantId, type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
+          where: { type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
           select: {
             id: true,
             type: true,
@@ -107,7 +107,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
     }
 
     const homegrids = await conPrismaTenant(tenantId, (prisma) => prisma.homegrid.findMany({
-      where: { tenantId },
+      where: {},
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
@@ -118,7 +118,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         active: true,
         featuredLayout: true,
         grids: {
-          where: { tenantId },
+          where: {},
           orderBy: [{ order: "asc" }, { title: "asc" }],
         },
       },

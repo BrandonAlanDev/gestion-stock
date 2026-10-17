@@ -44,7 +44,9 @@
     "transferir:datos-tenant": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/transferir-datos-tenant.ts",
     "verificar:transferencia-tenant": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-transferencia-tenant.ts",
     "registro:local:cifrar": "ts-node --project tsconfig.scripts.json scripts/cifrar-registro-local.ts",
-    "carruseles:limpiar-enlaces": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/limpiar-enlaces-carrusel.ts"
+    "carruseles:limpiar-enlaces": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/limpiar-enlaces-carrusel.ts",
+    "generar:baseline-provisionamiento": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/generar-baseline-provisionamiento.ts",
+    "verificar:baseline-provisionamiento": "npm run generar:baseline-provisionamiento"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

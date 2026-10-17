@@ -6,11 +6,11 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function obtenerPaginaPersonalizadaPorSlug(slug: string) {
   const { id: tenantId } = await requiereTenantActivo();
   return conPrismaTenant(tenantId, (prisma) => prisma.customPage.findFirst({
-    where: { slug, tenantId, isActive: true },
+    where: { slug, isActive: true },
     include: {
       sections: {
-        where: { tenantId },
-        include: { items: { where: { tenantId } } },
+        where: {},
+        include: { items: { where: {} } },
         orderBy: { order: "asc" },
       },
     },

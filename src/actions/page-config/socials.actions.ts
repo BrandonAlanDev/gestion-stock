@@ -18,7 +18,7 @@ export async function updateSocialsConfig(
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const socials = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data,
       }),
     );
@@ -36,7 +36,7 @@ export async function getSocialsConfig() {
     const { id: tenantId } = await requiereTenantActivo();
     const socials = await conPrismaTenant(tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { tenantId },
+        where: {},
 
         select: {
           instagram: true,

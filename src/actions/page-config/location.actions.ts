@@ -20,7 +20,7 @@ export async function updateLocationConfig(
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const location = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data,
       }),
     );
@@ -37,7 +37,7 @@ export async function getLocationConfig() {
     const { id: tenantId } = await requiereTenantActivo();
     const location = await conPrismaTenant(tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { tenantId },
+        where: {},
 
         select: {
           locationEnabled: true,

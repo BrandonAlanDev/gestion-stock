@@ -130,7 +130,6 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
         await dependencias.conPrismaTenant(tenantId, (prisma) => prisma.garmentImage.createMany({
           data: imagenesFinales.map((imagen, indice) => ({
             garmentId: prenda.id,
-            tenantId,
             srcImage: imagen.url,
             publicId: imagen.publicId,
             order: indice,

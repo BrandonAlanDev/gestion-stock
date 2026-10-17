@@ -28,13 +28,9 @@ export async function guardarConfigMetodo(
 
     await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
       where: {
-        tenantId_metodo: {
-          tenantId: contexto.tenantId,
-          metodo: datos.metodo,
-        },
+        metodo: datos.metodo,
       },
       create: {
-        tenantId: contexto.tenantId,
         metodo: datos.metodo,
         config: { instrucciones },
         activo: false,

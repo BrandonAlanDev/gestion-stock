@@ -6,6 +6,6 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function obtenerElementoSeccionPorId(id: string) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) =>
-    prisma.customSectionItem.findFirst({ where: { id, tenantId } }),
+    prisma.customSectionItem.findFirst({ where: { id } }),
   );
 }

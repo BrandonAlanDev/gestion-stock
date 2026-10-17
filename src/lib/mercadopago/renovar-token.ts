@@ -10,7 +10,7 @@ import type { RespuestaTokenMP } from "@/types/mercadopago";
  */
 export async function renovarTokenMP(tenantId: string): Promise<string> {
   const cuenta = await conPrismaTenant(tenantId, (prisma) =>
-    prisma.cuentaMercadoPago.findUnique({ where: { tenantId } }),
+    prisma.cuentaMercadoPago.findUnique({ where: { clave: "principal" } }),
   );
 
   if (!cuenta?.refreshToken) {
@@ -45,7 +45,7 @@ export async function renovarTokenMP(tenantId: string): Promise<string> {
 
   await conPrismaTenant(tenantId, (prisma) =>
     prisma.cuentaMercadoPago.update({
-      where: { tenantId },
+      where: { clave: "principal" },
       data: {
         accessToken: datos.access_token,
         refreshToken: datos.refresh_token ?? cuenta.refreshToken,

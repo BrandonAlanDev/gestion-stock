@@ -29,10 +29,7 @@ export async function registrarUsuario(
   const existente = await conPrismaTenant(tenant.id, (prisma) =>
     prisma.user.findUnique({
       where: {
-        tenantId_email: {
-          tenantId: tenant.id,
-          email: emailNormalizado,
-        },
+        email: emailNormalizado,
       },
     }),
   );
@@ -43,7 +40,6 @@ export async function registrarUsuario(
     await conPrismaTenant(tenant.id, (prisma) =>
       prisma.user.create({
         data: {
-          tenantId: tenant.id,
           email: emailNormalizado,
           name,
           password: passwordHash,

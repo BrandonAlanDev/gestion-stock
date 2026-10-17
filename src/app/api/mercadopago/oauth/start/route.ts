@@ -35,14 +35,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
   }
 
-  let contexto;
   try {
-    contexto = await requiereAdmin();
+    await requiereAdmin();
   } catch {
     return redirigirConError(urlAdmin, "no_autorizado");
   }
-
-  if (!contexto) return redirigirConError(urlAdmin, "no_autorizado");
 
   if (!process.env.MP_CLIENT_ID) {
     console.error("MP_CLIENT_ID no configurado en el .env");
@@ -61,7 +58,6 @@ export async function POST(req: NextRequest) {
   try {
     const codeVerifier = generarVerificadorPKCE();
     const estado = firmarEstadoOAuth(
-      contexto.tenantId,
       hostname,
       origen,
       obtenerSecretoFirma(),

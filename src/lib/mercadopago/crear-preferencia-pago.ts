@@ -25,8 +25,8 @@ export async function crearPreferenciaPago(
 ): Promise<ResultadoCrearPreferencia> {
   const pedido = await conPrismaTenant(tenantId, (prisma) =>
     prisma.pedido.findFirst({
-      where: { id: pedidoId, tenantId },
-      include: { items: { where: { tenantId } } },
+      where: { id: pedidoId },
+      include: { items: { where: {} } },
     }),
   );
 
@@ -66,7 +66,6 @@ export async function crearPreferenciaPago(
       })),
     },
     baseUrl,
-    tenantId,
   );
 
   const respuesta = await preference.create({ body: cuerpo });
@@ -78,7 +77,6 @@ export async function crearPreferenciaPago(
     prisma.pedido.updateMany({
       where: {
         id: pedido.id,
-        tenantId,
         estado: "PENDIENTE",
         stockReservado: true,
         reservaExpiraEn: { equals: reservaExpiraEn, gt: new Date() },

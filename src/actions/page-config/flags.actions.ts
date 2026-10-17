@@ -15,7 +15,7 @@ export async function updatePageFlags(data: unknown) {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const config = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { ...parsed.data },
       }),
     );

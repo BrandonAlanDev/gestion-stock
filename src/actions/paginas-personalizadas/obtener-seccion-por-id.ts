@@ -6,7 +6,7 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function obtenerSeccionPersonalizadaPorId(id: string) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) => prisma.customSection.findFirst({
-    where: { id, tenantId },
-    include: { items: { where: { tenantId } } },
+    where: { id },
+    include: { items: { where: {} } },
   }));
 }

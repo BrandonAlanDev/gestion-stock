@@ -18,7 +18,7 @@ async function obtenerConfigTransferencia(tenantId: string): Promise<{
   const metodo = await conPrismaTenant(tenantId, (prisma) =>
     prisma.metodoPago.findUnique({
       where: {
-        tenantId_metodo: { tenantId, metodo: METODO_TRANSFERENCIA },
+        metodo: METODO_TRANSFERENCIA,
       },
     }),
   );

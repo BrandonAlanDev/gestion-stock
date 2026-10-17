@@ -6,12 +6,12 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function obtenerPrendaParaEdicion(id: string) {
   const { tenantId } = await requiereAdmin();
   const producto = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
-    where: { id, tenantId },
+    where: { id },
     include: {
-      images: { where: { tenantId }, orderBy: { order: "asc" } },
-      opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+      images: { where: {}, orderBy: { order: "asc" } },
+      opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
       variants: {
-        where: { tenantId },
+        where: {},
         include: { optionValues: { include: { optionValue: { include: { option: true } } } } },
       },
     },

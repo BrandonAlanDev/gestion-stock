@@ -14,7 +14,7 @@ export async function updateSeoConfig(
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const seo = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data,
       }),
     );
@@ -32,7 +32,7 @@ export async function getSeoConfig() {
     const { id: tenantId } = await requiereTenantActivo();
     const seo = await conPrismaTenant(tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { tenantId },
+        where: {},
 
         select: {
           metaTitle: true,

@@ -25,7 +25,6 @@ export function crearExpiradorPedidosPendientes(
     return dependencias.conPrismaTenant(tenantId, async (prisma) => {
       const candidatos = await prisma.pedido.findMany({
         where: {
-          tenantId,
           estado: "PENDIENTE",
           stockReservado: true,
           reservaExpiraEn: { lte: ahora },
@@ -41,7 +40,6 @@ export function crearExpiradorPedidosPendientes(
           const cancelado = await tx.pedido.updateMany({
             where: {
               id: candidato.id,
-              tenantId,
               estado: "PENDIENTE",
               stockReservado: true,
               reservaExpiraEn: { lte: ahora },
@@ -53,7 +51,6 @@ export function crearExpiradorPedidosPendientes(
           await tx.payment.updateMany({
             where: {
               pedidoId: candidato.id,
-              tenantId,
               estado: { not: "APROBADO" },
             },
             data: { estado: "CANCELADO" },

@@ -12,8 +12,8 @@ export async function clearPageConfig() {
     const { contexto, pageConfig: configActual } = await requerirPageConfigAdministrador();
     const existing = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { id: configActual.id, tenantId: contexto.tenantId },
-        include: { banners: { where: { tenantId: contexto.tenantId } } },
+        where: { id: configActual.id },
+        include: { banners: { where: {} } },
       }),
     );
 
@@ -35,8 +35,8 @@ export async function clearPageConfig() {
 
     const pageConfig = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: existing.id, tenantId: contexto.tenantId },
-        data: { ...RESET_DATA, banners: { deleteMany: { tenantId: contexto.tenantId } } },
+        where: { id: existing.id },
+        data: { ...RESET_DATA, banners: { deleteMany: {} } },
       }),
     );
 

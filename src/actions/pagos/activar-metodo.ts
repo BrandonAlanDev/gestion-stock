@@ -20,10 +20,9 @@ export async function activarMetodo(
 
     await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
       where: {
-        tenantId_metodo: { tenantId: contexto.tenantId, metodo },
+        metodo,
       },
       create: {
-        tenantId: contexto.tenantId,
         metodo,
         activo,
       },

@@ -17,9 +17,8 @@ export async function guardarCuentaMP(
     : null;
 
   await conPrismaTenant(tenantId, (prisma) => prisma.cuentaMercadoPago.upsert({
-    where: { tenantId },
+    where: { clave: "principal" },
     create: {
-      tenantId,
       accessToken: datos.access_token,
       refreshToken: datos.refresh_token ?? null,
       publicKey: datos.public_key ?? null,

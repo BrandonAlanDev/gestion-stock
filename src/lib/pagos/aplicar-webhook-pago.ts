@@ -58,12 +58,12 @@ async function buscarOCrearPayment(
   moneda: string,
 ) {
   const asociado = await tx.payment.findFirst({
-    where: { tenantId, proveedor: "mercadopago", externalId },
+    where: { proveedor: "mercadopago", externalId },
   });
   if (asociado) return asociado.pedidoId === pedidoId ? asociado : null;
 
   const pendiente = await tx.payment.findFirst({
-    where: { pedidoId, tenantId, proveedor: "mercadopago", externalId: null, estado: "PENDIENTE" },
+    where: { pedidoId, proveedor: "mercadopago", externalId: null, estado: "PENDIENTE" },
     orderBy: { createdAt: "asc" },
   });
   if (pendiente) {
@@ -77,7 +77,6 @@ async function buscarOCrearPayment(
   try {
     return await tx.payment.create({
       data: {
-        tenantId,
         pedidoId,
         proveedor: "mercadopago",
         metodo: "mercadopago",
@@ -92,7 +91,7 @@ async function buscarOCrearPayment(
       typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
     if (!esDuplicado) throw error;
     const existente = await tx.payment.findFirst({
-      where: { tenantId, proveedor: "mercadopago", externalId },
+      where: { proveedor: "mercadopago", externalId },
     });
     return existente?.pedidoId === pedidoId ? existente : null;
   }
@@ -116,10 +115,9 @@ export function crearAplicadorWebhookPago(
       await dependencias.conPrismaTenant(tenantId, (prisma) =>
         prisma.$transaction(async (tx) => {
           const pedido = await tx.pedido.findFirst({
-            where: { id: pedidoId, tenantId: tenantIdIndicado },
+            where: { id: pedidoId },
             select: {
               id: true,
-              tenantId: true,
               total: true,
               moneda: true,
               metodoPago: true,
@@ -147,7 +145,7 @@ export function crearAplicadorWebhookPago(
           const payment = await buscarOCrearPayment(
             tx,
             pedidoId,
-            pedido.tenantId,
+            tenantId,
             pago.externalId,
             montoRecibido,
             pedido.moneda,
@@ -159,7 +157,6 @@ export function crearAplicadorWebhookPago(
               const pagoTardio = await tx.payment.updateMany({
                 where: {
                   id: payment.id,
-                  tenantId: pedido.tenantId,
                   pedidoId,
                   proveedor: "mercadopago",
                   externalId: pago.externalId,
@@ -180,7 +177,6 @@ export function crearAplicadorWebhookPago(
               await tx.payment.updateMany({
                 where: {
                   id: payment.id,
-                  tenantId: pedido.tenantId,
                   pedidoId,
                   proveedor: "mercadopago",
                   externalId: pago.externalId,
@@ -196,7 +192,6 @@ export function crearAplicadorWebhookPago(
             const actualizado = await tx.payment.updateMany({
               where: {
                 id: payment.id,
-                tenantId: pedido.tenantId,
                 pedidoId,
                 proveedor: "mercadopago",
                 externalId: pago.externalId,
@@ -207,7 +202,7 @@ export function crearAplicadorWebhookPago(
             if (actualizado.count !== 1) return;
 
             const confirmado = await tx.pedido.updateMany({
-              where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
+              where: { id: pedidoId, estado: "PENDIENTE" },
               data: {
                 estado: "CONFIRMADO",
                 estadoPago: "APROBADO",
@@ -221,10 +216,10 @@ export function crearAplicadorWebhookPago(
             }
 
             if (pedido.stockReservado) {
-              await dependencias.confirmarReservaStockPedido(pedidoId, pedido.tenantId, tx);
+              await dependencias.confirmarReservaStockPedido(pedidoId, tenantId, tx);
             } else {
               // Pedidos anteriores al despliegue no tienen stock reservado.
-              await dependencias.descontarStockPedido(pedidoId, pedido.tenantId, tx);
+              await dependencias.descontarStockPedido(pedidoId, tenantId, tx);
             }
             return;
           }
@@ -232,7 +227,6 @@ export function crearAplicadorWebhookPago(
           const actualizado = await tx.payment.updateMany({
             where: {
               id: payment.id,
-              tenantId: pedido.tenantId,
               pedidoId,
               proveedor: "mercadopago",
               externalId: pago.externalId,
@@ -250,13 +244,13 @@ export function crearAplicadorWebhookPago(
 
           if (mapa.cancelar) {
             const cancelado = await tx.pedido.updateMany({
-              where: { id: pedidoId, tenantId: pedido.tenantId, estado: pedido.estado },
+              where: { id: pedidoId, estado: pedido.estado },
               data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
             });
             if (cancelado.count === 1 && pedido.stockReservado) {
               const liberada = await dependencias.liberarReservaStockPedido(
                 pedidoId,
-                pedido.tenantId,
+                tenantId,
                 tx,
               );
               if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
@@ -265,7 +259,7 @@ export function crearAplicadorWebhookPago(
           }
 
           await tx.pedido.updateMany({
-            where: { id: pedidoId, tenantId: pedido.tenantId, estado: "PENDIENTE" },
+            where: { id: pedidoId, estado: "PENDIENTE" },
             data: { estadoPago: mapa.estadoPago },
           });
       }));

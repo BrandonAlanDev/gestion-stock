@@ -11,11 +11,10 @@ export interface IdentidadSesionTenant {
 
 export interface UsuarioPersistidoTenant {
   id: string;
-  tenantId: string;
   role: RolTenant;
 }
 
-/** Contrasta los claims de sesión con el tenant resuelto y el usuario del silo. */
+/** Verifica que el usuario de la sesión todavía exista y conserva su rol vigente. */
 export async function resolverContextoSesionTenant(
   tenant: TenantPublico | null,
   identidadSesion: IdentidadSesionTenant | null | undefined,
@@ -28,8 +27,7 @@ export async function resolverContextoSesionTenant(
   if (
     !tenant ||
     tenant.estado !== "ACTIVO" ||
-    !usuarioId ||
-    identidadSesion?.tenantId !== tenant.id
+    !usuarioId
   ) {
     return null;
   }
@@ -37,8 +35,7 @@ export async function resolverContextoSesionTenant(
   const usuario = await buscarUsuario(tenant.id, usuarioId);
   if (
     !usuario ||
-    usuario.id !== usuarioId ||
-    usuario.tenantId !== tenant.id
+    usuario.id !== usuarioId
   ) {
     return null;
   }

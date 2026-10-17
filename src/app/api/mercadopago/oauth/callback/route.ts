@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { obtenerProveedorRegistroTenant } from "@/lib/tenants/registry/proveedor-registro";
+import { ID_TIENDA } from "@/lib/tenants/obtener-tenant-publico";
 import { proveedorMercadoPago } from "@/lib/pagos/proveedores/mercadopago/mercadopago-proveedor";
 import { obtenerSecretoFirma } from "@/lib/mercadopago/obtener-secreto-firma";
 import {
@@ -72,19 +72,11 @@ export async function GET(req: NextRequest) {
   const estadoFirmado = req.nextUrl.searchParams.get("state") ?? "";
   const codigo = req.nextUrl.searchParams.get("code");
   const errorProveedor = req.nextUrl.searchParams.get("error");
-  const obtenerRegistro = () => obtenerProveedorRegistroTenant();
 
-  // Mercado Pago vuelve primero al dominio fijo de la aplicación. Ese dominio
-  // solo valida el destino y hace relay; nunca puede canjear ni guardar tokens.
+  // El dominio fijo solo valida el destino y hace relay al origen autenticado.
   if (callbackFijo && uriFija) {
     const validacion = await validarContextoCallbackOAuth(estadoFirmado, {
       secreto,
-      resolverTenant: async (tenantId) =>
-        obtenerRegistro().resolverPorId(tenantId),
-      registrarError: (etapa, error) => console.error(
-        `Error en la etapa ${etapa} del relay OAuth de Mercado Pago:`,
-        error instanceof Error ? error.message : String(error),
-      ),
     });
     if (validacion.tipo === "invalido") {
       return responderCallbackInvalido(validacion.status);
@@ -102,9 +94,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  let contexto;
   try {
-    contexto = await requiereAdmin();
+    await requiereAdmin();
   } catch {
     return responderCallbackInvalido(401, true);
   }
@@ -113,17 +104,15 @@ export async function GET(req: NextRequest) {
     estado: estadoFirmado,
     estadoCookie: req.cookies.get("mp_oauth_state")?.value,
     codeVerifier: req.cookies.get("mp_code_verifier")?.value,
-    tenantIdSesion: contexto.tenantId,
     hostRecibido: req.headers.get("host") ?? "",
     codigo,
     errorProveedor,
   }, {
     secreto,
-    resolverTenant: (tenantId) => obtenerRegistro().resolverPorId(tenantId),
-    manejarCallback: (tenantId, codigoAutorizacion, codeVerifier) =>
-      proveedorMercadoPago.manejarCallback(tenantId, codigoAutorizacion, codeVerifier),
-    registrarError: (etapa, error) => console.error(
-      `Error en la etapa ${etapa} del callback de Mercado Pago:`,
+    manejarCallback: (codigoAutorizacion, codeVerifier) =>
+      proveedorMercadoPago.manejarCallback(ID_TIENDA, codigoAutorizacion, codeVerifier),
+    registrarError: (error) => console.error(
+      "Error en el intercambio OAuth de Mercado Pago:",
       error instanceof Error ? error.message : String(error),
     ),
   });

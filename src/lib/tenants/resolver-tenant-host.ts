@@ -1,14 +1,9 @@
 import "server-only";
 
-import { normalizarHostname } from "@/lib/tenants/normalizar-hostname";
-import { obtenerProveedorRegistroTenant } from "@/lib/tenants/registry/proveedor-registro";
-import type { TenantPublico } from "@/types/tenants";
+import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 
-export async function resolverTenantPorHost(
-  host: string,
-): Promise<TenantPublico | null> {
-  const hostname = normalizarHostname(host);
-  if (!hostname) return null;
-  const entry = await obtenerProveedorRegistroTenant().resolverPorHostname(hostname);
-  return entry?.tenant ?? null;
+/** Compatibilidad con los handlers existentes mientras se retira el parámetro tenant. */
+export async function resolverTenantPorHost(_host: string) {
+  void _host;
+  return obtenerTenantPublico();
 }

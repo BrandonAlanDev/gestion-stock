@@ -8,7 +8,7 @@ export async function getProductsPicker() {
   try {
     const products = await conPrismaTenant(tenantId, (prisma) =>
       prisma.garment.findMany({
-        where: { tenantId },
+        where: {},
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),

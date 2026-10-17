@@ -5,7 +5,7 @@ import type { Prisma } from "../../../../generated/prisma/client";
 export async function actualizarCarrusel(tenantId: string, datos: EntradaActualizarCarrusel) {
   const { id, slides, ...cambios } = datos;
   return conPrismaTenant(tenantId, async (prisma) => {
-    const existente = await prisma.carousel.findFirst({ where: { id, tenantId }, select: { id: true } });
+    const existente = await prisma.carousel.findFirst({ where: { id }, select: { id: true } });
     if (!existente) throw new Error("El carrusel no pertenece a la tienda activa");
 
     return prisma.$transaction(async (transaccion) => {
@@ -19,10 +19,9 @@ export async function actualizarCarrusel(tenantId: string, datos: EntradaActuali
       });
     }
     if (slides) {
-      await transaccion.carouselSlide.deleteMany({ where: { carouselId: id, tenantId } });
+      await transaccion.carouselSlide.deleteMany({ where: { carouselId: id } });
       await transaccion.carouselSlide.createMany({
         data: slides.map((diapositiva) => ({
-          tenantId,
           carouselId: id,
           image: diapositiva.image,
           publicId: diapositiva.publicId,
@@ -37,8 +36,8 @@ export async function actualizarCarrusel(tenantId: string, datos: EntradaActuali
       });
     }
     return transaccion.carousel.findFirst({
-      where: { id, tenantId },
-      include: { slides: { where: { tenantId }, orderBy: { order: "asc" } } },
+      where: { id },
+      include: { slides: { where: {}, orderBy: { order: "asc" } } },
     });
     });
   });

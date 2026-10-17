@@ -53,8 +53,8 @@ interface FilaCrudaConsulta {
   cantidadVariantes: string | number;
 }
 
-function construirCondiciones(tenantId: string, p: ParametrosConsultaProductos): Prisma.Sql {
-  const condiciones: Prisma.Sql[] = [Prisma.sql`g.tenantId = ${tenantId}`];
+function construirCondiciones(p: ParametrosConsultaProductos): Prisma.Sql {
+  const condiciones: Prisma.Sql[] = [Prisma.sql`1 = 1`];
 
   if (p.estado === "activo") condiciones.push(Prisma.sql`g.active = 1`);
   if (p.estado === "oculto") condiciones.push(Prisma.sql`g.active = 0`);
@@ -69,7 +69,7 @@ function construirCondiciones(tenantId: string, p: ParametrosConsultaProductos):
       Prisma.sql`(${Prisma.join(
         [
           Prisma.sql`g.name LIKE ${patron}`,
-          Prisma.sql`EXISTS (SELECT 1 FROM GarmentVariant v_busqueda WHERE v_busqueda.garmentId = g.id AND v_busqueda.tenantId = g.tenantId AND v_busqueda.sku LIKE ${patron})`,
+          Prisma.sql`EXISTS (SELECT 1 FROM GarmentVariant v_busqueda WHERE v_busqueda.garmentId = g.id AND v_busqueda.sku LIKE ${patron})`,
           Prisma.sql`c.name LIKE ${patron}`,
           Prisma.sql`sc.name LIKE ${patron}`,
         ],
@@ -106,7 +106,7 @@ const SELECT_BASE = Prisma.sql`
   LEFT JOIN Category c ON c.id = g.categoryId
   LEFT JOIN SubCategory sc ON sc.id = g.subCategoryId
   LEFT JOIN Provider p ON p.id = g.supplierId
-  LEFT JOIN GarmentVariant v ON v.garmentId = g.id AND v.tenantId = g.tenantId
+  LEFT JOIN GarmentVariant v ON v.garmentId = g.id
 `;
 
 const GROUP_BY = Prisma.raw(
@@ -121,7 +121,7 @@ export async function obtenerProductosAdmin(
   const limite = Math.min(LIMITE_MAXIMO_ADMIN, Math.max(1, Math.trunc(p.limite) || 20));
   const skip = (pagina - 1) * limite;
 
-  const donde = construirCondiciones(tenantId, p);
+  const donde = construirCondiciones(p);
   const teniendo = construirHaving(p.stock);
   const orden = ORDENES_SQL[p.orden ?? "recientes"];
 
@@ -142,7 +142,7 @@ export async function obtenerProductosAdmin(
       LEFT JOIN Category c ON c.id = g.categoryId
       LEFT JOIN SubCategory sc ON sc.id = g.subCategoryId
       LEFT JOIN Provider p ON p.id = g.supplierId
-      LEFT JOIN GarmentVariant v ON v.garmentId = g.id AND v.tenantId = g.tenantId
+      LEFT JOIN GarmentVariant v ON v.garmentId = g.id
       WHERE ${donde}
       GROUP BY g.id
       HAVING ${teniendo}
@@ -161,7 +161,7 @@ export async function obtenerProductosAdmin(
     const imagenPorId = new Map<string, string>();
     if (ids.length > 0) {
       const imagenes = await prisma.garmentImage.findMany({
-        where: { garmentId: { in: ids }, tenantId },
+        where: { garmentId: { in: ids } },
         orderBy: { order: "asc" },
         select: { garmentId: true, srcImage: true },
       });
@@ -175,7 +175,7 @@ export async function obtenerProductosAdmin(
     const variantesPorProducto = new Map<string, VarianteAdminResumen[]>();
     if (ids.length > 0) {
       const variantes = await prisma.garmentVariant.findMany({
-        where: { garmentId: { in: ids }, tenantId },
+        where: { garmentId: { in: ids } },
         include: {
           optionValues: {
             include: {

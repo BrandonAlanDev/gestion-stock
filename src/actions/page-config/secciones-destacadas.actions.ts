@@ -55,7 +55,6 @@ export async function crearSeccionDestacada() {
     prisma.$transaction(async (tx) => {
       const homegrid = await tx.homegrid.create({
         data: {
-          tenantId: contexto.tenantId,
           title: "",
           subtitle: "",
           style: 1,
@@ -69,7 +68,7 @@ export async function crearSeccionDestacada() {
         PREFIJO_DESTACADA + homegrid.id,
       );
       await tx.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { sectionOrder: JSON.stringify(orden) },
       });
       return homegrid;
@@ -103,7 +102,7 @@ export async function actualizarSeccionDestacada(
 
     const homegrid = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.homegrid.findFirst({
-        where: { id: homegridId, tenantId: contexto.tenantId },
+        where: { id: homegridId },
         select: { id: true },
       }),
     );
@@ -134,7 +133,7 @@ export async function actualizarSeccionDestacada(
 
     const gridsExistentes = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.grid.findMany({
-        where: { homegridId: homegrid.id, tenantId: contexto.tenantId },
+        where: { homegridId: homegrid.id },
       }),
     );
 
@@ -149,12 +148,11 @@ export async function actualizarSeccionDestacada(
         },
       });
       await tx.grid.deleteMany({
-        where: { homegridId: homegrid.id, tenantId: contexto.tenantId },
+        where: { homegridId: homegrid.id },
       });
 
       await tx.grid.createMany({
         data: gridsProcesados!.map((g) => ({
-          tenantId: contexto.tenantId,
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,
@@ -199,7 +197,7 @@ export async function alternarVisibilidadSeccionDestacada(homegridId: string) {
 
   const actualizado = await conPrismaTenant(contexto.tenantId, async (prisma) => {
     const hg = await prisma.homegrid.findFirst({
-      where: { id: homegridId, tenantId: contexto.tenantId },
+      where: { id: homegridId },
       select: { id: true, active: true },
     });
     if (!hg) return null;
@@ -223,14 +221,13 @@ export async function duplicarSeccionDestacada(homegridId: string) {
   const copia = await conPrismaTenant(contexto.tenantId, (prisma) =>
     prisma.$transaction(async (tx) => {
       const fuente = await tx.homegrid.findFirst({
-        where: { id: homegridId, tenantId: contexto.tenantId },
-        include: { grids: { where: { tenantId: contexto.tenantId } } },
+        where: { id: homegridId },
+        include: { grids: { where: {} } },
       });
       if (!fuente) return null;
 
       const nueva = await tx.homegrid.create({
         data: {
-          tenantId: contexto.tenantId,
           title: fuente.title ? fuente.title + " (copia)" : "",
           subtitle: fuente.subtitle,
           style: fuente.style,
@@ -243,7 +240,6 @@ export async function duplicarSeccionDestacada(homegridId: string) {
       if (fuente.grids.length > 0) {
         await tx.grid.createMany({
           data: fuente.grids.map((g) => ({
-            tenantId: contexto.tenantId,
             title: g.title,
             subtitle: g.subtitle,
             image: g.image,
@@ -267,7 +263,7 @@ export async function duplicarSeccionDestacada(homegridId: string) {
         PREFIJO_DESTACADA + nueva.id,
       );
       await tx.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { sectionOrder: JSON.stringify(orden) },
       });
       return nueva;
@@ -287,8 +283,8 @@ export async function eliminarSeccionDestacada(homegridId: string) {
   const eliminado = await conPrismaTenant(contexto.tenantId, (prisma) =>
     prisma.$transaction(async (tx) => {
       const homegrid = await tx.homegrid.findFirst({
-        where: { id: homegridId, tenantId: contexto.tenantId },
-        include: { grids: { where: { tenantId: contexto.tenantId } } },
+        where: { id: homegridId },
+        include: { grids: { where: {} } },
       });
       if (!homegrid) return null;
 
@@ -301,7 +297,7 @@ export async function eliminarSeccionDestacada(homegridId: string) {
         (s) => s !== PREFIJO_DESTACADA + homegrid.id,
       );
       await tx.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { sectionOrder: JSON.stringify(orden) },
       });
       return publicIds;

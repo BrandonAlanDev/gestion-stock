@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import { NextResponse } from "next/server";
-import { normalizarHostname } from "@/lib/tenants/normalizar-hostname";
 
 const { auth } = NextAuth(authConfig);
 
@@ -27,10 +26,7 @@ const RUTAS_ADMIN_VALIDAS = new Set([
 const RUTAS_GESTION = ["/dashboard", "/provider", "/sizes", "/movements"];
 
 export default auth(async (solicitud) => {
-  const hostname = normalizarHostname(solicitud.headers.get("host") ?? "");
-  const tenantHost = solicitud.auth?.user?.tenantHost;
-  const sesionDelHost = Boolean(hostname && tenantHost && hostname === tenantHost);
-  const estaAutenticado = Boolean(solicitud.auth && sesionDelHost);
+  const estaAutenticado = Boolean(solicitud.auth?.user?.id);
   const rolUsuario = estaAutenticado ? solicitud.auth?.user?.role : undefined;
   const { nextUrl } = solicitud;
 

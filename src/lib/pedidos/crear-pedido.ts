@@ -18,7 +18,6 @@ export type ResultadoCrearPedido = {
 };
 
 type ItemPreparado = {
-  tenantId: string;
   garmentId: string;
   variantId: string;
   nombre: string;
@@ -42,7 +41,7 @@ export async function crearPedidoDesdeCarrito(
 
   return conPrismaTenant(tenantId, async (prisma) => {
   const pageConfig = await prisma.pageConfig.findFirst({
-    where: { tenantId },
+    where: {},
     select: { currency: true },
   });
   const moneda = pageConfig?.currency ?? "ARS";
@@ -75,9 +74,8 @@ export async function crearPedidoDesdeCarrito(
     const variante = await prisma.garmentVariant.findFirst({
       where: {
         id: variantId,
-        tenantId,
         garmentId: item.productId,
-        garment: { tenantId, active: true },
+        garment: { active: true },
       },
       include: { garment: { select: { name: true, price: true, controlaStock: true } } },
     });
@@ -91,7 +89,6 @@ export async function crearPedidoDesdeCarrito(
     const precioUnitario = Number(variante.priceOverride ?? variante.garment.price);
 
     itemsPreparados.push({
-      tenantId,
       garmentId: item.productId,
       variantId,
       nombre: variante.garment.name,
@@ -113,7 +110,6 @@ export async function crearPedidoDesdeCarrito(
   const pedido = await prisma.$transaction(async (tx) => {
     const creado = await tx.pedido.create({
       data: {
-        tenantId,
         userId,
         total,
         moneda,

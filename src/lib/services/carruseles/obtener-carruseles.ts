@@ -13,11 +13,10 @@ export async function obtenerCarruseles(
 
   return conPrismaTenant(tenantId, (prisma) => prisma.carousel.findMany({
     where: {
-      tenantId,
       ...(soloActivos ? { active: true } : {}),
       type: { in: tipos },
     },
-    include: { slides: { where: { tenantId }, orderBy: { order: "asc" } } },
+    include: { slides: { where: {}, orderBy: { order: "asc" } } },
     orderBy: { order: "asc" },
   }));
 }

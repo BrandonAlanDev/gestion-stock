@@ -7,7 +7,7 @@ export async function GET() {
     const { tenantId } = await requiereAdmin();
     const categories = await conPrismaTenant(tenantId, (prisma) =>
       prisma.category.findMany({
-        where: { tenantId, active: true },
+        where: { active: true },
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),

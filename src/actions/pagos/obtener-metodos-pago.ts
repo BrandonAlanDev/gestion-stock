@@ -32,7 +32,7 @@ export async function obtenerMetodosPago(): Promise<ResultadoMetodosPago> {
     const [disponibles, registros] = await Promise.all([
       obtenerMetodosPagoDisponibles(contexto.tenantId),
       conPrismaTenant(contexto.tenantId, (prisma) =>
-        prisma.metodoPago.findMany({ where: { tenantId: contexto.tenantId } }),
+        prisma.metodoPago.findMany({ where: {} }),
       ),
     ]);
     const porMetodo = new Map<string, { config: unknown }>();

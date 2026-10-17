@@ -15,7 +15,7 @@ export async function updateContactConfig(
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const contact = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { phone: data.phone, whatsapp: data.whatsapp, email: data.email },
       }),
     );
@@ -32,7 +32,7 @@ export async function getContactConfig() {
     const { id: tenantId } = await requiereTenantActivo();
     const contact = await conPrismaTenant(tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { tenantId },
+        where: {},
 
         select: {
           phone: true,

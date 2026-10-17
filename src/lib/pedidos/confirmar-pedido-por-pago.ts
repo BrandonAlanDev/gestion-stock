@@ -33,10 +33,9 @@ export async function confirmarPedidoPorPago(
 ): Promise<ResultadoConfirmacionPago> {
   return conPrismaTenant(argumentos.tenantId, async (prisma) => prisma.$transaction(async (tx) => {
   const pedido = await tx.pedido.findFirst({
-    where: { id: argumentos.pedidoId, tenantId: argumentos.tenantId },
+    where: { id: argumentos.pedidoId },
     select: {
       id: true,
-      tenantId: true,
       estado: true,
       total: true,
       stockReservado: true,
@@ -59,7 +58,7 @@ export async function confirmarPedidoPorPago(
   }
 
   const resultado = await tx.pedido.updateMany({
-    where: { id: pedido.id, tenantId: argumentos.tenantId, estado: "PENDIENTE" },
+    where: { id: pedido.id, estado: "PENDIENTE" },
     data: {
       estado: validacion.estado,
       estadoPago: validacion.estadoPago,
@@ -75,10 +74,10 @@ export async function confirmarPedidoPorPago(
   }
 
   if (pedido.stockReservado) {
-    await confirmarReservaStockPedido(pedido.id, pedido.tenantId, tx);
+    await confirmarReservaStockPedido(pedido.id, argumentos.tenantId, tx);
   } else {
     // Pedidos anteriores al despliegue todavía no tienen stock reservado.
-    await descontarStockPedido(pedido.id, pedido.tenantId, tx);
+    await descontarStockPedido(pedido.id, argumentos.tenantId, tx);
   }
 
   return { ok: true, pedidoId: pedido.id };

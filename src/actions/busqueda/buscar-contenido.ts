@@ -16,14 +16,14 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
   try {
     const [prendas, categorias, subcategorias, paginas] = await conPrismaTenant(tenantId, (prisma) => Promise.all([
       prisma.garment.findMany({
-        where: { tenantId, active: true, name: { contains: texto }, category: { tenantId, active: true } },
+        where: { active: true, name: { contains: texto }, category: { active: true } },
         orderBy: { name: "asc" },
         take: LIMITE_POR_TIPO,
         select: {
           id: true,
           name: true,
           images: {
-            where: { tenantId },
+            where: {},
             orderBy: { order: "asc" },
             take: 1,
             select: { srcImage: true },
@@ -31,19 +31,19 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
         },
       }),
       prisma.category.findMany({
-        where: { tenantId, active: true, name: { contains: texto } },
+        where: { active: true, name: { contains: texto } },
         orderBy: { name: "asc" },
         take: LIMITE_POR_TIPO,
         select: { id: true, name: true },
       }),
       prisma.subCategory.findMany({
-        where: { tenantId, active: true, name: { contains: texto }, category: { tenantId, active: true } },
+        where: { active: true, name: { contains: texto }, category: { active: true } },
         orderBy: { name: "asc" },
         take: LIMITE_POR_TIPO,
         select: { id: true, name: true, category: { select: { name: true } } },
       }),
       prisma.customPage.findMany({
-        where: { tenantId, isActive: true, title: { contains: texto } },
+        where: { isActive: true, title: { contains: texto } },
         orderBy: { title: "asc" },
         take: LIMITE_POR_TIPO,
         select: { id: true, title: true, slug: true },

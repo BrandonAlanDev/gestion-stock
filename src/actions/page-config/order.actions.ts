@@ -17,7 +17,7 @@ export async function updateSectionOrder(sections: unknown) {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: { sectionOrder: JSON.stringify(sections) },
       }),
     );

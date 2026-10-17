@@ -25,15 +25,14 @@ export async function obtenerEstadisticasDashboard(tenantId: string) {
     const [movimientos, variantesStockBajo, totalProductos, totalSalidas, totalEntradas] =
     await Promise.all([
       prisma.movement.findMany({
-        where: { tenantId, type: "OUT", createdAt: { gte: desde } },
+        where: { type: "OUT", createdAt: { gte: desde } },
         select: { quantity: true, priceAtTime: true, createdAt: true },
         orderBy: { createdAt: "asc" },
       }),
       prisma.garmentVariant.findMany({
         where: {
-          tenantId,
           stock: { lte: 3 },
-          garment: { tenantId, active: true },
+          garment: { active: true },
         },
         include: {
           garment: {
@@ -50,9 +49,9 @@ export async function obtenerEstadisticasDashboard(tenantId: string) {
         orderBy: { stock: "asc" },
         take: 20,
       }),
-      prisma.garment.count({ where: { tenantId, active: true } }),
-      prisma.movement.count({ where: { tenantId, type: "OUT" } }),
-      prisma.movement.count({ where: { tenantId, type: "IN" } }),
+      prisma.garment.count({ where: { active: true } }),
+      prisma.movement.count({ where: { type: "OUT" } }),
+      prisma.movement.count({ where: { type: "IN" } }),
     ]);
 
     const ventasPorMes: Record<string, { cantidad: number; ingresos: number }> = {};

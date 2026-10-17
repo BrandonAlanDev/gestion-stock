@@ -34,12 +34,11 @@ export function coincideHistorialMigraciones(
   });
 }
 
-/** Valida que migrate deploy continúe un prefijo íntegro o parta de una base vacía. */
+/** Valida que migrate deploy continúe un prefijo íntegro ya registrado. */
 export function validarHistorialAntesDeDeploy(
   registros: readonly RegistroMigracionAplicada[],
   versionadas: readonly MigracionVersionada[],
   tieneObjetosPersistentes: boolean,
-  estadoTenant: EstadoTenantMigrable,
 ): void {
   const incompleta = registros.find((registro) => !registro.finalizada && !registro.revertida);
   if (incompleta) {
@@ -50,14 +49,14 @@ export function validarHistorialAntesDeDeploy(
     .filter((registro) => registro.finalizada && !registro.revertida)
     .map(({ nombre, checksum }) => ({ nombre, checksum }));
 
-  if (aplicadas.length === 0 && estadoTenant !== "PROVISIONING") {
-    throw new Error(
-      "Solo un tenant PROVISIONING puede inicializarse sin un historial de migraciones aplicado",
-    );
-  }
   if (tieneObjetosPersistentes && aplicadas.length === 0) {
     throw new Error(
       "La base contiene objetos pero no tiene un historial de migraciones aplicado; reconciliá la baseline antes de continuar",
+    );
+  }
+  if (aplicadas.length === 0) {
+    throw new Error(
+      "Una base vacía debe inicializarse con la baseline versionada del catálogo de Logabyte Core",
     );
   }
   if (aplicadas.length > 0 && !tieneObjetosPersistentes) {

@@ -155,69 +155,59 @@ const migracionesVersionadas = [
   { nombre: "0_init", checksum: "a1" },
   { nombre: "20260102000000_pedidos", checksum: "b2" },
 ];
-assert.doesNotThrow(() => validarHistorialAntesDeDeploy([], migracionesVersionadas, false, "PROVISIONING"));
 assert.throws(
-  () => validarHistorialAntesDeDeploy([], migracionesVersionadas, true, "PROVISIONING"),
+  () => validarHistorialAntesDeDeploy([], migracionesVersionadas, false),
+  /baseline versionada del catálogo de Logabyte Core/,
+);
+assert.throws(
+  () => validarHistorialAntesDeDeploy([], migracionesVersionadas, true),
   /no tiene un historial de migraciones aplicado/,
 );
-assert.throws(
-  () => validarHistorialAntesDeDeploy([], migracionesVersionadas, false, "ACTIVO"),
-  /Solo un tenant PROVISIONING/,
-);
-for (const estado of ["SUSPENDIDO", "INACTIVO"] as const) {
-  assert.throws(
-    () => validarHistorialAntesDeDeploy([], migracionesVersionadas, false, estado),
-    /Solo un tenant PROVISIONING/,
-  );
-  assert.doesNotThrow(() => validarHistorialAntesDeDeploy([
-    { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
-  ], migracionesVersionadas, true, estado));
-}
 assert.doesNotThrow(() => validarHistorialAntesDeDeploy([
   { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
-], migracionesVersionadas, true, "ACTIVO"));
+], migracionesVersionadas, true));
 assert.doesNotThrow(() => validarHistorialAntesDeDeploy([
   { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
   { nombre: "20260102000000_pedidos", checksum: "b2", finalizada: true, revertida: false },
-], migracionesVersionadas, true, "PROVISIONING"));
+], migracionesVersionadas, true));
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "0_init", checksum: "checksum-distinto", finalizada: true, revertida: false },
-  ], migracionesVersionadas, true, "ACTIVO"),
+  ], migracionesVersionadas, true),
   /no coincide con un prefijo/,
 );
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "20260102000000_pedidos", checksum: "b2", finalizada: true, revertida: false },
-  ], migracionesVersionadas, true, "ACTIVO"),
+  ], migracionesVersionadas, true),
   /no coincide con un prefijo/,
 );
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "migracion-desconocida", checksum: "c3", finalizada: true, revertida: false },
-  ], migracionesVersionadas, true, "ACTIVO"),
+  ], migracionesVersionadas, true),
   /no coincide con un prefijo/,
 );
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
     { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
-  ], migracionesVersionadas, true, "ACTIVO"),
+  ], migracionesVersionadas, true),
   /no coincide con un prefijo/,
 );
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "0_init", checksum: "a1", finalizada: false, revertida: false },
-  ], migracionesVersionadas, true, "PROVISIONING"),
+  ], migracionesVersionadas, true),
   /migración incompleta/,
 );
-assert.doesNotThrow(() => validarHistorialAntesDeDeploy([
+assert.throws(() => validarHistorialAntesDeDeploy([
   { nombre: "0_init", checksum: "a1", finalizada: false, revertida: true },
-], migracionesVersionadas, false, "PROVISIONING"));
+], migracionesVersionadas, false), /baseline versionada del catálogo de Logabyte Core/);
 assert.throws(
   () => validarHistorialAntesDeDeploy([
     { nombre: "0_init", checksum: "a1", finalizada: true, revertida: false },
-  ], migracionesVersionadas, false, "PROVISIONING"),
+  ], migracionesVersionadas, false),
   /no contiene objetos persistentes/,
 );
 

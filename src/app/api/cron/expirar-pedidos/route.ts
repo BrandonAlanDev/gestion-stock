@@ -1,12 +1,12 @@
 import { crearHandlerCronExpirarPedidos } from "@/lib/pedidos/crear-handler-cron-expirar-pedidos";
 import { expirarPedidosPendientesTenant } from "@/lib/pedidos/expirar-pedidos-pendientes";
-import { obtenerProveedorRegistroTenant } from "@/lib/tenants/registry/proveedor-registro";
+import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 
 export const dynamic = "force-dynamic";
 
-/** Endpoint interno para que el scheduler expire reservas dentro de cada silo activo. */
+/** Endpoint interno para que el scheduler expire las reservas de la tienda. */
 export const GET = crearHandlerCronExpirarPedidos({
   obtenerSecreto: () => process.env.CRON_SECRET,
-  listarTenants: () => obtenerProveedorRegistroTenant().listarTenants(),
+  listarTenants: async () => [{ tenant: await obtenerTenantPublico() }],
   expirarPedidos: expirarPedidosPendientesTenant,
 });

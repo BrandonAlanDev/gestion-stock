@@ -9,7 +9,7 @@ export async function actualizarDiapositiva(
   const { id, ...cambios } = datos;
   return conPrismaTenant(tenantId, async (prisma) => {
     const existente = await prisma.carouselSlide.findFirst({
-    where: { id, tenantId, carousel: { tenantId } },
+    where: { id, carousel: {} },
     select: { id: true },
     });
     if (!existente) throw new Error("La diapositiva no pertenece a la tienda activa");

@@ -16,7 +16,7 @@ export async function crearMovimiento(
 ) {
   return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
     const variante = await tx.garmentVariant.findFirst({
-      where: { id: datos.variantId, tenantId },
+      where: { id: datos.variantId },
       select: { id: true },
     });
     if (!variante) throw new Error("Variante no encontrada");
@@ -25,7 +25,6 @@ export async function crearMovimiento(
     const actualizado = await tx.garmentVariant.updateMany({
       where: {
         id: variante.id,
-        tenantId,
         ...(datos.type === "OUT" ? { stock: { gte: datos.quantity } } : {}),
       },
       data: { stock: { increment: ajuste } },
@@ -37,7 +36,6 @@ export async function crearMovimiento(
 
     return tx.movement.create({
       data: {
-        tenantId,
         variantId: variante.id,
         type: datos.type,
         quantity: datos.quantity,

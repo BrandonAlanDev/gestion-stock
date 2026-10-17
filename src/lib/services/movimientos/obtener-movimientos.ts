@@ -11,7 +11,7 @@ export async function obtenerMovimientos(
   return conPrismaTenant(tenantId, async (prisma) => {
     const [registros, total] = await Promise.all([
     prisma.movement.findMany({
-      where: { tenantId },
+      where: {},
       include: {
         garmentVariant: {
           include: {
@@ -25,7 +25,7 @@ export async function obtenerMovimientos(
       skip: omitir,
       take: limite,
     }),
-    prisma.movement.count({ where: { tenantId } }),
+    prisma.movement.count({ where: {} }),
     ]);
 
     return {

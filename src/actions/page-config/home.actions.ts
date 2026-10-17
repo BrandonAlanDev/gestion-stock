@@ -54,7 +54,6 @@ export async function updateHomeGrids(
         prisma.$transaction(async (tx) => {
           const homegrid = await tx.homegrid.create({
             data: {
-              tenantId: contexto.tenantId,
               title: title || "",
               subtitle: "",
               style: 1,
@@ -62,7 +61,7 @@ export async function updateHomeGrids(
             },
           });
           await tx.pageConfig.update({
-            where: { id: pageConfig.id, tenantId: contexto.tenantId },
+            where: { id: pageConfig.id },
             data: { homegridId: homegrid.id },
           });
           return homegrid;
@@ -74,7 +73,7 @@ export async function updateHomeGrids(
       const homegridIdActual = targetHomegridId;
       await conPrismaTenant(contexto.tenantId, async (prisma) => {
         const homegrid = await prisma.homegrid.findFirst({
-          where: { id: homegridIdActual, tenantId: contexto.tenantId },
+          where: { id: homegridIdActual },
           select: { id: true },
         });
         if (!homegrid) throw new Error("La sección no pertenece a la tienda activa");
@@ -89,7 +88,7 @@ export async function updateHomeGrids(
 
     const gridsExistentes = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.grid.findMany({
-        where: { homegridId: targetHomegridId, tenantId: contexto.tenantId },
+        where: { homegridId: targetHomegridId },
       }),
     );
 
@@ -117,11 +116,10 @@ export async function updateHomeGrids(
     }
 
     await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
-      await tx.grid.deleteMany({ where: { homegridId: targetHomegridId, tenantId: contexto.tenantId } });
+      await tx.grid.deleteMany({ where: { homegridId: targetHomegridId } });
 
       await tx.grid.createMany({
         data: gridsProcesados!.map((g) => ({
-          tenantId: contexto.tenantId,
           title: g.title,
           subtitle: g.subtitle,
           image: g.image,

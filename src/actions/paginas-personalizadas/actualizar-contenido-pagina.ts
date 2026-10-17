@@ -7,7 +7,7 @@ import type { EntradaActualizarContenidoPagina } from "@/types/paginas-personali
 export async function actualizarContenidoPaginaPersonalizada(pageId: string, datos: EntradaActualizarContenidoPagina) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (transaccion) => {
-    const pagina = await transaccion.customPage.findFirst({ where: { id: pageId, tenantId }, select: { id: true } });
+    const pagina = await transaccion.customPage.findFirst({ where: { id: pageId }, select: { id: true } });
     if (!pagina) throw new Error("La página no pertenece a la tienda activa");
 
     await transaccion.customPage.update({
@@ -20,12 +20,11 @@ export async function actualizarContenidoPaginaPersonalizada(pageId: string, dat
       },
     });
 
-    await transaccion.customSection.deleteMany({ where: { pageId, tenantId } });
+    await transaccion.customSection.deleteMany({ where: { pageId } });
 
     for (const seccion of datos.sections) {
       const creada = await transaccion.customSection.create({
         data: {
-          tenantId,
           pageId,
           type: seccion.type,
           title: seccion.title,
@@ -38,7 +37,6 @@ export async function actualizarContenidoPaginaPersonalizada(pageId: string, dat
       if (seccion.items?.length) {
         await transaccion.customSectionItem.createMany({
           data: seccion.items.map((elemento) => ({
-            tenantId,
             sectionId: creada.id,
             title: elemento.title,
             description: elemento.description,
@@ -53,11 +51,11 @@ export async function actualizarContenidoPaginaPersonalizada(pageId: string, dat
     }
 
     return transaccion.customPage.findFirst({
-      where: { id: pageId, tenantId },
+      where: { id: pageId },
       include: {
         sections: {
-          where: { tenantId },
-          include: { items: { where: { tenantId } } },
+          where: {},
+          include: { items: { where: {} } },
           orderBy: { order: "asc" },
         },
       },

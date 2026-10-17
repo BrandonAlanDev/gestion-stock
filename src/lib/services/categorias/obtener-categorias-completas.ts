@@ -2,13 +2,13 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 
 export async function obtenerCategoriasCompletas(tenantId: string) {
   return conPrismaTenant(tenantId, (prisma) => prisma.category.findMany({
-    where: { tenantId },
+    where: {},
     include: {
       subCategories: {
-        where: { tenantId },
+        where: {},
         include: {
           sizeType: {
-            include: { sizes: { where: { tenantId }, orderBy: { order: "asc" } } },
+            include: { sizes: { where: {}, orderBy: { order: "asc" } } },
           },
         },
       },

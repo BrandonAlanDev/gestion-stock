@@ -8,7 +8,7 @@ export async function getCategoriesPicker() {
   try {
     const categories = await conPrismaTenant(tenantId, (prisma) =>
       prisma.category.findMany({
-        where: { tenantId },
+        where: {},
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),

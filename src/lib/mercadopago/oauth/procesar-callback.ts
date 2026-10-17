@@ -5,7 +5,6 @@ import {
   type EstadoOAuthVerificado,
 } from "./seguridad-oauth";
 import { RUTA_CALLBACK_MERCADO_PAGO } from "../constantes";
-import type { TenantRegistryEntry } from "../../tenants/registry/types";
 
 const MAX_LONGITUD_CODIGO = 2048;
 const PATRON_VERIFICADOR_PKCE = /^[A-Za-z0-9_-]{43,128}$/;
@@ -14,7 +13,6 @@ export interface EntradaCallbackOAuth {
   estado: string;
   estadoCookie: string | undefined;
   codeVerifier: string | undefined;
-  tenantIdSesion: string | null;
   hostRecibido: string;
   codigo: string | null;
   errorProveedor: string | null;
@@ -27,17 +25,15 @@ export type ResultadoCallbackOAuth =
 
 export type ResultadoValidacionCallbackOAuth =
   | { tipo: "invalido"; status: 400 | 503 }
-  | { tipo: "valido"; estado: EstadoOAuthVerificado; tenant: TenantRegistryEntry };
+  | { tipo: "valido"; estado: EstadoOAuthVerificado };
 
 export interface DependenciasValidacionCallbackOAuth {
   secreto: string;
-  resolverTenant(tenantId: string): Promise<TenantRegistryEntry | null>;
-  registrarError?(etapa: "registro", error: unknown): void;
 }
 
 export interface DependenciasCallbackOAuth extends DependenciasValidacionCallbackOAuth {
-  manejarCallback(tenantId: string, codigo: string, codeVerifier: string): Promise<void>;
-  registrarError?(etapa: "registro" | "intercambio", error: unknown): void;
+  manejarCallback(codigo: string, codeVerifier: string): Promise<void>;
+  registrarError?(error: unknown): void;
 }
 
 /** Construye un relay al origen autenticado y solo reenvía parámetros permitidos. */
@@ -63,36 +59,20 @@ export function crearUrlRelayCallbackOAuth(
   return destino;
 }
 
-/** Confirma estado, tenant activo y dominio antes del relay o intercambio. */
+/** Comprueba el estado firmado antes del relay o del intercambio. */
 export async function validarContextoCallbackOAuth(
   estadoFirmado: string,
   dependencias: DependenciasValidacionCallbackOAuth,
   ahora = Date.now(),
 ): Promise<ResultadoValidacionCallbackOAuth> {
   const estado = leerEstadoOAuth(estadoFirmado, dependencias.secreto, ahora);
-  if (!estado) return { tipo: "invalido", status: 400 };
-
-  let tenant: TenantRegistryEntry | null;
-  try {
-    tenant = await dependencias.resolverTenant(estado.tenantId);
-  } catch (error) {
-    dependencias.registrarError?.("registro", error);
-    return { tipo: "invalido", status: 503 };
-  }
-
-  if (
-    !tenant ||
-    tenant.tenant.id !== estado.tenantId ||
-    tenant.tenant.estado !== "ACTIVO" ||
-    !tenant.dominios.includes(estado.hostname) ||
-    !validarOrigenOAuth(estado.origen, estado.hostname)
-  ) {
+  if (!estado || !validarOrigenOAuth(estado.origen, estado.hostname)) {
     return { tipo: "invalido", status: 400 };
   }
-  return { tipo: "valido", estado, tenant };
+  return { tipo: "valido", estado };
 }
 
-/** Canjea el código solo en el callback del tenant y dentro de su sesión ADMIN. */
+/** Canjea el código únicamente con sesión ADMIN y cookies vinculadas al inicio. */
 export async function procesarCallbackOAuth(
   entrada: EntradaCallbackOAuth,
   dependencias: DependenciasCallbackOAuth,
@@ -101,31 +81,14 @@ export async function procesarCallbackOAuth(
   if (
     !entrada.estado ||
     entrada.estadoCookie !== entrada.estado ||
-    !entrada.tenantIdSesion ||
     !entrada.codeVerifier ||
     !PATRON_VERIFICADOR_PKCE.test(entrada.codeVerifier)
-  ) {
-    return { tipo: "invalido", status: 400 };
-  }
+  ) return { tipo: "invalido", status: 400 };
 
-  const validacion = await validarContextoCallbackOAuth(
-    entrada.estado,
-    dependencias,
-    ahora,
-  );
+  const validacion = await validarContextoCallbackOAuth(entrada.estado, dependencias, ahora);
   if (validacion.tipo === "invalido") return validacion;
-
-  const { estado, tenant } = validacion;
-  if (
-    entrada.tenantIdSesion !== estado.tenantId ||
-    !verificarEstadoOAuth(
-      entrada.estado,
-      tenant.tenant.id,
-      entrada.hostRecibido,
-      dependencias.secreto,
-      ahora,
-    )
-  ) {
+  const { estado } = validacion;
+  if (!verificarEstadoOAuth(entrada.estado, entrada.hostRecibido, dependencias.secreto, ahora)) {
     return { tipo: "invalido", status: 400 };
   }
 
@@ -135,8 +98,7 @@ export async function procesarCallbackOAuth(
       origen: estado.origen,
       exito: false,
       error: entrada.errorProveedor === "access_denied"
-        ? "autorizacion_cancelada"
-        : "autorizacion_fallida",
+        ? "autorizacion_cancelada" : "autorizacion_fallida",
     };
   }
   if (!entrada.codigo || entrada.codigo.length > MAX_LONGITUD_CODIGO) {
@@ -144,19 +106,10 @@ export async function procesarCallbackOAuth(
   }
 
   try {
-    await dependencias.manejarCallback(
-      tenant.tenant.id,
-      entrada.codigo,
-      entrada.codeVerifier,
-    );
+    await dependencias.manejarCallback(entrada.codigo, entrada.codeVerifier);
     return { tipo: "redirigir", origen: estado.origen, exito: true };
   } catch (error) {
-    dependencias.registrarError?.("intercambio", error);
-    return {
-      tipo: "redirigir",
-      origen: estado.origen,
-      exito: false,
-      error: "conexion_fallida",
-    };
+    dependencias.registrarError?.(error);
+    return { tipo: "redirigir", origen: estado.origen, exito: false, error: "conexion_fallida" };
   }
 }

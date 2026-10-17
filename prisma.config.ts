@@ -9,7 +9,7 @@ const urlCli = process.env.DATABASE_URL ??
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
-    path: 'prisma/migrations',
+    path: 'prisma/migrations-base-unica',
   },
   datasource: {
     url: urlCli,

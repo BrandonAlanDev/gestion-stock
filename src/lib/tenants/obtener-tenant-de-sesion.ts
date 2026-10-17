@@ -17,12 +17,11 @@ const obtenerTenantDeSesionMemoizado = cache(
       tenant,
       {
         id: sesion?.user?.id,
-        tenantId: sesion?.user?.tenantId,
       },
       (tenantId, usuarioId) => conPrismaTenant(tenantId, (prisma) =>
         prisma.user.findFirst({
-          where: { id: usuarioId, tenantId },
-          select: { id: true, tenantId: true, role: true },
+          where: { id: usuarioId },
+          select: { id: true, role: true },
         }),
       ),
     );

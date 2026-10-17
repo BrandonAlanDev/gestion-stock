@@ -6,14 +6,14 @@ import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-var
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
 
 export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string, datos: DatosGuardarProducto) {
-  const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId, tenantId }, select: { id: true } });
+  const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId }, select: { id: true } });
   if (!categoria) throw new Error("Categoría no encontrada");
   if (datos.subCategoryId) {
-    const subcategoria = await prisma.subCategory.findFirst({ where: { id: datos.subCategoryId, categoryId: datos.categoryId, tenantId }, select: { id: true } });
+    const subcategoria = await prisma.subCategory.findFirst({ where: { id: datos.subCategoryId, categoryId: datos.categoryId }, select: { id: true } });
     if (!subcategoria) throw new Error("Subcategoría no encontrada");
   }
   if (datos.supplierId) {
-    const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId, tenantId }, select: { id: true } });
+    const proveedor = await prisma.provider.findFirst({ where: { id: datos.supplierId }, select: { id: true } });
     if (!proveedor) throw new Error("Proveedor no encontrado");
   }
   await validarReferenciasVariantes(prisma, tenantId, datos.variants);
@@ -22,7 +22,6 @@ export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string
     async (tx) => {
       const creado = await tx.garment.create({
         data: {
-          tenantId,
           name: datos.name,
           price: datos.price,
           maxPrice: datos.maxPrice,
@@ -40,7 +39,6 @@ export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string
       for (const variante of datos.variants) {
         const creadaVariante = await tx.garmentVariant.create({
           data: {
-            tenantId,
             garmentId: creado.id,
             stock: variante.stock,
             sku: variante.sku || null,

@@ -16,7 +16,7 @@ export async function updateEcommerceConfig(
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const ecommerce = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.pageConfig.update({
-        where: { id: pageConfig.id, tenantId: contexto.tenantId },
+        where: { id: pageConfig.id },
         data: {
           ecommerceEnabled: data.ecommerceEnabled,
           cartEnabled: data.cartEnabled,
@@ -39,7 +39,7 @@ export async function getEcommerceConfig() {
     const { id: tenantId } = await requiereTenantActivo();
     const ecommerce = await conPrismaTenant(tenantId, (prisma) =>
       prisma.pageConfig.findFirst({
-        where: { tenantId },
+        where: {},
 
         select: {
           ecommerceEnabled: true,

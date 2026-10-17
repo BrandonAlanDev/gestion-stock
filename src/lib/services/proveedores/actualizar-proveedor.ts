@@ -12,26 +12,25 @@ export async function actualizarProveedor(
 
   return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
     const actualizado = await tx.provider.updateMany({
-      where: { id, tenantId, active: true },
+      where: { id, active: true },
       data: { name: datos.nombre, details: datos.detalles },
     });
     if (actualizado.count === 0) throw new Error("Proveedor no encontrado");
 
     for (const contacto of contactos) {
       const existente = await tx.contactProvider.findFirst({
-        where: { tenantId, contact: contacto, idProvider: id },
+        where: { contact: contacto, idProvider: id },
         select: { id: true },
       });
 
       if (existente) {
         await tx.contactProvider.updateMany({
-          where: { id: existente.id, tenantId, idProvider: id },
+          where: { id: existente.id, idProvider: id },
           data: { active: true },
         });
       } else {
         await tx.contactProvider.create({
           data: {
-            tenantId,
             contact: contacto,
             idProvider: id,
             type: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto)
@@ -43,13 +42,13 @@ export async function actualizarProveedor(
     }
 
     await tx.contactProvider.updateMany({
-      where: { tenantId, idProvider: id, contact: { notIn: contactos } },
+      where: { idProvider: id, contact: { notIn: contactos } },
       data: { active: false },
     });
 
     const proveedor = await tx.provider.findFirst({
-      where: { id, tenantId, active: true },
-      include: { contacts: { where: { tenantId, active: true } } },
+      where: { id, active: true },
+      include: { contacts: { where: { active: true } } },
     });
     if (!proveedor) throw new Error("Proveedor no encontrado");
     return proveedor;

@@ -25,7 +25,7 @@ export async function actualizarVisibilidadProducto(id: string, activo: boolean)
   try {
     const resultado = await conPrismaTenant(tenantId, (prisma) =>
       prisma.garment.updateMany({
-        where: { id: parsed.data.id, tenantId },
+        where: { id: parsed.data.id },
         data: { active: parsed.data.activo },
       }),
     );

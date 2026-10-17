@@ -18,14 +18,14 @@ export async function actualizarEstadoPagoPedido(
 ) {
   return conPrismaTenant(tenantId, async (prisma) => prisma.$transaction(async (tx) => {
     const pedido = await tx.pedido.findFirst({
-      where: { id: pedidoId, tenantId },
+      where: { id: pedidoId },
       select: { id: true, estado: true, stockReservado: true },
     });
 
     if (!pedido) return null;
 
     const actualizado = await tx.pedido.updateMany({
-      where: { id: pedidoId, tenantId, estado: pedido.estado },
+      where: { id: pedidoId, estado: pedido.estado },
       data: {
         estadoPago: datos.estadoPago,
         ...(datos.cancelar ? { estado: "CANCELADO" } : {}),
@@ -39,6 +39,6 @@ export async function actualizarEstadoPagoPedido(
       if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
     }
 
-    return tx.pedido.findFirst({ where: { id: pedidoId, tenantId } });
+    return tx.pedido.findFirst({ where: { id: pedidoId } });
   }));
 }

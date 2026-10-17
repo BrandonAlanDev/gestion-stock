@@ -9,31 +9,10 @@ datasource db {
   relationMode = "prisma"
 }
 
-enum TenantEstado {
-  ACTIVO
-  SUSPENDIDO
-  INACTIVO
-}
 
-model Tenant {
-  id        String       @id @default(cuid())
-  nombre    String
-  slug      String       @unique
-  dominio   String?      @unique
-  estado    TenantEstado @default(ACTIVO)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  accounts          account[]
-  users             user[]
-  cuentaMercadoPago CuentaMercadoPago?
-  pedidos           Pedido[]
-  metodosPago       MetodoPago[]
-  payments          Payment[]
-}
 
 model account {
   id                String  @id @default(cuid())
-  tenantId          String
   userId            String
   type              String
   provider          String
@@ -45,17 +24,14 @@ model account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-  tenant            Tenant  @relation(fields: [tenantId], references: [id])
   user              user    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, provider, providerAccountId])
+  @@unique([provider, providerAccountId])
   @@index([userId])
-  @@index([tenantId, userId])
 }
 
 model user {
   id            String    @id @default(cuid())
-  tenantId      String
   name          String?
   email         String
   password      String?
@@ -66,16 +42,14 @@ model user {
   image         String?
   telefono      String?
   account       account[]
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
   pedidos       Pedido[]
 
-  @@unique([tenantId, email])
-  @@index([tenantId, role])
+  @@unique([email])
+  @@index([role])
 }
 
 model Category {
   id            String        @id @default(cuid())
-  tenantId      String
   name          String
   active        Boolean       @default(true)
   createdAt     DateTime      @default(now())
@@ -83,13 +57,12 @@ model Category {
   subCategories SubCategory[]
   garments      Garment[]
 
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
+  @@unique([name])
+  @@index([active])
 }
 
 model SubCategory {
   id         String    @id @default(cuid())
-  tenantId   String
   name       String
   active     Boolean   @default(true)
   categoryId String
@@ -103,13 +76,11 @@ model SubCategory {
   @@unique([name, categoryId])
   @@index([categoryId])
   @@index([sizeTypeId])
-  @@index([tenantId, active])
-  @@index([tenantId, categoryId])
+  @@index([active])
 }
 
 model Garment {
   id            String           @id @default(cuid())
-  tenantId      String
   name          String
   price         Decimal          @db.Decimal(10, 2)
   description   String?          @db.Text
@@ -135,15 +106,12 @@ model Garment {
   @@index([subCategoryId, createdAt])
   @@index([subCategoryId])
   @@index([supplierId])
-  @@index([tenantId, active])
-  @@index([tenantId, categoryId])
-  @@index([tenantId, subCategoryId])
-  @@index([tenantId, createdAt])
+  @@index([active])
+  @@index([createdAt])
 }
 
 model GarmentImage {
   id        String  @id @default(cuid())
-  tenantId  String
   srcImage  String  @db.Text
   publicId  String? @db.Text
   alt       String?
@@ -152,12 +120,10 @@ model GarmentImage {
   garment   Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
 
   @@index([garmentId])
-  @@index([tenantId, garmentId])
 }
 
 model GarmentVariant {
   id            String                      @id @default(cuid())
-  tenantId      String
   sku           String?
   stock         Int                         @default(0)
   garmentId     String
@@ -173,16 +139,14 @@ model GarmentVariant {
   movements     Movement[]
   optionValues  GarmentVariantOptionValue[]
 
-  @@unique([tenantId, sku])
+  @@unique([sku])
   @@index([garmentId])
   @@index([sizeId])
   @@index([colorId])
-  @@index([tenantId, garmentId])
 }
 
 model GarmentOption {
   id        String                @id @default(cuid())
-  tenantId  String
   garmentId String
   name      String
   position  Int                   @default(0)
@@ -191,12 +155,10 @@ model GarmentOption {
 
   @@unique([garmentId, name])
   @@index([garmentId])
-  @@index([tenantId, garmentId])
 }
 
 model GarmentOptionValue {
   id            String                      @id @default(cuid())
-  tenantId      String
   optionId      String
   value         String
   position      Int                         @default(0)
@@ -205,7 +167,6 @@ model GarmentOptionValue {
 
   @@unique([optionId, value])
   @@index([optionId])
-  @@index([tenantId, optionId])
 }
 
 model GarmentVariantOptionValue {
@@ -220,19 +181,17 @@ model GarmentVariantOptionValue {
 
 model SizeType {
   id            String        @id @default(cuid())
-  tenantId      String
   name          String
   active        Boolean       @default(true)
   sizes         Size[]
   subCategories SubCategory[]
 
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
+  @@unique([name])
+  @@index([active])
 }
 
 model Size {
   id         String           @id @default(cuid())
-  tenantId   String
   active     Boolean          @default(true)
   order      Int              @default(0)
   sizeTypeId String
@@ -242,25 +201,22 @@ model Size {
 
   @@unique([value, sizeTypeId])
   @@index([sizeTypeId])
-  @@index([tenantId, active])
-  @@index([tenantId, sizeTypeId])
+  @@index([active])
 }
 
 model Color {
   id       String           @id @default(cuid())
-  tenantId String
   name     String
   hex      String?
   active   Boolean          @default(true)
   variants GarmentVariant[]
 
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
+  @@unique([name])
+  @@index([active])
 }
 
 model Provider {
   id        String            @id @default(cuid())
-  tenantId  String
   name      String
   active    Boolean           @default(true)
   createdAt DateTime          @default(now())
@@ -269,13 +225,12 @@ model Provider {
   contacts  ContactProvider[]
   garments  Garment[]
 
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
+  @@unique([name])
+  @@index([active])
 }
 
 model ContactProvider {
   id         String   @id @default(cuid())
-  tenantId   String
   contact    String
   type       String
   idProvider String
@@ -286,13 +241,11 @@ model ContactProvider {
 
   @@unique([contact, idProvider])
   @@index([idProvider])
-  @@index([tenantId, active])
-  @@index([tenantId, idProvider])
+  @@index([active])
 }
 
 model Movement {
   id             String         @id @default(cuid())
-  tenantId       String
   type           MovementType
   quantity       Int
   priceAtTime    Decimal        @db.Decimal(10, 2)
@@ -303,13 +256,12 @@ model Movement {
 
   @@index([variantId])
   @@index([type, createdAt])
-  @@index([tenantId, variantId])
-  @@index([tenantId, createdAt])
+  @@index([createdAt])
 }
 
 model PageConfig {
   id                   Int                       @id @default(autoincrement())
-  tenantId             String
+  clave                String                    @unique @default("principal")
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
   storeName            String
@@ -366,13 +318,11 @@ model PageConfig {
   carousels            Carousel[]
   homegrid             Homegrid?                 @relation(fields: [homegridId], references: [id])
 
-  @@unique([tenantId])
   @@index([homegridId])
 }
 
 model Banner {
   id           Int        @id @default(autoincrement())
-  tenantId     String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   order        Int
@@ -385,12 +335,11 @@ model Banner {
   pageConfig   PageConfig @relation(fields: [pageConfigId], references: [id], onDelete: Cascade)
 
   @@unique([pageConfigId, order])
-  @@index([tenantId, pageConfigId])
+  @@index([pageConfigId])
 }
 
 model CustomPage {
   id        String          @id @default(cuid())
-  tenantId  String
   slug      String
   title     String
   subtitle  String?         @db.Text
@@ -399,14 +348,13 @@ model CustomPage {
   updatedAt DateTime        @updatedAt
   sections  CustomSection[]
 
-  @@unique([tenantId, slug])
-  @@index([tenantId, isActive])
+  @@unique([slug])
+  @@index([isActive])
   @@map("CustomPages")
 }
 
 model CustomSection {
   id       String              @id @default(cuid())
-  tenantId String
   pageId   String
   type     SectionType
   title    String?
@@ -417,13 +365,11 @@ model CustomSection {
   items    CustomSectionItem[]
 
   @@index([pageId])
-  @@index([tenantId, pageId])
   @@map("CustomPageSections")
 }
 
 model CustomSectionItem {
   id          String        @id @default(cuid())
-  tenantId    String
   sectionId   String
   title       String
   description String?       @db.Text
@@ -435,13 +381,11 @@ model CustomSectionItem {
   section     CustomSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@index([sectionId])
-  @@index([tenantId, sectionId])
   @@map("CustomPageItems")
 }
 
 model Homegrid {
   id          String       @id @default(cuid())
-  tenantId    String
   title       String
   subtitle    String
   style       Int
@@ -453,12 +397,11 @@ model Homegrid {
   grids            Grid[]
   pageConfigs      PageConfig[]
 
-  @@index([tenantId, active])
+  @@index([active])
 }
 
 model Grid {
   id              String        @id @default(cuid())
-  tenantId        String
   title           String
   subtitle        String
   image           String
@@ -478,7 +421,6 @@ model Grid {
   homegrid        Homegrid      @relation(fields: [homegridId], references: [id], onDelete: Cascade)
 
   @@index([homegridId])
-  @@index([tenantId, homegridId])
 }
 
 enum LinkStyle {
@@ -535,7 +477,6 @@ enum CarouselType {
 
 model Carousel {
   id           String       @id @default(cuid())
-  tenantId     String
   type         CarouselType
   title        String? // Título de la sección (solo para CARDS/BANNER)
   active       Boolean      @default(true)
@@ -550,13 +491,12 @@ model Carousel {
   updatedAt DateTime @updatedAt
 
   @@unique([pageConfigId, order])
-  @@index([tenantId, active])
-  @@index([tenantId, pageConfigId])
+  @@index([active])
+  @@index([pageConfigId])
 }
 
 model CarouselSlide {
   id         String   @id @default(cuid())
-  tenantId   String
   carouselId String
   carousel   Carousel @relation(fields: [carouselId], references: [id], onDelete: Cascade)
 
@@ -576,12 +516,12 @@ model CarouselSlide {
   updatedAt DateTime @updatedAt
 
   @@unique([carouselId, order])
-  @@index([tenantId, carouselId])
+  @@index([carouselId])
 }
 
 model CuentaMercadoPago {
   id           String    @id @default(cuid())
-  tenantId     String    @unique
+  clave        String    @unique @default("principal")
   accessToken  String    @db.Text
   refreshToken String?   @db.Text
   publicKey    String?
@@ -593,14 +533,11 @@ model CuentaMercadoPago {
   nombreNegocio String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
 }
 
 model Pedido {
   id             String           @id @default(cuid())
-  tenantId       String
   userId         String
   estado         PedidoEstado     @default(PENDIENTE)
   estadoPago     PedidoEstadoPago @default(PENDIENTE)
@@ -615,20 +552,18 @@ model Pedido {
   metodoPago     String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  tenant         Tenant           @relation(fields: [tenantId], references: [id])
   user           user             @relation(fields: [userId], references: [id])
   items          PedidoItem[]
   payments       Payment[]
 
-  @@index([tenantId, createdAt])
-  @@index([tenantId, estado, reservaExpiraEn])
+  @@index([createdAt])
+  @@index([estado, reservaExpiraEn])
   @@index([userId])
 }
 
 model PedidoItem {
   id             String   @id @default(cuid())
   pedidoId       String
-  tenantId       String
   stockReservado Boolean  @default(false)
   garmentId      String
   variantId      String
@@ -639,7 +574,6 @@ model PedidoItem {
   pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
   @@index([pedidoId])
-  @@index([tenantId])
 }
 
 enum PedidoEstado {
@@ -658,22 +592,19 @@ enum PedidoEstadoPago {
 
 model MetodoPago {
   id        String   @id @default(cuid())
-  tenantId  String
   metodo    String // Identificador: "mercadopago" | "transferencia" | ...
   activo    Boolean  @default(false)
   config    Json? // Configuración propia del método (ej. instrucciones de transferencia)
   orden     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, metodo])
-  @@index([tenantId, activo])
+  @@unique([metodo])
+  @@index([activo])
 }
 
 model Payment {
   id         String           @id @default(cuid())
-  tenantId   String
   pedidoId   String
   proveedor  String // "mercadopago" | "transferencia" | ...
   metodo     String
@@ -685,10 +616,8 @@ model Payment {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   pedido     Pedido           @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([pedidoId])
-  @@index([tenantId])
-  @@index([tenantId, proveedor])
-  @@unique([tenantId, proveedor, externalId])
+  @@index([proveedor])
+  @@unique([proveedor, externalId])
 }

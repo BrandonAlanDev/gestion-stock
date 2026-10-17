@@ -16,7 +16,6 @@ export interface PedidoParaPreferencia {
 export function construirPreferenciaPago(
   pedido: PedidoParaPreferencia,
   baseUrl: string,
-  tenantId: string,
 ) {
   const items = pedido.items.map((item, indice) => ({
     id: `item-${indice}`,
@@ -39,9 +38,9 @@ export function construirPreferenciaPago(
       pending: `${baseUrl}/pago/pendiente?pedidoId=${pedido.id}`,
     },
     auto_return: "approved",
-    notification_url: `${baseUrl}/api/mercadopago/webhook?tenantId=${tenantId}`,
+    notification_url: `${baseUrl}/api/mercadopago/webhook`,
     external_reference: pedido.id,
-    metadata: { pedidoId: pedido.id, tenantId },
+    metadata: { pedidoId: pedido.id },
     expires: true,
     expiration_date_from: new Date().toISOString(),
     expiration_date_to: pedido.reservaExpiraEn.toISOString(),

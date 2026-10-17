@@ -20,7 +20,7 @@ export async function agregarAlCarrito(datos: {
 
   const variant = await conPrismaTenant(tenantId, (prisma) =>
     prisma.garmentVariant.findFirst({
-      where: { id: datos.variantId, tenantId, garmentId: datos.productId },
+      where: { id: datos.variantId, garmentId: datos.productId },
       include: { garment: { select: { controlaStock: true } } },
     }),
   );

@@ -12,16 +12,14 @@ const TOLERANCIA_RELOJ_MS = 30 * 1000;
 const CONTEXTO_CLAVE = "gestion-stock:mercadopago:oauth-state:v1";
 
 export interface EstadoOAuthVerificado {
-  tenantId: string;
   hostname: string;
   origen: string;
   emitidoEn: number;
   expiraEn: number;
 }
 
-/** Cifra y autentica el tenant y el origen de retorno durante diez minutos. */
+/** Cifra y autentica el origen de retorno durante diez minutos. */
 export function firmarEstadoOAuth(
-  tenantId: string,
   hostname: string,
   origen: string,
   secreto: string,
@@ -29,14 +27,12 @@ export function firmarEstadoOAuth(
 ): string {
   const hostNormalizado = normalizarHostname(hostname);
   if (
-    !/^[a-z0-9_-]{1,128}$/i.test(tenantId) ||
     !hostNormalizado || !validarOrigen(origen, hostNormalizado) || !secreto
   ) {
     throw new Error("No se puede firmar un estado OAuth inválido");
   }
 
   const contenido: EstadoOAuthVerificado = {
-    tenantId,
     hostname: hostNormalizado,
     origen,
     emitidoEn: ahora,
@@ -89,8 +85,6 @@ export function leerEstadoOAuth(
       ? normalizarHostname(registro.hostname)
       : null;
     if (
-      typeof registro.tenantId === "string" &&
-      /^[a-z0-9_-]{1,128}$/i.test(registro.tenantId) &&
       hostname !== null && hostname === registro.hostname &&
       typeof registro.origen === "string" &&
       validarOrigen(registro.origen, hostname) &&
@@ -107,7 +101,6 @@ export function leerEstadoOAuth(
         expiraEn - emitidoEn <= DURACION_ESTADO_MS
       ) {
         return {
-          tenantId: registro.tenantId,
           hostname,
           origen: registro.origen,
           emitidoEn,
@@ -121,10 +114,9 @@ export function leerEstadoOAuth(
   }
 }
 
-/** Comprueba tenant y origen si el proveedor devuelve el callback al dominio de tienda. */
+/** Comprueba el origen si el proveedor devuelve el callback al dominio de la tienda. */
 export function verificarEstadoOAuth(
   estadoFirmado: string,
-  tenantId: string,
   hostRecibido: string,
   secreto: string,
   ahora = Date.now(),
@@ -134,7 +126,6 @@ export function verificarEstadoOAuth(
   const origen = construirOrigenHost(hostRecibido);
   return Boolean(
     estado &&
-    estado.tenantId === tenantId &&
     estado.hostname === hostname &&
     estado.origen === origen,
   );

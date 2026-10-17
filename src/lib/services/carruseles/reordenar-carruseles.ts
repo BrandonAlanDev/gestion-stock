@@ -3,7 +3,7 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function reordenarCarruseles(tenantId: string, ids: string[]) {
   if (new Set(ids).size !== ids.length) throw new Error("El orden contiene carruseles repetidos");
   return conPrismaTenant(tenantId, async (prisma) => {
-    const existentes = await prisma.carousel.count({ where: { id: { in: ids }, tenantId } });
+    const existentes = await prisma.carousel.count({ where: { id: { in: ids } } });
     if (existentes !== ids.length) throw new Error("Hay carruseles de otra tienda");
     return prisma.$transaction(async (transaccion) => {
     for (let indice = 0; indice < ids.length; indice++) {

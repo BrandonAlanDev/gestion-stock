@@ -2,120 +2,41 @@ import "server-only";
 
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../../../generated/prisma/client";
-import { conContextoTenantRuntime } from "./contexto-tenant-runtime";
-import { GestorClientesTenant } from "./gestor-clientes-tenant";
-import { crearOpcionesPoolTenant } from "./opciones-pool-tenant";
-import { obtenerProveedorRegistroTenant } from "./registry/proveedor-registro";
-import type { TenantRegistryEntry } from "./registry/types";
 
-interface EstadoFactory {
-  gestor: GestorClientesTenant<PrismaClient>;
-}
-
-const globalFactory = globalThis as typeof globalThis & {
-  __factoryPrismaTenant?: EstadoFactory;
+const globalPrisma = globalThis as typeof globalThis & {
+  __clientePrisma?: PrismaClient;
 };
 
-function leerEnteroPositivo(valor: string | undefined, predeterminado: number, maximo: number): number {
-  if (!valor || !/^\d+$/.test(valor)) return predeterminado;
-  const numero = Number(valor);
-  return numero > 0 && numero <= maximo ? numero : predeterminado;
-}
-
-async function crearClienteTenant(
-  entry: TenantRegistryEntry,
-  ttlInactividadMs: number,
-  limiteConexiones: number,
-): Promise<PrismaClient> {
-  const credenciales = await obtenerProveedorRegistroTenant().resolverCredenciales(
-    entry.referenciaBase,
-    entry.versionCredenciales,
-    entry.tenant.id,
-  );
-  if (process.env.NODE_ENV === "production" && !credenciales.ssl) {
-    throw new Error("Las conexiones MySQL de producción deben usar TLS");
-  }
-
+function crearCliente(): PrismaClient {
+  const valor = process.env.DATABASE_URL;
+  if (!valor) throw new Error("Configurá DATABASE_URL para conectar la base de datos");
+  const url = new URL(valor);
+  if (url.protocol !== "mysql:") throw new Error("DATABASE_URL debe usar MySQL");
+  const limite = Number(url.searchParams.get("connection_limit") ?? "10");
+  const ssl = url.searchParams.get("sslaccept") === "strict" ||
+    url.searchParams.get("sslmode") === "require";
   const adaptador = new PrismaMariaDb({
-    host: credenciales.host,
-    port: credenciales.puerto,
-    user: credenciales.usuario,
-    password: credenciales.contrasena,
-    database: credenciales.base,
-    ssl: credenciales.ssl ? { rejectUnauthorized: true } : false,
-    ...crearOpcionesPoolTenant(ttlInactividadMs, limiteConexiones),
+    host: url.hostname,
+    port: url.port ? Number(url.port) : 3306,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: decodeURIComponent(url.pathname.slice(1)),
+    ssl: ssl ? { rejectUnauthorized: true } : false,
+    connectionLimit: Number.isInteger(limite) && limite > 0 ? limite : 10,
     connectTimeout: 10_000,
   });
-  const cliente = new PrismaClient({ adapter: adaptador });
-  try {
-    await cliente.$connect();
-    return cliente;
-  } catch (error) {
-    try {
-      await cliente.$disconnect();
-    } catch {
-      // La conexión fallida no debe quedar abierta en el pool.
-    }
-    throw error;
-  }
+  return new PrismaClient({ adapter: adaptador });
 }
 
-function obtenerGestor(): GestorClientesTenant<PrismaClient> {
-  if (!globalFactory.__factoryPrismaTenant) {
-    const ttlInactividadMs = leerEnteroPositivo(
-      process.env.TENANT_PRISMA_IDLE_TTL_MS,
-      60_000,
-      3_600_000,
-    );
-    const limiteConexiones = leerEnteroPositivo(
-      process.env.TENANT_PRISMA_CONNECTION_LIMIT,
-      2,
-      10,
-    );
-    globalFactory.__factoryPrismaTenant = {
-      gestor: new GestorClientesTenant<PrismaClient>({
-        limiteClientes: leerEnteroPositivo(process.env.TENANT_PRISMA_MAX_CLIENTS, 10, 100),
-        ttlInactividadMs,
-        crearCliente: (entry) => crearClienteTenant(
-          entry,
-          ttlInactividadMs,
-          limiteConexiones,
-        ),
-        desconectarCliente: (cliente) => cliente.$disconnect(),
-      }),
-    };
-  }
-  return globalFactory.__factoryPrismaTenant.gestor;
+export function obtenerPrisma(): PrismaClient {
+  globalPrisma.__clientePrisma ??= crearCliente();
+  return globalPrisma.__clientePrisma;
 }
 
-export async function invalidarClientesPrismaTenant(tenantId: string): Promise<void> {
-  await obtenerGestor().invalidar(tenantId);
-}
-
-/** Ejecuta una operación en el silo activo y mantiene el lease durante toda la operación. */
+/** Compatibilidad temporal con los servicios que aún reciben un identificador legado. */
 export async function conPrismaTenant<T>(
-  tenantId: string,
+  _tenantId: string,
   operacion: (cliente: PrismaClient) => Promise<T>,
 ): Promise<T> {
-  const registro = obtenerProveedorRegistroTenant();
-  const entry = await registro.resolverPorId(tenantId);
-  if (!entry || entry.tenant.estado !== "ACTIVO") {
-    await invalidarClientesPrismaTenant(tenantId);
-    throw new Error("La organización no está disponible");
-  }
-
-  try {
-    const versionVigente = await registro.verificarAcceso(entry.tenant.id);
-    if (versionVigente !== undefined && versionVigente !== entry.versionCache) {
-      registro.invalidar();
-      throw new Error("El registro del tenant cambió; reintentá la operación");
-    }
-  } catch (error) {
-    await invalidarClientesPrismaTenant(tenantId);
-    throw error;
-  }
-
-  return obtenerGestor().ejecutar(entry, (cliente) =>
-    conContextoTenantRuntime(tenantId, () => operacion(cliente)),
-  );
+  return operacion(obtenerPrisma());
 }

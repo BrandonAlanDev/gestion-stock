@@ -1,39 +1,25 @@
 import bcrypt from "bcryptjs";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
-import { crearAdaptadorTenant } from "@/lib/autenticacion/crear-adaptador-tenant";
-import { crearCallbacksTenant } from "@/lib/autenticacion/crear-callbacks-tenant";
-import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { obtenerPrisma } from "@/lib/tenants/prisma-factory";
 import { loginSchema } from "@/lib/validaciones/esquemas";
-import { obtenerHostnameSolicitud } from "@/lib/tenants/obtener-hostname-solicitud";
 
-// Excepción técnica: Auth.js entrega estas cuatro funciones en un único factory.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: crearAdaptadorTenant(),
+  adapter: PrismaAdapter(obtenerPrisma()),
   providers: [
     ...(authConfig.providers ?? []),
     Credentials({
       authorize: async (credentials) => {
         const { email, password } = await loginSchema.parseAsync(credentials);
-        const tenant = await obtenerTenantAutenticacion();
-        const usuario = await conPrismaTenant(tenant.id, (prisma) =>
-          prisma.user.findUnique({
-            where: {
-              tenantId_email: {
-                tenantId: tenant.id,
-                email: email.trim().toLowerCase(),
-              },
-            },
-          }),
-        );
-
+        const usuario = await obtenerPrisma().user.findUnique({
+          where: { email: email.trim().toLowerCase() },
+        });
         if (!usuario?.password || !(await bcrypt.compare(password, usuario.password))) {
           return null;
         }
-
         return {
           id: usuario.id,
           name: usuario.name,
@@ -41,28 +27,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: usuario.role,
           telefono: usuario.telefono,
           image: usuario.image,
-          tenantId: tenant.id,
-          tenantNombre: tenant.nombre,
-          tenantSlug: tenant.slug,
         };
       },
     }),
   ],
-  callbacks: crearCallbacksTenant({
-    obtenerTenantAutenticacion,
-    obtenerHostnameSolicitud,
-    buscarUsuario: (tenantId, usuarioId) =>
-      conPrismaTenant(tenantId, (prisma) =>
-        prisma.user.findFirst({
-          where: { id: usuarioId, tenantId },
-          select: {
-            id: true,
-            tenantId: true,
-            role: true,
-            telefono: true,
-            image: true,
-          },
-        }),
-      ),
-  }),
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      if (user?.id) token.id = user.id;
+      const usuarioId = typeof token.id === "string" ? token.id : null;
+      if (!usuarioId) return token;
+      const usuario = await obtenerPrisma().user.findUnique({
+        where: { id: usuarioId },
+        select: { id: true, role: true, telefono: true, image: true },
+      });
+      if (!usuario) {
+        delete token.id;
+        delete token.role;
+        return token;
+      }
+      token.id = usuario.id;
+      token.role = usuario.role;
+      token.telefono = usuario.telefono;
+      token.image = usuario.image;
+      return token;
+    },
+  },
 });

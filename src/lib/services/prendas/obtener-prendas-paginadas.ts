@@ -15,7 +15,6 @@ export async function obtenerPrendasPaginadas(
   const busqueda = search?.trim();
   const skip = (paginaSegura - 1) * limiteSeguro;
   const where: Prisma.GarmentWhereInput = {
-    tenantId,
     active: true,
     ...(categoryId && { categoryId }),
     ...(subCategoryId && { subCategoryId }),
@@ -27,11 +26,11 @@ export async function obtenerPrendasPaginadas(
       prisma.garment.findMany({
         where,
         include: {
-          images: { where: { tenantId }, orderBy: { order: "asc" } },
-          variants: { where: { tenantId }, include: INCLUDE_VARIANTE, take: 5 },
+          images: { where: {}, orderBy: { order: "asc" } },
+          variants: { where: {}, include: INCLUDE_VARIANTE, take: 5 },
           subCategory: true,
           category: true,
-          opciones: { where: { tenantId }, include: { values: true }, orderBy: { position: "asc" } },
+          opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
         },
         skip,
         take: limiteSeguro,

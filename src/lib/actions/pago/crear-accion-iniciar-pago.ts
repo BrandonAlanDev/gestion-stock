@@ -73,7 +73,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
 
       const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.pedido.findFirst({
-          where: { id: creado.pedidoId, tenantId: contexto.tenantId },
+          where: { id: creado.pedidoId },
           include: {
             user: { select: { name: true, email: true } },
             items: { select: { nombre: true, cantidad: true, precioUnitario: true } },
@@ -91,7 +91,6 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       const payment = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.payment.create({
           data: {
-            tenantId: contexto.tenantId,
             pedidoId: pedido.id,
             proveedor: metodo,
             metodo,
@@ -104,16 +103,16 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
 
       await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.pedido.updateMany({
-          where: { id: pedido.id, tenantId: contexto.tenantId, estado: "PENDIENTE" },
+          where: { id: pedido.id, estado: "PENDIENTE" },
           data: { metodoPago: metodo },
         }),
       );
 
       const proveedor = dependencias.obtenerProveedor(metodo);
       const resultado = await proveedor.crearPago({
+        tenantId: contexto.tenantId,
         paymentId: payment.id,
         pedidoId: pedido.id,
-        tenantId: contexto.tenantId,
         reservaExpiraEn: pedido.reservaExpiraEn,
         baseUrl,
         monto: Number(pedido.total),
@@ -129,7 +128,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
 
       await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.payment.updateMany({
-          where: { id: payment.id, pedidoId: pedido.id, tenantId: contexto.tenantId },
+          where: { id: payment.id, pedidoId: pedido.id },
           data: { estado: resultado.estado },
         }),
       );
@@ -149,12 +148,12 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
           const tenantId = tenantIdProcesado;
           await dependencias.conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
             const cancelado = await tx.pedido.updateMany({
-              where: { id: pedidoId, tenantId, estado: "PENDIENTE" },
+              where: { id: pedidoId, estado: "PENDIENTE" },
               data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
             });
             if (cancelado.count === 1) {
               await tx.payment.updateMany({
-                where: { pedidoId, tenantId, estado: { not: "APROBADO" } },
+                where: { pedidoId, estado: { not: "APROBADO" } },
                 data: { estado: "CANCELADO" },
               });
               const liberada = await dependencias.liberarReservaStockPedido(

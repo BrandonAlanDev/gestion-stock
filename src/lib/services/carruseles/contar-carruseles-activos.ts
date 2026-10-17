@@ -6,7 +6,7 @@ export async function contarCarruselesActivos(
   tenantId: string,
 ): Promise<Record<CarouselType, number>> {
   const carruseles = await conPrismaTenant(tenantId, (prisma) => prisma.carousel.findMany({
-    where: { tenantId, active: true, type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
+    where: { active: true, type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
     select: { type: true },
   }));
   const cantidades = { HERO: 0, BANNER: 0, CARDS: 0 } as Record<CarouselType, number>;

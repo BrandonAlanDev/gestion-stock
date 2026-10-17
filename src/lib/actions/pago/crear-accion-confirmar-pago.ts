@@ -41,8 +41,8 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
   async function mapaPedido(pedidoId: string, tenantId: string): Promise<PedidoConfirmado | null> {
     const pedido = await dependencias.conPrismaTenant(tenantId, (prisma) =>
       prisma.pedido.findFirst({
-        where: { id: pedidoId, tenantId },
-        include: { items: { where: { tenantId } } },
+        where: { id: pedidoId },
+        include: { items: { where: {} } },
       }),
     );
     if (!pedido) return null;
@@ -74,12 +74,12 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
 
       const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.pedido.findFirst({
-          where: { id: pedidoId, tenantId: contexto.tenantId },
-          select: { id: true, tenantId: true, userId: true, estado: true, metodoPago: true },
+          where: { id: pedidoId },
+          select: { id: true, userId: true, estado: true, metodoPago: true },
         }),
       );
       if (!pedido) return { ok: false, error: "Pedido no encontrado" };
-      if (pedido.tenantId !== contexto.tenantId || pedido.userId !== contexto.usuarioId) {
+      if (pedido.userId !== contexto.usuarioId) {
         return { ok: false, error: "No autorizado" };
       }
 

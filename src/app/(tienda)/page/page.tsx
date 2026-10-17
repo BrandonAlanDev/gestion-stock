@@ -19,18 +19,15 @@ export default async function RutaPaginaPersonalizada({ searchParams }: Propieda
   const paginaPersonalizada = await conPrismaTenant(tenant.id, (prisma) =>
     prisma.customPage.findUnique({
       where: {
-        tenantId_slug: {
-          tenantId: tenant.id,
-          slug: tituloConsulta,
-        },
+        slug: tituloConsulta,
       },
       include: {
         sections: {
-          where: { tenantId: tenant.id },
+          where: {},
           orderBy: { order: "asc" },
           include: {
             items: {
-              where: { tenantId: tenant.id },
+              where: {},
               orderBy: { order: "asc" },
             },
           },

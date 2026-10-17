@@ -24,7 +24,7 @@ export async function obtenerMetodosPagoDisponibles(
   tenantId: string,
 ): Promise<ResumenMetodoPago[]> {
   const registros = await conPrismaTenant(tenantId, (prisma) =>
-    prisma.metodoPago.findMany({ where: { tenantId } }),
+    prisma.metodoPago.findMany({ where: {} }),
   );
   const porMetodo = new Map<string, { activo: boolean }>();
   for (const registro of registros) {

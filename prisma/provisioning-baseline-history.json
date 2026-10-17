@@ -1,0 +1,45 @@
+{
+  "version": "gestion-stock-2026.10",
+  "migraciones": [
+    {
+      "nombre": "0_init",
+      "checksum": "09db328dd3b3e0c7851aab5268d1023669110b0dcd9eac3664838891614bf5a5"
+    },
+    {
+      "nombre": "20260715030342_add_carousel_limits_to_pageconfig",
+      "checksum": "ef1e5cc3219d120f9c6a853d51f6ea6a107c4d003bc1a4731578cdb0be4a2330"
+    },
+    {
+      "nombre": "20260818193439_modulos_desactivados_por_defecto",
+      "checksum": "3abba57a09ca4ab93ab4b9d34afba84f602acb7985ef75209e53cfb57b024c49"
+    },
+    {
+      "nombre": "20260820120000_plan_ahorro_y_footer",
+      "checksum": "49cd2a3b8594c87c59ad80cdbd478d9ce190912aaa79416dab330573fdf9e609"
+    },
+    {
+      "nombre": "20260828000000_multitenancy_paso1",
+      "checksum": "871e8fd0671711c3d5e1d0e94a1443130a53ea8e6c64a2e4a0d2ac7ff20fc2e4"
+    },
+    {
+      "nombre": "20260830020000_multitenancy_paso2",
+      "checksum": "63b54a88b88fc724de0ddfe965f1342ce5d0f142d2cf71e9c9112070686e9d23"
+    },
+    {
+      "nombre": "20260910000000_eliminar_tablas_surf_y_flags",
+      "checksum": "879f0701dedc010a5ab1a73f258e54ae3f5bac46d8954e4a189b55f06dcc813a"
+    },
+    {
+      "nombre": "20260910010000_agregar_pagos_y_opciones",
+      "checksum": "95ceb0046f97ae4c6109e68ecea3660d7a91b32ec01bcfa5cb7f0755076791fd"
+    },
+    {
+      "nombre": "20261016000000_reservar_stock_pedido",
+      "checksum": "e89b97066691acdccc5c85fa4a9e19ec6521ad50232a88089d6fb3207d94f6d6"
+    },
+    {
+      "nombre": "20261017000000_baseline_silos_nuevos",
+      "checksum": "6438d627bef8a1a0144324fac9907688c91116bd392338695a4a4f2746a387b0"
+    }
+  ]
+}

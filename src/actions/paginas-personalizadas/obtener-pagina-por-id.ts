@@ -6,11 +6,11 @@ import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
 export async function obtenerPaginaPersonalizadaPorId(id: string) {
   const { tenantId } = await requiereAdmin();
   return conPrismaTenant(tenantId, (prisma) => prisma.customPage.findFirst({
-    where: { id, tenantId },
+    where: { id },
     include: {
       sections: {
-        where: { tenantId },
-        include: { items: { where: { tenantId } } },
+        where: {},
+        include: { items: { where: {} } },
         orderBy: { order: "asc" },
       },
     },

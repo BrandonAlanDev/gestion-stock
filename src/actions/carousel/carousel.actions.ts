@@ -94,7 +94,6 @@ export async function createCarousel(data: unknown) {
       await conPrismaTenant(tenantId, (prisma) =>
         prisma.carouselSlide.createMany({
           data: slidesProcesados.map((slide) => ({
-            tenantId,
             carouselId: carousel.id,
             image: slide.image,
             publicId: slide.publicId,
@@ -215,7 +214,7 @@ export async function deleteCarousel(id: string) {
         if (filtered.length !== sections.length) {
           await conPrismaTenant(tenantId, (prisma) =>
             prisma.pageConfig.update({
-              where: { id: pageConfig.id, tenantId },
+              where: { id: pageConfig.id },
               data: { sectionOrder: JSON.stringify(filtered) },
             }),
           );
@@ -339,7 +338,6 @@ export async function duplicateCarousel(id: string) {
       await conPrismaTenant(tenantId, (prisma) =>
         prisma.carouselSlide.createMany({
           data: slides.map((slide) => ({
-            tenantId,
             carouselId: copia.id,
             image: slide.image,
             publicId: slide.publicId,

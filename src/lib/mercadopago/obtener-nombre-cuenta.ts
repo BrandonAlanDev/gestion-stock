@@ -45,7 +45,7 @@ export async function obtenerNombreCuentaMP(tenantId: string): Promise<string | 
     if (nombre) {
       await conPrismaTenant(tenantId, (prisma) =>
         prisma.cuentaMercadoPago.update({
-          where: { tenantId },
+          where: { clave: "principal" },
           data: { nombreNegocio: nombre },
         }),
       );

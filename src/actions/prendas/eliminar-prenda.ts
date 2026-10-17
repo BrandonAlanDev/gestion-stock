@@ -11,8 +11,8 @@ export async function eliminarPrenda(id: string) {
   const { tenantId } = await requiereAdmin();
   try {
     const prendaExistente = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
-      where: { id, tenantId },
-      include: { images: { where: { tenantId } } },
+      where: { id },
+      include: { images: { where: {} } },
     }));
     if (!prendaExistente) return { error: "El producto no existe o ya fue eliminado." };
 

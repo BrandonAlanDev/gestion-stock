@@ -16,13 +16,13 @@ export async function descontarStockPedido(
   cliente: ClienteTx,
 ) {
   const items = await cliente.pedidoItem.findMany({
-    where: { pedidoId, tenantId },
+    where: { pedidoId },
   });
 
   if (!items.length) return;
 
   const variantes = await cliente.garmentVariant.findMany({
-    where: { id: { in: items.map((item) => item.variantId) }, tenantId },
+    where: { id: { in: items.map((item) => item.variantId) } },
     include: { garment: { select: { controlaStock: true } } },
   });
 
@@ -36,7 +36,6 @@ export async function descontarStockPedido(
     const actualizado = await cliente.garmentVariant.updateMany({
       where: {
         id: item.variantId,
-        tenantId,
         stock: { gte: item.cantidad },
       },
       data: { stock: { decrement: item.cantidad } },
@@ -48,7 +47,6 @@ export async function descontarStockPedido(
 
     await cliente.movement.create({
       data: {
-        tenantId,
         variantId: item.variantId,
         type: "OUT",
         quantity: item.cantidad,
