@@ -20,7 +20,7 @@ import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import type { Prisma } from "../../../generated/prisma/client";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { procesarSlide } from "./procesar-slide";
 import type { CarouselSettings, SlideConfig } from "@/types/carousel";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
@@ -91,7 +91,7 @@ export async function createCarousel(data: unknown) {
         slidesProcesados.push({ ...procesado, order: index });
       }
 
-      await conPrismaTenant(tenantId, (prisma) =>
+      await conPrisma((prisma) =>
         prisma.carouselSlide.createMany({
           data: slidesProcesados.map((slide) => ({
             carouselId: carousel.id,
@@ -113,7 +113,7 @@ export async function createCarousel(data: unknown) {
       throw error;
     }
 
-    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -182,7 +182,7 @@ export async function updateCarousel(data: unknown) {
       await eliminarImagenes(publicIdsViejos, tenantId);
     }
 
-    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -212,7 +212,7 @@ export async function deleteCarousel(id: string) {
         const sections = JSON.parse(pageConfig.sectionOrder) as string[];
         const filtered = sections.filter((s) => s !== `carousel_${id}`);
         if (filtered.length !== sections.length) {
-          await conPrismaTenant(tenantId, (prisma) =>
+          await conPrisma((prisma) =>
             prisma.pageConfig.update({
               where: { id: pageConfig.id },
               data: { sectionOrder: JSON.stringify(filtered) },
@@ -222,8 +222,8 @@ export async function deleteCarousel(id: string) {
       } catch { }
     }
 
-    revalidateTag(`tenant:${tenantId}:carousels`);
-    revalidateTag(`page-config:${tenantId}`);
+    revalidateTag(`carousels`);
+    revalidateTag(`page-config`);
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -239,7 +239,7 @@ export async function reorderCarousels(data: unknown) {
   try {
     const { tenantId } = await requiereAdmin();
     await reordenarCarruselesPersistidos(tenantId, parsed.data.carouselIds);
-    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`carousels`);
     return { success: true };
   } catch (error) {
     console.error("Error reordering carousels:", error);
@@ -273,8 +273,8 @@ export async function updateCarouselActive(id: string, active: boolean) {
   try {
     const { tenantId } = await requiereAdmin();
     const carousel = await actualizarCarrusel(tenantId, { id, active });
-    revalidateTag(`tenant:${tenantId}:carousels`);
-    revalidateTag(`page-config:${tenantId}`);
+    revalidateTag(`carousels`);
+    revalidateTag(`page-config`);
     revalidatePath("/");
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
@@ -335,7 +335,7 @@ export async function duplicateCarousel(id: string) {
         });
       }
 
-      await conPrismaTenant(tenantId, (prisma) =>
+      await conPrisma((prisma) =>
         prisma.carouselSlide.createMany({
           data: slides.map((slide) => ({
             carouselId: copia.id,
@@ -357,7 +357,7 @@ export async function duplicateCarousel(id: string) {
       throw error;
     }
 
-    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`carousels`);
     return { success: true, data: serializeData(copia) };
   } catch (error) {
     console.error("Error al duplicar carrusel:", error);

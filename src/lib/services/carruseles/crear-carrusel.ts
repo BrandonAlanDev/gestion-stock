@@ -1,9 +1,9 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EntradaCrearCarrusel } from "@/lib/services/carruseles/tipos";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 export async function crearCarrusel(tenantId: string, datos: EntradaCrearCarrusel) {
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const configuracion = await prisma.pageConfig.findUnique({
       where: { clave: "principal" },
       select: { id: true },

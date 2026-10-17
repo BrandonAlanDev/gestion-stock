@@ -5,12 +5,12 @@ import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-im
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { RESET_DATA } from "@/actions/page-config/shared/reset-data";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function clearPageConfig() {
   try {
     const { contexto, pageConfig: configActual } = await requerirPageConfigAdministrador();
-    const existing = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const existing = await conPrisma((prisma) =>
       prisma.pageConfig.findFirst({
         where: { id: configActual.id },
         include: { banners: { where: {} } },
@@ -33,7 +33,7 @@ export async function clearPageConfig() {
       ),
     ].filter((publicId) => publicId !== null);
 
-    const pageConfig = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const pageConfig = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: existing.id },
         data: { ...RESET_DATA, banners: { deleteMany: {} } },
@@ -42,8 +42,8 @@ export async function clearPageConfig() {
 
     await eliminarImagenes(publicIdsAEliminar, contexto.tenantId);
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
-    revalidateTag(`branding-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
+    revalidateTag(`branding-config`);
 
     return { ok: true, pageConfig };
   } catch (error) {

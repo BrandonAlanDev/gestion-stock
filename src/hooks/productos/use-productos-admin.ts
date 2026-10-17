@@ -2,15 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { obtenerProductosAdmin } from "@/actions/productos/obtener-productos-admin";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import type { RespuestaProductosAdmin } from "@/lib/productos/tipos";
 import type { FiltrosProductos } from "@/lib/productos/query-params";
 
 export function useProductosAdmin(filtros: FiltrosProductos) {
-  const tenantId = useTenantId();
 
   return useQuery({
-    queryKey: ["tenant", tenantId, "productos-admin", filtros],
+    queryKey: ["productos-admin", filtros],
     queryFn: async (): Promise<RespuestaProductosAdmin> => {
       const resultado = await obtenerProductosAdmin({
         pagina: filtros.pagina,

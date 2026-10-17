@@ -1,12 +1,12 @@
 "use server";
 
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EntradaActualizarContenidoPagina } from "@/types/paginas-personalizadas/entradas-acciones";
 
 export async function actualizarContenidoPaginaPersonalizada(pageId: string, datos: EntradaActualizarContenidoPagina) {
-  const { tenantId } = await requiereAdmin();
-  return conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (transaccion) => {
+  await requiereAdmin();
+  return conPrisma((prisma) => prisma.$transaction(async (transaccion) => {
     const pagina = await transaccion.customPage.findFirst({ where: { id: pageId }, select: { id: true } });
     if (!pagina) throw new Error("La página no pertenece a la tienda activa");
 

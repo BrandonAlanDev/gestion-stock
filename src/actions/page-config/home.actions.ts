@@ -6,7 +6,7 @@ import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 interface GridItem {
   id?: string;
@@ -50,7 +50,7 @@ export async function updateHomeGrids(
     let targetHomegridId = homegridId;
 
     if (!targetHomegridId) {
-      const nuevoHomegrid = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      const nuevoHomegrid = await conPrisma((prisma) =>
         prisma.$transaction(async (tx) => {
           const homegrid = await tx.homegrid.create({
             data: {
@@ -71,7 +71,7 @@ export async function updateHomeGrids(
       targetHomegridId = nuevoHomegrid.id;
     } else {
       const homegridIdActual = targetHomegridId;
-      await conPrismaTenant(contexto.tenantId, async (prisma) => {
+      await conPrisma(async (prisma) => {
         const homegrid = await prisma.homegrid.findFirst({
           where: { id: homegridIdActual },
           select: { id: true },
@@ -86,7 +86,7 @@ export async function updateHomeGrids(
       });
     }
 
-    const gridsExistentes = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const gridsExistentes = await conPrisma((prisma) =>
       prisma.grid.findMany({
         where: { homegridId: targetHomegridId },
       }),
@@ -115,7 +115,7 @@ export async function updateHomeGrids(
       return { ok: false, error: "No se pudieron actualizar las secciones" };
     }
 
-    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
+    await conPrisma((prisma) => prisma.$transaction(async (tx) => {
       await tx.grid.deleteMany({ where: { homegridId: targetHomegridId } });
 
       await tx.grid.createMany({

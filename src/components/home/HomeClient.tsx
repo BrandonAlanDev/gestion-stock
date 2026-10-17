@@ -11,7 +11,6 @@ import FeaturedSection from "@/components/home/FeaturedSection";
 import LocationCard from "@/components/ui/LocationCard";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { getSectionMt } from "@/lib/section-mt";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 interface CarouselSlide {
   id: string;
@@ -97,7 +96,6 @@ function renderCarousel(carousel: CarouselData, storeName?: string) {
 const PREFIJO_DESTACADA = "featured_";
 
 export default function HomeClient({ pageConfig }: HomeClientProps) {
-  const tenantId = useTenantId();
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
@@ -120,7 +118,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
   const isNewFormat = hasCustomOrder && sectionOrder.some((s) => s.startsWith("carousel_"));
 
   const { data: fetchedCarousels } = useQuery({
-    queryKey: ["tenant", tenantId, "carousels", "home-order"],
+    queryKey: ["carousels", "home-order"],
     queryFn: async () => {
       const res = await fetch("/api/carousels");
       if (!res.ok) throw new Error("Error al cargar carruseles");

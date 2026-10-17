@@ -1,4 +1,4 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EntradaDiapositivaCarrusel } from "@/lib/services/carruseles/tipos";
 import type { Prisma } from "../../../../generated/prisma/client";
 
@@ -7,7 +7,7 @@ export async function actualizarDiapositiva(
   datos: EntradaDiapositivaCarrusel & { id: string },
 ) {
   const { id, ...cambios } = datos;
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const existente = await prisma.carouselSlide.findFirst({
     where: { id, carousel: {} },
     select: { id: true },

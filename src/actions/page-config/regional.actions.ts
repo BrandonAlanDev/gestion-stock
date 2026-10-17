@@ -3,7 +3,7 @@
 import { revalidateTag, revalidatePath } from "next/cache";
 import { regionalSchema } from "@/lib/validaciones/esquemas";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function updateRegionalConfig(data: unknown) {
   try {
@@ -12,15 +12,15 @@ export async function updateRegionalConfig(data: unknown) {
       return { ok: false, error: parsed.error.issues[0].message };
     }
 
-    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const config = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const { pageConfig } = await requerirPageConfigAdministrador();
+    const config = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data: { ...parsed.data },
       }),
     );
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
     revalidatePath("/");
     return { ok: true, config };
   } catch {

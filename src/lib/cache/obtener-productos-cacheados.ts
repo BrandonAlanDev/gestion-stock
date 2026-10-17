@@ -1,6 +1,5 @@
 import { unstable_cache } from "next/cache";
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
-import { conContextoTenantRuntime } from "@/lib/tenants/contexto-tenant-runtime";
 
 export async function obtenerProductosCacheados(
   tenantId: string,
@@ -15,17 +14,17 @@ export async function obtenerProductosCacheados(
   const busqueda = search?.trim();
 
   if (busqueda) {
-    return conContextoTenantRuntime(tenantId, () => obtenerPrendasPaginadas(
+    return obtenerPrendasPaginadas(
         tenantId,
         paginaSegura,
         limiteSeguro,
         categoryId,
         busqueda,
         subCategoryId
-      ));
+      );
   }
 
-  return conContextoTenantRuntime(tenantId, () => unstable_cache(
+  return unstable_cache(
     () =>
       obtenerPrendasPaginadas(
         tenantId,
@@ -36,12 +35,12 @@ export async function obtenerProductosCacheados(
         subCategoryId
       ),
     [
-      `tenant:${tenantId}:products`,
+      `products`,
       String(paginaSegura),
       String(limiteSeguro),
       categoryId ?? "",
       subCategoryId ?? "",
     ],
-    { revalidate: 300, tags: [`tenant:${tenantId}:products`] }
-  )());
+    { revalidate: 300, tags: [`products`] }
+  )();
 }

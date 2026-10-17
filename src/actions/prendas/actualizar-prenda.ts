@@ -8,7 +8,7 @@ import { publicIdPerteneceTenant } from "@/lib/services/imagenes-cloudinary/publ
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { actualizarRegistroPrendaConDetalles } from "@/lib/services/prendas/actualizar-registro-prenda";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import { garmentSchema as esquemaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
@@ -20,7 +20,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
   if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
-  const prendaExistente = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
+  const prendaExistente = await conPrisma((prisma) => prisma.garment.findFirst({
     where: { id },
     include: {
       images: { where: {}, orderBy: { order: "asc" } },
@@ -101,7 +101,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       }
     }
 
-    const prendaActualizada = await conPrismaTenant(tenantId, (prisma) => actualizarRegistroPrendaConDetalles(prisma, tenantId, id, {
+    const prendaActualizada = await conPrisma((prisma) => actualizarRegistroPrendaConDetalles(prisma, tenantId, id, {
       name,
       price,
       maxPrice: maxPrice || null,
@@ -123,8 +123,8 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       imagenesARemover.map((imagenActual) => imagenActual.publicId ?? obtenerPublicIdDesdeUrl(imagenActual.srcImage)),
       tenantId
     );
-    revalidateTag(`tenant:${tenantId}:products`);
-    revalidateTag(`tenant:${tenantId}:product:${id}`);
+    revalidateTag(`products`);
+    revalidateTag(`product:${id}`);
 
     if (resultados.some((resultado) => resultado === false)) {
       return { success: true, warning: "La información se actualizó, pero una imagen no pudo eliminarse correctamente." };

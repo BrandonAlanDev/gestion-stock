@@ -2,7 +2,7 @@
 
 import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 
 export type ResultadoActivacion = { success: boolean; error?: string };
@@ -16,9 +16,9 @@ export async function activarMetodo(
   activo: boolean,
 ): Promise<ResultadoActivacion> {
   try {
-    const contexto = await requiereAdmin();
+    await requiereAdmin();
 
-    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
+    await conPrisma((prisma) => prisma.metodoPago.upsert({
       where: {
         metodo,
       },

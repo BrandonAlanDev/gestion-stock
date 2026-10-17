@@ -1,6 +1,6 @@
 "use server";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 
 export type ResultadoAgregarCarrito =
@@ -12,13 +12,13 @@ export async function agregarAlCarrito(datos: {
   variantId: string;
   cantidad: number;
 }): Promise<ResultadoAgregarCarrito> {
-  const { id: tenantId } = await requiereTenantActivo();
+  await requiereTenantActivo();
 
   if (!Number.isInteger(datos.cantidad) || datos.cantidad < 1) {
     return { ok: false, error: "La cantidad no es válida." };
   }
 
-  const variant = await conPrismaTenant(tenantId, (prisma) =>
+  const variant = await conPrisma((prisma) =>
     prisma.garmentVariant.findFirst({
       where: { id: datos.variantId, garmentId: datos.productId },
       include: { garment: { select: { controlaStock: true } } },

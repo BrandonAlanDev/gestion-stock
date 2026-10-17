@@ -6,18 +6,17 @@ código; se actualiza a medida que se resuelven los puntos.
 ## Alto impacto
 
 1. **Cache del catálogo `/productos`**
-   - `getCachedProducts` en `src/lib/cache.ts` funciona como passthrough: cada carga/página/filtro
-     ejecuta consultas Prisma vía server action POST (no cacheable).
-   - Evaluar SSR/ISR de la primera página y cache de servidor con tags para el listado.
+   - `obtenerProductosCacheados` en `src/lib/cache/obtener-productos-cacheados.ts` usa caché de servidor para listados sin búsqueda. Las búsquedas consultan Prisma directamente.
+   - Evaluar el costo de las búsquedas y si conviene cachearlas.
 
 2. **`getPageConfig` en cada render**
-   - `src/actions/page-config/general.actions.ts` consulta Prisma con `unstable_cache` por
-     `tenantId`. Revisar que los includes (banners, homegrid, carousels) no se pidan cuando la
+   - `src/actions/page-config/general.actions.ts` consulta Prisma con `unstable_cache`.
+     Revisar que los includes (banners, homegrid, carousels) no se pidan cuando la
      sección no se renderiza.
 
 3. **Búsqueda global**
-   - `src/actions/search.ts` ejecuta varias consultas secuenciales al montar la barra de búsqueda
-     del header. Paralelizar o cachear.
+   - `src/actions/busqueda/buscar-contenido.ts` ejecuta consultas en paralelo sin caché.
+     Evaluar si conviene cachear búsquedas frecuentes.
 
 4. **N+1 en el dashboard**
    - Evitar llamadas por fila al montar la tabla de productos; usar los datos ya paginados.
@@ -25,7 +24,7 @@ código; se actualiza a medida que se resuelven los puntos.
 ## Medio impacto
 
 5. **Índices Prisma**: revisar índices faltantes en consultas frecuentes (filtros por categoría,
-   subcategoría, tenant y fecha).
+   subcategoría y fecha).
 
 6. **Paginación**: verificar paginación consistente en catálogo, categorías y movimientos.
 

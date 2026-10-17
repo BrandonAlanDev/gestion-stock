@@ -1,7 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { obtenerPrendasPorNombres } from "@/actions/prendas/obtener-prendas-por-nombres";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
 type ResultadoCatalogo = {
@@ -20,12 +19,9 @@ export function useCatalogGarments(
   subcategoria?: string,
   initialData?: unknown
 ) {
-  const tenantId = useTenantId();
 
   return useQuery<ResultadoCatalogo>({
     queryKey: [
-      "tenant",
-      tenantId,
       "catalogProducts",
       { page, limit, categoria, search, subcategoria },
     ],

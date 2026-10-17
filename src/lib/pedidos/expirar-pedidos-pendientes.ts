@@ -1,28 +1,26 @@
 import "server-only";
 
 import type { PrismaClient } from "@/../generated/prisma/client";
-import { conPrismaTenant } from "../tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { liberarReservaStockPedido } from "./gestionar-reserva-stock";
 
-type EjecutarConPrismaTenant = <T>(
-  tenantId: string,
+type EjecutarConPrisma = <T>(
   operacion: (prisma: PrismaClient) => Promise<T>,
 ) => Promise<T>;
 
 interface DependenciasExpiracionReservas {
-  conPrismaTenant: EjecutarConPrismaTenant;
+  conPrisma: EjecutarConPrisma;
   liberarReservaStockPedido: typeof liberarReservaStockPedido;
 }
 
-/** Cancela pedidos vencidos por tenant y libera cada reserva de forma idempotente. */
+/** Cancela pedidos vencidos y libera cada reserva de forma idempotente. */
 export function crearExpiradorPedidosPendientes(
   dependencias: DependenciasExpiracionReservas,
-): (tenantId: string, ahora?: Date) => Promise<number> {
-  return async function expirarPedidosPendientesTenant(
-    tenantId: string,
+): (ahora?: Date) => Promise<number> {
+  return async function expirarPedidosPendientes(
     ahora = new Date(),
   ): Promise<number> {
-    return dependencias.conPrismaTenant(tenantId, async (prisma) => {
+    return dependencias.conPrisma(async (prisma) => {
       const candidatos = await prisma.pedido.findMany({
         where: {
           estado: "PENDIENTE",
@@ -58,7 +56,6 @@ export function crearExpiradorPedidosPendientes(
 
           const liberada = await dependencias.liberarReservaStockPedido(
             candidato.id,
-            tenantId,
             tx,
           );
           if (!liberada) throw new Error("No se pudo liberar la reserva del pedido vencido");
@@ -72,7 +69,7 @@ export function crearExpiradorPedidosPendientes(
   };
 }
 
-export const expirarPedidosPendientesTenant = crearExpiradorPedidosPendientes({
-  conPrismaTenant,
+export const expirarPedidosPendientes = crearExpiradorPedidosPendientes({
+  conPrisma,
   liberarReservaStockPedido,
 });

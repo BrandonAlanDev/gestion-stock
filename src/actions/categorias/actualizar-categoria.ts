@@ -8,8 +8,8 @@ export async function updateCategory(id: string, datos: { name: string; descript
   try {
     const { tenantId } = await requiereAdmin();
     const categoriaActualizada = await actualizarCategoria(tenantId, id, datos);
-    revalidateTag(`tenant:${tenantId}:categories`);
-    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`categories`);
+    revalidateTag(`products`);
     return { success: true, data: categoriaActualizada };
   } catch (error) {
     console.error("Error al actualizar categoría:", error);

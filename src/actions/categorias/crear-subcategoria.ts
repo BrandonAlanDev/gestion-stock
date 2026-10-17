@@ -11,8 +11,8 @@ export async function createSubCategory(datos: { name: string; categoryId: strin
       return { error: "El nombre y la categoría madre son obligatorios." };
     }
     const nuevaSubcategoria = await crearSubcategoria(tenantId, datos);
-    revalidateTag(`tenant:${tenantId}:categories`);
-    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`categories`);
+    revalidateTag(`products`);
     return { success: true, data: nuevaSubcategoria };
   } catch (error: unknown) {
     console.error("Error en createSubCategoryAction:", error);

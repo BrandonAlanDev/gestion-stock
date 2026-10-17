@@ -1,7 +1,7 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerDiapositivas(tenantId: string, carouselId: string) {
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const carrusel = await prisma.carousel.findFirst({ where: { id: carouselId }, select: { id: true } });
     if (!carrusel) return [];
     return prisma.carouselSlide.findMany({

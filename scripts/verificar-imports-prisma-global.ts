@@ -25,7 +25,7 @@ type Hallazgo = {
   tipo: "compatibilidad" | "cliente-directo";
 };
 
-const ARCHIVO_FACTORY_PRISMA = "src/lib/tenants/prisma-factory.ts";
+const ARCHIVO_FACTORY_PRISMA = "src/lib/prisma.ts";
 
 function normalizarRuta(ruta: string): string {
   return ruta.replace(/\\/g, "/");
@@ -86,7 +86,7 @@ function cargarAllowlist(): Set<string> {
 }
 
 function esModuloPrismaCompat(ruta: ts.Expression): boolean {
-  return ts.isStringLiteralLike(ruta) && ruta.text === "@/lib/prisma";
+  return ts.isStringLiteralLike(ruta) && ruta.text === "@/lib/tenants/prisma-factory";
 }
 
 function buscarImportsPrisma(archivo: string, contenido: string): Hallazgo[] {
@@ -225,25 +225,25 @@ function main(): number {
   if (importsNuevos.length > 0 || clientesDirectos.length > 0 || allowlistObsoleta.length > 0) {
     if (importsNuevos.length > 0) {
       console.error(
-        "Se detectaron imports nuevos de @/lib/prisma fuera de la allowlist:",
+        "Se detectaron imports del factory de silos anterior:",
       );
       for (const hallazgo of importsNuevos) {
         console.error(`  ${hallazgo.archivo}:${hallazgo.linea}`);
       }
       console.error(
-        "Migrá estos módulos a acceso Prisma explícito; no agregues sus rutas a la allowlist.",
+        "Usá src/lib/prisma.ts para acceder a la base única.",
       );
     }
 
     if (clientesDirectos.length > 0) {
-      console.error("La aplicación debe crear PrismaClient únicamente desde prisma-factory.ts:");
+      console.error("La aplicación debe crear PrismaClient únicamente desde src/lib/prisma.ts:");
       for (const hallazgo of clientesDirectos) {
         console.error(`  ${hallazgo.archivo}:${hallazgo.linea}`);
       }
     }
 
     if (allowlistObsoleta.length > 0) {
-      console.error("La allowlist contiene rutas que ya no importan @/lib/prisma:");
+      console.error("La allowlist contiene rutas que ya no importan el factory anterior:");
       for (const archivo of allowlistObsoleta.sort()) {
         console.error(`  ${archivo}`);
       }

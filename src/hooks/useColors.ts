@@ -2,13 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getColors } from "@/actions/colores/obtener-colores";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useColors() {
-  const tenantId = useTenantId();
 
   return useQuery({
-    queryKey: ["tenant", tenantId, "colors"],
+    queryKey: ["colors"],
     queryFn: async () => {
       const data = await getColors();
       if (!data) throw new Error("Error al cargar colores");

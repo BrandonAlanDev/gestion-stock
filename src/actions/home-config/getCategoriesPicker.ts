@@ -1,12 +1,12 @@
 "use server";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function getCategoriesPicker() {
-  const { tenantId } = await requiereAdmin();
+  await requiereAdmin();
   try {
-    const categories = await conPrismaTenant(tenantId, (prisma) =>
+    const categories = await conPrisma((prisma) =>
       prisma.category.findMany({
         where: {},
         select: { id: true, name: true },

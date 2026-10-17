@@ -1,7 +1,8 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerOrdenMaximo(tenantId: string): Promise<number | null> {
-  const resultado = await conPrismaTenant(tenantId, (prisma) => prisma.carousel.aggregate({
+  void tenantId;
+  const resultado = await conPrisma((prisma) => prisma.carousel.aggregate({
     where: {},
     _max: { order: true },
   }));

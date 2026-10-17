@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { auth } from "@/auth";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 import { resolverContextoSesionTenant } from "@/lib/tenants/resolver-contexto-sesion";
 import type { ContextoTenantSesion } from "@/types/tenants";
@@ -18,7 +18,7 @@ const obtenerTenantDeSesionMemoizado = cache(
       {
         id: sesion?.user?.id,
       },
-      (tenantId, usuarioId) => conPrismaTenant(tenantId, (prisma) =>
+      (tenantId, usuarioId) => conPrisma((prisma) =>
         prisma.user.findFirst({
           where: { id: usuarioId },
           select: { id: true, role: true },

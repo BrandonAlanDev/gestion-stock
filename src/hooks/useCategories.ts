@@ -2,13 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/actions/categorias/obtener-categorias";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useCategories() {
-  const tenantId = useTenantId();
 
   return useQuery({
-    queryKey: ["tenant", tenantId, "categories"],
+    queryKey: ["categories"],
     queryFn: async () => {
       const data = await getCategories();
       if (!data) throw new Error("Error al cargar categorías");

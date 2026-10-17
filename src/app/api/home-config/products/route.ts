@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const { tenantId } = await requiereAdmin();
-    const products = await conPrismaTenant(tenantId, (prisma) =>
+    await requiereAdmin();
+    const products = await conPrisma((prisma) =>
       prisma.garment.findMany({
         where: { active: true },
         select: { id: true, name: true },

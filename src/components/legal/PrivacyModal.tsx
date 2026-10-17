@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 interface PrivacyModalProps {
   isOpen?: boolean;
@@ -21,27 +20,26 @@ const parrafosPorDefecto = [
 export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
   const [visible, setVisible] = useState(false);
   const { pageConfig } = usePageConfig();
-  const tenantId = useTenantId();
 
   useBloqueoScroll(visible);
 
   useEffect(() => {
-    const prefijoTenant = tenantId ?? "sin-tenant";
+    const prefijoTienda = "gestion-stock";
     const cookiesAccepted = localStorage.getItem(
-      `${prefijoTenant}:cookiesAcknowledged`
+      `${prefijoTienda}:cookiesAcknowledged`
     );
-    const privacySeen = localStorage.getItem(`${prefijoTenant}:privacySeen`);
+    const privacySeen = localStorage.getItem(`${prefijoTienda}:privacySeen`);
 
     // abrir automático SOLO la primera vez después de aceptar cookies
     if (cookiesAccepted && !privacySeen) {
       const timer = setTimeout(() => {
         setVisible(true);
-        localStorage.setItem(`${prefijoTenant}:privacySeen`, "true");
+        localStorage.setItem(`${prefijoTienda}:privacySeen`, "true");
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [tenantId]);
+  }, []);
 
   // apertura manual (botón externo)
   useEffect(() => {

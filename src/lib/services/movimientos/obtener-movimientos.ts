@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerMovimientos(
   tenantId: string,
@@ -8,7 +8,7 @@ export async function obtenerMovimientos(
   limite: number,
 ) {
   const omitir = (pagina - 1) * limite;
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const [registros, total] = await Promise.all([
     prisma.movement.findMany({
       where: {},

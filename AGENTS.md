@@ -1,10 +1,10 @@
 # Instrucciones para agentes — gestion-stock
 
-Estas instrucciones rigen el repositorio completo. Para entender una zona concreta, consultá el código y la documentación pertinente: `ARCHITECTURE.md` para el mapa de capas, `MULTI_TENANCY.md` para aislamiento y `README.md` para puesta en marcha. Si difieren del comportamiento actual, verificá el código antes de cambiarlo y actualizá la documentación afectada.
+Estas instrucciones rigen el repositorio completo. Consultá `ARCHITECTURE.md` para el mapa de capas y `README.md` para la puesta en marcha. Si la documentación difiere del comportamiento actual, verificá el código antes de cambiarlo y actualizá la documentación afectada.
 
 ## Proyecto y arquitectura
 
-- Aplicación única de Next.js App Router con React, TypeScript estricto, Prisma y MySQL/MariaDB. La arquitectura elegida es un **monolito modular por capacidades de negocio** (catálogo, inventario, tienda, pedidos, pagos, configuración y tenants), con despliegue conjunto y límites de dominio claros. No introduzcas servicios separados por defecto.
+- Aplicación única de Next.js App Router con React, TypeScript estricto, Prisma y MySQL/MariaDB. La arquitectura elegida es un **monolito modular por capacidades de negocio** (catálogo, inventario, tienda, pedidos, pagos y configuración), con despliegue conjunto y una base de datos por instancia. No introduzcas servicios separados por defecto.
 - Respetá la organización existente: `src/app/` define rutas, layouts y handlers; `src/components/` contiene interfaz; `src/actions/` expone operaciones del servidor; `src/lib/` contiene servicios, acceso a datos e infraestructura. Dentro de esas áreas, agrupá por dominio. `src/hooks/`, `src/contextos/` y `src/types/` alojan piezas compartidas cuando corresponda.
 - Las rutas y los componentes de interfaz coordinan la presentación. Las Server Actions y los route handlers validan entradas, aplican autenticación y autorización, coordinan la operación e invalidan caché cuando corresponde. Los servicios encapsulan lógica o consultas reutilizables y reciben sus dependencias de forma explícita. Una consulta simple no exige crear una capa o archivo adicional.
 - Mantené las dependencias entre dominios explícitas. Extraé código a `src/lib/` compartido cuando tenga uso real en más de un dominio; evitá tanto la duplicación como las abstracciones preventivas. Evolucioná la estructura al tocar cada función, sin migraciones masivas ajenas a la tarea.
@@ -12,19 +12,16 @@ Estas instrucciones rigen el repositorio completo. Para entender una zona concre
 
 ## Invariantes del negocio
 
-- El `tenantId` autorizado se obtiene en el servidor, nunca de un valor del cliente como prueba de autorización. En fronteras públicas usá los controles de tenant activo; en operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
-- Toda consulta o mutación de datos de negocio debe quedar acotada al tenant, incluida la validación de IDs y relaciones recibidos del cliente. Los servicios reciben el `tenantId` explícito. Conservá el tenant en claves de caché, almacenamiento del cliente y rutas de Cloudinary. Consultá `MULTI_TENANCY.md` al modificar estas rutas.
+- La conexión de datos se obtiene de `DATABASE_URL` en el servidor. Nunca aceptes destinos de conexión enviados por clientes. En operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
+- Validá IDs y relaciones recibidos del cliente antes de mutar datos. Mantené las claves de caché y las invalidaciones coherentes con la base única.
 - Mantené atómicas las operaciones que cambian stock y movimientos. En pedidos, pagos y callbacks externos, preservá los controles existentes de autorización, consistencia e idempotencia; verificá su flujo antes de editarlo.
 - `prisma/schema.prisma` es la fuente de verdad del modelo. No edites `generated/` ni `.next/` manualmente. No ejecutes cambios de esquema contra una base compartida sin conocer el entorno y el alcance.
 
-## Arquitectura silo y transición de datos
+## Base única y migraciones
 
-- Se mantiene una sola aplicación Next.js. El runtime resuelve el tenant por hostname y usa una base MySQL independiente mediante `TenantRegistryProvider` y la fábrica de `src/lib/tenants/prisma-factory.ts`. El registro local cifrado está implementado; el transporte de Logabyte Core y su gestor de credenciales quedan pendientes de su contrato oficial.
-- La resolución y selección de conexión ocurren exclusivamente en el servidor. Un dominio desconocido, tenant inactivo o referencia inválida debe fallar de forma cerrada; nunca uses una base por defecto ni aceptes un destino de conexión indicado por el cliente.
-- `tenantId`, sus filtros y validaciones siguen presentes en el schema y en el código como protecciones de transición. No los elimines hasta que todas las tiendas estén copiadas y verificadas en sus bases independientes. No vuelvas a introducir un singleton Prisma conectado a una base compartida.
-- No crees un `PrismaClient` por solicitud ni vuelvas a introducir la fachada global eliminada `src/lib/prisma.ts`. Usá `conPrismaTenant(tenantId, fn)` con un ID obtenido del registro del servidor; en solicitudes HTTP, resolvé el tenant por hostname antes de llamar esa función.
-- Logabyte Core debe quedar como fuente externa de dominios, suscripciones/estado y referencias opacas de conexión. La incorporación dinámica sin cambios de variables de Vercel queda habilitada cuando se integre el gateway y el resolver de secretos; no presentes el archivo local como solución productiva dinámica.
-- Antes de aplicar migraciones en bases existentes, compará DDL e historial, definí el baseline, aprovisionamiento, credenciales, traslado, validaciones y reversión. Todas las bases deben ejecutar el mismo schema y las mismas migraciones. `MULTI_TENANCY.md` detalla la transición.
+- Se mantiene una sola aplicación Next.js y una sola base MySQL compatible por despliegue. Reutilizá un cliente Prisma por proceso; no crees uno por solicitud.
+- El baseline activo está en `prisma/migrations-base-unica/`. Aplicá las migraciones configuradas por `prisma.config.ts`.
+- Antes de aplicar migraciones a una base con datos, compará su DDL e historial, definí respaldo y reversión. Nunca reinicies una base sin confirmar que es descartable.
 
 ## Código y alcance de los cambios
 
@@ -42,5 +39,5 @@ Estas instrucciones rigen el repositorio completo. Para entender una zona concre
 ## Verificación
 
 - Revisá el diff y ejecutá la comprobación más pequeña que cubra el cambio. Para código TypeScript, usá el lint y la comprobación de tipos pertinentes (`npm run lint`, `npx tsc --noEmit`) según el alcance; para cambios de integración o build, considerá `npm run build` si el entorno está configurado.
-- Si cambiás aislamiento multi-tenant, ejecutá `npm run verificar:aislamiento` con una base de pruebas configurada y comprobá los casos afectados. No tomes el éxito del lint como prueba de seguridad entre tenants.
+- Si cambiás el esquema, verificá la migración activa y el acceso a una base de pruebas. No tomes el éxito del lint como prueba de integridad de datos.
 - Para cambios solo de documentación, verificá rutas, comandos y coherencia con el código; no ejecutes una batería de pruebas sin relación con el cambio. Informá qué verificaste y cualquier limitación real.

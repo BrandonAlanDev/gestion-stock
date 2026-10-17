@@ -21,8 +21,8 @@ export async function updateProvider(datos: unknown) {
         contactos: resultado.data.contacts.map(normalizeContact),
       },
     );
-    revalidateTag(`tenant:${contexto.tenantId}:providers`);
-    revalidateTag(`tenant:${contexto.tenantId}:products`);
+    revalidateTag(`providers`);
+    revalidateTag(`products`);
     return { success: true, provider: proveedor };
   } catch (error: unknown) {
     if (

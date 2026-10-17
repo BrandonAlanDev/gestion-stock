@@ -19,7 +19,6 @@ import { useCategories } from "@/hooks/useCategories";
 import { useFiltrosProductos } from "@/hooks/productos/use-filtros-productos";
 import { useProductosAdmin } from "@/hooks/productos/use-productos-admin";
 import { useProviders } from "@/hooks/useProviders";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import { eliminarPrenda } from "@/actions/prendas/eliminar-prenda";
 import { actualizarVisibilidadProducto } from "@/actions/productos/actualizar-visibilidad-producto";
 import { LIMITE_DEFECTO } from "@/lib/productos/query-params";
@@ -45,7 +44,6 @@ function adaptarProducto(producto: ProductoAdminRow): ProductoAdministracion {
 
 export default function PaginaProductos() {
   const queryClient = useQueryClient();
-  const tenantId = useTenantId();
   const { filtros, actualizar, limpiar } = useFiltrosProductos();
   const { data, isPending, isError } = useProductosAdmin(filtros);
   const { data: categorias } = useCategories();
@@ -56,7 +54,7 @@ export default function PaginaProductos() {
   const [eliminar, setEliminar] = useState<ProductoAdminRow | null>(null);
 
   const invalidar = () =>
-    queryClient.invalidateQueries({ queryKey: ["tenant", tenantId, "productos-admin"] });
+    queryClient.invalidateQueries({ queryKey: ["productos-admin"] });
 
   const filas = data?.filas ?? [];
   const total = data?.total ?? 0;

@@ -13,16 +13,14 @@ import type {
   ItemCarrito,
   ProductoParaCarrito,
 } from "@/contextos/carrito/tipos-carrito";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 interface PropiedadesCartProvider {
   children: ReactNode;
 }
 
 export function CartProvider({ children }: PropiedadesCartProvider) {
-  const tenantId = useTenantId();
-  const claveCarrito = `cart:${tenantId ?? "sin-tenant"}`;
-  const claveMarcaTemporal = `cartTimestamp:${tenantId ?? "sin-tenant"}`;
+  const claveCarrito = `cart:gestion-stock`;
+  const claveMarcaTemporal = `cartTimestamp:gestion-stock`;
   const [cartItems, setCartItems] = useState<ItemCarrito[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [claveCargada, setClaveCargada] = useState<string | null>(null);

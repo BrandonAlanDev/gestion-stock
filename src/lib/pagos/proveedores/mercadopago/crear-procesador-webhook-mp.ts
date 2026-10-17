@@ -41,16 +41,14 @@ function extraerPaymentId(cuerpo: Record<string, unknown>): string | null {
 export interface DependenciasProcesadorWebhookMP {
   validarFirma(request: NextRequest, paymentId: string): boolean;
   obtenerEstadoPago(
-    tenantId: string,
     datos: DatosEstadoPago,
   ): Promise<ResultadoEstadoPago>;
 }
 
-/** Crea el procesador para probar la autenticidad y el tenant sin acceder a MP. */
+/** Crea el procesador para verificar la firma antes de consultar el pago. */
 export function crearProcesadorWebhookMP(dependencias: DependenciasProcesadorWebhookMP) {
   return async function procesarWebhookMP(
     req: NextRequest,
-    tenantIdAutorizado: string,
   ): Promise<ResultadoWebhook> {
     const cuerpo = (await req.json()) as Record<string, unknown>;
     const paymentId = extraerPaymentId(cuerpo);
@@ -60,7 +58,7 @@ export function crearProcesadorWebhookMP(dependencias: DependenciasProcesadorWeb
     if (idFirmado && idFirmado !== paymentId) throw new Error("Firma inválida");
     if (!dependencias.validarFirma(req, paymentId)) throw new Error("Firma inválida");
 
-    const pago = await dependencias.obtenerEstadoPago(tenantIdAutorizado, {
+    const pago = await dependencias.obtenerEstadoPago({
       externalId: paymentId,
     });
     return {

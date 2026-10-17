@@ -2,7 +2,7 @@
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function updateEcommerceConfig(
   data: {
@@ -13,8 +13,8 @@ export async function updateEcommerceConfig(
   }
 ) {
   try {
-    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const ecommerce = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const { pageConfig } = await requerirPageConfigAdministrador();
+    const ecommerce = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data: {
@@ -26,7 +26,7 @@ export async function updateEcommerceConfig(
       }),
     );
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
 
     return { ok: true, ecommerce };
   } catch {
@@ -36,8 +36,8 @@ export async function updateEcommerceConfig(
 
 export async function getEcommerceConfig() {
   try {
-    const { id: tenantId } = await requiereTenantActivo();
-    const ecommerce = await conPrismaTenant(tenantId, (prisma) =>
+    await requiereTenantActivo();
+    const ecommerce = await conPrisma((prisma) =>
       prisma.pageConfig.findFirst({
         where: {},
 

@@ -12,7 +12,7 @@ export async function createMovement(datos: unknown) {
 
   try {
     const movimiento = await crearMovimiento(contexto.tenantId, resultado.data);
-    revalidateTag(`tenant:${contexto.tenantId}:products`);
+    revalidateTag(`products`);
     return {
       success: true,
       data: { ...movimiento, priceAtTime: Number(movimiento.priceAtTime) },

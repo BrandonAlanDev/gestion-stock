@@ -1,10 +1,10 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function crearSubcategoria(
   tenantId: string,
   datos: { name: string; categoryId: string; sizeTypeId: string | null },
 ) {
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId }, select: { id: true } });
     if (!categoria) throw new Error("Categoría no encontrada");
     if (datos.sizeTypeId) {

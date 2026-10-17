@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 const NOMBRES_MESES = [
   "Ene",
@@ -18,10 +18,11 @@ const NOMBRES_MESES = [
 ] as const;
 
 export async function obtenerEstadisticasDashboard(tenantId: string) {
+  void tenantId;
   const desde = new Date();
   desde.setMonth(desde.getMonth() - 6);
 
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const [movimientos, variantesStockBajo, totalProductos, totalSalidas, totalEntradas] =
     await Promise.all([
       prisma.movement.findMany({

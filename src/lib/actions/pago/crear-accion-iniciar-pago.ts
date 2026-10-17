@@ -31,8 +31,7 @@ export interface DependenciasIniciarPago {
     items: ItemParaCrearPedido[],
     metodoPago: MetodoPagoId,
   ) => Promise<{ pedidoId: string }>;
-  conPrismaTenant: <T>(
-    tenantId: string,
+  conPrisma: <T>(
     operacion: (prisma: PrismaClient) => Promise<T>,
   ) => Promise<T>;
   liberarReservaStockPedido: typeof liberarReservaStockPedido;
@@ -71,7 +70,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       );
       pedidoIdCreado = creado.pedidoId;
 
-      const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
+      const pedido = await dependencias.conPrisma((prisma) =>
         prisma.pedido.findFirst({
           where: { id: creado.pedidoId },
           include: {
@@ -88,7 +87,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         throw new Error("La reserva del pedido ya venció");
       }
 
-      const payment = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
+      const payment = await dependencias.conPrisma((prisma) =>
         prisma.payment.create({
           data: {
             pedidoId: pedido.id,
@@ -101,7 +100,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         }),
       );
 
-      await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
+      await dependencias.conPrisma((prisma) =>
         prisma.pedido.updateMany({
           where: { id: pedido.id, estado: "PENDIENTE" },
           data: { metodoPago: metodo },
@@ -126,7 +125,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         })),
       });
 
-      await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
+      await dependencias.conPrisma((prisma) =>
         prisma.payment.updateMany({
           where: { id: payment.id, pedidoId: pedido.id },
           data: { estado: resultado.estado },
@@ -145,8 +144,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       if (pedidoIdCreado && tenantIdProcesado) {
         try {
           const pedidoId = pedidoIdCreado;
-          const tenantId = tenantIdProcesado;
-          await dependencias.conPrismaTenant(tenantId, (prisma) => prisma.$transaction(async (tx) => {
+          await dependencias.conPrisma((prisma) => prisma.$transaction(async (tx) => {
             const cancelado = await tx.pedido.updateMany({
               where: { id: pedidoId, estado: "PENDIENTE" },
               data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
@@ -158,7 +156,6 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
               });
               const liberada = await dependencias.liberarReservaStockPedido(
                 pedidoId,
-                tenantId,
                 tx,
               );
               if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");

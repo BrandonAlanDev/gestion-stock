@@ -2,13 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useSizeTypes() {
-  const tenantId = useTenantId();
 
   return useQuery({
-    queryKey: ["tenant", tenantId, "sizeTypes"],
+    queryKey: ["sizeTypes"],
     queryFn: async () => {
       const data = await getSizeTypes();
       if (!data) throw new Error("Error al cargar talles");

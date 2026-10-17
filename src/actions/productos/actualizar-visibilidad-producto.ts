@@ -2,7 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 const esquemaVisibilidad = z.object({
@@ -11,10 +11,8 @@ const esquemaVisibilidad = z.object({
 });
 
 export async function actualizarVisibilidadProducto(id: string, activo: boolean) {
-  let tenantId: string;
   try {
-    const contexto = await requiereAdmin();
-    tenantId = contexto.tenantId;
+    await requiereAdmin();
   } catch {
     return { error: "No autorizado" };
   }
@@ -23,15 +21,15 @@ export async function actualizarVisibilidadProducto(id: string, activo: boolean)
   if (!parsed.success) return { error: "Datos inválidos" };
 
   try {
-    const resultado = await conPrismaTenant(tenantId, (prisma) =>
+    const resultado = await conPrisma((prisma) =>
       prisma.garment.updateMany({
         where: { id: parsed.data.id },
         data: { active: parsed.data.activo },
       }),
     );
     if (resultado.count === 0) return { error: "Producto no encontrado" };
-    revalidateTag(`tenant:${tenantId}:products`);
-    revalidateTag(`tenant:${tenantId}:product:${id}`);
+    revalidateTag(`products`);
+    revalidateTag(`product:${id}`);
     return { success: true };
   } catch (error) {
     console.error("Error al actualizar visibilidad:", error);

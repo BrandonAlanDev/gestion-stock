@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { liberarReservaStockPedido } from "./gestionar-reserva-stock";
 import type { PedidoEstadoPagoNombre } from "./evaluar-pago-pedido";
 
@@ -16,7 +16,7 @@ export async function actualizarEstadoPagoPedido(
   tenantId: string,
   datos: DatosActualizarEstadoPago,
 ) {
-  return conPrismaTenant(tenantId, async (prisma) => prisma.$transaction(async (tx) => {
+  return conPrisma(async (prisma) => prisma.$transaction(async (tx) => {
     const pedido = await tx.pedido.findFirst({
       where: { id: pedidoId },
       select: { id: true, estado: true, stockReservado: true },
@@ -35,7 +35,7 @@ export async function actualizarEstadoPagoPedido(
     if (actualizado.count !== 1) return null;
 
     if (datos.cancelar && pedido.stockReservado) {
-      const liberada = await liberarReservaStockPedido(pedidoId, tenantId, tx);
+      const liberada = await liberarReservaStockPedido(pedidoId, tx);
       if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
     }
 

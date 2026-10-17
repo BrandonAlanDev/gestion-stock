@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type {
   DatosCrearPago,
   DatosEstadoPago,
@@ -15,7 +15,8 @@ export const METODO_TRANSFERENCIA = "transferencia";
 async function obtenerConfigTransferencia(tenantId: string): Promise<{
   instrucciones: string | null;
 } | null> {
-  const metodo = await conPrismaTenant(tenantId, (prisma) =>
+  void tenantId;
+  const metodo = await conPrisma((prisma) =>
     prisma.metodoPago.findUnique({
       where: {
         metodo: METODO_TRANSFERENCIA,

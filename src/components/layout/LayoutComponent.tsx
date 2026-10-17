@@ -10,13 +10,11 @@ import { Toaster } from "sonner";
 import CartSidebar from "@/components/cart/CartSidebar";
 import { CartProvider } from "@/contextos/carrito/proveedor-carrito";
 import { useCart } from "@/contextos/carrito/use-carrito";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import { ContextoTemaAdmin } from "@/contextos/admin/contexto-tema-admin";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const temaAdmin = useContext(ContextoTemaAdmin);
   const { isCartOpen, closeCart } = useCart();
-  const tenantId = useTenantId();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [colapsado, setColapsado] = useState(false);
   const pathname = usePathname();
@@ -27,18 +25,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const guardado = window.localStorage.getItem(
-      `sidebar-colapsado:${tenantId ?? "sin-tenant"}`
+      `sidebar-colapsado:gestion-stock`
     );
     if (guardado === "1") setColapsado(true);
     if (guardado === "0" || guardado === null) setColapsado(false);
-  }, [tenantId]);
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(
-      `sidebar-colapsado:${tenantId ?? "sin-tenant"}`,
+      `sidebar-colapsado:gestion-stock`,
       colapsado ? "1" : "0"
     );
-  }, [colapsado, tenantId]);
+  }, [colapsado]);
 
   return (
     <div

@@ -19,8 +19,7 @@ interface ErrorValidacionPrenda {
 export interface DependenciasCrearAccionPrenda {
   requiereAdmin: () => Promise<Pick<ContextoTenantSesion, "tenantId">>;
   validar: (datos: unknown) => ResultadoValidacionPrenda | ErrorValidacionPrenda;
-  conPrismaTenant: <T>(
-    tenantId: string,
+  conPrisma: <T>(
     operacion: (prisma: PrismaClient) => Promise<T>,
   ) => Promise<T>;
   crearRegistroPrenda: (
@@ -79,7 +78,7 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
     const idsPublicosSubidos: string[] = [];
 
     try {
-      const prenda = await dependencias.conPrismaTenant(tenantId, (prisma) =>
+      const prenda = await dependencias.conPrisma((prisma) =>
         dependencias.crearRegistroPrenda(prisma, tenantId, {
           name,
           price,
@@ -127,7 +126,7 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
       }
 
       if (imagenesFinales.length > 0) {
-        await dependencias.conPrismaTenant(tenantId, (prisma) => prisma.garmentImage.createMany({
+        await dependencias.conPrisma((prisma) => prisma.garmentImage.createMany({
           data: imagenesFinales.map((imagen, indice) => ({
             garmentId: prenda.id,
             srcImage: imagen.url,
@@ -137,7 +136,7 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
         }));
       }
 
-      dependencias.revalidateTag(`tenant:${tenantId}:products`);
+      dependencias.revalidateTag(`products`);
       return { success: true, data: dependencias.serializarDatos(prenda) };
     } catch (error: unknown) {
       dependencias.registrarError("Error en crearPrenda:", error);
@@ -148,7 +147,7 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
       const idPrendaAEliminar = idPrenda;
       if (idPrendaAEliminar) {
         try {
-          await dependencias.conPrismaTenant(tenantId, (prisma) =>
+          await dependencias.conPrisma((prisma) =>
             dependencias.eliminarRegistroPrenda(prisma, tenantId, idPrendaAEliminar),
           );
         } catch {

@@ -2,7 +2,7 @@
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function updateLocationConfig(
   data: {
@@ -17,15 +17,15 @@ export async function updateLocationConfig(
   }
 ) {
   try {
-    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const location = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const { pageConfig } = await requerirPageConfigAdministrador();
+    const location = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data,
       }),
     );
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
     return { ok: true, location };
   } catch {
     return { ok: false, error: "Error ubicación" };
@@ -34,8 +34,8 @@ export async function updateLocationConfig(
 
 export async function getLocationConfig() {
   try {
-    const { id: tenantId } = await requiereTenantActivo();
-    const location = await conPrismaTenant(tenantId, (prisma) =>
+    await requiereTenantActivo();
+    const location = await conPrisma((prisma) =>
       prisma.pageConfig.findFirst({
         where: {},
 

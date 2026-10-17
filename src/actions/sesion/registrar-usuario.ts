@@ -1,8 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validaciones/esquemas";
 import type { EstadoAccionSesion } from "@/types/acciones-sesion";
 
@@ -18,15 +17,9 @@ export async function registrarUsuario(
   const validacion = registerSchema.safeParse(Object.fromEntries(formulario));
   if (!validacion.success) return { error: "Datos inválidos. Revisá los campos." };
 
-  let tenant;
-  try {
-    tenant = await obtenerTenantAutenticacion();
-  } catch {
-    return { error: "La organización no está disponible" };
-  }
   const { email, password, name } = validacion.data;
   const emailNormalizado = email.trim().toLowerCase();
-  const existente = await conPrismaTenant(tenant.id, (prisma) =>
+  const existente = await conPrisma((prisma) =>
     prisma.user.findUnique({
       where: {
         email: emailNormalizado,
@@ -37,7 +30,7 @@ export async function registrarUsuario(
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
-    await conPrismaTenant(tenant.id, (prisma) =>
+    await conPrisma((prisma) =>
       prisma.user.create({
         data: {
           email: emailNormalizado,

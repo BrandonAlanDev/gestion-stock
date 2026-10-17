@@ -21,8 +21,8 @@ export async function createProvider(datos: unknown) {
         return { contacto, tipo: getContactType(contacto) };
       }),
     });
-    revalidateTag(`tenant:${contexto.tenantId}:providers`);
-    revalidateTag(`tenant:${contexto.tenantId}:products`);
+    revalidateTag(`providers`);
+    revalidateTag(`products`);
     return { success: true, provider: proveedor };
   } catch (error: unknown) {
     if (

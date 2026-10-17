@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Preference } from "mercadopago";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { construirPreferenciaPago } from "@/lib/mercadopago/construir-preferencia";
 import { obtenerCredencialesMP } from "@/lib/mercadopago/obtener-credenciales";
 import { obtenerUrlCheckout } from "@/lib/mercadopago/url-checkout";
@@ -23,7 +23,7 @@ export async function crearPreferenciaPago(
   baseUrl: string,
   reservaExpiraEn: Date,
 ): Promise<ResultadoCrearPreferencia> {
-  const pedido = await conPrismaTenant(tenantId, (prisma) =>
+  const pedido = await conPrisma((prisma) =>
     prisma.pedido.findFirst({
       where: { id: pedidoId },
       include: { items: { where: {} } },
@@ -73,7 +73,7 @@ export async function crearPreferenciaPago(
     throw new Error("Mercado Pago no devolvió un identificador de preferencia");
   }
 
-  const actualizado = await conPrismaTenant(tenantId, (prisma) =>
+  const actualizado = await conPrisma((prisma) =>
     prisma.pedido.updateMany({
       where: {
         id: pedido.id,

@@ -8,8 +8,8 @@ export async function createCategory(datosFormulario: { name: string; descriptio
   try {
     const { tenantId } = await requiereAdmin();
     const nuevaCategoria = await crearCategoria(tenantId, datosFormulario.name);
-    revalidateTag(`tenant:${tenantId}:categories`);
-    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`categories`);
+    revalidateTag(`products`);
     return { success: true, data: nuevaCategoria };
   } catch (error) {
     console.error("Error al crear categoría:", error);

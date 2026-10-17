@@ -1,15 +1,11 @@
 import type { DefaultSession } from "next-auth";
-import type { RolTenant } from "@/types/tenants";
+import type { user_role } from "@/../generated/prisma/client";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: RolTenant;
-      tenantId: string;
-      tenantNombre: string;
-      tenantSlug: string;
-      tenantHost?: string;
+      role: user_role;
       telefono?: string | null;
       image?: string | null; 
     } & DefaultSession["user"];
@@ -17,11 +13,7 @@ declare module "next-auth" {
 
   interface User {
     id: string;
-    role?: RolTenant;
-    tenantId?: string;
-    tenantNombre?: string;
-    tenantSlug?: string;
-    tenantHost?: string;
+    role?: user_role;
     telefono?: string | null;
     image?: string | null; 
   }
@@ -30,11 +22,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
-    role?: RolTenant;
-    tenantId?: string;
-    tenantNombre?: string;
-    tenantSlug?: string;
-    tenantHost?: string;
+    role?: user_role;
     telefono?: string | null;
     image?: string | null;
   }

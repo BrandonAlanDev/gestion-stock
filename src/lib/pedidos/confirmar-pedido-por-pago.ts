@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { evaluarPagoPedido } from "./evaluar-pago-pedido";
 import { descontarStockPedido } from "./descontar-stock-pedido";
 import { confirmarReservaStockPedido } from "./gestionar-reserva-stock";
@@ -31,7 +31,7 @@ export type DatosConfirmarPago = {
 export async function confirmarPedidoPorPago(
   argumentos: DatosConfirmarPago,
 ): Promise<ResultadoConfirmacionPago> {
-  return conPrismaTenant(argumentos.tenantId, async (prisma) => prisma.$transaction(async (tx) => {
+  return conPrisma(async (prisma) => prisma.$transaction(async (tx) => {
   const pedido = await tx.pedido.findFirst({
     where: { id: argumentos.pedidoId },
     select: {
@@ -74,10 +74,10 @@ export async function confirmarPedidoPorPago(
   }
 
   if (pedido.stockReservado) {
-    await confirmarReservaStockPedido(pedido.id, argumentos.tenantId, tx);
+    await confirmarReservaStockPedido(pedido.id, tx);
   } else {
     // Pedidos anteriores al despliegue todavía no tienen stock reservado.
-    await descontarStockPedido(pedido.id, argumentos.tenantId, tx);
+    await descontarStockPedido(pedido.id, tx);
   }
 
   return { ok: true, pedidoId: pedido.id };

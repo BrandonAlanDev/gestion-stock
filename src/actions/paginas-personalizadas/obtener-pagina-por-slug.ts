@@ -1,11 +1,11 @@
 "use server";
 
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerPaginaPersonalizadaPorSlug(slug: string) {
-  const { id: tenantId } = await requiereTenantActivo();
-  return conPrismaTenant(tenantId, (prisma) => prisma.customPage.findFirst({
+  await requiereTenantActivo();
+  return conPrisma((prisma) => prisma.customPage.findFirst({
     where: { slug, isActive: true },
     include: {
       sections: {

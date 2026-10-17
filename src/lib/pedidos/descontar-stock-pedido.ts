@@ -12,7 +12,6 @@ type ClienteTx = Prisma.TransactionClient;
  */
 export async function descontarStockPedido(
   pedidoId: string,
-  tenantId: string,
   cliente: ClienteTx,
 ) {
   const items = await cliente.pedidoItem.findMany({

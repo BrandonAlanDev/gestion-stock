@@ -1,12 +1,12 @@
 "use server";
 
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EntradaCrearElemento } from "@/types/paginas-personalizadas/entradas-acciones";
 
 export async function crearElementoSeccion(datos: EntradaCrearElemento) {
-  const { tenantId } = await requiereAdmin();
-  return conPrismaTenant(tenantId, async (prisma) => {
+  await requiereAdmin();
+  return conPrisma(async (prisma) => {
     const seccion = await prisma.customSection.findFirst({ where: { id: datos.sectionId }, select: { id: true } });
     if (!seccion) throw new Error("La sección no pertenece a la tienda activa");
     return prisma.customSectionItem.create({

@@ -1,11 +1,11 @@
 "use server";
 
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerPrendaParaEdicion(id: string) {
-  const { tenantId } = await requiereAdmin();
-  const producto = await conPrismaTenant(tenantId, (prisma) => prisma.garment.findFirst({
+  await requiereAdmin();
+  const producto = await conPrisma((prisma) => prisma.garment.findFirst({
     where: { id },
     include: {
       images: { where: {}, orderBy: { order: "asc" } },

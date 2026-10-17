@@ -1,7 +1,7 @@
 import "server-only";
 
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "../../../generated/prisma/client";
+import { PrismaClient } from "../../generated/prisma/client";
 
 const globalPrisma = globalThis as typeof globalThis & {
   __clientePrisma?: PrismaClient;
@@ -33,9 +33,7 @@ export function obtenerPrisma(): PrismaClient {
   return globalPrisma.__clientePrisma;
 }
 
-/** Compatibilidad temporal con los servicios que aún reciben un identificador legado. */
-export async function conPrismaTenant<T>(
-  _tenantId: string,
+export async function conPrisma<T>(
   operacion: (cliente: PrismaClient) => Promise<T>,
 ): Promise<T> {
   return operacion(obtenerPrisma());

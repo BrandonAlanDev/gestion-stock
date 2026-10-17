@@ -1,11 +1,12 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 import type { CarouselType } from "@/types/carousel";
 
 export async function contarCarruselesActivos(
   tenantId: string,
 ): Promise<Record<CarouselType, number>> {
-  const carruseles = await conPrismaTenant(tenantId, (prisma) => prisma.carousel.findMany({
+  void tenantId;
+  const carruseles = await conPrisma((prisma) => prisma.carousel.findMany({
     where: { active: true, type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
     select: { type: true },
   }));

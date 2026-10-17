@@ -1,7 +1,8 @@
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerCategoriasCompletas(tenantId: string) {
-  return conPrismaTenant(tenantId, (prisma) => prisma.category.findMany({
+  void tenantId;
+  return conPrisma((prisma) => prisma.category.findMany({
     where: {},
     include: {
       subCategories: {

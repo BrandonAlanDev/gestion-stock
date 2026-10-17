@@ -1,11 +1,11 @@
 "use server";
 
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerElementoSeccionPorId(id: string) {
-  const { tenantId } = await requiereAdmin();
-  return conPrismaTenant(tenantId, (prisma) =>
+  await requiereAdmin();
+  return conPrisma((prisma) =>
     prisma.customSectionItem.findFirst({ where: { id } }),
   );
 }

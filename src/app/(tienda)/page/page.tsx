@@ -1,5 +1,5 @@
 import PageRenderer from "@/components/custompage/PageRender";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ interface Propiedades {
 }
 
 export default async function RutaPaginaPersonalizada({ searchParams }: Propiedades) {
-  const tenant = await requiereTenantActivo();
+  await requiereTenantActivo();
   const parametros = await searchParams;
   const tituloConsulta = typeof parametros.title === "string" ? parametros.title : undefined;
 
@@ -16,7 +16,7 @@ export default async function RutaPaginaPersonalizada({ searchParams }: Propieda
     return notFound();
   }
 
-  const paginaPersonalizada = await conPrismaTenant(tenant.id, (prisma) =>
+  const paginaPersonalizada = await conPrisma((prisma) =>
     prisma.customPage.findUnique({
       where: {
         slug: tituloConsulta,

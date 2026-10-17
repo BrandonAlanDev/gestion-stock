@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { PageConfig_featuredLayout } from "@/../generated/prisma/client";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export interface DatosVisibilidadSeccion {
   featuredLayout?: string;
@@ -12,7 +12,7 @@ export interface DatosVisibilidadSeccion {
 export async function actualizarVisibilidadSeccion(datos: DatosVisibilidadSeccion) {
   try {
     const { pageConfig } = await requerirPageConfigAdministrador();
-    await conPrismaTenant("tienda", (prisma) =>
+    await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data: {

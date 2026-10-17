@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { obtenerPrendas } from "@/actions/prendas/obtener-prendas";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 export function useGarments(
   page: number,
@@ -10,12 +9,9 @@ export function useGarments(
   categoryId?: string,
   search?: string
 ) {
-  const tenantId = useTenantId();
 
   return useQuery({
     queryKey: [
-      "tenant",
-      tenantId,
       "garments",
       { page, limit, categoryId, search },
     ],

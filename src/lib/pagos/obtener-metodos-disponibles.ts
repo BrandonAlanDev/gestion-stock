@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { METODOS_PAGO_CONOCIDOS } from "@/lib/pagos/constantes";
 import { obtenerProveedor } from "@/lib/pagos/registro";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
@@ -23,7 +23,7 @@ export interface ResumenMetodoPago {
 export async function obtenerMetodosPagoDisponibles(
   tenantId: string,
 ): Promise<ResumenMetodoPago[]> {
-  const registros = await conPrismaTenant(tenantId, (prisma) =>
+  const registros = await conPrisma((prisma) =>
     prisma.metodoPago.findMany({ where: {} }),
   );
   const porMetodo = new Map<string, { activo: boolean }>();

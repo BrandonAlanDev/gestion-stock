@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Prisma, PrismaClient } from "@/../generated/prisma/client";
-import { conPrismaTenant } from "../tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EstadoPagoId, PagoWebhookNormalizado } from "./tipos";
 import { descontarStockPedido } from "../pedidos/descontar-stock-pedido";
 import {
@@ -19,13 +19,12 @@ type MapaEstado = {
 
 const ERROR_REVERTIR_PAGO_SIN_PEDIDO = "PAYMENT_ORDER_TRANSITION_FAILED";
 
-type EjecutarConPrismaTenant = <T>(
-  tenantId: string,
+type EjecutarConPrisma = <T>(
   operacion: (prisma: PrismaClient) => Promise<T>,
 ) => Promise<T>;
 
 export interface DependenciasAplicadorWebhookPago {
-  conPrismaTenant: EjecutarConPrismaTenant;
+  conPrisma: EjecutarConPrisma;
   descontarStockPedido: typeof descontarStockPedido;
   confirmarReservaStockPedido: typeof confirmarReservaStockPedido;
   liberarReservaStockPedido: typeof liberarReservaStockPedido;
@@ -52,7 +51,6 @@ function mapearEstado(estadoExterno: string): MapaEstado | null {
 async function buscarOCrearPayment(
   tx: ClienteTx,
   pedidoId: string,
-  tenantId: string,
   externalId: string,
   monto: number,
   moneda: string,
@@ -100,19 +98,16 @@ async function buscarOCrearPayment(
 /** Crea el aplicador para permitir probar las transiciones con un cliente transaccional aislado. */
 export function crearAplicadorWebhookPago(
   dependencias: DependenciasAplicadorWebhookPago,
-): (tenantIdIndicado: string | null, pago: PagoWebhookNormalizado) => Promise<void> {
-  return async function aplicarWebhookPagoTenant(
-    tenantIdIndicado: string | null,
+): (pago: PagoWebhookNormalizado) => Promise<void> {
+  return async function aplicarWebhookPago(
     pago: PagoWebhookNormalizado,
   ): Promise<void> {
-    if (!tenantIdIndicado) return;
-    const tenantId = tenantIdIndicado;
     const pedidoId = pago.pedidoId;
     const mapa = mapearEstado(pago.estadoExterno);
     if (!pedidoId || !pago.externalId || !mapa) return;
 
     try {
-      await dependencias.conPrismaTenant(tenantId, (prisma) =>
+      await dependencias.conPrisma((prisma) =>
         prisma.$transaction(async (tx) => {
           const pedido = await tx.pedido.findFirst({
             where: { id: pedidoId },
@@ -145,7 +140,6 @@ export function crearAplicadorWebhookPago(
           const payment = await buscarOCrearPayment(
             tx,
             pedidoId,
-            tenantId,
             pago.externalId,
             montoRecibido,
             pedido.moneda,
@@ -216,10 +210,10 @@ export function crearAplicadorWebhookPago(
             }
 
             if (pedido.stockReservado) {
-              await dependencias.confirmarReservaStockPedido(pedidoId, tenantId, tx);
+              await dependencias.confirmarReservaStockPedido(pedidoId, tx);
             } else {
               // Pedidos anteriores al despliegue no tienen stock reservado.
-              await dependencias.descontarStockPedido(pedidoId, tenantId, tx);
+              await dependencias.descontarStockPedido(pedidoId, tx);
             }
             return;
           }
@@ -250,7 +244,6 @@ export function crearAplicadorWebhookPago(
             if (cancelado.count === 1 && pedido.stockReservado) {
               const liberada = await dependencias.liberarReservaStockPedido(
                 pedidoId,
-                tenantId,
                 tx,
               );
               if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
@@ -270,9 +263,9 @@ export function crearAplicadorWebhookPago(
   };
 }
 
-/** Aplica una notificación verificada por la pasarela en el silo resuelto. */
+/** Aplica una notificación verificada por la pasarela. */
 export const aplicarWebhookPago = crearAplicadorWebhookPago({
-  conPrismaTenant,
+  conPrisma,
   descontarStockPedido,
   confirmarReservaStockPedido,
   liberarReservaStockPedido,

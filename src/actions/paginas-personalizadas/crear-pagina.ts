@@ -1,12 +1,12 @@
 "use server";
 
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { EntradaCrearPagina } from "@/types/paginas-personalizadas/entradas-acciones";
 
 export async function crearPaginaPersonalizada(datos: EntradaCrearPagina) {
-  const { tenantId } = await requiereAdmin();
-  return conPrismaTenant(tenantId, (prisma) =>
+  await requiereAdmin();
+  return conPrisma((prisma) =>
     prisma.customPage.create({ data: { ...datos } }),
   );
 }

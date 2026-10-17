@@ -2,7 +2,7 @@
 
 import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 
 export type DatosConfigMetodo = {
@@ -21,12 +21,12 @@ export async function guardarConfigMetodo(
   datos: DatosConfigMetodo,
 ): Promise<ResultadoConfigMetodo> {
   try {
-    const contexto = await requiereAdmin();
+    await requiereAdmin();
 
     const instrucciones =
       typeof datos.instrucciones === "string" ? datos.instrucciones.trim() : null;
 
-    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
+    await conPrisma((prisma) => prisma.metodoPago.upsert({
       where: {
         metodo: datos.metodo,
       },

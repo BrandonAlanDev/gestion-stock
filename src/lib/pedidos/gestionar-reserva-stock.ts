@@ -7,7 +7,6 @@ type ClienteTx = Prisma.TransactionClient;
 /** Reserva stock y registra el egreso dentro de la transacción que crea el pedido. */
 export async function reservarStockPedido(
   pedidoId: string,
-  tenantId: string,
   cliente: ClienteTx,
 ): Promise<void> {
   const items = await cliente.pedidoItem.findMany({
@@ -60,7 +59,6 @@ export async function reservarStockPedido(
 /** Convierte los egresos de reserva en egresos de venta tras confirmar el pago. */
 export async function confirmarReservaStockPedido(
   pedidoId: string,
-  tenantId: string,
   cliente: ClienteTx,
 ): Promise<void> {
   await cliente.pedidoItem.updateMany({
@@ -76,7 +74,6 @@ export async function confirmarReservaStockPedido(
 /** Devuelve stock solo una vez; el pedido debe estar cancelado y seguir reservado. */
 export async function liberarReservaStockPedido(
   pedidoId: string,
-  tenantId: string,
   cliente: ClienteTx,
 ): Promise<boolean> {
   const reclamada = await cliente.pedido.updateMany({

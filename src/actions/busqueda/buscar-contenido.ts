@@ -1,6 +1,6 @@
 "use server";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import type { ResultadoBusqueda } from "@/types/busqueda/resultado-busqueda";
 
@@ -12,9 +12,9 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
   const texto = typeof consulta === "string" ? consulta.trim().slice(0, LONGITUD_MAXIMA_CONSULTA) : "";
   if (texto.length < 2) return [];
 
-  const { id: tenantId } = await requiereTenantActivo();
+  await requiereTenantActivo();
   try {
-    const [prendas, categorias, subcategorias, paginas] = await conPrismaTenant(tenantId, (prisma) => Promise.all([
+    const [prendas, categorias, subcategorias, paginas] = await conPrisma((prisma) => Promise.all([
       prisma.garment.findMany({
         where: { active: true, name: { contains: texto }, category: { active: true } },
         orderBy: { name: "asc" },

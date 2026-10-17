@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { reservarStockPedido } from "./gestionar-reserva-stock";
 import { obtenerVencimientoReserva } from "./politica-reserva-stock";
@@ -39,7 +39,7 @@ export async function crearPedidoDesdeCarrito(
 ): Promise<ResultadoCrearPedido> {
   if (!items.length) throw new Error("El carrito está vacío");
 
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
   const pageConfig = await prisma.pageConfig.findFirst({
     where: {},
     select: { currency: true },
@@ -120,7 +120,7 @@ export async function crearPedidoDesdeCarrito(
         items: { create: itemsPreparados },
       },
     });
-    await reservarStockPedido(creado.id, tenantId, tx);
+    await reservarStockPedido(creado.id, tx);
     return creado;
   });
 

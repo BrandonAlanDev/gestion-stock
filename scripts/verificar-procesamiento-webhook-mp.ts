@@ -39,11 +39,11 @@ async function main(): Promise<void> {
   process.env.MP_WEBHOOK_SECRET = SECRETO;
 
   try {
-    const llamadasProveedor: Array<{ tenantId: string; externalId: string }> = [];
+    const llamadasProveedor: string[] = [];
     const procesar = crearProcesadorWebhookMP({
       validarFirma: firmaWebhookMPValida,
-      async obtenerEstadoPago(tenantId, datos) {
-        llamadasProveedor.push({ tenantId, externalId: datos.externalId });
+      async obtenerEstadoPago(datos) {
+        llamadasProveedor.push(datos.externalId);
         return {
           externalId: datos.externalId,
           referencia: "pedido-a",
@@ -60,7 +60,6 @@ async function main(): Promise<void> {
         dataId: PAYMENT_ID,
         firma: firmaValida.firma,
       }),
-      "tenant-a",
     );
     assert.deepEqual(resultado, {
       tipo: "pago",
@@ -72,7 +71,7 @@ async function main(): Promise<void> {
         monedaPago: "ARS",
       },
     });
-    assert.deepEqual(llamadasProveedor, [{ tenantId: "tenant-a", externalId: PAYMENT_ID }]);
+    assert.deepEqual(llamadasProveedor, [PAYMENT_ID]);
 
     const llamadasAntesFirmaInvalida = llamadasProveedor.length;
     const ultimoDigito = firmaValida.firma.at(-1);
@@ -83,7 +82,6 @@ async function main(): Promise<void> {
           dataId: PAYMENT_ID,
           firma: firmaAlterada,
         }),
-        "tenant-a",
       ),
       /Firma inválida/,
     );
@@ -96,17 +94,16 @@ async function main(): Promise<void> {
           dataId: "mp-otro",
           firma: firmaDeOtroPago.firma,
         }),
-        "tenant-a",
       ),
       /Firma inválida/,
     );
     assert.equal(llamadasProveedor.length, llamadasAntesFirmaInvalida);
 
-    const ignorar = await procesar(crearRequest({ type: "merchant_order", data: {} }), "tenant-a");
+    const ignorar = await procesar(crearRequest({ type: "merchant_order", data: {} }));
     assert.deepEqual(ignorar, { tipo: "ignorar" });
     assert.equal(llamadasProveedor.length, llamadasAntesFirmaInvalida);
 
-    console.log("Webhook MP real: HMAC del SDK, coherencia de data.id, tenant autorizado y consulta del pago verificados.");
+    console.log("Webhook MP: HMAC del SDK, coherencia de data.id y consulta del pago verificados.");
   } finally {
     if (secretoAnterior === undefined) delete process.env.MP_WEBHOOK_SECRET;
     else process.env.MP_WEBHOOK_SECRET = secretoAnterior;

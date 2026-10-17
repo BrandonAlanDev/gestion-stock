@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowJs": false,
+    "baseUrl": ".",
     "module": "CommonJS",
     "moduleResolution": "Node"
   },

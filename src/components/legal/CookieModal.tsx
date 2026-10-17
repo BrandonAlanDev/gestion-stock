@@ -2,7 +2,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 interface CookieModalProps {
   onAccept?: () => void;
@@ -12,23 +11,22 @@ interface CookieModalProps {
 
 export default function CookieModal({ onAccept, onOpenPrivacy, onOpenTerms }: CookieModalProps) {
   const [visible, setVisible] = useState(false);
-  const tenantId = useTenantId();
 
   useBloqueoScroll(visible);
 
   useEffect(() => {
     const acknowledged = localStorage.getItem(
-      `${tenantId ?? "sin-tenant"}:allConsentsAcknowledged`
+      `gestion-stock:allConsentsAcknowledged`
     );
     setVisible(!acknowledged);
-  }, [tenantId]);
+  }, []);
 
   const handleAccept = () => {
-    const prefijoTenant = tenantId ?? "sin-tenant";
-    localStorage.setItem(`${prefijoTenant}:allConsentsAcknowledged`, "true");
-    localStorage.setItem(`${prefijoTenant}:cookiesAcknowledged`, "true");
-    localStorage.setItem(`${prefijoTenant}:privacySeen`, "true");
-    localStorage.setItem(`${prefijoTenant}:termsAccepted`, "true");
+    const prefijoTienda = "gestion-stock";
+    localStorage.setItem(`${prefijoTienda}:allConsentsAcknowledged`, "true");
+    localStorage.setItem(`${prefijoTienda}:cookiesAcknowledged`, "true");
+    localStorage.setItem(`${prefijoTienda}:privacySeen`, "true");
+    localStorage.setItem(`${prefijoTienda}:termsAccepted`, "true");
 
     setVisible(false);
     onAccept?.();

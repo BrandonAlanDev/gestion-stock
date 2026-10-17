@@ -2,7 +2,7 @@
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function updateContactConfig(
   data: {
@@ -12,15 +12,15 @@ export async function updateContactConfig(
   }
 ) {
   try {
-    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const contact = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const { pageConfig } = await requerirPageConfigAdministrador();
+    const contact = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data: { phone: data.phone, whatsapp: data.whatsapp, email: data.email },
       }),
     );
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
     return { ok: true, contact };
   } catch {
     return { ok: false, error: "Error contacto" };
@@ -29,8 +29,8 @@ export async function updateContactConfig(
 
 export async function getContactConfig() {
   try {
-    const { id: tenantId } = await requiereTenantActivo();
-    const contact = await conPrismaTenant(tenantId, (prisma) =>
+    await requiereTenantActivo();
+    const contact = await conPrisma((prisma) =>
       prisma.pageConfig.findFirst({
         where: {},
 

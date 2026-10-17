@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 interface TermsModalProps {
   isOpen?: boolean;
@@ -29,7 +28,6 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
   const [visible, setVisible] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const { pageConfig } = usePageConfig();
-  const tenantId = useTenantId();
 
   useBloqueoScroll(visible);
 
@@ -43,7 +41,7 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
   const handleAccept = () => {
     if (!accepted) return;
 
-    localStorage.setItem(`${tenantId ?? "sin-tenant"}:termsAccepted`, "true");
+    localStorage.setItem(`gestion-stock:termsAccepted`, "true");
     setVisible(false);
     onClose?.();
   };

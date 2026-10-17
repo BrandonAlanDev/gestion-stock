@@ -1,6 +1,6 @@
 import { Prisma } from "@/../generated/prisma/client";
 import { INCLUDE_VARIANTE } from "@/lib/services/prendas/incluir-variante";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function obtenerPrendasPaginadas(
   tenantId: string,
@@ -21,7 +21,7 @@ export async function obtenerPrendasPaginadas(
     ...(busqueda && { name: { contains: busqueda } }),
   };
 
-  return conPrismaTenant(tenantId, async (prisma) => {
+  return conPrisma(async (prisma) => {
     const [garments, total] = await Promise.all([
       prisma.garment.findMany({
         where,

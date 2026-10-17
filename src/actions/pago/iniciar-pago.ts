@@ -2,7 +2,7 @@
 
 import "server-only";
 import { headers } from "next/headers";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { obtenerContextoTenant } from "@/lib/tenants/obtener-contexto-tenant";
 import { obtenerHostnameSolicitud } from "@/lib/tenants/obtener-hostname-solicitud";
 import { construirOrigenSolicitud } from "@/lib/tenants/construir-origen-solicitud";
@@ -37,7 +37,7 @@ const ejecutarIniciarPago = crearAccionIniciarPago({
   filtrarMetodosDisponibles,
   obtenerBaseUrl,
   crearPedidoDesdeCarrito,
-  conPrismaTenant,
+  conPrisma,
   liberarReservaStockPedido,
   obtenerProveedor,
   registrarError: (mensaje, detalle) => console.error(mensaje, detalle),

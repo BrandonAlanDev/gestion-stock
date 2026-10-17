@@ -1,7 +1,7 @@
 "use server";
 
 import "server-only";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { obtenerContextoTenant } from "@/lib/tenants/obtener-contexto-tenant";
 import { obtenerProveedor } from "@/lib/pagos/registro";
 import { aplicarWebhookPago } from "@/lib/pagos/aplicar-webhook-pago";
@@ -14,7 +14,7 @@ export type {
 
 const ejecutarConfirmarPago = crearAccionConfirmarPago({
   obtenerContextoTenant,
-  conPrismaTenant,
+  conPrisma,
   obtenerProveedor,
   aplicarWebhookPago,
   registrarError: (mensaje, detalle) => console.error(mensaje, detalle),

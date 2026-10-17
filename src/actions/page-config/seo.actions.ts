@@ -2,7 +2,7 @@
 import { revalidateTag } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 export async function updateSeoConfig(
   data: {
@@ -11,15 +11,15 @@ export async function updateSeoConfig(
   }
 ) {
   try {
-    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
-    const seo = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const { pageConfig } = await requerirPageConfigAdministrador();
+    const seo = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data,
       }),
     );
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
 
     return { ok: true, seo };
   } catch {
@@ -29,8 +29,8 @@ export async function updateSeoConfig(
 
 export async function getSeoConfig() {
   try {
-    const { id: tenantId } = await requiereTenantActivo();
-    const seo = await conPrismaTenant(tenantId, (prisma) =>
+    await requiereTenantActivo();
+    const seo = await conPrisma((prisma) =>
       prisma.pageConfig.findFirst({
         where: {},
 

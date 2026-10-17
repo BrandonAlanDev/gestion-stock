@@ -12,7 +12,7 @@ import { obtenerCarpetaGrids } from "@/lib/services/imagenes-cloudinary/obtener-
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 
 interface SeccionDestacadaGrid {
   title: string;
@@ -49,9 +49,9 @@ function insertarAntesDeUbicacion(secciones: string[], id: string): string[] {
 }
 
 export async function crearSeccionDestacada() {
-  const { contexto, pageConfig } = await requerirPageConfigAdministrador();
+  const { pageConfig } = await requerirPageConfigAdministrador();
 
-  const nuevo = await conPrismaTenant(contexto.tenantId, (prisma) =>
+  const nuevo = await conPrisma((prisma) =>
     prisma.$transaction(async (tx) => {
       const homegrid = await tx.homegrid.create({
         data: {
@@ -75,7 +75,7 @@ export async function crearSeccionDestacada() {
     }),
   );
 
-  revalidateTag(`page-config:${contexto.tenantId}`);
+  revalidateTag(`page-config`);
   revalidatePath("/");
 
   return { ok: true, homegridId: nuevo.id };
@@ -100,7 +100,7 @@ export async function actualizarSeccionDestacada(
       return { ok: false, error: "Las páginas de destino deben comenzar con una sola barra (/)" };
     }
 
-    const homegrid = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const homegrid = await conPrisma((prisma) =>
       prisma.homegrid.findFirst({
         where: { id: homegridId },
         select: { id: true },
@@ -131,13 +131,13 @@ export async function actualizarSeccionDestacada(
       return { ok: false, error: "No se pudieron actualizar las secciones" };
     }
 
-    const gridsExistentes = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const gridsExistentes = await conPrisma((prisma) =>
       prisma.grid.findMany({
         where: { homegridId: homegrid.id },
       }),
     );
 
-    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
+    await conPrisma((prisma) => prisma.$transaction(async (tx) => {
       await tx.homegrid.update({
         where: { id: homegrid.id },
         data: {
@@ -179,7 +179,7 @@ export async function actualizarSeccionDestacada(
       await eliminarImagenes(publicIdsARemover, contexto.tenantId);
     }
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
     revalidatePath("/");
 
     return { ok: true, homegridId: homegrid.id };
@@ -193,9 +193,9 @@ export async function actualizarSeccionDestacada(
 }
 
 export async function alternarVisibilidadSeccionDestacada(homegridId: string) {
-  const { contexto } = await requerirPageConfigAdministrador();
+  await requerirPageConfigAdministrador();
 
-  const actualizado = await conPrismaTenant(contexto.tenantId, async (prisma) => {
+  const actualizado = await conPrisma(async (prisma) => {
     const hg = await prisma.homegrid.findFirst({
       where: { id: homegridId },
       select: { id: true, active: true },
@@ -209,16 +209,16 @@ export async function alternarVisibilidadSeccionDestacada(homegridId: string) {
   });
   if (actualizado === null) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
-  revalidateTag(`page-config:${contexto.tenantId}`);
+  revalidateTag(`page-config`);
   revalidatePath("/");
 
   return { ok: true, activo: actualizado };
 }
 
 export async function duplicarSeccionDestacada(homegridId: string) {
-  const { contexto, pageConfig } = await requerirPageConfigAdministrador();
+  const { pageConfig } = await requerirPageConfigAdministrador();
 
-  const copia = await conPrismaTenant(contexto.tenantId, (prisma) =>
+  const copia = await conPrisma((prisma) =>
     prisma.$transaction(async (tx) => {
       const fuente = await tx.homegrid.findFirst({
         where: { id: homegridId },
@@ -271,7 +271,7 @@ export async function duplicarSeccionDestacada(homegridId: string) {
   );
   if (!copia) return { ok: false, error: "La sección no pertenece a la tienda activa" };
 
-  revalidateTag(`page-config:${contexto.tenantId}`);
+  revalidateTag(`page-config`);
   revalidatePath("/");
 
   return { ok: true, homegridId: copia.id };
@@ -280,7 +280,7 @@ export async function duplicarSeccionDestacada(homegridId: string) {
 export async function eliminarSeccionDestacada(homegridId: string) {
   const { contexto, pageConfig } = await requerirPageConfigAdministrador();
 
-  const eliminado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+  const eliminado = await conPrisma((prisma) =>
     prisma.$transaction(async (tx) => {
       const homegrid = await tx.homegrid.findFirst({
         where: { id: homegridId },
@@ -311,7 +311,7 @@ export async function eliminarSeccionDestacada(homegridId: string) {
     await eliminarImagenes(publicIds, contexto.tenantId);
   }
 
-  revalidateTag(`page-config:${contexto.tenantId}`);
+  revalidateTag(`page-config`);
   revalidatePath("/");
 
   return { ok: true };

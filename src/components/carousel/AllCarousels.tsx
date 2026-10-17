@@ -6,7 +6,6 @@ import HeroLayout from "./layouts/hero/HeroLayout";
 import BannerLayout from "./layouts/banner/BannerLayout";
 import CardsLayout from "./layouts/cards/CardsLayout";
 import ShowcaseLayout from "./layouts/hero/ShowcaseLayout";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 import type { CarouselSettings } from "@/types/carousel";
 
 interface CarouselSlide {
@@ -31,7 +30,6 @@ interface Carousel {
 }
 
 export default function AllCarousels({ storeName }: { storeName?: string }) {
-  const tenantId = useTenantId();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -39,7 +37,7 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
   }, []);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["tenant", tenantId, "carousels", "all"],
+    queryKey: ["carousels", "all"],
     queryFn: async () => {
       const res = await fetch("/api/carousels");
       if (!res.ok) throw new Error("Error al cargar carruseles");

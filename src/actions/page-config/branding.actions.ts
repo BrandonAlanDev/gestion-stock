@@ -4,7 +4,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 
@@ -63,7 +63,7 @@ export async function updateBrandingConfig(data: BrandingInput) {
       density: data.density ?? pageConfig?.density ?? "comoda",
     };
 
-    const pageConfigActualizado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+    const pageConfigActualizado = await conPrisma((prisma) =>
       pageConfig
         ? prisma.pageConfig.update({
             where: { id: pageConfig.id },
@@ -88,8 +88,8 @@ export async function updateBrandingConfig(data: BrandingInput) {
 
     await eliminarImagenes(publicIdsAEliminar, contexto.tenantId);
 
-    revalidateTag(`page-config:${contexto.tenantId}`);
-    revalidateTag(`branding-config:${contexto.tenantId}`);
+    revalidateTag(`page-config`);
+    revalidateTag(`branding-config`);
 
     return {
       ok: true,
@@ -105,11 +105,11 @@ export async function updateBrandingConfig(data: BrandingInput) {
   }
 }
 
-async function obtenerBrandingCacheado(tenantId: string) {
+async function obtenerBrandingCacheado() {
  return unstable_cache(
   async () => {
     try {
-      const branding = await conPrismaTenant(tenantId, (prisma) =>
+      const branding = await conPrisma((prisma) =>
         prisma.pageConfig.findFirst({
           where: {},
           select: {
@@ -154,10 +154,10 @@ async function obtenerBrandingCacheado(tenantId: string) {
       };
     }
   },
-  [`branding-config:${tenantId}`],
+  [`branding-config`],
   {
     revalidate: 3600,
-    tags: [`branding-config:${tenantId}`],
+    tags: [`branding-config`],
   },
   )();
 }
@@ -165,5 +165,5 @@ async function obtenerBrandingCacheado(tenantId: string) {
 export async function getBrandingConfig() {
   const { id: tenantId } = await requiereTenantActivo();
   await getOrCreatePageConfig(tenantId);
-  return obtenerBrandingCacheado(tenantId);
+  return obtenerBrandingCacheado();
 }

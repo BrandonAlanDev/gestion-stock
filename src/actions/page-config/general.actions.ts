@@ -2,15 +2,15 @@
 
 import { unstable_cache } from "next/cache";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import { conPrismaTenant } from "@/lib/tenants/prisma-factory";
+import { conPrisma } from "@/lib/prisma";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 
-async function obtenerPageConfigCacheada(tenantId: string) {
+async function obtenerPageConfigCacheada() {
   return unstable_cache(
     async () => {
   try {
-    const pageConfig = await conPrismaTenant(tenantId, (prisma) => prisma.pageConfig.findFirst({
+    const pageConfig = await conPrisma((prisma) => prisma.pageConfig.findFirst({
       where: {},
       select: {
         storeName: true,
@@ -106,7 +106,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
       throw new Error("Configuración de página no encontrada");
     }
 
-    const homegrids = await conPrismaTenant(tenantId, (prisma) => prisma.homegrid.findMany({
+    const homegrids = await conPrisma((prisma) => prisma.homegrid.findMany({
       where: {},
       orderBy: { createdAt: "asc" },
       select: {
@@ -136,13 +136,13 @@ async function obtenerPageConfigCacheada(tenantId: string) {
     };
   }
     },
-    [`page-config-completa:${tenantId}`],
-    { revalidate: 3600, tags: [`page-config:${tenantId}`] }
+    [`page-config-completa`],
+    { revalidate: 3600, tags: [`page-config`] }
   )();
 }
 
 export async function getPageConfig() {
   const { id: tenantId } = await requiereTenantActivo();
   await getOrCreatePageConfig(tenantId);
-  return obtenerPageConfigCacheada(tenantId);
+  return obtenerPageConfigCacheada();
 }

@@ -10,7 +10,6 @@ import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
 import FormularioProducto from "@/components/admin/productos/formulario/FormularioProducto";
 import QuickViewTable from "@/components/providers/products/modals/QuickViewTable";
-import { useTenantId } from "@/hooks/tenants/use-tenant-id";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -25,7 +24,6 @@ function getContrastColor(hexColor: string) {
 
 export default function DashboardClient() {
   const queryClient = useQueryClient();
-  const tenantId = useTenantId();
   const pageConfig = usePageConfig();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -64,7 +62,7 @@ export default function DashboardClient() {
 
   const invalidateProducts = () => {
     queryClient.invalidateQueries({
-      queryKey: ["tenant", tenantId, "garments"],
+      queryKey: ["garments"],
     });
   };
 

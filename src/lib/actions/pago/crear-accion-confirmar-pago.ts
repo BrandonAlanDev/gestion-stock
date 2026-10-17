@@ -19,13 +19,11 @@ export interface DependenciasConfirmarPago {
     tenantId: string;
     usuarioId?: string | null;
   } | null>;
-  conPrismaTenant: <T>(
-    tenantId: string,
+  conPrisma: <T>(
     operacion: (prisma: PrismaClient) => Promise<T>,
   ) => Promise<T>;
   obtenerProveedor: (metodo: MetodoPagoId) => PaymentProvider;
   aplicarWebhookPago: (
-    tenantId: string,
     pago: {
       externalId: string;
       pedidoId: string | null;
@@ -38,8 +36,8 @@ export interface DependenciasConfirmarPago {
 }
 
 export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago) {
-  async function mapaPedido(pedidoId: string, tenantId: string): Promise<PedidoConfirmado | null> {
-    const pedido = await dependencias.conPrismaTenant(tenantId, (prisma) =>
+  async function mapaPedido(pedidoId: string): Promise<PedidoConfirmado | null> {
+    const pedido = await dependencias.conPrisma((prisma) =>
       prisma.pedido.findFirst({
         where: { id: pedidoId },
         include: { items: { where: {} } },
@@ -72,7 +70,7 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
         return { ok: false, error: "Iniciá sesión para confirmar tu pago" };
       }
 
-      const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
+      const pedido = await dependencias.conPrisma((prisma) =>
         prisma.pedido.findFirst({
           where: { id: pedidoId },
           select: { id: true, userId: true, estado: true, metodoPago: true },
@@ -89,7 +87,7 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
           externalId: paymentId,
         });
 
-        await dependencias.aplicarWebhookPago(contexto.tenantId, {
+        await dependencias.aplicarWebhookPago({
           externalId: estado.externalId,
           pedidoId: estado.referencia,
           estadoExterno: estado.estadoExterno,
@@ -98,7 +96,7 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
         });
       }
 
-      const confirmado = await mapaPedido(pedidoId, contexto.tenantId);
+      const confirmado = await mapaPedido(pedidoId);
       if (!confirmado) return { ok: false, error: "Pedido no encontrado" };
       return { ok: true, pedido: confirmado };
     } catch (error) {

@@ -8,7 +8,6 @@ import type { PagoWebhookNormalizado } from "../src/lib/pagos/tipos";
 
 interface PedidoFalso {
   id: string;
-  tenantId: string;
   total: number;
   moneda: string;
   metodoPago: string;
@@ -22,7 +21,6 @@ interface PedidoFalso {
 interface PagoFalso {
   id: string;
   pedidoId: string;
-  tenantId: string;
   proveedor: string;
   externalId: string | null;
   estado: string;
@@ -61,7 +59,6 @@ function coincideEstado(actual: string, filtro: unknown): boolean {
 function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
   let pedido: PedidoFalso | null = {
     id: "pedido-a",
-    tenantId: "tenant-a",
     total: 2500,
     moneda: "ARS",
     metodoPago: "mercadopago",
@@ -86,7 +83,7 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
         if (!pedido) return { count: 0 };
         const raiz = comoRegistro(argumentos);
         const where = comoRegistro(raiz.where);
-        if (where.id !== pedido.id || where.tenantId !== pedido.tenantId) return { count: 0 };
+        if (where.id !== pedido.id) return { count: 0 };
         if (where.estado && !coincideEstado(pedido.estado, where.estado)) return { count: 0 };
         if (opciones.actualizarPedido === false) return { count: 0 };
         Object.assign(pedido, comoRegistro(raiz.data));
@@ -97,7 +94,6 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
       async findFirst(argumentos: unknown) {
         const where = comoRegistro(comoRegistro(argumentos).where);
         return pagos.find((pago) =>
-          pago.tenantId === where.tenantId &&
           pago.proveedor === where.proveedor &&
           (where.pedidoId === undefined || pago.pedidoId === where.pedidoId) &&
           pago.externalId === where.externalId &&
@@ -110,7 +106,6 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
         const pago: PagoFalso = {
           id: `payment-${secuenciaPago}`,
           pedidoId: String(data.pedidoId),
-          tenantId: String(data.tenantId),
           proveedor: String(data.proveedor),
           externalId: typeof data.externalId === "string" ? data.externalId : null,
           estado: String(data.estado),
@@ -125,7 +120,6 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
         const where = comoRegistro(raiz.where);
         const pago = pagos.find((candidato) =>
           (where.id === undefined || candidato.id === where.id) &&
-          candidato.tenantId === where.tenantId &&
           candidato.pedidoId === where.pedidoId &&
           candidato.proveedor === where.proveedor &&
           candidato.externalId === where.externalId &&
@@ -180,33 +174,30 @@ function crearAplicador(
   prismaFalso: PrismaFalso,
   opciones: { fallarAlDescontarStock?: boolean } = {},
 ) {
-  const tenantsUsados: string[] = [];
   const pedidosConDescuento: string[] = [];
   const pedidosConReservaConfirmada: string[] = [];
   const reservasLiberadas: string[] = [];
   const dependencias: DependenciasAplicadorWebhookPago = {
-    async conPrismaTenant(tenantId, operacion) {
-      tenantsUsados.push(tenantId);
+    async conPrisma(operacion) {
       return operacion(prismaFalso.cliente);
     },
-    async descontarStockPedido(pedidoId, tenantId, tx) {
+    async descontarStockPedido(pedidoId, tx) {
       assert.ok(tx);
-      pedidosConDescuento.push(`${tenantId}:${pedidoId}`);
+      pedidosConDescuento.push(pedidoId);
       if (opciones.fallarAlDescontarStock) throw new Error("Stock insuficiente");
     },
-    async confirmarReservaStockPedido(pedidoId, tenantId, tx) {
+    async confirmarReservaStockPedido(pedidoId, tx) {
       assert.ok(tx);
-      pedidosConReservaConfirmada.push(`${tenantId}:${pedidoId}`);
+      pedidosConReservaConfirmada.push(pedidoId);
     },
-    async liberarReservaStockPedido(pedidoId, tenantId, tx) {
+    async liberarReservaStockPedido(pedidoId, tx) {
       assert.ok(tx);
-      reservasLiberadas.push(`${tenantId}:${pedidoId}`);
+      reservasLiberadas.push(pedidoId);
       return true;
     },
   };
   return {
     aplicar: crearAplicadorWebhookPago(dependencias),
-    tenantsUsados,
     pedidosConDescuento,
     pedidosConReservaConfirmada,
     reservasLiberadas,
@@ -217,19 +208,18 @@ async function verificarAprobacionIdempotenteYEventosFueraDeOrden(): Promise<voi
   const prisma = crearPrismaFalso();
   const aplicador = crearAplicador(prisma);
 
-  await aplicador.aplicar("tenant-a", crearPago());
-  assert.deepEqual(aplicador.tenantsUsados, ["tenant-a"]);
-  assert.deepEqual(aplicador.pedidosConDescuento, ["tenant-a:pedido-a"]);
+  await aplicador.aplicar(crearPago());
+  assert.deepEqual(aplicador.pedidosConDescuento, ["pedido-a"]);
   assert.equal(prisma.obtenerTransacciones(), 1);
   assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
   assert.equal(prisma.obtenerPagos()[0]?.estado, "APROBADO");
 
-  await aplicador.aplicar("tenant-a", crearPago());
+  await aplicador.aplicar(crearPago());
   assert.equal(prisma.obtenerTransacciones(), 2);
   assert.equal(prisma.obtenerPagos().length, 1, "El reintento no debe crear un segundo pago");
   assert.equal(aplicador.pedidosConDescuento.length, 1, "El reintento no debe descontar stock dos veces");
 
-  await aplicador.aplicar("tenant-a", crearPago("pending"));
+  await aplicador.aplicar(crearPago("pending"));
   assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
   assert.equal(prisma.obtenerPedido()?.estadoPago, "APROBADO");
   assert.equal(prisma.obtenerPagos()[0]?.estado, "APROBADO", "Un aviso viejo no debe degradar el pago");
@@ -240,8 +230,8 @@ async function verificarMontoMonedaYAsociacion(): Promise<void> {
   const prisma = crearPrismaFalso();
   const aplicador = crearAplicador(prisma);
   const montoIncorrecto = { ...crearPago(), montoPago: 2499 };
-  await aplicador.aplicar("tenant-a", montoIncorrecto);
-  await aplicador.aplicar("tenant-a", { ...crearPago(), monedaPago: "USD" });
+  await aplicador.aplicar(montoIncorrecto);
+  await aplicador.aplicar({ ...crearPago(), monedaPago: "USD" });
   assert.equal(prisma.obtenerPagos().length, 0);
   assert.equal(aplicador.pedidosConDescuento.length, 0);
 
@@ -249,8 +239,7 @@ async function verificarMontoMonedaYAsociacion(): Promise<void> {
     pagos: [{
       id: "payment-otro",
       pedidoId: "pedido-b",
-      tenantId: "tenant-a",
-      proveedor: "mercadopago",
+        proveedor: "mercadopago",
       externalId: "mp-123",
       estado: "PENDIENTE",
       monto: 2500,
@@ -258,7 +247,7 @@ async function verificarMontoMonedaYAsociacion(): Promise<void> {
     }],
   });
   const aplicadorVinculado = crearAplicador(vinculadoAOtroPedido);
-  await aplicadorVinculado.aplicar("tenant-a", crearPago());
+  await aplicadorVinculado.aplicar(crearPago());
   assert.equal(vinculadoAOtroPedido.obtenerPedido()?.estado, "PENDIENTE");
   assert.equal(vinculadoAOtroPedido.obtenerPagos()[0]?.pedidoId, "pedido-b");
   assert.equal(aplicadorVinculado.pedidosConDescuento.length, 0);
@@ -268,11 +257,11 @@ async function verificarPedidoReservadoNoDescuentaDosVeces(): Promise<void> {
   const prisma = crearPrismaFalso({ pedido: { stockReservado: true } });
   const aplicador = crearAplicador(prisma);
 
-  await aplicador.aplicar("tenant-a", crearPago());
+  await aplicador.aplicar(crearPago());
 
   assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
   assert.equal(prisma.obtenerPedido()?.stockReservado, false);
-  assert.deepEqual(aplicador.pedidosConReservaConfirmada, ["tenant-a:pedido-a"]);
+  assert.deepEqual(aplicador.pedidosConReservaConfirmada, ["pedido-a"]);
   assert.deepEqual(aplicador.pedidosConDescuento, []);
 }
 
@@ -280,10 +269,10 @@ async function verificarCancelacionLiberaReservaUnaVez(): Promise<void> {
   const prisma = crearPrismaFalso({ pedido: { stockReservado: true } });
   const aplicador = crearAplicador(prisma);
 
-  await aplicador.aplicar("tenant-a", crearPago("cancelled"));
+  await aplicador.aplicar(crearPago("cancelled"));
 
   assert.equal(prisma.obtenerPedido()?.estado, "CANCELADO");
-  assert.deepEqual(aplicador.reservasLiberadas, ["tenant-a:pedido-a"]);
+  assert.deepEqual(aplicador.reservasLiberadas, ["pedido-a"]);
 }
 
 async function verificarPagoAprobadoTrasVencimientoQuedaVisible(): Promise<void> {
@@ -292,7 +281,7 @@ async function verificarPagoAprobadoTrasVencimientoQuedaVisible(): Promise<void>
   });
   const aplicador = crearAplicador(prisma);
 
-  await aplicador.aplicar("tenant-a", crearPago("approved"));
+  await aplicador.aplicar(crearPago("approved"));
 
   assert.equal(prisma.obtenerPedido()?.estado, "CANCELADO");
   assert.equal(prisma.obtenerPagos()[0]?.estado, "APROBADO");
@@ -303,7 +292,7 @@ async function verificarPagoAprobadoTrasVencimientoQuedaVisible(): Promise<void>
 async function verificarReversionesTransaccionales(): Promise<void> {
   const conflicto = crearPrismaFalso({ actualizarPedido: false });
   const aplicadorConflicto = crearAplicador(conflicto);
-  await aplicadorConflicto.aplicar("tenant-a", crearPago());
+  await aplicadorConflicto.aplicar(crearPago());
   assert.equal(conflicto.obtenerReversiones(), 1);
   assert.equal(conflicto.obtenerPedido()?.estado, "PENDIENTE");
   assert.equal(conflicto.obtenerPagos().length, 0);
@@ -312,7 +301,7 @@ async function verificarReversionesTransaccionales(): Promise<void> {
   const faltaStock = crearPrismaFalso();
   const aplicadorSinStock = crearAplicador(faltaStock, { fallarAlDescontarStock: true });
   await assert.rejects(
-    aplicadorSinStock.aplicar("tenant-a", crearPago()),
+    aplicadorSinStock.aplicar(crearPago()),
     /Stock insuficiente/,
   );
   assert.equal(faltaStock.obtenerReversiones(), 1);
@@ -327,7 +316,7 @@ async function main(): Promise<void> {
   await verificarCancelacionLiberaReservaUnaVez();
   await verificarPagoAprobadoTrasVencimientoQuedaVisible();
   await verificarReversionesTransaccionales();
-  console.log("Aplicación de pagos: tenant, monto, moneda, idempotencia y fallos transaccionales verificados con doble en memoria.");
+  console.log("Aplicación de pagos: monto, moneda, idempotencia y fallos transaccionales verificados con doble en memoria.");
 }
 
 void main().catch((error: unknown) => {

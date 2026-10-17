@@ -6,10 +6,8 @@ import QueryProvider from "@/providers/QueryProvider";
 import { ProveedorConfiguracionPagina } from "@/components/providers/ProveedorConfiguracionPagina";
 import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
 import FuentesGoogle from "@/components/apariencia/FuentesGoogle";
-import { TenantProvider } from "@/contextos/tenants/proveedor-tenant";
 import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
-import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,10 +82,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   await auth();
-  const [tenant, configuracion] = await Promise.all([
-    obtenerTenantPublico(),
-    obtenerConfiguracionPaginaSolicitud(),
-  ]);
+  const configuracion = await obtenerConfiguracionPaginaSolicitud();
   const pageConfig = configuracion.pageConfig;
 
   return (
@@ -102,7 +97,6 @@ export default async function RootLayout({
         style={{ backgroundColor: "var(--color-fondo-sitio)" }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden text-[var(--texto-sobre-fondo)]`}
       >
-        <TenantProvider tenantId={tenant?.id ?? null}>
           <QueryProvider>
             <ProveedorConfiguracionPagina
               pageConfig={{
@@ -117,7 +111,6 @@ export default async function RootLayout({
               {children}
             </ProveedorConfiguracionPagina>
           </QueryProvider>
-        </TenantProvider>
       </body>
     </html>
   );
