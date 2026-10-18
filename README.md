@@ -21,11 +21,11 @@ npx prisma generate
 npm run dev
 ```
 
-El servidor usa el encabezado `Host` para buscar el cliente en Core. Un dominio desconocido, una organización suspendida o un Core no disponible impiden el acceso a los datos. Las credenciales no se toman del navegador ni de `DATABASE_URL`. Los clientes Prisma se reutilizan por proceso y por versión de credenciales. Las sesiones y los resultados cacheados se vinculan al cliente.
+El servidor usa el encabezado `Host` para buscar el cliente en Core. La primera resolución válida de dominio, ID, estado y credenciales se conserva en memoria del proceso sin vencimiento, por lo que la navegación posterior no consulta Core. Una invalidación explícita o un fallo de conexión al abrir o usar la base obliga a consultar Core nuevamente en el próximo intento. Los dominios desconocidos se reconsultan después de 30 segundos. Si se suspende un cliente, cambia su dominio o se rotan sus credenciales en Core, reiniciá todos los procesos de la aplicación para aplicar el cambio. Las credenciales no se toman del navegador ni de `DATABASE_URL`. Los clientes Prisma se reutilizan por proceso y por versión de credenciales. Las sesiones y los resultados cacheados se vinculan al cliente.
 
 Para probar un dominio registrado en Core mientras abrís la aplicación por `localhost`, configurá `TENANT_TEST_HOSTNAME="dominio.del.cliente"` en `.env` y reiniciá `npm run dev`. Core y esta aplicación deben escuchar en puertos distintos. La sustitución solo se aplica en desarrollo cuando la petición llega por `localhost`, `127.0.0.1`, `::1` o un subdominio `.localhost`. No cambia el origen real del navegador y queda deshabilitada en producción. Dejala vacía para resolver el `Host` recibido normalmente.
 
-Si la instancia local de Core tarda más de 3 segundos por usar una base remota, configurá `LOGABYTE_CORE_TIMEOUT_MS="10000"` en `.env` y reiniciá la aplicación. Este margen solo se aplica en desarrollo (entre 3000 y 30000 ms); producción conserva los límites de 3 segundos para consultas normales y 5 segundos para credenciales. Core debe seguir disponible: al agotarse el tiempo, la aplicación deniega el acceso.
+Si la instancia local de Core tarda más de 3 segundos por usar una base remota, configurá `LOGABYTE_CORE_TIMEOUT_MS="10000"` en `.env` y reiniciá la aplicación. Este margen solo se aplica en desarrollo (entre 3000 y 30000 ms); producción conserva los límites de 3 segundos para consultas normales y 5 segundos para credenciales. Core debe estar disponible para la primera carga o tras una invalidación; al agotarse el tiempo, la aplicación deniega ese acceso.
 
 ## Esquema y migraciones
 

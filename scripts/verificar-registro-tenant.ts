@@ -95,29 +95,58 @@ async function verificarNormalizacionYResolucion(): Promise<void> {
   );
 }
 
-async function verificarCacheTtlEInvalidacion(): Promise<void> {
+async function verificarCachePersistenteEInvalidacion(): Promise<void> {
   const demo = crearEntrada("tenant-cache", "cache.example.com");
+  const directo = crearEntrada("tenant-directo", "directo.example.com");
   let ahora = 100;
-  let consultas = 0;
+  let consultasHost = 0;
+  let consultasId = 0;
   const origen = crearProveedor({
     async resolverPorHostname() {
-      consultas += 1;
+      consultasHost += 1;
       return demo;
+    },
+    async resolverPorId(tenantId) {
+      consultasId += 1;
+      return tenantId === directo.tenant.id ? directo : demo;
     },
   });
   const cache = new ProveedorRegistroCacheado(origen, 30, () => ahora);
 
   await cache.resolverPorHostname("cache.example.com");
   await cache.resolverPorHostname("CACHE.EXAMPLE.COM:443");
-  assert.equal(consultas, 1, "La caché debe normalizar claves y reutilizar metadata");
+  await cache.resolverPorId(demo.tenant.id);
+  await cache.resolverPorId(directo.tenant.id);
+  assert.equal(consultasHost, 1, "La caché debe normalizar claves y reutilizar metadata");
+  assert.equal(consultasId, 1, "Resolver el dominio debe servir también para buscar el mismo ID");
 
   ahora += 31;
   await cache.resolverPorHostname("cache.example.com");
-  assert.equal(consultas, 2, "La entrada debe recargarse al vencer el TTL");
+  await cache.resolverPorId(demo.tenant.id);
+  await cache.resolverPorId(directo.tenant.id);
+  assert.equal(consultasHost, 1, "Un dominio válido no debe vencer por tiempo");
+  assert.equal(consultasId, 1, "Una referencia válida no debe vencer por tiempo");
 
   cache.invalidar();
   await cache.resolverPorHostname("cache.example.com");
-  assert.equal(consultas, 3, "La invalidación debe forzar una consulta nueva");
+  await cache.resolverPorId(demo.tenant.id);
+  await cache.resolverPorId(directo.tenant.id);
+  assert.equal(consultasHost, 2, "La invalidación debe forzar una consulta nueva");
+  assert.equal(consultasId, 2);
+
+  let consultasDesconocido = 0;
+  const desconocido = new ProveedorRegistroCacheado(crearProveedor({
+    async resolverPorHostname() {
+      consultasDesconocido += 1;
+      return null;
+    },
+  }), 30, () => ahora);
+  await desconocido.resolverPorHostname("nuevo.example.com");
+  await desconocido.resolverPorHostname("nuevo.example.com");
+  assert.equal(consultasDesconocido, 1);
+  ahora += 31;
+  await desconocido.resolverPorHostname("nuevo.example.com");
+  assert.equal(consultasDesconocido, 2, "Un dominio desconocido debe reconsultarse");
 }
 
 async function verificarSingleFlight(): Promise<void> {
@@ -181,7 +210,7 @@ async function verificarValidacionDeRespuestasYFallos(): Promise<void> {
   await assert.rejects(fallo.resolverPorHostname("fallo.example.com"), /directorio no disponible/);
 }
 
-async function verificarCredencialesNoCacheadas(): Promise<void> {
+async function verificarCredencialesCacheadas(): Promise<void> {
   let consultas = 0;
   const cache = new ProveedorRegistroCacheado(crearProveedor({
     async resolverCredenciales() {
@@ -190,12 +219,18 @@ async function verificarCredencialesNoCacheadas(): Promise<void> {
     },
   }));
 
-  await cache.resolverCredenciales("mysql/demo", "v1");
-  await cache.resolverCredenciales("mysql/demo", "v1");
-  assert.equal(consultas, 2, "Las credenciales no deben guardarse en la caché de metadata");
+  const primera = await cache.resolverCredenciales("mysql/demo", "v1", "tenant-demo");
+  primera.base = "alterada";
+  assert.equal((await cache.resolverCredenciales("mysql/demo", "v1", "tenant-demo")).base, CREDENCIALES.base);
+  assert.equal(consultas, 1, "Las credenciales validadas deben reutilizarse por identidad de conexión");
+  await cache.resolverCredenciales("mysql/demo", "v2", "tenant-demo");
+  assert.equal(consultas, 2, "Una versión nueva debe consultar credenciales nuevas");
+  cache.invalidar();
+  await cache.resolverCredenciales("mysql/demo", "v1", "tenant-demo");
+  assert.equal(consultas, 3, "La invalidación debe descartar las credenciales");
 }
 
-async function verificarEstadoVigenteConPlazoCorto(): Promise<void> {
+async function verificarEstadoHastaInvalidacion(): Promise<void> {
   let ahora = 100;
   let consultas = 0;
   let suspendido = false;
@@ -215,10 +250,53 @@ async function verificarEstadoVigenteConPlazoCorto(): Promise<void> {
   suspendido = true;
   assert.equal(await cache.verificarAcceso("cliente-a"), 7);
   ahora += 5_001;
+  assert.equal(await cache.verificarAcceso("cliente-a"), 7);
+  assert.equal(consultas, 1, "El estado confirmado debe persistir entre vistas");
+  cache.invalidar();
   await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
-  assert.equal(consultas, 2, "El estado debe revalidarse tras el plazo corto");
+  assert.equal(consultas, 2, "La invalidación debe volver a consultar el estado");
   await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
   assert.equal(consultas, 3, "Un fallo de estado no debe quedar cacheado como activo");
+}
+
+async function verificarInvalidacionDuranteConsultaDeEstado(): Promise<void> {
+  const anterior = diferida<number>();
+  let consultas = 0;
+  const cache = new ProveedorRegistroCacheado(crearProveedor({
+    verificarAcceso() {
+      consultas += 1;
+      return consultas === 1 ? anterior.promesa : Promise.resolve(9);
+    },
+  }));
+
+  const pendiente = cache.verificarAcceso("tenant-estado");
+  cache.invalidar();
+  anterior.resolver(8);
+  assert.equal(await pendiente, 9, "Una consulta invalidada debe devolver el estado nuevo");
+  assert.equal(consultas, 2);
+  assert.equal(await cache.verificarAcceso("tenant-estado"), 9);
+  assert.equal(consultas, 2, "El estado nuevo debe quedar cacheado");
+}
+
+async function verificarNavegacionSinConsultasRepetidas(): Promise<void> {
+  const entrada = crearEntrada("tenant-navegacion", "navegacion.example.com");
+  let ahora = 100;
+  const consultas = { dominio: 0, id: 0, estado: 0, credenciales: 0 };
+  const cache = new ProveedorRegistroCacheado(crearProveedor({
+    async resolverPorHostname() { consultas.dominio += 1; return entrada; },
+    async resolverPorId() { consultas.id += 1; return entrada; },
+    async verificarAcceso() { consultas.estado += 1; return 1; },
+    async resolverCredenciales() { consultas.credenciales += 1; return { ...CREDENCIALES }; },
+  }), 30, () => ahora);
+
+  for (const salto of [0, 60_000, 3_600_000]) {
+    ahora += salto;
+    await cache.resolverPorHostname(entrada.dominios[0]);
+    await cache.resolverPorId(entrada.tenant.id);
+    await cache.verificarAcceso(entrada.tenant.id);
+    await cache.resolverCredenciales(entrada.referenciaBase, entrada.versionCredenciales, entrada.tenant.id);
+  }
+  assert.deepEqual(consultas, { dominio: 1, id: 0, estado: 1, credenciales: 1 });
 }
 
 async function verificarFallosSinFallback(): Promise<void> {
@@ -237,8 +315,12 @@ async function verificarFallosSinFallback(): Promise<void> {
   assert.equal(operacionEjecutada, false, "Una caída del registro no debe usar una base alternativa");
 
   const demo = crearEntrada("tenant-error-credenciales", "error-credenciales.example.com");
-  configurarProveedorRegistroTenant(crearProveedor({
-    async resolverPorId() { return demo; },
+  let consultasId = 0;
+  const registro = configurarProveedorRegistroTenant(crearProveedor({
+    async resolverPorId() {
+      consultasId += 1;
+      return demo;
+    },
     async resolverCredenciales() { throw new Error("credenciales no disponibles"); },
   }));
   await assert.rejects(
@@ -248,16 +330,20 @@ async function verificarFallosSinFallback(): Promise<void> {
     /No se pudo completar la operación/,
   );
   assert.equal(operacionEjecutada, false, "Sin credenciales no debe ejecutarse una consulta comercial");
+  await registro.resolverPorId(demo.tenant.id);
+  assert.equal(consultasId, 2, "Un fallo al abrir la conexión debe refrescar los metadatos");
 }
 
 async function main(): Promise<void> {
   await verificarNormalizacionYResolucion();
-  await verificarCacheTtlEInvalidacion();
+  await verificarCachePersistenteEInvalidacion();
   await verificarSingleFlight();
   await verificarInvalidacionDuranteCarga();
   await verificarValidacionDeRespuestasYFallos();
-  await verificarCredencialesNoCacheadas();
-  await verificarEstadoVigenteConPlazoCorto();
+  await verificarCredencialesCacheadas();
+  await verificarEstadoHastaInvalidacion();
+  await verificarInvalidacionDuranteConsultaDeEstado();
+  await verificarNavegacionSinConsultasRepetidas();
   await verificarFallosSinFallback();
   console.log("Registro tenant: dominios, estados, caché, invalidación y fallos verificados.");
 }

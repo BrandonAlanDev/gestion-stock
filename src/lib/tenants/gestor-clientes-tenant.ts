@@ -3,6 +3,14 @@ import type { TenantRegistryEntry } from "./registry/types";
 
 export type IdentidadConexionTenant = TenantRegistryEntry;
 
+/** Señala que la referencia o las credenciales cacheadas no permitieron abrir la base. */
+export class ErrorConexionTenant extends Error {
+  constructor() {
+    super("No se pudo completar la operación en la base de datos de la organización");
+    this.name = "ErrorConexionTenant";
+  }
+}
+
 export interface OpcionesGestorClientesTenant<T> {
   limiteClientes: number;
   ttlInactividadMs: number;
@@ -68,7 +76,7 @@ export class GestorClientesTenant<T> {
     } catch {
       entrada.obsoleto = true;
       await this.soltar(entrada);
-      throw new Error("No se pudo completar la operación en la base de datos de la organización");
+      throw new ErrorConexionTenant();
     }
 
     try {

@@ -4,7 +4,7 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../../generated/prisma/client";
 import { obtenerTenantIdRuntime } from "./tenants/contexto-tenant-runtime";
 import { conContextoTenantRuntime } from "./tenants/contexto-tenant-runtime";
-import { GestorClientesTenant } from "./tenants/gestor-clientes-tenant";
+import { ErrorConexionTenant, GestorClientesTenant } from "./tenants/gestor-clientes-tenant";
 import { crearOpcionesPoolTenant } from "./tenants/opciones-pool-tenant";
 import { obtenerProveedorRegistroTenant } from "./tenants/registry/proveedor-registro";
 import type { TenantRegistryEntry } from "./tenants/registry/types";
@@ -16,6 +16,17 @@ interface EstadoFactory {
 const globalFactory = globalThis as typeof globalThis & {
   __factoryPrismaTenant?: EstadoFactory;
 };
+
+const codigosConexion = new Set([
+  "P1000", "P1001", "P1002", "P1003", "P1008", "P1011", "P1017", "P2024", "P2037",
+  "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "PROTOCOL_CONNECTION_LOST",
+  "ER_ACCESS_DENIED_ERROR", "ER_BAD_DB_ERROR",
+]);
+
+function esFalloConexion(error: unknown): boolean {
+  if (!error || typeof error !== "object" || !("code" in error)) return false;
+  return typeof error.code === "string" && codigosConexion.has(error.code);
+}
 
 function leerEnteroPositivo(valor: string | undefined, predeterminado: number, maximo: number): number {
   if (!valor || !/^\d+$/.test(valor)) return predeterminado;
@@ -116,9 +127,17 @@ export async function conPrismaTenant<T>(
     throw error;
   }
 
-  return obtenerGestor().ejecutar(entry, (cliente) =>
-    conContextoTenantRuntime(tenantId, () => operacion(cliente)),
-  );
+  try {
+    return await obtenerGestor().ejecutar(entry, (cliente) =>
+      conContextoTenantRuntime(tenantId, () => operacion(cliente)),
+    );
+  } catch (error) {
+    if (error instanceof ErrorConexionTenant || esFalloConexion(error)) {
+      registro.invalidar();
+      await invalidarClientesPrismaTenant(tenantId);
+    }
+    throw error;
+  }
 }
 
 /** Selecciona el silo del hostname recibido en la petición actual. */

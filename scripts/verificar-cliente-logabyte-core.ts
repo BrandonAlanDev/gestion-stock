@@ -93,6 +93,8 @@ async function ejecutar(): Promise<void> {
   await cacheRuntime.resolverPorId("segundo");
   estadoSegundo = "SUSPENDIDO";
   await assert.rejects(registro.verificarAcceso("segundo"), (error: unknown) => error instanceof ErrorLogabyteCore && error.codigo === "CONFLICTO");
+  assert.equal((await registro.resolverCredenciales("ref_segundo", "3", "segundo")).base, "base_segunda");
+  registro.invalidar();
   await assert.rejects(registro.resolverCredenciales("ref_segundo", "3", "segundo"), (error: unknown) => error instanceof ErrorLogabyteCore && error.codigo === "CONFLICTO");
   let entroEnBase = false;
   await assert.rejects(conPrismaTenant("segundo", async () => { entroEnBase = true; }), (error: unknown) => error instanceof ErrorLogabyteCore && error.codigo === "CONFLICTO");

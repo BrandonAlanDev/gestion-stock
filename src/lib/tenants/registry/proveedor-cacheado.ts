@@ -8,7 +8,7 @@ import type {
   TenantRegistryProvider,
 } from "./types";
 
-type ValorCacheado<T> = { valor: T; venceEn: number };
+type ValorCacheado<T> = { valor: T; venceEn?: number };
 
 const entradaSchema = z.object({
   tenant: z.object({
@@ -33,11 +33,12 @@ const credencialesSchema = z.object({
   ssl: z.boolean(),
 });
 
-/** Cachea solo metadatos del directorio; las credenciales siguen en el proveedor seguro. */
+/** Conserva por proceso las respuestas validadas de Core hasta una invalidación. */
 export class ProveedorRegistroCacheado implements TenantRegistryProvider {
   private readonly porHostname = new Map<string, ValorCacheado<TenantRegistryEntry | null>>();
   private readonly porId = new Map<string, ValorCacheado<TenantRegistryEntry | null>>();
   private readonly estados = new Map<string, ValorCacheado<number | void>>();
+  private readonly credenciales = new Map<string, CredencialesBaseTenant>();
   private listado?: ValorCacheado<TenantRegistryEntry[]>;
   private readonly cargas = new Map<string, Promise<unknown>>();
   private generacionCache = 0;
@@ -48,10 +49,11 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
     private readonly ahora: () => number = Date.now,
   ) {}
 
-  resolverPorHostname(hostname: string): Promise<TenantRegistryEntry | null> {
+  async resolverPorHostname(hostname: string): Promise<TenantRegistryEntry | null> {
     const host = normalizarHostname(hostname);
-    if (!host) return Promise.resolve(null);
-    return this.obtener(`host:${host}`, this.porHostname, () =>
+    if (!host) return null;
+    const generacion = this.generacionCache;
+    const entrada = await this.obtener(`host:${host}`, this.porHostname, () =>
       this.origen.resolverPorHostname(host).then((valor) => {
         const entrada = validarEntradaNullable(valor);
         if (entrada && !entrada.dominios.includes(host)) {
@@ -60,6 +62,11 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
         return entrada;
       }),
     );
+    const claveId = entrada ? `id:${entrada.tenant.id}` : null;
+    if (entrada && claveId && generacion === this.generacionCache && !this.porId.has(claveId)) {
+      this.porId.set(claveId, { valor: clonarEntrada(entrada) });
+    }
+    return entrada;
   }
 
   resolverPorId(tenantId: string): Promise<TenantRegistryEntry | null> {
@@ -76,33 +83,45 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
     );
   }
 
-  resolverCredenciales(
+  async resolverCredenciales(
     referenciaBase: string,
     versionCredenciales: string,
     tenantId?: string,
   ): Promise<CredencialesBaseTenant> {
-    return this.origen.resolverCredenciales(referenciaBase, versionCredenciales, tenantId).then((valor) => {
+    const clave = JSON.stringify([tenantId, referenciaBase, versionCredenciales]);
+    const existente = this.credenciales.get(clave);
+    if (existente) return { ...existente };
+    const generacion = this.generacionCache;
+    const credenciales = await this.cargar(`credenciales:${clave}`, async () => {
+      const valor = await this.origen.resolverCredenciales(referenciaBase, versionCredenciales, tenantId);
       const validado = credencialesSchema.safeParse(valor);
       if (!validado.success) throw new Error("El proveedor devolvió credenciales de tenant inválidas");
       return validado.data;
     });
+    if (generacion !== this.generacionCache) {
+      return this.resolverCredenciales(referenciaBase, versionCredenciales, tenantId);
+    }
+    this.credenciales.set(clave, { ...credenciales });
+    return { ...credenciales };
   }
 
-  verificarAcceso(tenantId: string): Promise<number | void> {
+  async verificarAcceso(tenantId: string): Promise<number | void> {
     const vigente = this.estados.get(tenantId);
-    if (vigente && this.ahora() < vigente.venceEn) return Promise.resolve(vigente.valor);
+    if (vigente) return vigente.valor;
     const generacion = this.generacionCache;
-    return this.cargar(`estado:${tenantId}`, async () => {
+    const version = await this.cargar(`estado:${tenantId}`, async () => {
       const version = await (this.origen.verificarAcceso?.(tenantId) ?? Promise.resolve());
       if (generacion === this.generacionCache) {
-        this.estados.set(tenantId, { valor: version, venceEn: this.ahora() + 5_000 });
+        this.estados.set(tenantId, { valor: version });
       }
       return version;
     });
+    if (generacion !== this.generacionCache) return this.verificarAcceso(tenantId);
+    return version;
   }
 
   async listarTenants(): Promise<TenantRegistryEntry[]> {
-    if (this.listado && this.ahora() < this.listado.venceEn) {
+    if (this.listado && this.listado.venceEn !== undefined && this.ahora() < this.listado.venceEn) {
       return this.listado.valor.map(clonarEntrada);
     }
     const generacion = this.generacionCache;
@@ -119,6 +138,7 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
     this.porHostname.clear();
     this.porId.clear();
     this.estados.clear();
+    this.credenciales.clear();
     this.listado = undefined;
     this.cargas.clear();
     this.origen.invalidarCache?.();
@@ -130,14 +150,15 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
     cargar: () => Promise<T>,
   ): Promise<T> {
     const existente = mapa.get(clave);
-    if (existente && this.ahora() < existente.venceEn) {
+    if (existente && (existente.venceEn === undefined || this.ahora() < existente.venceEn)) {
       return existente.valor ? (clonarEntrada(existente.valor) as T) : null as T;
     }
 
     const generacion = this.generacionCache;
     const valor = await this.cargar(clave, cargar);
     if (generacion !== this.generacionCache) return this.obtener(clave, mapa, cargar);
-    mapa.set(clave, { valor, venceEn: this.ahora() + this.ttlMs });
+    // Los dominios desconocidos se reconsultan para admitir altas posteriores.
+    mapa.set(clave, valor ? { valor } : { valor, venceEn: this.ahora() + this.ttlMs });
     return valor ? (clonarEntrada(valor) as T) : null as T;
   }
 
