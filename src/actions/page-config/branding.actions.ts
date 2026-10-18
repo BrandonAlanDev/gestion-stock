@@ -46,9 +46,9 @@ export async function updateBrandingConfig(data: BrandingInput) {
 
       bgColor: data.bgColor ?? pageConfig?.bgColor ?? "#09090b",
 
-      logo: data.logo ?? pageConfig?.logo ?? null,
+      logo: data.logo === undefined ? pageConfig?.logo ?? null : data.logo?.trim() || null,
 
-      favicon: data.favicon ?? pageConfig?.favicon ?? null,
+      favicon: data.favicon === undefined ? pageConfig?.favicon ?? null : data.favicon?.trim() || null,
 
       fontPrimary: data.fontPrimary ?? pageConfig?.fontPrimary ?? "Outfit",
 

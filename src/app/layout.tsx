@@ -6,6 +6,7 @@ import QueryProvider from "@/providers/QueryProvider";
 import { ProveedorConfiguracionPagina } from "@/components/providers/ProveedorConfiguracionPagina";
 import EstilosApariencia from "@/components/apariencia/EstilosApariencia";
 import FuentesGoogle from "@/components/apariencia/FuentesGoogle";
+import SessionWrapper from "@/components/providers/SessionWrapper";
 import { obtenerVariablesTema } from "@/lib/apariencia/obtener-variables-tema";
 import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
 
@@ -21,6 +22,7 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const { pageConfig } = await obtenerConfiguracionPaginaSolicitud();
+  const favicon = pageConfig?.favicon?.trim() || "/favicon.ico";
 
   return {
     title:
@@ -34,9 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "Sistema de gestión de stock",
 
     icons: {
-      icon: pageConfig?.favicon ?? "/favicon.ico",
-      shortcut: pageConfig?.favicon ?? "/favicon.ico",
-      apple: pageConfig?.favicon ?? "/favicon.ico",
+      icon: favicon,
     },
 
     openGraph: {
@@ -81,7 +81,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await auth();
+  const session = await auth();
   const configuracion = await obtenerConfiguracionPaginaSolicitud();
   const pageConfig = configuracion.pageConfig;
 
@@ -97,6 +97,7 @@ export default async function RootLayout({
         style={{ backgroundColor: "var(--color-fondo-sitio)" }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw max-w-dvw overflow-x-hidden text-[var(--texto-sobre-fondo)]`}
       >
+        <SessionWrapper session={session}>
           <QueryProvider>
             <ProveedorConfiguracionPagina
               pageConfig={{
@@ -111,6 +112,7 @@ export default async function RootLayout({
               {children}
             </ProveedorConfiguracionPagina>
           </QueryProvider>
+        </SessionWrapper>
       </body>
     </html>
   );

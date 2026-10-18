@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -28,6 +28,12 @@ export default function Sheet({
   anchoClases,
   children,
 }: SheetProps) {
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
+
   useEffect(() => {
     if (!abierto) return;
 
@@ -51,6 +57,8 @@ export default function Sheet({
       ? "right-0 border-l"
       : "left-0 border-r";
   const clasesAncho = anchoClases ?? "w-full sm:w-[480px]";
+
+  if (!montado) return null;
 
   return createPortal(
     <ContextoCapas.Provider value={nivel + 1}>

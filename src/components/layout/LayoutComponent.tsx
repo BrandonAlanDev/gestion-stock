@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import SidebarMovil from "@/components/layout/SidebarMovil";
-import SessionWrapper from "@/components/providers/SessionWrapper";
 import { Toaster } from "sonner";
 import CartSidebar from "@/components/cart/CartSidebar";
 import { CartProvider } from "@/contextos/carrito/proveedor-carrito";
@@ -84,11 +83,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function LayoutComponent({ children }: { children: React.ReactNode }) {
-  return ( 
-    <SessionWrapper>
-      <CartProvider>
-        <AppLayout>{children}</AppLayout>
-      </CartProvider>
-    </SessionWrapper>
+  return (
+    <CartProvider>
+      <AppLayout>{children}</AppLayout>
+    </CartProvider>
   );
 }
