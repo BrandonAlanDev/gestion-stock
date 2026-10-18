@@ -48,6 +48,11 @@ model user {
   @@index([role])
 }
 
+model admin_pending_email {
+  email      String  @id @db.VarChar(191)
+  codigoHash String? @db.VarChar(64)
+}
+
 model Category {
   id            String        @id @default(cuid())
   name          String

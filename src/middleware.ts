@@ -54,7 +54,7 @@ export default auth(async (solicitud) => {
       nextUrl.searchParams.get("recuperarSesion") === "1";
 
     if (estaAutenticado && !debeRecuperarSesion) {
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+      return NextResponse.redirect(new URL(rolUsuario === "ADMIN" ? "/admin" : "/", nextUrl));
     }
 
     return NextResponse.next();
@@ -68,7 +68,7 @@ export default auth(async (solicitud) => {
     }
 
     if (esRutaAdmin && rolUsuario !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+      return NextResponse.redirect(new URL("/", nextUrl));
     }
 
     return NextResponse.next();

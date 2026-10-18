@@ -1,9 +1,9 @@
 "use server";
 
 import { obtenerEstadisticasDashboard } from "@/lib/services/estadisticas/obtener-estadisticas-dashboard";
-import { requiereUsuarioTenant } from "@/lib/tenants/requerir-usuario-tenant";
+import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 
 export async function getDashboardStats() {
-  const { tenantId } = await requiereUsuarioTenant();
+  const { tenantId } = await requiereAdmin();
   return obtenerEstadisticasDashboard(tenantId);
 }

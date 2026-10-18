@@ -9,6 +9,7 @@ export const loginSchema = z.object({
 const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 
 export const registerSchema = loginSchema.extend({
+  codigoInvitacion: z.string().trim().max(128).optional(),
   name: z.string()
     .min(2, "Nombre requerido")
     .regex(nameRegex, "El nombre solo debe contener letras y espacios"),

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import {
   LayoutDashboard, Menu, X, User, Store, LogOut, ShoppingBag,
 } from "lucide-react";
@@ -177,9 +177,19 @@ export default function Header({
                     <span className="text-[10px] opacity-60" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionActual.user.email}</span>
                   </div>
                 </div>
-                <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
-                  <LogOut size={14} /> Salir
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void signIn("google", { redirectTo: "/" })}
+                    className="text-xs font-bold hover:opacity-80"
+                    style={{ color: "var(--texto-sobre-fondo)" }}
+                  >
+                    Vincular Google
+                  </button>
+                  <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
+                    <LogOut size={14} /> Salir
+                  </button>
+                </div>
               </div>
             )}
           </div>

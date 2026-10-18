@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
 import { crearAdaptadorTenant } from "@/lib/autenticacion/crear-adaptador-tenant";
 import { crearCallbacksTenant } from "@/lib/autenticacion/crear-callbacks-tenant";
+import { reclamarAdministradorGoogle } from "@/lib/autenticacion/reclamar-admin-google";
 import { obtenerTenantAutenticacion } from "@/lib/autenticacion/obtener-tenant-autenticacion";
 import { conPrismaTenant } from "@/lib/prisma";
 import { obtenerHostnameSolicitud } from "@/lib/tenants/obtener-hostname-solicitud";
@@ -41,6 +42,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: crearCallbacksTenant({
     obtenerTenantAutenticacion,
     obtenerHostnameSolicitud,
+    reclamarAdministradorGoogle: (tenantId, solicitud) =>
+      conPrismaTenant(tenantId, (prisma) => reclamarAdministradorGoogle(prisma, solicitud)),
     buscarUsuario: (tenantId, usuarioId) =>
       conPrismaTenant(tenantId, (prisma) =>
         prisma.user.findUnique({

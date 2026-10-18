@@ -2,11 +2,11 @@
 
 import GoogleButton from "@/components/auth/google-button";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Mail, Lock, ChevronRight, Shirt } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import Image from "next/image";
 
@@ -16,6 +16,13 @@ export default function IniciarSesionPage() {
   const [estaIngresando, setEstaIngresando] = useState(false);
   const { pageConfig: configuracionPagina } = usePageConfig();
   const [estaSobreBoton, setEstaSobreBoton] = useState(false);
+
+  useEffect(() => {
+    const error = new URLSearchParams(window.location.search).get("error");
+    if (error === "OAuthAccountNotLinked") {
+      establecerMensajeError("Ese correo ya tiene una cuenta. Iniciá sesión con tu contraseña y vinculá Google desde el menú de la tienda.");
+    }
+  }, []);
 
   const manejarInicioSesion = async (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
@@ -38,8 +45,9 @@ export default function IniciarSesionPage() {
         return;
       }
 
+      const sesion = await getSession();
       const destinoSolicitado = new URLSearchParams(window.location.search).get("callbackUrl");
-      let destino = "/dashboard";
+      let destino = sesion?.user?.role === "ADMIN" ? "/admin" : "/";
 
       if (destinoSolicitado) {
         try {
@@ -48,7 +56,7 @@ export default function IniciarSesionPage() {
             destino = `${urlDestino.pathname}${urlDestino.search}${urlDestino.hash}`;
           }
         } catch {
-          destino = "/dashboard";
+          destino = sesion?.user?.role === "ADMIN" ? "/admin" : "/";
         }
       }
 

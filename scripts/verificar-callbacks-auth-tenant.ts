@@ -31,6 +31,7 @@ function crearCallbacks(
   const callbacks = crearCallbacksTenant({
     obtenerTenantAutenticacion: obtenerTenant,
     obtenerHostnameSolicitud: obtenerHostname,
+    reclamarAdministradorGoogle: async () => true,
     async buscarUsuario(tenantId, usuarioId) {
       tenantsConsultados.push(tenantId);
       return buscarUsuario(tenantId, usuarioId);
@@ -40,16 +41,48 @@ function crearCallbacks(
   return { callbacks, tenantsConsultados };
 }
 
-async function ejecutarSignIn(callbacks: Callbacks, user: User): Promise<string | boolean> {
+async function ejecutarSignIn(
+  callbacks: Callbacks,
+  user: User,
+  opciones: Partial<Pick<ArgumentosSignIn, "account" | "profile">> = {},
+): Promise<string | boolean> {
   assert.ok(callbacks.signIn);
   const argumentos = {
     user,
-    account: null,
-    profile: undefined,
+    account: opciones.account ?? null,
+    profile: opciones.profile,
     email: undefined,
     credentials: undefined,
   } as ArgumentosSignIn;
   return callbacks.signIn(argumentos);
+}
+
+async function verificarAltaGoogle(): Promise<void> {
+  const { callbacks, tenantsConsultados } = crearCallbacks(async () => null);
+  const usuarioNuevo = { id: "sub-de-google", email: "nuevo@example.com" } as User;
+  const google = { provider: "google", type: "oidc", providerAccountId: usuarioNuevo.id } as ArgumentosSignIn["account"];
+
+  assert.equal(await ejecutarSignIn(callbacks, usuarioNuevo, {
+    account: google,
+  }), true);
+  assert.deepEqual(tenantsConsultados, [], "El alta OAuth todavía no tiene usuario persistido");
+  assert.equal(usuarioNuevo.tenantId, TENANT_A.id);
+
+  assert.equal(await ejecutarSignIn(callbacks, usuarioNuevo, {
+    account: google,
+    profile: { email_verified: false },
+  }), true, "El alta no depende de una lista ni de un claim adicional del perfil");
+  assert.equal(await ejecutarSignIn(callbacks, { id: usuarioNuevo.id } as User, {
+    account: google,
+  }), false);
+
+  const callbacksSinTenant = crearCallbacks(
+    async () => null,
+    async () => { throw new Error("tenant suspendido"); },
+  ).callbacks;
+  assert.equal(await ejecutarSignIn(callbacksSinTenant, usuarioNuevo, {
+    account: google,
+  }), false);
 }
 
 async function ejecutarJwt(
@@ -180,6 +213,23 @@ async function verificarNuevoLoginVinculaHostActual(): Promise<void> {
   assert.equal(token.tenantHost, "a.example.com");
 }
 
+async function verificarPrimerLoginGoogleSinTenantEnAdaptador(): Promise<void> {
+  const { callbacks } = crearCallbacks(async (_tenantId, usuarioId) => ({
+    id: usuarioId,
+    role: "USER",
+    telefono: null,
+    image: null,
+  }));
+  const usuarioPersistido = { id: "nuevo-google", email: "nuevo@example.com" } as User;
+  const token = await ejecutarJwt(callbacks, { sub: usuarioPersistido.id }, {
+    user: usuarioPersistido,
+    trigger: "signUp",
+  });
+  assert.equal(token.id, usuarioPersistido.id);
+  assert.equal(token.role, "USER");
+  assert.equal(token.tenantId, TENANT_A.id);
+}
+
 async function verificarRechazoDeTenantAjeno(): Promise<void> {
   let busquedas = 0;
   const { callbacks, tenantsConsultados } = crearCallbacks(async () => {
@@ -262,8 +312,10 @@ async function verificarTenantSuspendidoYUsuarioRevocado(): Promise<void> {
 
 async function main(): Promise<void> {
   await verificarSignInAislado();
+  await verificarAltaGoogle();
   await verificarRevalidacionEnSilo();
   await verificarNuevoLoginVinculaHostActual();
+  await verificarPrimerLoginGoogleSinTenantEnAdaptador();
   await verificarRechazoDeTenantAjeno();
   await verificarRechazoDeHostAjeno();
   await verificarTenantSuspendidoYUsuarioRevocado();

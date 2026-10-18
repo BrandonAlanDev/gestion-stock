@@ -37,7 +37,7 @@ export default function RegisterPage() {
             Creá tu <span className="text-[var(--color-primario)]"
             >cuenta</span>
           </h1>
-          <p className="text-[var(--texto-sobre-fondo)]/70 text-sm mt-1">Registrate y luego iniciá sesión para ingresar al panel de gestión</p>
+          <p className="text-[var(--texto-sobre-fondo)]/70 text-sm mt-1">Registrate para comprar en la tienda</p>
         </div>
 
         <div className="space-y-3 mb-6">
@@ -96,6 +96,15 @@ export default function RegisterPage() {
                   className="w-full bg-[color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent)] border border-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)] rounded-xl py-3 pl-10 pr-4 text-[var(--texto-sobre-fondo)] focus:border-[var(--color-primario)] transition-all"
                 />
               </div>
+            </div>
+            <div className="space-y-1">
+              <input
+                name="codigoInvitacion"
+                type="text"
+                placeholder="Código de invitación (solo administradores)"
+                autoComplete="off"
+                className="w-full bg-[color-mix(in_srgb,var(--color-fondo-sitio)_20%,transparent)] border border-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)] rounded-xl py-3 px-3 text-[var(--texto-sobre-fondo)] focus:border-[var(--color-primario)] transition-all"
+              />
             </div>
           </div>
 

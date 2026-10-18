@@ -1,4 +1,5 @@
 import type { NextAuthConfig, Session, User } from "next-auth";
+import type { SolicitudReclamoGoogle } from "./reclamar-admin-google";
 import type { TenantPublico, RolTenant } from "../../types/tenants";
 
 interface UsuarioPersistidoAutenticacion {
@@ -15,6 +16,7 @@ export interface DependenciasCallbacksTenant {
     tenantId: string,
     usuarioId: string,
   ): Promise<UsuarioPersistidoAutenticacion | null>;
+  reclamarAdministradorGoogle(tenantId: string, solicitud: SolicitudReclamoGoogle): Promise<boolean>;
 }
 
 type CallbacksAuth = NonNullable<NextAuthConfig["callbacks"]>;
@@ -39,7 +41,7 @@ export function crearCallbacksTenant(
   dependencias: DependenciasCallbacksTenant,
 ): CallbacksAuth {
   return {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       let tenant: TenantPublico;
       try {
         tenant = await dependencias.obtenerTenantAutenticacion();
@@ -47,9 +49,30 @@ export function crearCallbacksTenant(
         return false;
       }
 
-      if (!user.id) return false;
-      const usuario = await dependencias.buscarUsuario(tenant.id, user.id);
-      if (!usuario) return false;
+      if (account?.provider === "google" && account.type === "oidc") {
+        // Auth.js invoca signIn antes de crear al usuario de un primer ingreso OAuth.
+        if (!user.email) return false;
+        const identidad = profile && typeof profile.email === "string" &&
+          typeof profile.sub === "string"
+          ? {
+              email: profile.email,
+              sub: profile.sub,
+              email_verified: profile.email_verified,
+              hd: profile.hd,
+            }
+          : null;
+        if (!(await dependencias.reclamarAdministradorGoogle(tenant.id, {
+          email: user.email.trim().toLowerCase(),
+          providerAccountId: account.providerAccountId,
+          name: user.name ?? null,
+          image: user.image ?? null,
+          profile: identidad,
+        }))) return false;
+      } else {
+        if (!user.id) return false;
+        const usuario = await dependencias.buscarUsuario(tenant.id, user.id);
+        if (!usuario) return false;
+      }
       const usuarioTenant = user as User;
       usuarioTenant.tenantId = tenant.id;
       usuarioTenant.tenantNombre = tenant.nombre;
@@ -82,10 +105,11 @@ export function crearCallbacksTenant(
       }
 
       const tenantIdToken = typeof token.tenantId === "string" ? token.tenantId : null;
-      if (tenantIdToken !== tenant.id) {
+      if (tenantIdToken !== tenant.id && (!user || tenantIdToken !== null)) {
         invalidarIdentidad(token);
         return token;
       }
+      if (user && tenantIdToken === null) token.tenantId = tenant.id;
 
       const tenantHost = await dependencias.obtenerHostnameSolicitud();
       if (!tenantHost) {

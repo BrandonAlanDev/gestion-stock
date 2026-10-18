@@ -16,6 +16,8 @@ npm install
 
 Copiá `.env.example` a `.env`. Configurá `LOGABYTE_CORE_URL`, `LOGABYTE_CORE_SERVICE_TOKEN` y `AUTH_SECRET`. El token de servicio de Core debe pertenecer a `gestion-stock` y tener los permisos `RESOLVER_TENANT`, `LISTAR_TENANTS`, `CONSULTAR_ESTADO` y `OBTENER_CREDENCIALES`. Registrá en Core cada dominio DNS y su destino de base. El proceso de Next.js debe poder llegar tanto a Core como a las bases registradas. Completá Google, Cloudinary y Mercado Pago para las funciones que uses.
 
+Para habilitar el registro con Google, configurá `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` y agregá en Google Cloud la URI de redirección `https://tu-dominio/api/auth/callback/google` (o `http://localhost:3000/api/auth/callback/google` en desarrollo). Cualquier persona puede registrarse; por defecto se crea un usuario `USER`. Si Core reservó ese correo para un administrador Google, el primer acceso con una identidad Google verificada de Gmail o Google Workspace consume la reserva y crea o vincula la cuenta `ADMIN`. Para una cuenta ya registrada por contraseña, iniciá sesión con ella y elegí **Vincular Google** en el menú de la tienda.
+
 ```bash
 npx prisma generate
 npm run dev
@@ -40,7 +42,7 @@ npx prisma migrate status
 
 Para una base con datos, compará antes su DDL y el historial de `_prisma_migrations` con el esquema vigente. Prepará respaldo y reversión antes de aplicar cambios. El catálogo de Core no migra automáticamente bases antiguas. El build genera el cliente Prisma y no modifica bases.
 
-Después de registrar y activar un cliente en Core, configurá `ADMIN_TENANT_ID`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12 caracteres o más) y ejecutá `npm run crear:admin`. `ADMIN_TENANT_ID` es el ID del cliente en Core. `ADMIN_NAME` es opcional. El comando falla si ya existe un administrador en esa base. No guardes contraseñas ni tokens en el repositorio.
+Para crear un administrador, reservá su correo desde el panel de Core. Con **Cuenta de Google**, el titular ingresa por Google y la reserva se consume al crear o vincular su cuenta. Con **Correo y contraseña**, Core muestra un código de invitación una sola vez: compartilo con el titular para que lo ingrese al registrarse y elija una contraseña de al menos 12 caracteres. Las reservas se eliminan después de reclamarse; los usuarios sin reserva se registran como `USER`. La migración `20261018010000_admin_pendiente` crea la tabla de reservas y conserva los administradores Google antiguos sin contraseña para su primer acceso. Aplicá esa migración a bases existentes solo después de revisar DDL, historial, respaldo y reversión.
 
 ## Verificación
 
