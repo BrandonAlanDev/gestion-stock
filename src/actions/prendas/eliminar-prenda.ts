@@ -19,8 +19,8 @@ export async function eliminarPrenda(id: string) {
     await conPrisma((prisma) => eliminarRegistroPrenda(prisma, tenantId, id));
     const idsPublicos = prendaExistente.images.map((imagen) => imagen.publicId ?? obtenerPublicIdDesdeUrl(imagen.srcImage));
     await eliminarImagenes(idsPublicos, tenantId);
-    revalidateTag(`products`);
-    revalidateTag(`product:${id}`);
+    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`tenant:${tenantId}:product:${id}`);
     return { success: true };
   } catch (error: unknown) {
     console.error("ERROR_AL_ELIMINAR_PRENDA:", error);

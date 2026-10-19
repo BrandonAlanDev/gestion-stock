@@ -12,7 +12,7 @@ export async function updateFooterConfig(data: unknown) {
       return { ok: false, error: parsed.error.issues[0].message };
     }
 
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const config = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -20,7 +20,7 @@ export async function updateFooterConfig(data: unknown) {
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     revalidatePath("/", "layout");
     return { ok: true, config };
   } catch {

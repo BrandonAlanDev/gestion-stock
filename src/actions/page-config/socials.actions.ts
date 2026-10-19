@@ -15,7 +15,7 @@ export async function updateSocialsConfig(
   }
 ) {
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const socials = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -23,7 +23,7 @@ export async function updateSocialsConfig(
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
 
     return { ok: true, socials };
   } catch {

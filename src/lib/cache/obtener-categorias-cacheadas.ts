@@ -5,6 +5,6 @@ export async function obtenerCategoriasCacheadas(tenantId: string) {
   return unstable_cache(
     () => obtenerCategoriasCompletas(tenantId),
     [`tenant:${tenantId}:categories`],
-    { revalidate: 3600, tags: [`categories`] }
+    { revalidate: 3600, tags: [`tenant:${tenantId}:categories`] }
   )();
 }

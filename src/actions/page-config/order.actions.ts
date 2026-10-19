@@ -14,7 +14,7 @@ export async function updateSectionOrder(sections: unknown) {
   }
 
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -22,7 +22,7 @@ export async function updateSectionOrder(sections: unknown) {
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     revalidatePath("/");
     return { success: true };
   } catch (error: unknown) {

@@ -17,7 +17,7 @@ Las operaciones de inventario que cambian stock y movimientos se ejecutan en tra
 
 `prisma/schema.prisma` define el modelo local de cada cliente. `src/lib/tenants/registry/` consulta el contrato privado v1 de Core, valida sus respuestas y conserva por proceso las resoluciones válidas de dominio, ID, estado y credenciales sin vencimiento. Las credenciales se guardan solo en memoria del servidor, separadas de los metadatos públicos y por identidad y versión de conexión. Las búsquedas sin resultado y el listado vencen a los 30 segundos. Una invalidación explícita o un fallo de conexión al abrir o usar la base descarta las respuestas cacheadas para el próximo intento. La suspensión o un cambio de configuración en Core requiere invalidar la caché de cada proceso o reiniciar la aplicación para verse reflejado. `src/lib/prisma.ts` reutiliza clientes Prisma por cliente y versión de credenciales. El encabezado `Host` determina el cliente de las peticiones públicas; las operaciones internas con un ID confiable lo seleccionan explícitamente.
 
-Auth.js usa un adaptador que opera en la base del cliente. El JWT vincula usuario, cliente y dominio; el middleware protege rutas de gestión y el servidor vuelve a verificar autorización y pertenencia. Las claves de caché de datos incluyen el ID del cliente.
+Auth.js usa un adaptador que opera en la base del cliente. El JWT vincula usuario, cliente y dominio; el middleware protege rutas de gestión y el servidor vuelve a verificar autorización y pertenencia. Las claves y etiquetas de caché de datos incluyen el ID del cliente. El catálogo público selecciona solo campos de tienda y excluye productos inactivos; las consultas de movimientos requieren permisos de administrador.
 
 ## Migraciones
 

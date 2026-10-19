@@ -11,8 +11,9 @@ const esquemaVisibilidad = z.object({
 });
 
 export async function actualizarVisibilidadProducto(id: string, activo: boolean) {
+  let tenantId: string;
   try {
-    await requiereAdmin();
+    ({ tenantId } = await requiereAdmin());
   } catch {
     return { error: "No autorizado" };
   }
@@ -28,8 +29,8 @@ export async function actualizarVisibilidadProducto(id: string, activo: boolean)
       }),
     );
     if (resultado.count === 0) return { error: "Producto no encontrado" };
-    revalidateTag(`products`);
-    revalidateTag(`product:${id}`);
+    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`tenant:${tenantId}:product:${id}`);
     return { success: true };
   } catch (error) {
     console.error("Error al actualizar visibilidad:", error);

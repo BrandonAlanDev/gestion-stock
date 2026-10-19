@@ -138,7 +138,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
   }
     },
     [`tenant:${tenantId}:page-config-completa`],
-    { revalidate: 3600, tags: [`page-config`] }
+    { revalidate: 3600, tags: [`tenant:${tenantId}:page-config`] }
   )();
 }
 

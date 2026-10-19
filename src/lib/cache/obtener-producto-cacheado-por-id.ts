@@ -4,12 +4,12 @@ import { obtenerPrendaPorId } from "@/lib/services/prendas/obtener-prenda-por-id
 export const obtenerProductoCacheadoPorId = (tenantId: string, id: string) => async () => {
   return unstable_cache(
     () => obtenerPrendaPorId(tenantId, id),
-    [`tenant:${tenantId}:product:${id}`],
+    [`tenant:${tenantId}:public-product:v2:${id}`],
     {
       revalidate: 300,
       tags: [
-        `products`,
-        `product:${id}`,
+        `tenant:${tenantId}:products`,
+        `tenant:${tenantId}:product:${id}`,
       ],
     }
   )();

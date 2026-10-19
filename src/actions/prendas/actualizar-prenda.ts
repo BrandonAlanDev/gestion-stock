@@ -123,8 +123,8 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
       imagenesARemover.map((imagenActual) => imagenActual.publicId ?? obtenerPublicIdDesdeUrl(imagenActual.srcImage)),
       tenantId
     );
-    revalidateTag(`products`);
-    revalidateTag(`product:${id}`);
+    revalidateTag(`tenant:${tenantId}:products`);
+    revalidateTag(`tenant:${tenantId}:product:${id}`);
 
     if (resultados.some((resultado) => resultado === false)) {
       return { success: true, warning: "La información se actualizó, pero una imagen no pudo eliminarse correctamente." };

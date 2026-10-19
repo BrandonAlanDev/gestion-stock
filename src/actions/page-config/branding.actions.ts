@@ -88,8 +88,8 @@ export async function updateBrandingConfig(data: BrandingInput) {
 
     await eliminarImagenes(publicIdsAEliminar, contexto.tenantId);
 
-    revalidateTag(`page-config`);
-    revalidateTag(`branding-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:branding-config`);
 
     return {
       ok: true,
@@ -157,7 +157,7 @@ async function obtenerBrandingCacheado(tenantId: string) {
   [`tenant:${tenantId}:branding-config`],
   {
     revalidate: 3600,
-    tags: [`branding-config`],
+    tags: [`tenant:${tenantId}:branding-config`],
   },
   )();
 }

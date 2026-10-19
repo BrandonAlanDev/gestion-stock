@@ -12,8 +12,8 @@ export async function deleteProvider(id: unknown) {
 
   try {
     await eliminarProveedor(contexto.tenantId, resultado.data);
-    revalidateTag(`providers`);
-    revalidateTag(`products`);
+    revalidateTag(`tenant:${contexto.tenantId}:providers`);
+    revalidateTag(`tenant:${contexto.tenantId}:products`);
     return { success: true };
   } catch {
     return { error: "No se pudo eliminar el proveedor" };

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { obtenerCarpetaGrids } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-grids";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
@@ -147,6 +147,7 @@ export async function updateHomeGrids(
 
     await eliminarImagenes(publicIdsARemover, contexto.tenantId);
 
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     revalidatePath("/", "layout");
     return { ok: true, homegridId: targetHomegridId };
   } catch (error) {

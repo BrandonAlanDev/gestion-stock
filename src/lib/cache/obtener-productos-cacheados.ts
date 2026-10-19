@@ -36,12 +36,12 @@ export async function obtenerProductosCacheados(
       ),
     [
       `tenant:${tenantId}`,
-      `products`,
+      `public-products:v2`,
       String(paginaSegura),
       String(limiteSeguro),
       categoryId ?? "",
       subCategoryId ?? "",
     ],
-    { revalidate: 300, tags: [`products`] }
+    { revalidate: 300, tags: [`tenant:${tenantId}:products`] }
   )();
 }

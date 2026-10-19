@@ -17,7 +17,7 @@ export async function updateLocationConfig(
   }
 ) {
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const location = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -25,7 +25,7 @@ export async function updateLocationConfig(
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     return { ok: true, location };
   } catch {
     return { ok: false, error: "Error ubicación" };

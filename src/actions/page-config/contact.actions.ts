@@ -12,7 +12,7 @@ export async function updateContactConfig(
   }
 ) {
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const contact = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -20,7 +20,7 @@ export async function updateContactConfig(
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     return { ok: true, contact };
   } catch {
     return { ok: false, error: "Error contacto" };

@@ -1,6 +1,6 @@
 import { Prisma } from "@/../generated/prisma/client";
-import { INCLUDE_VARIANTE } from "@/lib/services/prendas/incluir-variante";
 import { conPrismaTenant } from "@/lib/prisma";
+import { SELECCION_PRODUCTO_PUBLICO } from "./seleccion-producto-publico";
 
 export async function obtenerPrendasPaginadas(
   tenantId: string,
@@ -25,12 +25,9 @@ export async function obtenerPrendasPaginadas(
     const [garments, total] = await Promise.all([
       prisma.garment.findMany({
         where,
-        include: {
-          images: { where: {}, orderBy: { order: "asc" } },
-          variants: { where: {}, include: INCLUDE_VARIANTE, take: 5 },
-          subCategory: true,
-          category: true,
-          opciones: { where: {}, include: { values: true }, orderBy: { position: "asc" } },
+        select: {
+          ...SELECCION_PRODUCTO_PUBLICO,
+          variants: { ...SELECCION_PRODUCTO_PUBLICO.variants, take: 5 },
         },
         skip,
         take: limiteSeguro,

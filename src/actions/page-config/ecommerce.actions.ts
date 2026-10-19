@@ -13,7 +13,7 @@ export async function updateEcommerceConfig(
   }
 ) {
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     const ecommerce = await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
@@ -26,7 +26,7 @@ export async function updateEcommerceConfig(
       }),
     );
 
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
 
     return { ok: true, ecommerce };
   } catch {

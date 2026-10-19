@@ -42,8 +42,8 @@ export async function clearPageConfig() {
 
     await eliminarImagenes(publicIdsAEliminar, contexto.tenantId);
 
-    revalidateTag(`page-config`);
-    revalidateTag(`branding-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
+    revalidateTag(`tenant:${contexto.tenantId}:branding-config`);
 
     return { ok: true, pageConfig };
   } catch (error) {

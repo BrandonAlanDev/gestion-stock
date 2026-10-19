@@ -113,7 +113,7 @@ export async function createCarousel(data: unknown) {
       throw error;
     }
 
-    revalidateTag(`carousels`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -182,7 +182,7 @@ export async function updateCarousel(data: unknown) {
       await eliminarImagenes(publicIdsViejos, tenantId);
     }
 
-    revalidateTag(`carousels`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
@@ -222,8 +222,8 @@ export async function deleteCarousel(id: string) {
       } catch { }
     }
 
-    revalidateTag(`carousels`);
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`tenant:${tenantId}:page-config`);
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -239,7 +239,7 @@ export async function reorderCarousels(data: unknown) {
   try {
     const { tenantId } = await requiereAdmin();
     await reordenarCarruselesPersistidos(tenantId, parsed.data.carouselIds);
-    revalidateTag(`carousels`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true };
   } catch (error) {
     console.error("Error reordering carousels:", error);
@@ -273,8 +273,8 @@ export async function updateCarouselActive(id: string, active: boolean) {
   try {
     const { tenantId } = await requiereAdmin();
     const carousel = await actualizarCarrusel(tenantId, { id, active });
-    revalidateTag(`carousels`);
-    revalidateTag(`page-config`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
+    revalidateTag(`tenant:${tenantId}:page-config`);
     revalidatePath("/");
     return { success: true, data: serializeData(carousel) };
   } catch (error) {
@@ -357,7 +357,7 @@ export async function duplicateCarousel(id: string) {
       throw error;
     }
 
-    revalidateTag(`carousels`);
+    revalidateTag(`tenant:${tenantId}:carousels`);
     return { success: true, data: serializeData(copia) };
   } catch (error) {
     console.error("Error al duplicar carrusel:", error);

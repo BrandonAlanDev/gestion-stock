@@ -136,7 +136,7 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
         }));
       }
 
-      dependencias.revalidateTag(`products`);
+      dependencias.revalidateTag(`tenant:${tenantId}:products`);
       return { success: true, data: dependencias.serializarDatos(prenda) };
     } catch (error: unknown) {
       dependencias.registrarError("Error en crearPrenda:", error);

@@ -5,6 +5,6 @@ export async function obtenerTiposTalleCacheados(tenantId: string) {
   return unstable_cache(
     () => servicioTalles.getSizeTypes(tenantId),
     [`tenant:${tenantId}:sizeTypes`],
-    { revalidate: 3600, tags: [`sizeTypes`] }
+    { revalidate: 3600, tags: [`tenant:${tenantId}:sizeTypes`] }
   )();
 }

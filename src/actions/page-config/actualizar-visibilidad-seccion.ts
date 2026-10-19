@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import type { PageConfig_featuredLayout } from "@/../generated/prisma/client";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 import { conPrisma } from "@/lib/prisma";
 
@@ -11,18 +11,23 @@ export interface DatosVisibilidadSeccion {
 
 export async function actualizarVisibilidadSeccion(datos: DatosVisibilidadSeccion) {
   try {
-    const { pageConfig } = await requerirPageConfigAdministrador();
+    const { contexto, pageConfig } = await requerirPageConfigAdministrador();
+    const layout = datos.featuredLayout
+      ? z.enum(["GRID", "COLLAGE", "MINIMAL"]).safeParse(datos.featuredLayout.toUpperCase())
+      : null;
+    if (layout && !layout.success) {
+      return { ok: false, error: "Diseño de sección no válido" };
+    }
     await conPrisma((prisma) =>
       prisma.pageConfig.update({
         where: { id: pageConfig.id },
         data: {
-          featuredLayout: datos.featuredLayout
-            ? (datos.featuredLayout.toUpperCase() as PageConfig_featuredLayout)
-            : undefined,
+          featuredLayout: layout?.data,
         },
       }),
     );
 
+    revalidateTag(`tenant:${contexto.tenantId}:page-config`);
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (error) {

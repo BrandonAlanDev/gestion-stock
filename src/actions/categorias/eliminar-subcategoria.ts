@@ -16,8 +16,8 @@ export async function deleteSubCategory(id: string) {
       return { error: `No se puede eliminar. Hay ${cantidadProductos} producto(s) asignado(s).` };
     }
     await eliminarSubcategoria(tenantId, id);
-    revalidateTag(`categories`);
-    revalidateTag(`products`);
+    revalidateTag(`tenant:${tenantId}:categories`);
+    revalidateTag(`tenant:${tenantId}:products`);
     return { success: true };
   } catch (error) {
     console.error("Error en deleteSubCategoryAction:", error);

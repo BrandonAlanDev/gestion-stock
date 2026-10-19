@@ -13,8 +13,8 @@ export async function deleteCategory(id: string) {
       return { error: `No se puede eliminar. Tenés ${cantidadSubcategorias} subcategorías vinculadas.` };
     }
     await eliminarCategoria(tenantId, id);
-    revalidateTag(`categories`);
-    revalidateTag(`products`);
+    revalidateTag(`tenant:${tenantId}:categories`);
+    revalidateTag(`tenant:${tenantId}:products`);
     return { success: true };
   } catch (error) {
     console.error("Error al borrar categoría:", error);

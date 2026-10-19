@@ -5,6 +5,6 @@ export async function obtenerCarruselesCacheados(tenantId: string) {
   return unstable_cache(
     () => obtenerCarruseles(tenantId, undefined, true),
     [`tenant:${tenantId}:carousels`],
-    { revalidate: 3600, tags: [`carousels`] }
+    { revalidate: 3600, tags: [`tenant:${tenantId}:carousels`] }
   )();
 }
