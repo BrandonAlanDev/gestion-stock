@@ -22,8 +22,9 @@ export interface ResumenMetodoPago {
  */
 export async function obtenerMetodosPagoDisponibles(
   tenantId: string,
+  registrosExistentes?: ReadonlyArray<{ metodo: string; activo: boolean }>,
 ): Promise<ResumenMetodoPago[]> {
-  const registros = await conPrisma((prisma) =>
+  const registros = registrosExistentes ?? await conPrisma((prisma) =>
     prisma.metodoPago.findMany({ where: {} }),
   );
   const porMetodo = new Map<string, { activo: boolean }>();

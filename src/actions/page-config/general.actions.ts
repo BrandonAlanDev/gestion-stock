@@ -1,6 +1,7 @@
 "use server";
 
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { conPrismaTenant } from "@/lib/prisma";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
@@ -141,8 +142,12 @@ async function obtenerPageConfigCacheada(tenantId: string) {
   )();
 }
 
-export async function getPageConfig() {
+const obtenerPageConfigSolicitud = cache(async () => {
   const { id: tenantId } = await requiereTenantActivo();
   await getOrCreatePageConfig(tenantId);
   return obtenerPageConfigCacheada(tenantId);
+});
+
+export async function getPageConfig() {
+  return obtenerPageConfigSolicitud();
 }

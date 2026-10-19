@@ -42,8 +42,7 @@ import GrupoConfiguracion from "./GrupoConfiguracion";
 import ItemConfiguracion from "./ItemConfiguracion";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
-import { obtenerMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
-import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
+import type { ResultadoMetodosPago, MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
 import type { EstadoConexionMP } from "@/types/mercadopago";
 
 const gruposNav = [
@@ -69,25 +68,16 @@ const MENSAJES_ERROR_MP: Record<string, string> = {
 export default function PanelConfiguracion({
   config,
   estadoMercadoPago,
+  resultadoMetodosPagoInicial,
 }: {
   config: ConfigCompleta | null;
   estadoMercadoPago: EstadoConexionMP;
+  resultadoMetodosPagoInicial: ResultadoMetodosPago;
 }) {
   const [drawerAbierto, setDrawerAbierto] = useState<ClaveDrawer | null>(null);
-  const [metodosPago, setMetodosPago] = useState<MetodoPagoAdmin[] | null>(null);
+  const [resultadoMetodosPago, setResultadoMetodosPago] = useState(resultadoMetodosPagoInicial);
   const router = useRouter();
   const parametrosBusqueda = useSearchParams();
-
-  useEffect(() => {
-    let activo = true;
-    void obtenerMetodosPago().then((resultado) => {
-      if (!activo) return;
-      setMetodosPago(resultado.ok ? resultado.metodos : null);
-    });
-    return () => {
-      activo = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (parametrosBusqueda.get("mp_success")) {
@@ -117,6 +107,20 @@ export default function PanelConfiguracion({
       </div>
     );
   }
+
+  const metodosPago = resultadoMetodosPago.ok ? resultadoMetodosPago.metodos : null;
+  const actualizarMetodoPago = (id: MetodoPagoAdmin["id"], parcial: Partial<MetodoPagoAdmin>) => {
+    setResultadoMetodosPago((resultado) =>
+      resultado.ok
+        ? {
+            ok: true,
+            metodos: resultado.metodos.map((metodo) =>
+              metodo.id === id ? { ...metodo, ...parcial } : metodo,
+            ),
+          }
+        : resultado,
+    );
+  };
 
   const tieneContacto = Boolean(config.phone || config.whatsapp || config.email);
   const tieneUbicacion = config.locationEnabled && Boolean(config.address);
@@ -273,7 +277,7 @@ export default function PanelConfiguracion({
                   ? metodosPago.some((metodo) => metodo.activo)
                     ? "Activados"
                     : "Sin activar"
-                  : "Cargando..."
+                  : "No disponible"
               }
               alClick={() => setDrawerAbierto("pagos")}
             />
@@ -349,6 +353,8 @@ export default function PanelConfiguracion({
         drawerAbierto={drawerAbierto}
         alCerrar={() => setDrawerAbierto(null)}
         estadoMercadoPago={estadoMercadoPago}
+        resultadoMetodosPago={resultadoMetodosPago}
+        alActualizarMetodoPago={actualizarMetodoPago}
       />
     </div>
   );

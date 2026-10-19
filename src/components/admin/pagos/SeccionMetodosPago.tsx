@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { obtenerMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
-import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
+import type { MetodoPagoAdmin, ResultadoMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { activarMetodo } from "@/actions/pagos/activar-metodo";
 import { guardarConfigMetodo } from "@/actions/pagos/guardar-config-metodo";
@@ -13,37 +12,20 @@ import { desconectarMetodo } from "@/actions/pagos/desconectar-metodo";
 import TarjetaMercadoPago from "./TarjetaMercadoPago";
 import TarjetaTransferencia from "./TarjetaTransferencia";
 
-export default function SeccionMetodosPago() {
-  const [metodosPago, setMetodosPago] = useState<MetodoPagoAdmin[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export default function SeccionMetodosPago({
+  resultado,
+  alActualizarMetodo,
+}: {
+  resultado: ResultadoMetodosPago;
+  alActualizarMetodo: (id: MetodoPagoId, parcial: Partial<MetodoPagoAdmin>) => void;
+}) {
   const [pendiente, iniciarTransicion] = useTransition();
-
-  useEffect(() => {
-    let activo = true;
-    void obtenerMetodosPago().then((resultado) => {
-      if (!activo) return;
-      if (resultado.ok) {
-        setMetodosPago(resultado.metodos);
-      } else {
-        setError(resultado.error);
-      }
-    });
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  const actualizarMetodo = (id: MetodoPagoId, parcial: Partial<MetodoPagoAdmin>) => {
-    setMetodosPago((previos) =>
-      previos ? previos.map((metodo) => (metodo.id === id ? { ...metodo, ...parcial } : metodo)) : previos,
-    );
-  };
 
   const manejarCambioActivo = (id: MetodoPagoId, valor: boolean) => {
     iniciarTransicion(async () => {
       const resultado = await activarMetodo(id, valor);
       if (resultado.success) {
-        actualizarMetodo(id, { activo: valor });
+        alActualizarMetodo(id, { activo: valor });
         toast.success(valor ? "Método activado" : "Método desactivado");
       } else {
         toast.error("No se pudo actualizar el método", {
@@ -57,7 +39,7 @@ export default function SeccionMetodosPago() {
     iniciarTransicion(async () => {
       const resultado = await desconectarMetodo("mercadopago");
       if (resultado.success) {
-        actualizarMetodo("mercadopago", { conectado: false, activo: false });
+        alActualizarMetodo("mercadopago", { conectado: false, activo: false });
         toast.success("Mercado Pago desconectado");
       } else {
         toast.error("No se pudo desconectar", {
@@ -74,7 +56,7 @@ export default function SeccionMetodosPago() {
         instrucciones,
       });
       if (resultado.success) {
-        actualizarMetodo("transferencia", {
+        alActualizarMetodo("transferencia", {
           instrucciones: instrucciones.trim() || null,
         });
         toast.success("Instrucciones guardadas");
@@ -86,20 +68,11 @@ export default function SeccionMetodosPago() {
     });
   };
 
-  if (error) {
+  if (!resultado.ok) {
     return (
       <div className="flex items-start gap-2 rounded-lg border border-[var(--admin-peligro)] bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">
         <AlertTriangle size={16} className="shrink-0" />
-        <span>{error}</span>
-      </div>
-    );
-  }
-
-  if (!metodosPago) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-[var(--admin-texto-suave)]">
-        <Loader2 size={16} className="animate-spin" />
-        Cargando métodos de pago...
+        <span>{resultado.error}</span>
       </div>
     );
   }
@@ -114,7 +87,7 @@ export default function SeccionMetodosPago() {
       </div>
 
       <div className="space-y-6">
-        {metodosPago.map((metodo) =>
+        {resultado.metodos.map((metodo) =>
           metodo.id === "mercadopago" ? (
             <TarjetaMercadoPago
               key={metodo.id}

@@ -20,12 +20,15 @@ import SeccionMetodosPago from "@/components/admin/pagos/SeccionMetodosPago";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
 import type { EstadoConexionMP } from "@/types/mercadopago";
+import type { MetodoPagoAdmin, ResultadoMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
 
 interface DrawersConfiguracionProps {
   config: ConfigCompleta;
   drawerAbierto: ClaveDrawer | null;
   alCerrar: () => void;
   estadoMercadoPago: EstadoConexionMP;
+  resultadoMetodosPago: ResultadoMetodosPago;
+  alActualizarMetodoPago: (id: MetodoPagoAdmin["id"], parcial: Partial<MetodoPagoAdmin>) => void;
 }
 
 export default function DrawersConfiguracion({
@@ -33,6 +36,8 @@ export default function DrawersConfiguracion({
   drawerAbierto,
   alCerrar,
   estadoMercadoPago,
+  resultadoMetodosPago,
+  alActualizarMetodoPago,
 }: DrawersConfiguracionProps) {
   const aConfigApariencia = (): ConfigApariencia => ({
     storeName: config.storeName,
@@ -172,7 +177,7 @@ export default function DrawersConfiguracion({
         titulo="Métodos de pago"
         descripcion="Configurá cómo tus clientes pueden pagar sus compras."
       >
-        <SeccionMetodosPago />
+        <SeccionMetodosPago resultado={resultadoMetodosPago} alActualizarMetodo={alActualizarMetodoPago} />
       </DrawerSeccion>
 
       <DrawerSeccion

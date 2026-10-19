@@ -29,12 +29,10 @@ export async function obtenerMetodosPago(): Promise<ResultadoMetodosPago> {
   try {
     const contexto = await requiereAdmin();
 
-    const [disponibles, registros] = await Promise.all([
-      obtenerMetodosPagoDisponibles(contexto.tenantId),
-      conPrisma((prisma) =>
-        prisma.metodoPago.findMany({ where: {} }),
-      ),
-    ]);
+    const registros = await conPrisma((prisma) =>
+      prisma.metodoPago.findMany({ where: {} }),
+    );
+    const disponibles = await obtenerMetodosPagoDisponibles(contexto.tenantId, registros);
     const porMetodo = new Map<string, { config: unknown }>();
     for (const registro of registros) {
       porMetodo.set(registro.metodo, { config: registro.config });
