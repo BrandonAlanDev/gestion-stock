@@ -1,5 +1,5 @@
 import { SkeletonAdmin } from "@/components/ui/skeleton-vistas";
 
 export default function LoadingPaginas() {
-  return <SkeletonAdmin />;
+  return <SkeletonAdmin tipo="paginas" />;
 }

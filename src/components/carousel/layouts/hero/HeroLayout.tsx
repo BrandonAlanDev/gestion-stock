@@ -43,7 +43,7 @@ export default function HeroLayout({ carousel }: HeroLayoutProps) {
   const layout = settings.slideLayout || "standard";
 
   return (
-    <section className="relative w-full h-[100dvh] bg-black">
+    <section className="relative h-[78dvh] min-h-[520px] max-h-[820px] w-full bg-black">
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
@@ -66,9 +66,7 @@ export default function HeroLayout({ carousel }: HeroLayoutProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.6), rgba(0,0,0,0.15))" }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent, rgba(0,0,0,0.35))" }} />
-            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--color-primario) 20%, transparent) 0%, transparent 70%)" }} />
+            <div className="absolute inset-0 bg-black/60" />
           </motion.div>
         </AnimatePresence>
       )}

@@ -148,7 +148,7 @@ export default function CheckoutCliente() {
           </div>
 
           {cargandoMetodos ? (
-            <SkeletonTarjetas cantidad={2} admin={false} />
+            <SkeletonTarjetas cantidad={2} admin={false} tipo="pagos" />
           ) : metodos.length === 0 ? (
             <p className="text-sm opacity-70">
               No hay métodos de pago disponibles en este momento.

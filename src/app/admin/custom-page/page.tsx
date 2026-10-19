@@ -137,12 +137,12 @@ export default function CustomPagesPage() {
               </button>
             </div>
           </div>
-          <div className="overflow-hidden rounded-lg bg-[var(--admin-fondo-opaco)]">
-            {loading && <SkeletonFilas filas={5} />}
+          <div className="space-y-3 sm:space-y-0 sm:overflow-hidden sm:rounded-xl sm:border sm:border-[var(--admin-borde)] sm:bg-[var(--admin-fondo-opaco)]">
+            {loading && <SkeletonFilas filas={5} tipo="paginas" />}
             {pages.map((page) => (
               <div
                 key={page.id}
-                className="flex flex-col items-start justify-between gap-3 border-b border-[var(--admin-borde)] p-3 transition-colors last:border-b-0 hover:bg-[var(--admin-fondo-hover)] sm:flex-row sm:items-center"
+                className="admin-panel flex flex-col items-start justify-between gap-3 p-4 transition-colors hover:bg-[var(--admin-fondo-hover)] sm:rounded-none sm:border-x-0 sm:border-t-0 sm:border-b sm:flex-row sm:items-center sm:last:border-b-0"
               >
                 {/* Izquierda: ícono + título + slug */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -165,7 +165,7 @@ export default function CustomPagesPage() {
                   <span
                     className={`rounded-[1rem] px-3 py-1 text-xs font-black tracking-wide ${page.isActive ? "bg-[var(--admin-exito-suave)] text-[var(--admin-exito)]" : "bg-[var(--admin-secundario-suave)] text-[var(--admin-texto-suave)]"}`}
                   >
-                    {page.isActive ? "ACTIVA" : "INACTIVA"}
+                    {page.isActive ? "Activa" : "Inactiva"}
                   </span>
 
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -207,7 +207,7 @@ export default function CustomPagesPage() {
                 </div>
                 <h3 className="text-xl font-black text-[var(--admin-texto)]">No hay páginas dinámicas creadas</h3>
                 <p className="mt-2 max-w-sm text-[var(--admin-texto-suave)]">
-                  Utiliza el botón de &quot;Crear Página&quot; para comenzar a armar tu primera landing page modular.
+                  Usá «Crear página» para agregar contenido a tu tienda.
                 </p>
               </div>
             )}

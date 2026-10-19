@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "verificar:core": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-cliente-logabyte-core.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-adaptador-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-callbacks-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-admin-pendiente.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-dominio-prueba.ts",
+    "verificar:core": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-adaptador-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-callbacks-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-admin-pendiente.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-dominio-prueba.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-proveedor-base-core.ts",
     "lint": "eslint src next.config.ts prisma.config.ts eslint.config.mjs postcss.config.mjs --quiet && npm run verificar:imports-prisma",
     "verificar:imports-prisma": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-imports-prisma-global.ts"
   },
@@ -29,6 +29,7 @@
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
     "mercadopago": "^3.6.1",
+    "mariadb": "^3.4.5",
     "next": "15.2.8",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.0.0",

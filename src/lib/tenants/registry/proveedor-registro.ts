@@ -1,8 +1,7 @@
 import "server-only";
 
 import { ProveedorRegistroCacheado } from "./proveedor-cacheado";
-import { ClienteLogabyteCore } from "./cliente-logabyte-core";
-import { ProveedorLogabyteCore } from "./proveedor-logabyte-core";
+import { ProveedorBaseCore } from "./proveedor-base-core";
 import type { TenantRegistryProvider } from "./types";
 
 const globalRegistro = globalThis as typeof globalThis & {
@@ -20,25 +19,16 @@ export function obtenerProveedorRegistroTenant(): ProveedorRegistroCacheado {
 }
 
 function crearProveedorConfigurado(): TenantRegistryProvider {
-  const urlBase = process.env.LOGABYTE_CORE_URL;
-  const token = process.env.LOGABYTE_CORE_SERVICE_TOKEN;
-  const producto = process.env.LOGABYTE_CORE_PRODUCTO ?? "gestion-stock";
-  const timeoutLocal = process.env.NODE_ENV === "development"
-    ? process.env.LOGABYTE_CORE_TIMEOUT_MS
-    : undefined;
-  if (!urlBase || !token) {
-    throw new Error("Falta configurar Logabyte Core");
+  const urlConexion = process.env.LOGABYTE_CORE_DATABASE_URL;
+  const secreto = process.env.CIFRADO_CONEXIONES_SECRETO;
+  if (!urlConexion || !secreto) {
+    throw new Error("Falta configurar la conexión directa a la base de Logabyte Core");
   }
-  if (timeoutLocal && !/^\d+$/.test(timeoutLocal)) {
-    throw new Error("LOGABYTE_CORE_TIMEOUT_MS debe ser un entero en milisegundos");
-  }
-  const cliente = new ClienteLogabyteCore({
-    urlBase,
-    token,
-    producto,
-    timeoutMs: timeoutLocal ? Number(timeoutLocal) : undefined,
-  });
-  return new ProveedorLogabyteCore(cliente, cliente);
+  return new ProveedorBaseCore(
+    urlConexion,
+    process.env.LOGABYTE_CORE_PRODUCTO ?? "gestion-stock",
+    secreto,
+  );
 }
 
 /** Permite inyectar un proveedor en pruebas y tareas administrativas. */

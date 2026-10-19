@@ -35,7 +35,6 @@ export default function HeroLayoutSplit({
           sizes="50vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
       </motion.div>
 
       <motion.div
@@ -50,7 +49,7 @@ export default function HeroLayoutSplit({
           </motion.p>
         )}
 
-        <motion.h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter uppercase italic leading-none mb-6">
+        <motion.h1 className="mb-6 text-4xl font-semibold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
           {slide.title}
         </motion.h1>
 

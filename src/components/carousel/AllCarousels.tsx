@@ -105,15 +105,15 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
 
 function SkeletonAll() {
   return (
-    <div className="carousel-container space-y-0">
-      <div className="w-full h-[100dvh] bg-[var(--color-fondo-sitio)] animate-pulse" />
-      <div className="w-full h-[300px] bg-[var(--superficie-fondo)] animate-pulse" />
-      <div className="w-full py-16 px-4 md:px-12 lg:px-16 bg-[var(--color-fondo-sitio)]">
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="h-[50vh] bg-[var(--superficie-fondo)] animate-pulse" />
-          <div className="h-[50vh] bg-[var(--color-secundario)] animate-pulse" />
+    <div role="status" aria-label="Cargando carruseles" className="carousel-container">
+      <div aria-hidden="true" className="relative h-[78dvh] min-h-[520px] max-h-[820px] w-full bg-[var(--superficie-imagen)] motion-safe:animate-pulse">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-4">
+          <div className="h-5 w-40 rounded-md bg-[var(--color-fondo-sitio)]/20" />
+          <div className="h-12 w-72 max-w-full rounded-md bg-[var(--color-fondo-sitio)]/20" />
+          <div className="h-11 w-36 rounded-md bg-[var(--color-fondo-sitio)]/20" />
         </div>
       </div>
+      <span className="sr-only">Cargando carruseles...</span>
     </div>
   );
 }

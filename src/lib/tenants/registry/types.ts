@@ -33,20 +33,3 @@ export interface TenantRegistryProvider {
   /** Descarta la caché interna al recibir una invalidación explícita. */
   invalidarCache?(): void;
 }
-
-/** Puerto del cliente HTTP privado de Logabyte Core. */
-export interface LogabyteCoreGateway {
-  resolverPorHostname(hostname: string): Promise<TenantRegistryEntry | null>;
-  resolverPorId(tenantId: string): Promise<TenantRegistryEntry | null>;
-  listarTenants(): Promise<TenantRegistryEntry[]>;
-  verificarAcceso(tenantId: string): Promise<number>;
-}
-
-/** Resuelve referencias opacas de conexión sin mezclar secretos con metadatos. */
-export interface TenantCredentialResolver {
-  resolver(
-    referenciaBase: string,
-    versionCredenciales: string,
-    tenantId?: string,
-  ): Promise<CredencialesBaseTenant>;
-}

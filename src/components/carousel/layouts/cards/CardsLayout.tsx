@@ -56,13 +56,13 @@ export default function CardsLayout({ carousel, storeName }: CardsLayoutProps) {
   if (slides.length === 0) return null;
 
   const headerSection = title ? (
-    <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b-2 pb-6" style={{ borderColor: "var(--color-primario)" }}>
+    <div className="mx-auto mb-8 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 border-b border-current/10 pb-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <span className="text-[10px] font-black tracking-[0.4em] text-[var(--texto-sobre-fondo)] opacity-60 uppercase block mb-1">
+          <span className="mb-1 block text-sm text-[var(--texto-sobre-fondo)] opacity-70">
             {storeName || "Tienda"}
           </span>
-          <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-fondo)] tracking-tighter uppercase italic leading-none">
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--texto-sobre-fondo)] sm:text-3xl">
             {title}
           </h2>
         </div>
@@ -72,7 +72,7 @@ export default function CardsLayout({ carousel, storeName }: CardsLayoutProps) {
 
   if (layout === "offers") {
     return (
-      <section className="w-full bg-[var(--color-fondo-sitio)] py-16 border-t-2" style={{ borderColor: "var(--color-primario)" }}>
+      <section className="w-full border-t border-current/10 bg-[var(--color-fondo-sitio)] py-12 sm:py-16">
         {headerSection}
         <OfferCarousel
           title={title}
@@ -86,9 +86,9 @@ export default function CardsLayout({ carousel, storeName }: CardsLayoutProps) {
   }
 
   return (
-    <section id="featured" className="w-full bg-[var(--color-fondo-sitio)] py-16 border-t-2" style={{ borderColor: "var(--color-primario)" }}>
+    <section id="featured" className="w-full border-t border-current/10 bg-[var(--color-fondo-sitio)] py-12 sm:py-16">
       {headerSection}
-      <div className="w-full px-4 md:px-12 lg:px-16">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <CardsLayoutSimple slides={slides} settings={settings} />
       </div>
     </section>

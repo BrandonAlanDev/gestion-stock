@@ -109,7 +109,7 @@ export default function SizesPage() {
         {/* Creador Rápido de Grupos */}
         <form 
           onSubmit={handleCreateGroup} 
-          className="rounded-lg bg-[var(--admin-fondo-opaco)] p-5"
+          className="admin-panel p-5"
         >
           <h2 className="mb-4 text-base font-semibold">Nuevo grupo</h2>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -131,9 +131,9 @@ export default function SizesPage() {
         {/* Lista de Grupos y Curvas */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {loading ? (
-            <div className="col-span-full"><SkeletonTarjetas cantidad={4} /></div>
+            <div className="col-span-full"><SkeletonTarjetas cantidad={4} tipo="talles" /></div>
           ) : sizeTypes.map(type => (
-            <div key={type.id} className="space-y-5 rounded-lg bg-[var(--admin-fondo-opaco)] p-5">
+            <div key={type.id} className="admin-panel space-y-5 p-5">
               
               {/* Header del Grupo */}
               <div className="flex items-center justify-between border-b border-[var(--admin-borde)] pb-4">

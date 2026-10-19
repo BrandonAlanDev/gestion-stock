@@ -8,7 +8,7 @@ import { buscarContenido } from '@/actions/busqueda/buscar-contenido';
 import type { ResultadoBusqueda } from '@/types/busqueda/resultado-busqueda';
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
-export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
+export default function Searchbarfinder({ isHomeTop, onNavigate }: { isHomeTop: boolean; onNavigate?: () => void }) {
 
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState<ResultadoBusqueda[]>([]);
@@ -98,11 +98,11 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
   };
 
   return (
-    <div ref={containerRef} className="relative flex-1 w-full max-w-[200px] sm:max-w-md lg:max-w-2xl mx-3 sm:mx-6 z-50">
+    <div ref={containerRef} className="relative z-50 w-full flex-1">
       
       {/* Campo de búsqueda */}
       <div
-        className={`relative flex items-center w-full h-10 sm:h-11 rounded-xl transition-all duration-300 backdrop-blur-md ${
+        className={`relative flex h-11 w-full items-center rounded-lg transition-colors ${
            !isTransparentState ? 'border' : 'border-transparent'
         }`}
         style={{
@@ -122,6 +122,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
           className={`peer h-full w-full outline-none text-xs sm:text-sm bg-transparent pr-2 transition-colors ${placeholderClass}`}
           type="text"
           id="search"
+          aria-label="Buscar en la tienda"
           placeholder="Buscar productos..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -146,7 +147,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
       {/* Lista desplegable de resultados */}
       {isFocused && query.trim().length > 0 && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl border overflow-hidden flex flex-col max-h-[60vh] sm:max-h-[400px] overflow-y-auto backdrop-blur-xl transition-all"
+          className="absolute top-full left-0 right-0 mt-2 flex max-h-[60vh] flex-col overflow-y-auto rounded-lg border shadow-lg sm:max-h-[400px]"
           style={{
             backgroundColor: dropdownBg,
             borderColor: overlayColor
@@ -162,7 +163,7 @@ export default function Searchbarfinder({ isHomeTop }: { isHomeTop: boolean }) {
                 <li key={item.id}>
                   <Link 
                     href={item.url}
-                    onClick={() => setIsFocused(false)} 
+                    onClick={() => { setIsFocused(false); onNavigate?.(); }}
                     className="flex items-center px-4 py-2.5 transition-colors gap-3 group hover:bg-[color-mix(in_srgb,var(--texto-sobre-secundario)_8%,transparent)]"
                   >
                     <div 

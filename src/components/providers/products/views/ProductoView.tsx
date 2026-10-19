@@ -25,8 +25,8 @@ export default function ProductoView({ product }: ProductProps) {
   }, [productImages]);
 
   return (
-    <div className="bg-[var(--color-fondo-sitio)] min-h-screen pt-32 pb-24 text-[var(--texto-sobre-fondo)] selection:bg-[var(--color-secundario)]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+    <div className="min-h-screen bg-[var(--color-fondo-sitio)] pb-20 pt-24 text-[var(--texto-sobre-fondo)] selection:bg-[var(--color-secundario)] sm:pt-28">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-12">
 
         {/* BOTÓN VOLVER ATRÁS */}
         <button
@@ -38,17 +38,17 @@ export default function ProductoView({ product }: ProductProps) {
           Volver al catálogo
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-12 lg:gap-20 items-start">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
 
           {/* BLOQUE IZQUIERDO: GALERÍA */}
-          <div className="flex flex-col-reverse md:flex-row gap-6">
+          <div className="flex min-w-0 flex-col-reverse gap-3 sm:gap-5 md:flex-row">
             {productImages.length > 1 && (
-              <div className="flex md:flex-col gap-3 flex-shrink-0">
+              <div className="flex shrink-0 gap-3 overflow-x-auto pb-1 md:flex-col md:overflow-visible">
                 {productImages.map((img) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.srcImage)}
-                    className={`w-16 h-20 overflow-hidden bg-[var(--superficie-imagen)] rounded-md transition-all border ${selectedImage === img.srcImage
+                    className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-md border bg-[var(--superficie-imagen)] transition-all ${selectedImage === img.srcImage
                       ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
                     }`}
@@ -63,14 +63,14 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            <div className="w-full bg-[var(--superficie-imagen)] rounded-xl p-8 flex items-center justify-center min-h-[450px] md:min-h-[650px]">
+            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-xl bg-[var(--superficie-imagen)] p-4 sm:p-8">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 src={selectedImage}
                 alt={product.name}
-                className="max-h-[650px] w-auto object-contain select-none mix-blend-multiply"
+                className="max-h-[680px] max-w-full select-none object-contain"
               />
             </div>
           </div>
@@ -81,9 +81,9 @@ export default function ProductoView({ product }: ProductProps) {
           </div>
         </div>
 
-        <div className="mt-24 border-t border-[var(--color-secundario)] pt-16 max-w-3xl">
-          <h2 className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--color-primario)" }}>
-            Resumen del producto
+        <div className="mt-16 max-w-3xl border-t border-current/15 pt-10">
+          <h2 className="mb-5 text-xl font-semibold">
+            Descripción
           </h2>
           <div
             className="text-[var(--texto-sobre-fondo)] opacity-70 font-light leading-relaxed space-y-4 text-base prose prose-sm"

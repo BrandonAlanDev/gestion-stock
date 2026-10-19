@@ -67,7 +67,7 @@ export default async function ResumenDiseno() {
   }: PropsBloque) {
     return (
       <section
-        className={`rounded-lg bg-[var(--admin-fondo-opaco)] p-5 ${className ?? ""}`}
+        className={`admin-panel p-5 ${className ?? ""}`}
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

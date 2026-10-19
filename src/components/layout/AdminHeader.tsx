@@ -33,7 +33,7 @@ export default function AdminHeader({ onOpenMenu }: { onOpenMenu: () => void }) 
     <header className="fixed top-0 right-0 left-0 md:left-[var(--sidebar-ancho)] z-[90] h-14 border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] transition-[left] duration-200">
       <div className="flex h-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <button type="button" onClick={onOpenMenu} aria-label="Abrir menú" className="md:hidden -ml-1 p-2 text-[var(--admin-texto)]">
+          <button type="button" onClick={onOpenMenu} aria-label="Abrir menú" className="-ml-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--admin-texto)] hover:bg-[var(--admin-fondo-hover)] md:hidden">
             <Menu size={20} />
           </button>
           <span className="truncate text-sm font-semibold text-[var(--admin-texto)]">{seccion}</span>

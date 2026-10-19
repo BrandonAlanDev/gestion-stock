@@ -82,7 +82,7 @@ export default function NotFoundClient({
 }: NotFoundClientProps) {
   return (
     <main
-      className="relative min-h-[70vh] flex-1 flex items-center justify-center overflow-hidden px-4 py-16"
+      className="relative min-h-[100svh] flex-1 flex items-center justify-center overflow-hidden px-4 py-10 sm:py-16"
       style={{ backgroundColor: "color-mix(in srgb, var(--color-secundario) 33%, transparent)" }}
     >
       <motion.div
@@ -100,7 +100,7 @@ export default function NotFoundClient({
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
       />
 
-      <div className="relative max-w-2xl w-full flex flex-col items-center text-center">
+      <div className="relative w-full max-w-2xl min-w-0 flex flex-col items-center text-center">
         {logo ? (
           <motion.div
             initial={{ opacity: 0, y: -16 }}
@@ -112,14 +112,14 @@ export default function NotFoundClient({
               alt={storeName}
               width={160}
               height={64}
-              className="h-16 w-auto object-contain mb-6"
+              className="mb-6 h-16 max-w-full w-auto object-contain"
             />
           </motion.div>
         ) : null}
 
-        <div className="relative mb-8 flex items-center justify-center w-full">
+        <div className="relative mb-5 flex w-full min-w-0 items-center justify-center sm:mb-8">
           <motion.h1
-            className="text-[8rem] leading-none md:text-[10rem] font-black tracking-tighter select-none"
+            className="max-w-full text-[clamp(4.5rem,25vw,10rem)] leading-none font-black tracking-tighter select-none"
             style={{ color: "var(--color-primario)" }}
             initial={{ opacity: 0, scale: 0.5, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -134,7 +134,7 @@ export default function NotFoundClient({
         </div>
 
         <motion.h2
-          className="text-2xl md:text-3xl font-bold text-[var(--texto-sobre-fondo)] mb-3"
+          className="mb-3 max-w-full text-xl font-bold leading-tight text-[var(--texto-sobre-fondo)] sm:text-2xl md:text-3xl"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSICION_APARICION, delay: 0.5 }}
@@ -143,7 +143,7 @@ export default function NotFoundClient({
         </motion.h2>
 
         <motion.p
-          className="text-base md:text-lg text-[var(--texto-sobre-fondo)] opacity-70 mb-10 max-w-md"
+          className="mb-8 max-w-md text-sm leading-relaxed text-[var(--texto-sobre-fondo)] opacity-70 sm:mb-10 sm:text-base md:text-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSICION_APARICION, delay: 0.65 }}
@@ -153,15 +153,15 @@ export default function NotFoundClient({
         </motion.p>
 
         <motion.div
-          className="flex flex-col sm:flex-row gap-4"
+          className="flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSICION_APARICION, delay: 0.8 }}
         >
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+          <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
             <Link
               href="/"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-full font-semibold transition-opacity hover:opacity-90"
+              className="inline-flex w-full items-center justify-center rounded-full px-8 py-3 font-semibold transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: "var(--color-primario)",
                 color: "var(--texto-sobre-primario)",
@@ -171,10 +171,10 @@ export default function NotFoundClient({
             </Link>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+          <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
             <Link
               href="/productos"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-full font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--color-primario)_10%,transparent)]"
+              className="inline-flex w-full items-center justify-center rounded-full px-8 py-3 font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--color-primario)_10%,transparent)]"
               style={{
                 color: "var(--color-primario)",
                 border: "2px solid var(--color-primario)",

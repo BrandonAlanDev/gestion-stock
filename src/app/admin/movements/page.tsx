@@ -36,14 +36,14 @@ export default function MovementsPage() {
       </div>
 
       {cargando ? (
-        <SkeletonFilas filas={8} />
+        <SkeletonFilas filas={8} tipo="movimientos" />
       ) : error ? (
-        <div className="rounded-lg bg-[var(--admin-fondo-opaco)] p-10 text-center text-sm text-[var(--admin-texto-suave)]">No se pudieron cargar los movimientos.</div>
+        <div className="admin-panel p-10 text-center text-sm text-[var(--admin-texto-suave)]">No se pudieron cargar los movimientos.</div>
       ) : movimientos.length === 0 ? (
-        <div className="rounded-lg bg-[var(--admin-fondo-opaco)] p-10 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay movimientos registrados.</div>
+        <div className="admin-panel p-10 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay movimientos registrados.</div>
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-lg bg-[var(--admin-fondo-opaco)] xl:block">
+          <div className="admin-panel hidden overflow-hidden xl:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-hover)] text-xs font-medium text-[var(--admin-texto-suave)]">
                 <tr>
@@ -71,7 +71,7 @@ export default function MovementsPage() {
           </div>
           <div className="space-y-2 xl:hidden">
             {movimientos.map((movimiento) => (
-              <article key={movimiento.id} className="rounded-lg bg-[var(--admin-fondo-opaco)] p-4">
+              <article key={movimiento.id} className="admin-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold">{movimiento.garmentVariant?.garment?.name || "Producto eliminado"}</h2>

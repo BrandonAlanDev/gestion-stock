@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 
 type Slide = {
   id: string | number;
@@ -12,7 +13,7 @@ type Slide = {
   subtitle?: string;
   url?: string;
   ctaText?: string;
-  config?: { hideText?: boolean };
+  config?: Record<string, unknown> & { hideText?: boolean };
 };
 
 interface ShowcaseLayoutProps {
@@ -38,7 +39,11 @@ export default function ShowcaseLayout({ carousel }: ShowcaseLayoutProps) {
   const showDots = settings.showDots ?? true;
   const showArrows = settings.showArrows ?? true;
   const slidesToScroll = settings.slidesToScroll ?? 1;
-  const visibleSlides = 3;
+  const anchoSlide = slides.length === 1
+    ? "flex-[0_0_100%]"
+    : slides.length === 2
+      ? "flex-[0_0_85%] sm:flex-[0_0_50%]"
+      : "flex-[0_0_85%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%]";
 
   const refAutoplay = useRef(Autoplay({ delay: autoplayDelay, stopOnInteraction: false }));
 
@@ -77,14 +82,19 @@ export default function ShowcaseLayout({ carousel }: ShowcaseLayoutProps) {
     <div className="relative w-full overflow-hidden py-8" style={{ height: `${height}px` }}>
       <div className="overflow-hidden h-full" ref={emblaRef}>
         <div className="flex h-full" style={{ marginLeft: `-${gap}px` }}>
-          {slides.map((slide) => (
+          {slides.map((slide) => {
+            const enlace = resolverEnlaceSlide(slide);
+            return (
             <div
               key={slide.id}
-              className="min-w-0 h-full"
-              style={{ flex: `0 0 calc(100% / ${visibleSlides})`, paddingLeft: `${gap}px` }}
+              className={`h-full min-w-0 ${anchoSlide}`}
+              style={{ paddingLeft: `${gap}px` }}
             >
-              <div
-                className="h-full w-full rounded-2xl overflow-hidden relative group cursor-pointer"
+              <a
+                href={enlace ?? undefined}
+                target={enlace?.startsWith("http") ? "_blank" : undefined}
+                rel={enlace?.startsWith("http") ? "noopener noreferrer" : undefined}
+                className={`group relative block h-full w-full overflow-hidden rounded-xl ${enlace ? "cursor-pointer" : "cursor-default"}`}
                 style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 6%, transparent)" }}
               >
                 <div
@@ -92,23 +102,23 @@ export default function ShowcaseLayout({ carousel }: ShowcaseLayoutProps) {
                   style={{ backgroundImage: `url(${slide.image})` }}
                 />
                 {!slide.config?.hideText && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-black/40" />
                 )}
                 {!slide.config?.hideText && (
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     {slide.subtitle && (
-                      <p className="text-xs font-black tracking-[0.3em] uppercase mb-1" style={{ color: "var(--color-primario)" }}>
+                      <p className="mb-1 text-sm font-medium text-white/80">
                         {slide.subtitle}
                       </p>
                     )}
                     {slide.title && (
-                      <h3 className="text-white font-black text-xl md:text-2xl tracking-tighter uppercase leading-tight">
+                      <h3 className="text-xl font-semibold leading-tight tracking-tight text-white md:text-2xl">
                         {slide.title}
                       </h3>
                     )}
-                    {slide.ctaText && (
+                    {slide.ctaText && enlace && (
                       <span
-                        className="inline-block mt-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider"
+                        className="mt-3 inline-flex min-h-9 items-center rounded-lg px-4 py-1.5 text-sm font-semibold"
                         style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
                       >
                         {slide.ctaText}
@@ -116,13 +126,13 @@ export default function ShowcaseLayout({ carousel }: ShowcaseLayoutProps) {
                     )}
                   </div>
                 )}
-              </div>
+              </a>
             </div>
-          ))}
+          );})}
         </div>
       </div>
 
-      {showArrows && slides.length > visibleSlides && (
+      {showArrows && slides.length > 1 && (
         <>
           <button
             onClick={scrollPrev}

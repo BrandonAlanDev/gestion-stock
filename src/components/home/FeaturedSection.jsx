@@ -25,10 +25,10 @@ export default function FeaturedSection({ homegrid }) {
   };
 
   return (
-    <section className="w-full bg-[var(--color-fondo-sitio)] py-16 border-t-2 overflow-hidden" style={{ borderColor: "var(--color-primario)" }}>
+    <section className="w-full overflow-hidden border-t border-current/10 bg-[var(--color-fondo-sitio)] py-12 sm:py-16">
       {datos?.title?.trim() ? (
-        <div className="w-full px-4 md:px-12 lg:px-16 mb-12">
-          <h2 className="text-4xl md:text-6xl font-black text-[var(--texto-sobre-fondo)] uppercase italic">
+        <div className="mx-auto mb-7 max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--texto-sobre-fondo)] sm:text-3xl">
             {datos.title}
           </h2>
         </div>

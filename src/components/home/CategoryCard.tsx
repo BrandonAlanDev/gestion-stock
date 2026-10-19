@@ -62,7 +62,7 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
   ) : null;
 
   const buttonClasses = (() => {
-    const base = "px-8 py-3 font-black uppercase tracking-wider text-sm";
+    const base = "inline-flex min-h-11 items-center px-5 py-2.5 text-sm font-semibold";
     switch (buttonVariant) {
       case "STRAIGHT":
         return `${base} rounded-none`;
@@ -79,7 +79,7 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
 
   const content = (
     <motion.div
-      className={`relative block overflow-hidden group bg-[var(--color-secundario)] border border-[color-mix(in_srgb,var(--color-secundario)_60%,var(--color-fondo-sitio))] w-full ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
+      className={`group relative block w-full overflow-hidden rounded-xl border border-current/10 bg-[var(--color-secundario)] ${variantStyles} ${linkStyle === "IMAGE" ? "cursor-pointer" : ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       initial={{ opacity: 0 }}
@@ -88,16 +88,16 @@ export const CategoryCard = ({ cat, index, variant = 'grid' }: CategoryCardProps
       transition={{ duration: 0.5, delay: index * 0.05 }}
     >
       <motion.div
-        className="absolute inset-0 bg-cover bg-center grayscale-[15%] group-hover:grayscale-0 transition-all duration-1000"
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-500"
         style={{ backgroundImage: `url(${cat.image})` }}
         animate={{ scale: hovered ? 1.04 : 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-95 group-hover:via-black/35 transition-all duration-300" />
+      <div className="absolute inset-0 bg-black/40" />
 
-      <div className="absolute inset-0 p-8 md:p-10 flex flex-col justify-end z-10">
-        <h3 className="text-white font-black text-2xl md:text-3xl tracking-tighter uppercase italic leading-none">
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-6 md:p-8">
+        <h3 className="text-2xl font-semibold leading-tight tracking-tight text-white md:text-3xl">
           {cat.label}
         </h3>
         {subtitleEl}

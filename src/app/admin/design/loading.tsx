@@ -1,5 +1,5 @@
 import { SkeletonAdmin } from "@/components/ui/skeleton-vistas";
 
 export default function LoadingDiseno() {
-  return <SkeletonAdmin tipo="editor" />;
+  return <SkeletonAdmin tipo="diseno" />;
 }

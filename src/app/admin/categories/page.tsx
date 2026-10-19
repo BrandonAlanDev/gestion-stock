@@ -28,7 +28,7 @@ export default function CategoriesAdminPage() {
     });
   }, []);
 
-  if (!mounted) return <SkeletonAdmin tipo="tarjetas" />;
+  if (!mounted) return <SkeletonAdmin tipo="categorias" />;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
@@ -44,7 +44,7 @@ export default function CategoriesAdminPage() {
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="relative flex flex-col rounded-lg bg-[var(--admin-fondo-opaco)] p-5"
+            className="admin-panel relative flex flex-col p-5"
           >
             <div className="flex justify-between items-start mb-4">
               <span className="text-xs text-[var(--admin-texto-suave)]">Categoría</span>
@@ -96,7 +96,7 @@ export default function CategoriesAdminPage() {
           </div>
         ))}
       </div>
-      {categories.length === 0 && <div className="rounded-lg bg-[var(--admin-fondo-opaco)] p-8 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay categorías. Creá la primera para organizar tus productos.</div>}
+      {categories.length === 0 && <div className="admin-panel p-8 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay categorías. Creá la primera para organizar tus productos.</div>}
     </div>
   );
 }

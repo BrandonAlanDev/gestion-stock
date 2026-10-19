@@ -22,7 +22,7 @@ export default function HeroLayoutMinimal({
     >
       {slide.subtitle && (
         <motion.p
-          className="text-xs font-black tracking-[0.35em] uppercase mb-4"
+          className="mb-4 text-sm font-medium"
           style={{ color: "var(--color-primario)" }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function HeroLayoutMinimal({
       )}
 
       <motion.h1
-        className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter uppercase italic leading-none mb-6"
+        className="mb-6 text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
@@ -43,7 +43,7 @@ export default function HeroLayoutMinimal({
 
       {slide.description && (
         <motion.p
-          className="text-neutral-200/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 backdrop-blur-sm bg-black/20 px-6 py-3 rounded-full"
+          className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-neutral-100 sm:text-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}

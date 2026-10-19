@@ -59,7 +59,7 @@ function ProvidersContent() {
           <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">Gestioná los datos y contactos de tus proveedores.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-[var(--admin-fondo-opaco)] p-5">
+        <form onSubmit={handleSubmit} className="admin-panel space-y-4 p-5">
           <h2 className="text-base font-semibold">
             {editingId ? "Editar proveedor" : "Nuevo proveedor"}
           </h2>
@@ -89,8 +89,8 @@ function ProvidersContent() {
         </form>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {loading ? <div className="col-span-full"><SkeletonTarjetas cantidad={4} /></div> : providers.map(p => (
-            <div key={p.id} className="rounded-lg bg-[var(--admin-fondo-opaco)] p-5">
+          {loading ? <div className="col-span-full"><SkeletonTarjetas cantidad={4} tipo="proveedores" /></div> : providers.map(p => (
+            <div key={p.id} className="admin-panel p-5">
               <h3 className="text-base font-semibold text-[var(--admin-texto)]">{p.name}</h3>
               {p.details && <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">{p.details}</p>}
               {p.contacts.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{p.contacts.map((contacto) => <span key={contacto.id} className="rounded-md bg-[var(--admin-fondo-hover)] px-2 py-1 text-xs text-[var(--admin-texto-suave)]">{contacto.contact}</span>)}</div>}
@@ -106,7 +106,7 @@ function ProvidersContent() {
 
 export default function ProvidersPage() {
   return (
-    <Suspense fallback={<SkeletonAdmin tipo="tarjetas" />}>
+    <Suspense fallback={<SkeletonAdmin tipo="proveedores" />}>
       <ProvidersContent />
     </Suspense>
   );

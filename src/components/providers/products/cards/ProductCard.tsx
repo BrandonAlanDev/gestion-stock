@@ -5,20 +5,16 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
-
-interface ProductoTarjeta {
-  id: string;
-  name: string;
-  createdAt: string | Date;
-  images?: Array<{ srcImage: string }>;
-  variants?: Array<{ stock: number }>;
-}
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
+import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
 interface Props {
-  product: ProductoTarjeta;
+  product: Omit<ProductoCatalogo, "createdAt"> & { createdAt?: ProductoCatalogo["createdAt"] };
 }
 
 const ProductCard = ({ product }: Props) => {
+  const { pageConfig } = usePageConfig();
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [fade, setFade] = useState(true);
@@ -57,8 +53,15 @@ const ProductCard = ({ product }: Props) => {
   const totalStock =
     product.variants?.reduce((acc, v) => acc + v.stock, 0) || 0;
 
-  const isNew =
-    new Date(product.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 14);
+  const isNew = product.createdAt
+    ? new Date(product.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 14)
+    : false;
+  const moneda = typeof pageConfig?.currency === "string" && /^[A-Z]{3}$/.test(pageConfig.currency) ? pageConfig.currency : "ARS";
+  const precio = Number(product.price);
+  const precioFormateado = Number.isFinite(precio)
+    ? new Intl.NumberFormat("es-AR", { style: "currency", currency: moneda, maximumFractionDigits: 2 }).format(precio)
+    : null;
+  const imagen = obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.svg";
 
   return (
     <motion.div
@@ -68,23 +71,23 @@ const ProductCard = ({ product }: Props) => {
       exit={{ opacity: 0 }}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      className="select-none group relative"
+      className="group relative min-w-0"
     >
-      <Link href={`/productos/item/${product.id}`} className="block">
+      <Link href={`/productos/item/${product.id}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primario)]">
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isNew && (
             <span
-              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)", borderRadius: "4px" }}
+              className="rounded-md px-2.5 py-1 text-xs font-semibold"
+              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
               Nuevo
             </span>
           )}
           {totalStock <= 0 && (
             <span
-              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5"
-              style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 10%, transparent)", color: "var(--color-primario)", borderRadius: "4px" }}
+              className="rounded-md px-2.5 py-1 text-xs font-semibold"
+              style={{ backgroundColor: "var(--color-secundario)", color: "var(--texto-sobre-secundario)" }}
             >
               Consultar stock
             </span>
@@ -92,28 +95,24 @@ const ProductCard = ({ product }: Props) => {
         </div>
 
         <div
-          className="overflow-hidden mb-5 relative"
-          style={{ background: "var(--superficie-imagen)", borderRadius: "12px", aspectRatio: "3 / 4" }}
+          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-black/5 bg-[var(--superficie-imagen)]"
         >
           <Image
-            src={obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.svg"}
+            src={imagen}
             alt={product.name}
             width={500}
             height={700}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
             loading="lazy"
-            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.03] mix-blend-multiply ${fade ? "opacity-100" : "opacity-0"
+            unoptimized={!imagenAdmiteOptimizacion(imagen)}
+            className={`h-full w-full object-contain p-4 transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
               }`}
-            style={{ padding: "12px" }}
           />
-
-          {/* Nombre superpuesto */}
-          <h3
-            className="absolute bottom-4 left-0 right-0 text-center font-black uppercase italic px-3 line-clamp-2"
-            style={{ color: "var(--color-primario)", fontSize: "22px", letterSpacing: "-0.02em" }}
-          >
-            {product.name}
-          </h3>
+        </div>
+        <div className="space-y-1 px-0.5 pt-3">
+          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--texto-sobre-fondo)]">{product.name}</h3>
+          {precioFormateado && <p className="text-sm font-medium text-[var(--texto-sobre-fondo)]">{precioFormateado}</p>}
+          <span className="inline-block pt-1 text-sm font-medium text-[var(--color-primario)]">Ver producto <span aria-hidden="true">→</span></span>
         </div>
       </Link>
     </motion.div>

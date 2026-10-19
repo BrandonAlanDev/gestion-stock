@@ -2,12 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import {
   LayoutDashboard, Menu, X, User, Store, LogOut, ShoppingBag,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
@@ -22,11 +20,9 @@ export default function Header({
   onToggleSidebar: () => void;
   isAdminRoute?: boolean;
 }) {
-  const pathname = usePathname();
   const { data: session } = useSession();
   const pageConfig = usePageConfig();
   const { isCartOpen, openCart, closeCart } = useCart();
-  const [scrolled, setScrolled] = useState(false);
 
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
@@ -36,22 +32,14 @@ export default function Header({
     typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Gestion OK";
   const cartEnabled = pageConfig?.pageConfig?.cartEnabled === true;
 
-  const isHomeTop = pathname === "/" && !scrolled && !isSidebarOpen && !isAdminRoute;
-  const currentTextColor = isHomeTop ? "#ffffff" : "var(--texto-sobre-fondo)";
-  const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
-  const overlayFondoMenu = "color-mix(in srgb, var(--color-fondo-sitio) 75%, transparent)";
+  const currentTextColor = "var(--texto-sobre-fondo)";
+  const overlaySuave = "color-mix(in srgb, var(--texto-sobre-fondo) 8%, transparent)";
+  const overlayFondoMenu = "var(--superficie-fondo)";
 
   const sesionActual = session;
   const isAdmin = sesionActual?.user?.role === "ADMIN";
   const mostrarMenuHeader = !(isAdmin && isAdminRoute);
   const mostrarBotonToggle = (isAdmin && isAdminRoute) || mostrarMenuHeader;
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 0);
-    handler();
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
 
   const handleCartClick = () => {
     if (isCartOpen) {
@@ -69,47 +57,45 @@ export default function Header({
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[100] border-b flex flex-col backdrop-blur-md transition-all duration-300 ease-in-out md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
+      className={`fixed top-0 left-0 right-0 z-[100] flex flex-col border-b md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
       style={{
-        backgroundColor: isHomeTop ? "transparent" : "var(--superficie-fondo)",
-        borderColor: isHomeTop ? "transparent" : overlaySuave,
+        backgroundColor: "var(--superficie-fondo)",
+        borderColor: overlaySuave,
       }}
     >
       <div className="w-full max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" onClick={() => { if (isSidebarOpen) onToggleSidebar(); }} className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primario)]">
           {logo ? (
             <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="w-8 h-8 rounded-lg object-cover" />
           ) : (
-            <div className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: "var(--color-primario)" }}>
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />
-            </div>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>{storeName[0]?.toUpperCase() ?? "T"}</span>
           )}
-          <span className="text-sm font-black uppercase italic" style={{ color: currentTextColor }}>
+          <span className="max-w-32 truncate text-sm font-semibold tracking-tight sm:max-w-48 sm:text-base" style={{ color: currentTextColor }}>
             {storeName}
           </span>
         </Link>
         
         {/* Buscador en Desktop */}
         <div className="hidden md:block flex-1 max-w-md mx-4">
-          <Searchbarfinder isHomeTop={isHomeTop} />
+          <Searchbarfinder isHomeTop={false} />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-2">
           {!sesionActual && (
             <Link
               href="/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
+              className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80"
               style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
               <User size={16} />
-              <span className="hidden sm:inline">Iniciar Sesión</span>
+              <span className="hidden sm:inline">Ingresar</span>
             </Link>
           )}
 
           {isAdmin && !isAdminRoute && (
             <Link
               href="/admin/pageConfig"
-              className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg"
+              className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium"
               style={{ backgroundColor: overlaySuave, color: currentTextColor }}
             >
               <LayoutDashboard size={14} />
@@ -119,7 +105,8 @@ export default function Header({
 
           <Link
             href="/productos"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:opacity-80"
+            onClick={() => { if (isSidebarOpen) onToggleSidebar(); }}
+            className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80"
             style={{ backgroundColor: overlaySuave, color: currentTextColor }}
           >
             <Store size={16} />
@@ -129,7 +116,8 @@ export default function Header({
           {cartEnabled && (
             <button
               onClick={handleCartClick}
-              className="p-2 rounded-xl cursor-pointer transition-all hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
+              aria-label="Abrir carrito"
+              className="rounded-lg p-2.5 transition-colors hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
               style={{ color: currentTextColor }}
             >
               <ShoppingBag size={20} />
@@ -139,7 +127,9 @@ export default function Header({
           {mostrarBotonToggle && (
             <button
               onClick={onToggleSidebar}
-              className={`p-2 rounded-xl cursor-pointer ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
+              aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={isSidebarOpen}
+              className={`rounded-lg p-2.5 ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
               style={{
                 backgroundColor: isSidebarOpen ? overlaySuave : "transparent",
                 color: currentTextColor,
@@ -153,7 +143,7 @@ export default function Header({
 
       {mostrarMenuHeader && (
         <div
-          className={`block transition-all duration-300 ease-in-out backdrop-blur-md ${
+          className={`block transition-all duration-300 ease-in-out ${
             isSidebarOpen ? "overflow-visible" : "overflow-hidden"
           }`}
           style={{
@@ -163,7 +153,7 @@ export default function Header({
         >
           <div className="max-w-4xl mx-auto py-6 px-6 flex flex-col gap-4">
             <div className="md:hidden relative w-full z-[110] mx-auto">
-              <Searchbarfinder isHomeTop={false} />
+              <Searchbarfinder isHomeTop={false} onNavigate={onToggleSidebar} />
             </div>
 
             {sesionActual?.user && (

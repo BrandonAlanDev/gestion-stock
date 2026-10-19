@@ -37,7 +37,7 @@ export default function FilaMovilProducto({
     .join(" · ");
 
   return (
-    <article className="rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-4">
+    <article className="admin-panel px-4 py-4">
       <div className="flex items-start gap-3">
         <button
           type="button"

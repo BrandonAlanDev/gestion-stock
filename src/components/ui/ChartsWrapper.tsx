@@ -59,7 +59,7 @@ export default function ChartWrapper({
       {/* STATS */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((s) => (
-          <div key={s.label} className="flex flex-col gap-3 rounded-lg p-5" style={{ background: cardBg, border: modoAdmin ? "none" : `1px solid ${borderColor}` }}>
+          <div key={s.label} className={`flex flex-col gap-3 rounded-lg p-5 ${modoAdmin ? "admin-panel" : ""}`} style={modoAdmin ? undefined : { background: cardBg, border: `1px solid ${borderColor}` }}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium" style={{ color: mutedColor }}>{s.label}</p>
               <s.icon size={16} style={{ color: s.color }} />
@@ -70,7 +70,7 @@ export default function ChartWrapper({
       </div>
 
       {/* GRÁFICA */}
-      <div className="rounded-lg p-5 sm:p-6" style={{ background: cardBg, border: modoAdmin ? "none" : `1px solid ${borderColor}` }}>
+      <div className={`rounded-lg p-5 sm:p-6 ${modoAdmin ? "admin-panel" : ""}`} style={modoAdmin ? undefined : { background: cardBg, border: `1px solid ${borderColor}` }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-base font-semibold" style={{ color: textColor }}>Salidas de stock</h2>
           <ShoppingBag size={20} style={{ color: accent }} />

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { combinarClases as cn } from "@/lib/utilidades/combinar-clases";
 import { resolverEnlaceSlide } from "@/lib/enlaces/resolver-enlace-slide";
 
 interface CarouselSlide {
@@ -34,7 +33,6 @@ interface BannerLayoutProps {
 export default function BannerLayout({ carousel }: BannerLayoutProps) {
   const { settings, slides } = carousel;
   const [current, setCurrent] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
 
   const height = settings.height || 300;
   const transitionDuration = settings.transitionDuration || 4000;
@@ -68,8 +66,6 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
     <section
       className="relative w-full overflow-hidden"
       style={{ height: `${height}px` }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -85,8 +81,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
 
       {!slide.config?.hideText && (
         <>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/70" />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--color-primario) 13%, transparent) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0 bg-black/50" />
         </>
       )}
 
@@ -103,7 +98,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
             >
               {slide.subtitle && (
                 <motion.p
-                  className="text-xs font-black tracking-[0.35em] uppercase mb-2"
+                  className="mb-2 text-sm font-medium"
                   style={{ color: "var(--color-primario)" }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -113,7 +108,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
                 </motion.p>
               )}
               <motion.h2
-                className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase italic leading-tight mb-4"
+                className="mb-4 text-3xl font-semibold leading-tight tracking-tight text-white md:text-5xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
@@ -133,7 +128,7 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
               {resolverEnlaceSlide(slide) && (
                 <motion.a
                   href={resolverEnlaceSlide(slide) ?? undefined}
-                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[var(--color-primario)] text-[var(--texto-sobre-primario)] font-black uppercase tracking-wider text-sm hover:opacity-90 transition-opacity"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--color-primario)] px-5 py-2.5 text-sm font-semibold text-[var(--texto-sobre-primario)] transition-opacity hover:opacity-90"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
@@ -151,32 +146,26 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
           <>
             <motion.button
               onClick={handlePrev}
-              className={cn(
-                "absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-md border transition-all",
-                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
-              )}
+              className="absolute left-3 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border bg-black/40 text-white sm:left-4"
               style={{ borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)", background: "rgba(0,0,0,0.3)" }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Slide anterior"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: isHovered ? 1 : 0, x: 0 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
             >
               <ChevronLeft className="w-5 h-5 text-white" />
             </motion.button>
             <motion.button
               onClick={handleNext}
-              className={cn(
-                "absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-md border transition-all",
-                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
-              )}
+              className="absolute right-3 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border bg-black/40 text-white sm:right-4"
               style={{ borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)", background: "rgba(0,0,0,0.3)" }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Slide siguiente"
               initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: isHovered ? 1 : 0, x: 0 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
             >
               <ChevronRight className="w-5 h-5 text-white" />
@@ -195,18 +184,13 @@ export default function BannerLayout({ carousel }: BannerLayoutProps) {
               <motion.button
                 key={index}
                 onClick={() => setCurrent(index)}
-                className={cn(
-                  "h-2 rounded-full transition-all duration-300",
-                  index === current ? "w-10" : "w-2"
-                )}
-                style={{
-                  backgroundColor: index === current ? "var(--color-primario)" : "rgba(255,255,255,0.4)",
-                  boxShadow: index === current ? "0 0 15px var(--color-primario)" : "none",
-                }}
+                className="flex h-10 w-10 items-center justify-center"
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
                 aria-label={`Ir a slide ${index + 1}`}
-              />
+              >
+                <span className={`h-2 rounded-full transition-all duration-300 ${index === current ? "w-8" : "w-2"}`} style={{ backgroundColor: index === current ? "var(--color-primario)" : "rgba(255,255,255,0.6)" }} />
+              </motion.button>
             ))}
           </motion.div>
         )}

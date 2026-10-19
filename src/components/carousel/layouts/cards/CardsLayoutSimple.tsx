@@ -47,13 +47,13 @@ export default function CardsLayoutSimple({ slides, settings }: CardsLayoutSimpl
               style={{ height: cardHeight }}
             >
               <motion.div
-                className="absolute inset-0 bg-cover bg-center grayscale-[15%] group-hover:grayscale-0 transition-all duration-1000"
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-500"
                 style={{ backgroundImage: "url(" + slide.image + ")" }}
                 animate={{ scale: enableHoverZoom ? 1.04 : 1 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
               {!slide.config?.hideText && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-95 group-hover:via-black/35 transition-all duration-300" />
+                <div className="absolute inset-0 bg-black/45" />
               )}
               {!slide.config?.hideText && (
                 <div className="absolute inset-0 p-8 md:p-14 flex flex-col justify-end z-10">
@@ -63,7 +63,7 @@ export default function CardsLayoutSimple({ slides, settings }: CardsLayoutSimpl
                     </motion.p>
                   )}
                   <div className="flex items-center justify-between gap-4">
-                    <motion.h3 className="text-white font-black text-2xl md:text-4xl tracking-tighter uppercase leading-none italic">
+                    <motion.h3 className="text-2xl font-semibold leading-tight tracking-tight text-white md:text-4xl">
                       {slide.title}
                     </motion.h3>
                   </div>
@@ -71,15 +71,15 @@ export default function CardsLayoutSimple({ slides, settings }: CardsLayoutSimpl
               )}
             </Link>
           ) : (
-            <div className="relative block overflow-hidden cursor-pointer group bg-[var(--color-secundario)] border border-[var(--color-secundario)] w-full" style={{ height: cardHeight }}>
+            <div className="group relative block w-full overflow-hidden border border-[var(--color-secundario)] bg-[var(--color-secundario)]" style={{ height: cardHeight }}>
               <motion.div
-                className="absolute inset-0 bg-cover bg-center grayscale-[15%] group-hover:grayscale-0 transition-all duration-1000"
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-500"
                 style={{ backgroundImage: "url(" + slide.image + ")" }}
                 animate={{ scale: enableHoverZoom ? 1.04 : 1 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
               {!slide.config?.hideText && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-95 group-hover:via-black/35 transition-all duration-300" />
+                <div className="absolute inset-0 bg-black/45" />
               )}
               {!slide.config?.hideText && (
                 <div className="absolute inset-0 p-8 md:p-14 flex flex-col justify-end z-10">
@@ -89,7 +89,7 @@ export default function CardsLayoutSimple({ slides, settings }: CardsLayoutSimpl
                     </motion.p>
                   )}
                   <div className="flex items-center justify-between gap-4">
-                    <motion.h3 className="text-white font-black text-2xl md:text-4xl tracking-tighter uppercase leading-none italic">
+                    <motion.h3 className="text-2xl font-semibold leading-tight tracking-tight text-white md:text-4xl">
                       {slide.title}
                     </motion.h3>
                   </div>

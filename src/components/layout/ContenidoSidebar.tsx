@@ -65,7 +65,7 @@ export default function ContenidoSidebar({ colapsado = false, onNavegar, onToggl
                 const activo = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`)) || (href === "/admin" && pathname === "/admin/dashboard");
                 return (
                   <Link key={href} href={href} onClick={onNavegar} title={etiqueta} aria-current={activo ? "page" : undefined}
-                    className={`flex min-h-9 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${colapsado ? "justify-center" : ""} ${activo ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]" : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"}`}>
+                    className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${colapsado ? "justify-center" : ""} ${activo ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]" : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"}`}>
                     <Icono size={18} strokeWidth={1.8} className="shrink-0" />
                     {!colapsado && <span>{etiqueta}</span>}
                   </Link>

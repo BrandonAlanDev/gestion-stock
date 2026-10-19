@@ -18,7 +18,7 @@ export default function GrupoConfiguracion({
           {titulo}
         </h2>
       </header>
-      <div className="divide-y divide-[var(--admin-borde)] overflow-hidden rounded-lg bg-[var(--admin-fondo-opaco)]">
+      <div className="admin-panel divide-y divide-[var(--admin-borde)] overflow-hidden">
         {children}
       </div>
     </section>

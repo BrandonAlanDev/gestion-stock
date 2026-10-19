@@ -15,7 +15,7 @@ import ProductoInventario from "./ProductoInventario";
 import ProductoOpciones from "./ProductoOpciones";
 import PieFormularioProducto from "./PieFormularioProducto";
 import { CLASE_BOTON_PRIMARIO } from "@/lib/productos/estilos";
-import { SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
+import { Esqueleto } from "@/components/ui/esqueleto";
 import type {
   CategoriaAdministracion,
   ProductoAdministracion,
@@ -169,7 +169,7 @@ export default function FormularioProducto({ categorias, productoSemilla, onSucc
             <div className="p-8 text-center text-sm text-[var(--admin-texto-suave)]">
               No se pudo cargar el producto. Cerrá el formulario e intentá de nuevo.
             </div>
-          ) : <div className="p-6"><SkeletonTarjetas cantidad={2} /></div>
+          ) : <div role="status" aria-label="Cargando formulario de producto" className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_400px]"><div className="space-y-8"><div className="space-y-4"><Esqueleto className="h-5 w-44" /><Esqueleto className="h-11 w-full" /><Esqueleto className="h-28 w-full" /></div><Esqueleto className="aspect-[4/3] w-full rounded-xl" /><Esqueleto className="h-11 w-full" /></div><div className="space-y-8"><div className="space-y-4"><Esqueleto className="h-5 w-36" /><Esqueleto className="h-11 w-full" /><Esqueleto className="h-11 w-full" /></div><Esqueleto className="h-44 w-full rounded-xl" /></div><span className="sr-only">Cargando formulario...</span></div>
         ) : <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="grid grid-cols-1 gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_400px]">

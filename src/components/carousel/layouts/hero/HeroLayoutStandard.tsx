@@ -28,7 +28,7 @@ export default function HeroLayoutStandard({
           className="mb-6"
         >
           <span
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-md text-xs uppercase tracking-[0.35em] font-black"
+            className="mb-1 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium"
             style={{
               borderColor: "color-mix(in srgb, var(--color-primario) 25%, transparent)",
               color: "var(--color-primario)",
@@ -42,7 +42,7 @@ export default function HeroLayoutStandard({
       )}
 
       <motion.h1
-        className="text-5xl md:text-7xl lg:text-8xl font-black uppercase italic tracking-tighter leading-[0.9] text-white"
+        className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}

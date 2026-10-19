@@ -14,7 +14,7 @@ export const CLASE_BOTON_ICONO =
   "inline-flex items-center justify-center rounded-lg p-2 text-[var(--admin-texto)] transition hover:bg-[var(--admin-fondo-hover)]";
 
 export const CLASE_SUPERFICIE =
-  "rounded-lg bg-[var(--admin-fondo-opaco)]";
+  "admin-panel";
 
 export function colorOpcion() {
   return { color: "var(--admin-texto)", backgroundColor: "var(--admin-fondo)" };

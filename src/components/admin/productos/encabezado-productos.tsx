@@ -18,8 +18,8 @@ export default function EncabezadoProductos({ onAgregar }: EncabezadoProductosPr
           Administrá todos los productos de tu tienda.
         </p>
       </div>
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={onAgregar} className={CLASE_BOTON_PRIMARIO}>
+      <div className="flex w-full items-center gap-2 sm:w-auto">
+        <button type="button" onClick={onAgregar} className={`${CLASE_BOTON_PRIMARIO} min-h-11 w-full justify-center sm:w-auto`}>
           <Plus size={16} />
           Agregar producto
         </button>
