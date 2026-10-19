@@ -5,8 +5,10 @@ import { useTemaAdmin } from "@/hooks/admin/use-tema-admin";
 
 export default function BotonTemaAdmin({
   colapsado = false,
+  compacto = false,
 }: {
   colapsado?: boolean;
+  compacto?: boolean;
 }) {
   const { tema, alternarTema } = useTemaAdmin();
   const modoClaroActivo = tema === "claro";
@@ -19,10 +21,10 @@ export default function BotonTemaAdmin({
       onClick={alternarTema}
       aria-label={etiqueta}
       title={etiqueta}
-      className={`flex w-full items-center rounded-lg border border-[var(--admin-borde)] px-3 py-2 text-sm font-medium text-[var(--admin-texto)] transition-colors hover:bg-[var(--admin-fondo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primario)] ${colapsado ? "justify-center" : "gap-2"}`}
+      className={`flex items-center justify-center rounded-md p-2 text-sm font-medium text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primario)] ${compacto || colapsado ? "" : "w-full gap-2"}`}
     >
       <Icono size={17} aria-hidden="true" />
-      {!colapsado && <span>{modoClaroActivo ? "Modo oscuro" : "Modo claro"}</span>}
+      {!colapsado && !compacto && <span>{modoClaroActivo ? "Modo oscuro" : "Modo claro"}</span>}
     </button>
   );
 }

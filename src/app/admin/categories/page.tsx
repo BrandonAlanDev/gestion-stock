@@ -3,11 +3,12 @@
 import ManageCategoryModal from "@/components/categories/modals/ManageCategoryModal";
 import AddSubCategoryForm from "@/components/categories/forms/AddSubCategoryForm";
 import DeleteSubBtn from "@/components/categories/modals/DeleteSubBtn";
-import { Tag, Layers, FolderDot } from "lucide-react";
+import { Layers } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { getCategories } from "@/actions/categorias/obtener-categorias";
 import { getSizeTypes } from "@/actions/talles/obtener-tipos-talle";
 import type { CategoriaConSubs, TalleTipoConSizes } from "@/types/catalogos";
+import { SkeletonAdmin } from "@/components/ui/skeleton-vistas";
 
 export default function CategoriesAdminPage() {
   const [categories, setCategories] = useState<CategoriaConSubs[]>([]);
@@ -27,75 +28,52 @@ export default function CategoriesAdminPage() {
     });
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) return <SkeletonAdmin tipo="tarjetas" />;
 
   return (
-    <div className="min-h-screen w-full bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] sm:p-8">
-      {/* HEADER */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between my-6 sm:my-12">
+    <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
+      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1
-            className="flex items-center gap-3 text-3xl font-black uppercase italic text-[var(--admin-texto)]"
-          >
-            <Tag className="text-[var(--admin-primario)]" />
-            Estructura de Catálogo
-          </h1>
-          <p
-            className="mt-1 text-[10px] font-black uppercase tracking-[0.4em] text-[var(--admin-texto-suave)]"
-          >
-            Gestión de categorías y subgrupos
-          </p>
+          <h1>Categorías</h1>
+          <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">Organizá el catálogo y sus subcategorías.</p>
         </div>
         <ManageCategoryModal sizeTypes={sizeTypes} onCategoryChange={refreshCategories} />
       </div>
 
-      {/* GRID DE CATEGORÍAS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="relative flex flex-col rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 shadow-sm"
+            className="relative flex flex-col rounded-lg bg-[var(--admin-fondo-opaco)] p-5"
           >
-            {/* Badge + edit */}
             <div className="flex justify-between items-start mb-4">
-              <div
-                className="flex items-center gap-2 rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-3 py-1 text-[9px] font-black uppercase text-[var(--admin-primario)]"
-              >
-                <FolderDot size={12} />
-                Categoría Principal
-              </div>
+              <span className="text-xs text-[var(--admin-texto-suave)]">Categoría</span>
               <ManageCategoryModal sizeTypes={sizeTypes} category={cat} onCategoryChange={refreshCategories} />
             </div>
 
-            {/* Nombre categoría */}
-            <h3
-              className="mb-6 text-2xl font-black uppercase italic text-[var(--admin-texto)]"
-            >
+            <h3 className="mb-5 text-lg font-semibold text-[var(--admin-texto)]">
               {cat.name}
             </h3>
 
-            {/* Subcategorías */}
             <div className="flex-1 space-y-3">
-              <h4
-                className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[var(--admin-texto-suave)]"
-              >
-                <Layers size={12} /> Subcategorías Actuales
+              <h4 className="flex items-center gap-2 text-xs font-medium text-[var(--admin-texto-suave)]">
+                <Layers size={14} /> Subcategorías
               </h4>
 
               <div className="space-y-2" style={{ minHeight: "50px" }}>
                 {cat.subCategories?.map((sub) => (
                   <div
                     key={sub.id}
-                    className="flex items-center justify-between rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3"
+                    className="flex items-center justify-between gap-2 rounded-md bg-[var(--admin-fondo)] p-3"
                   >
                     <div>
                       <p
-                        className="text-xs font-bold uppercase text-[var(--admin-texto)]"
+                        className="text-sm font-medium text-[var(--admin-texto)]"
                       >
                         {sub.name}
                       </p>
                       <p
-                        className="mt-0.5 text-[8px] font-black uppercase text-[var(--admin-primario)]"
+                        className="mt-0.5 text-xs text-[var(--admin-texto-suave)]"
                       >
                         {sub.sizeType?.name || "Talle Único"}
                       </p>
@@ -112,13 +90,13 @@ export default function CategoriesAdminPage() {
               </div>
             </div>
 
-            {/* Formulario agregar subcategoría */}
-            <div className="mt-6 border-t border-[var(--admin-borde)] pt-6">
+            <div className="mt-5 border-t border-[var(--admin-borde)] pt-4">
               <AddSubCategoryForm categoryId={cat.id} sizeTypes={sizeTypes} onSuccess={refreshCategories} />
             </div>
           </div>
         ))}
       </div>
+      {categories.length === 0 && <div className="rounded-lg bg-[var(--admin-fondo-opaco)] p-8 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay categorías. Creá la primera para organizar tus productos.</div>}
     </div>
   );
 }

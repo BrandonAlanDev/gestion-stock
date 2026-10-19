@@ -130,21 +130,21 @@
 [data-tema-admin="claro"] {
   color-scheme: light;
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --admin-fondo: #f8fafc;
+  --admin-fondo: #f6f6f7;
   --admin-fondo-opaco: #ffffff;
-  --admin-fondo-suave: #f1f5f9;
-  --admin-fondo-hover: #e2e8f0;
-  --admin-borde: #cbd5e1;
-  --admin-texto: #0f172a;
-  --admin-texto-suave: #475569;
-  --admin-primario: #2563eb;
+  --admin-fondo-suave: #ffffff;
+  --admin-fondo-hover: #f1f2f2;
+  --admin-borde: #e5e6e7;
+  --admin-texto: #202223;
+  --admin-texto-suave: #6d7175;
+  --admin-primario: #176b43;
   --admin-primario-texto: #ffffff;
-  --admin-primario-suave: #dbeafe;
+  --admin-primario-suave: #eaf4ee;
   --admin-secundario: #475569;
   --admin-secundario-texto: #ffffff;
   --admin-secundario-suave: #e2e8f0;
-  --admin-acento: #7c3aed;
-  --admin-acento-suave: #ede9fe;
+  --admin-acento: #48705b;
+  --admin-acento-suave: #eaf4ee;
   --admin-exito: #047857;
   --admin-exito-suave: #d1fae5;
   --admin-aviso: #92400e;
@@ -166,45 +166,45 @@
   --fuente-principal: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
   --fuente-secundaria: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
 
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  --background: 240 5% 97%;
+  --foreground: 190 5% 13%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 190 5% 13%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 221 83% 53%;
+  --popover-foreground: 190 5% 13%;
+  --primary: 151 65% 26%;
   --primary-foreground: 0 0% 100%;
   --secondary: 210 40% 96%;
   --secondary-foreground: 215 25% 27%;
   --muted: 210 40% 96%;
   --muted-foreground: 215 16% 47%;
-  --accent: 262 83% 58%;
+  --accent: 151 65% 26%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
   --border: 214 32% 91%;
   --input: 214 32% 91%;
-  --ring: 221 83% 53%;
+  --ring: 151 65% 26%;
 }
 
 [data-tema-admin="oscuro"] {
   color-scheme: dark;
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --admin-fondo: #0b1220;
-  --admin-fondo-opaco: #111827;
-  --admin-fondo-suave: #172033;
-  --admin-fondo-hover: #1e293b;
-  --admin-borde: #334155;
-  --admin-texto: #f1f5f9;
-  --admin-texto-suave: #94a3b8;
-  --admin-primario: #60a5fa;
-  --admin-primario-texto: #0b1220;
-  --admin-primario-suave: #1e3a5f;
+  --admin-fondo: #17191b;
+  --admin-fondo-opaco: #222528;
+  --admin-fondo-suave: #222528;
+  --admin-fondo-hover: #303438;
+  --admin-borde: #383d40;
+  --admin-texto: #f2f3f3;
+  --admin-texto-suave: #adb4b7;
+  --admin-primario: #86cf9f;
+  --admin-primario-texto: #132319;
+  --admin-primario-suave: #254433;
   --admin-secundario: #334155;
   --admin-secundario-texto: #f1f5f9;
   --admin-secundario-suave: #1e293b;
-  --admin-acento: #a78bfa;
-  --admin-acento-suave: #312e5a;
+  --admin-acento: #98c9a6;
+  --admin-acento-suave: #254433;
   --admin-exito: #6ee7b7;
   --admin-exito-suave: #064e3b;
   --admin-aviso: #fde68a;
@@ -232,25 +232,49 @@
   --card-foreground: 210 40% 96%;
   --popover: 217 33% 12%;
   --popover-foreground: 210 40% 96%;
-  --primary: 213 94% 68%;
+  --primary: 141 43% 67%;
   --primary-foreground: 222 47% 7%;
   --secondary: 215 28% 17%;
   --secondary-foreground: 210 40% 96%;
   --muted: 215 28% 17%;
   --muted-foreground: 215 20% 65%;
-  --accent: 255 92% 76%;
+  --accent: 141 43% 67%;
   --accent-foreground: 222 47% 7%;
   --destructive: 0 91% 71%;
   --destructive-foreground: 222 47% 7%;
   --border: 215 25% 27%;
   --input: 215 25% 27%;
-  --ring: 213 94% 68%;
+  --ring: 141 43% 67%;
 }
 
 .admin-tema {
   background-color: var(--admin-fondo);
   color: var(--admin-texto);
   font-family: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+}
+
+/* Lenguaje visual compartido por todas las vistas de gestión. */
+.admin-tema :is(h1, h2, h3, h4) {
+  font-style: normal !important;
+  text-transform: none !important;
+  letter-spacing: -0.02em !important;
+}
+
+.admin-tema h1 { font-size: clamp(1.5rem, 2vw, 1.875rem) !important; font-weight: 650 !important; }
+.admin-tema h2 { font-weight: 600 !important; }
+.admin-tema h3 { font-weight: 600 !important; }
+.admin-tema :is(p, span, button, a, th, td, label) {
+  font-style: normal !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.admin-tema .font-black { font-weight: 600 !important; }
+.admin-tema :is(.shadow-xl, .shadow-lg, .shadow-md, .shadow-sm) { box-shadow: none !important; }
+.admin-tema :is(.rounded-2xl, .rounded-xl) { border-radius: 8px !important; }
+.admin-tema :is(input, select, textarea, button):focus-visible,
+.admin-tema a:focus-visible {
+  outline: 2px solid var(--admin-primario);
+  outline-offset: 2px;
 }
 
 .glass-dark {

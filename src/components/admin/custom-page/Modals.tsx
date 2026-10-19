@@ -159,7 +159,7 @@ export function PageBuilderModal({ isOpen, onClose, onSave, initialData, isSavin
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4"
     >
       <div
         className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] text-[var(--admin-texto)] shadow-2xl animate-in fade-in zoom-in-95 duration-200"

@@ -53,7 +53,7 @@ export default function SeccionOcultas({
   }): ReactNode => (
     <div
       key={id}
-      className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3"
+      className="flex flex-wrap items-center gap-3 rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-3"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
         <Icono size={16} className="text-[var(--admin-texto)]" />

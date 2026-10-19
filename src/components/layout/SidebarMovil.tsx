@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import ContenidoSidebar from "@/components/layout/ContenidoSidebar";
 import { useBloqueoScroll } from "@/hooks/use-bloqueo-scroll";
 
@@ -11,15 +12,23 @@ export default function SidebarMovil({
   onClose: () => void;
 }) {
   useBloqueoScroll(isOpen);
+  useEffect(() => {
+    if (!isOpen) return;
+    const cerrarConEscape = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => window.removeEventListener("keydown", cerrarConEscape);
+  }, [isOpen, onClose]);
 
   return (
     <>
       <aside
-        className={`md:hidden fixed inset-y-0 left-0 w-60 max-w-[80vw] z-[110] flex flex-col p-6 transition-transform duration-300 ease-in-out backdrop-blur-xl overflow-y-auto ${isOpen ? "translate-x-0" : "-translate-x-full"
+        aria-label="Menú de administración"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+        className={`md:hidden fixed inset-y-0 left-0 w-72 max-w-[85vw] z-[110] flex flex-col p-3 transition-transform duration-200 ease-in-out overflow-y-auto bg-[var(--admin-fondo-opaco)] ${isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
-        style={{
-          backgroundColor: "var(--superficie-fondo)",
-        }}
       >
         <ContenidoSidebar onNavegar={onClose} />
       </aside>
@@ -27,7 +36,7 @@ export default function SidebarMovil({
       {isOpen && (
         <div
           onClick={onClose}
-          className="md:hidden fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+          className="md:hidden fixed inset-0 bg-black/40 z-[100]"
         />
       )}
     </>

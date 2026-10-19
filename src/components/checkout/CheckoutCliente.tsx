@@ -14,6 +14,7 @@ import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import SelectorMetodoPago from "@/components/checkout/SelectorMetodoPago";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import PanelInstruccionesPago from "@/components/checkout/PanelInstruccionesPago";
+import { SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
 
 export interface MetodoPagoDisponible {
   id: string;
@@ -147,10 +148,7 @@ export default function CheckoutCliente() {
           </div>
 
           {cargandoMetodos ? (
-            <p className="inline-flex items-center gap-2 text-sm opacity-70">
-              <Loader2 className="animate-spin" size={16} />
-              Cargando métodos de pago...
-            </p>
+            <SkeletonTarjetas cantidad={2} admin={false} />
           ) : metodos.length === 0 ? (
             <p className="text-sm opacity-70">
               No hay métodos de pago disponibles en este momento.

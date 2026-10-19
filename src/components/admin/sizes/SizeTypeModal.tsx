@@ -31,7 +31,7 @@ export default function SizeTypeModal({ isOpen, onClose, onSave, initialData }: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
       <div className="relative w-full max-w-md rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] shadow-2xl">
         <button onClick={onClose} className="absolute right-4 top-4 text-[var(--admin-texto-suave)] transition-opacity hover:text-[var(--admin-texto)]">
           <X size={20} />

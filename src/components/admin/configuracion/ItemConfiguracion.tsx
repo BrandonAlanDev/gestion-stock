@@ -30,7 +30,7 @@ export default function ItemConfiguracion({
 }: ItemConfiguracionProps) {
   const contenido = (
     <>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)] text-[var(--admin-texto)]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--admin-fondo)] text-[var(--admin-texto-suave)]">
         <Icono size={17} />
       </div>
       <div className="min-w-0 flex-1">

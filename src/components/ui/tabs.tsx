@@ -17,7 +17,7 @@ interface TabsProps {
 
 export default function Tabs({ elementos, activo }: TabsProps) {
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-[var(--admin-borde)] px-1 -mb-px">
+    <nav aria-label="Secciones de diseño" className="flex gap-1 overflow-x-auto border-b border-[var(--admin-borde)]">
       {elementos.map((elemento) => {
         const Icono = elemento.icono;
         const esActivo =
@@ -31,10 +31,10 @@ export default function Tabs({ elementos, activo }: TabsProps) {
             href={elemento.href}
             aria-current={esActivo ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2 whitespace-nowrap rounded-t-lg border-b-2 px-4 py-2.5 text-sm transition-colors",
+              "flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors",
               esActivo
                 ? "border-[var(--admin-primario)] text-[var(--admin-texto)]"
-                : "border-transparent text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
+                : "border-transparent text-[var(--admin-texto-suave)] hover:text-[var(--admin-texto)]"
             )}
           >
             {Icono && (

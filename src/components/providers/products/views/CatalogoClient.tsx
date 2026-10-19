@@ -8,8 +8,8 @@ import type {
 import { useCatalogGarments } from "@/hooks/useCatalogGarments";
 import { useCatalogCategories } from "@/hooks/useCatalogCategories";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { useCallback } from "react";
+import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
 
 export default function CatalogoClient({
   initialGarments,
@@ -69,13 +69,12 @@ export default function CatalogoClient({
       page: undefined,
     });
 
+  if (isFetching && garments.length === 0) {
+    return <SkeletonTienda />;
+  }
+
   return (
     <div className="relative">
-      {isFetching && garments.length === 0 && (
-        <div className="fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--color-fondo-sitio)_70%,transparent)] flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-[var(--color-primario)] animate-spin" />
-        </div>
-      )}
       <ProductsPage
         garments={garments}
         categories={categories}

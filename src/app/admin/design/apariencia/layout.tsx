@@ -49,10 +49,10 @@ export default function AparienciaLayout({
         por separado.
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[200px_1fr]">
         <nav
           aria-label="Secciones de apariencia"
-          className="flex flex-col gap-1 self-start rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-2 lg:sticky lg:top-24"
+          className="flex gap-1 overflow-x-auto self-start lg:sticky lg:top-20 lg:flex-col"
         >
           {OPCIONES.map((opcion) => {
             const Icono = opcion.icono;
@@ -64,9 +64,9 @@ export default function AparienciaLayout({
                 href={opcion.href}
                 aria-current={activa ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors",
                   activa
-                    ? "bg-[var(--admin-primario)] font-semibold text-[var(--admin-primario-texto)]"
+                    ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]"
                     : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
                 )}
               >

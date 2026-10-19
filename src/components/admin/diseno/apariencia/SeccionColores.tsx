@@ -59,7 +59,7 @@ export default function SeccionColores({
   };
 
   return (
-    <section className="rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)]">
+    <section className="rounded-lg bg-[var(--admin-fondo-opaco)]">
       <div className="border-b border-[var(--admin-borde)] p-5">
         <div className="flex items-center gap-2">
           <Palette size={16} className="text-[var(--admin-primario)]" />

@@ -67,7 +67,7 @@ export default async function ResumenDiseno() {
   }: PropsBloque) {
     return (
       <section
-        className={`rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-5 ${className ?? ""}`}
+        className={`rounded-lg bg-[var(--admin-fondo-opaco)] p-5 ${className ?? ""}`}
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export default async function ResumenDiseno() {
       <p className="text-sm text-[var(--admin-texto-suave)]">
         Así está configurada tu tienda hoy. Entrá a cualquier área para editarla.
       </p>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <BloqueResumen
           icono={Palette}
           titulo="Identidad visual"

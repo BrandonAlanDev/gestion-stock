@@ -107,7 +107,7 @@ export default function PaginaProductos() {
   const proveedoresSeguros: ProveedorAdministracion[] = proveedores ?? [];
 
   return (
-    <div className="p-4 text-[var(--admin-texto)] sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
       <EncabezadoProductos onAgregar={abrirCrear} />
 
       <div className="mt-6 space-y-4">

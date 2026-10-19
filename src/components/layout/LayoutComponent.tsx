@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
+import AdminHeader from "@/components/layout/AdminHeader";
 import Sidebar from "@/components/layout/Sidebar";
 import SidebarMovil from "@/components/layout/SidebarMovil";
 import { Toaster } from "sonner";
@@ -52,7 +53,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Contenido principal + header */}
       <div className="flex-1 flex flex-col min-w-0">
-        {!esRutaMantenimiento && (
+        {isAdminRoute ? (
+          <AdminHeader onOpenMenu={() => setSidebarOpen(true)} />
+        ) : !esRutaMantenimiento && (
           <Header
             isSidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -60,7 +63,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className={`flex-grow ${isAdminRoute ? "pt-16 md:pt-0 md:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
+        <main className={`flex-grow min-w-0 ${isAdminRoute ? "pt-14 md:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
           {children}
         </main>
       </div>

@@ -10,7 +10,6 @@ import {
   Grid2X2,
   Image as ImageIcon,
   LayoutDashboard,
-  Loader2,
   MapPin,
   Megaphone,
   type LucideIcon,
@@ -21,6 +20,7 @@ import CarouselSettingsModal from "@/components/admin/carousel/CarouselSettingsM
 import CarouselWizard from "@/components/admin/carousel/CarouselWizard";
 import ConfirmacionEliminarSeccion from "@/components/admin/carousel/ConfirmacionEliminarSeccion";
 import EstadoVacio from "@/components/ui/estado-vacio";
+import { SkeletonFilas } from "@/components/ui/skeleton-vistas";
 import type { Carousel } from "@/types/carousel";
 
 import DrawerSeccionDestacada from "./DrawerSeccionDestacada";
@@ -261,9 +261,7 @@ export default function GestorContenido({
             mostrar u ocultar.
           </p>
           {cargando ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-[var(--admin-texto-suave)]" />
-            </div>
+            <SkeletonFilas filas={4} />
           ) : filasVisibles.length === 0 && !hayOcultas ? (
             <EstadoVacio
               icono={LayoutDashboard}

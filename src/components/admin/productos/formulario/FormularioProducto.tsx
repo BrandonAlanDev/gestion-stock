@@ -15,6 +15,7 @@ import ProductoInventario from "./ProductoInventario";
 import ProductoOpciones from "./ProductoOpciones";
 import PieFormularioProducto from "./PieFormularioProducto";
 import { CLASE_BOTON_PRIMARIO } from "@/lib/productos/estilos";
+import { SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
 import type {
   CategoriaAdministracion,
   ProductoAdministracion,
@@ -135,7 +136,7 @@ export default function FormularioProducto({ categorias, productoSemilla, onSucc
     <>
       {trigger}
       {createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-4">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-2 sm:p-4">
       <div className="relative flex max-h-[92vh] w-full max-w-[1200px] flex-col overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-[var(--admin-borde)] bg-[var(--admin-fondo)] px-6 py-5">
@@ -164,9 +165,11 @@ export default function FormularioProducto({ categorias, productoSemilla, onSucc
 
         {/* Body + footer dentro del form */}
         {idSemilla && productoCompleto?.id !== idSemilla ? (
-          <div className="p-8 text-center text-sm text-[var(--admin-texto-suave)]">
-            {errorCarga ? "No se pudo cargar el producto. Cerrá el formulario e intentá de nuevo." : "Cargando producto..."}
-          </div>
+          errorCarga ? (
+            <div className="p-8 text-center text-sm text-[var(--admin-texto-suave)]">
+              No se pudo cargar el producto. Cerrá el formulario e intentá de nuevo.
+            </div>
+          ) : <div className="p-6"><SkeletonTarjetas cantidad={2} /></div>
         ) : <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="grid grid-cols-1 gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_400px]">

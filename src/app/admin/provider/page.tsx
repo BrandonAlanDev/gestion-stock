@@ -5,7 +5,8 @@ import { getProviders } from "@/actions/proveedores/obtener-proveedores";
 import { createProvider } from "@/actions/proveedores/crear-proveedor";
 import { updateProvider } from "@/actions/proveedores/actualizar-proveedor";
 import { toast } from "sonner";
-import { Truck, Layers, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { SkeletonAdmin, SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
 
 type Proveedor = Awaited<ReturnType<typeof getProviders>>[number];
 
@@ -50,45 +51,53 @@ function ProvidersContent() {
 
   return (
 
-    <div className="min-h-screen w-full bg-[var(--admin-fondo)] p-6 pt-12 text-[var(--admin-texto)] transition-colors duration-200 sm:p-8">
-      <div className="p-0 max-w-6xl mx-auto space-y-8 pt-12 sm:p-8">
+    <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
+      <div className="space-y-6">
         
-        <div className="flex items-end justify-between border-b border-[var(--admin-borde)] pb-6 font-black italic uppercase tracking-tighter">
-          <h1 className="flex items-center gap-3 text-3xl text-[var(--admin-texto)]">
-            <Truck className="text-[var(--admin-primario)]" size={32} /> Gestión de Proveedores
-          </h1>
+        <div>
+          <h1>Proveedores</h1>
+          <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">Gestioná los datos y contactos de tus proveedores.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="relative space-y-4 overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 shadow-xl">
-          <div className="absolute left-0 top-0 h-full w-1 bg-[var(--admin-primario)]" />
-          <h3 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--admin-primario)]">
-            <Layers size={14} /> {editingId ? "Modificar Registro" : "Nuevo Ingreso"}
-          </h3>
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-[var(--admin-fondo-opaco)] p-5">
+          <h2 className="text-base font-semibold">
+            {editingId ? "Editar proveedor" : "Nuevo proveedor"}
+          </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-2 focus:ring-[var(--admin-primario)]" placeholder="Nombre" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-            <input className="w-full rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-2 focus:ring-[var(--admin-primario)]" placeholder="Detalles..." value={form.details} onChange={e => setForm({...form, details: e.target.value})} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="space-y-1 text-sm font-medium">Nombre
+              <input required className="w-full rounded-md border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-2.5 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)]" placeholder="Nombre del proveedor" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+            </label>
+            <label className="space-y-1 text-sm font-medium">Detalles
+              <input className="w-full rounded-md border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-2.5 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)]" placeholder="Información adicional" value={form.details} onChange={e => setForm({...form, details: e.target.value})} />
+            </label>
           </div>
 
-          <div className="flex gap-2 w-full">
-            <input className="min-w-0 flex-1 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-3 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)] focus:ring-2 focus:ring-[var(--admin-primario)]" placeholder="Añadir contacto" value={newContact} onChange={e => setNewContact(e.target.value)} />
-            <button type="button" onClick={addContact} className="rounded-xl bg-[var(--admin-primario)] p-3 text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90">
+          <div className="flex w-full items-end gap-2">
+            <label className="min-w-0 flex-1 space-y-1 text-sm font-medium">Contacto
+              <input className="w-full rounded-md border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-2.5 text-sm text-[var(--admin-texto)] outline-none placeholder:text-[var(--admin-texto-suave)]" placeholder="Email o teléfono" value={newContact} onChange={e => setNewContact(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addContact(); } }} />
+            </label>
+            <button type="button" onClick={addContact} aria-label="Agregar contacto" className="rounded-md bg-[var(--admin-primario)] p-3 text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90">
               <Plus size={20} />
             </button>
           </div>
 
-          <button type="submit" className="w-full rounded-xl bg-[var(--admin-primario)] py-3 font-bold text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90">
+          {form.contacts.length > 0 && <div className="flex flex-wrap gap-2">{form.contacts.map((contacto, indice) => <button type="button" key={`${contacto}-${indice}`} onClick={() => setForm({ ...form, contacts: form.contacts.filter((_, i) => i !== indice) })} title="Quitar contacto" className="rounded-md bg-[var(--admin-fondo-hover)] px-2.5 py-1.5 text-xs">{contacto} ×</button>)}</div>}
+          <button type="submit" className="rounded-md bg-[var(--admin-primario)] px-5 py-2.5 text-sm font-semibold text-[var(--admin-primario-texto)] transition-opacity hover:opacity-90">
             {editingId ? "Actualizar" : "Registrar"}
           </button>
         </form>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {loading ? <div className="animate-pulse">Cargando...</div> : providers.map(p => (
-            <div key={p.id} className="rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6">
-              <h3 className="text-lg font-black uppercase text-[var(--admin-texto)]">{p.name}</h3>
-              <p className="text-[10px] text-[var(--admin-texto-suave)]">{p.details}</p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {loading ? <div className="col-span-full"><SkeletonTarjetas cantidad={4} /></div> : providers.map(p => (
+            <div key={p.id} className="rounded-lg bg-[var(--admin-fondo-opaco)] p-5">
+              <h3 className="text-base font-semibold text-[var(--admin-texto)]">{p.name}</h3>
+              {p.details && <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">{p.details}</p>}
+              {p.contacts.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{p.contacts.map((contacto) => <span key={contacto.id} className="rounded-md bg-[var(--admin-fondo-hover)] px-2 py-1 text-xs text-[var(--admin-texto-suave)]">{contacto.contact}</span>)}</div>}
+              <button type="button" onClick={() => { setEditingId(p.id); setForm({ name: p.name, details: p.details ?? "", contacts: p.contacts.map((contacto) => contacto.contact) }); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="mt-4 text-sm font-medium text-[var(--admin-primario)] hover:underline">Editar proveedor</button>
             </div>
           ))}
+          {!loading && providers.length === 0 && <p className="text-sm text-[var(--admin-texto-suave)]">Todavía no hay proveedores.</p>}
         </div>
       </div>
     </div>
@@ -97,7 +106,7 @@ function ProvidersContent() {
 
 export default function ProvidersPage() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
+    <Suspense fallback={<SkeletonAdmin tipo="tarjetas" />}>
       <ProvidersContent />
     </Suspense>
   );

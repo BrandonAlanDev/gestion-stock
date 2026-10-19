@@ -140,8 +140,8 @@ export default function PanelConfiguracion({
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] backdrop-blur">
-        <div className="mx-auto max-w-5xl px-6 py-4">
+      <header>
+        <div className="mx-auto max-w-5xl px-4 pt-7 sm:px-6 lg:px-8">
           <h1 className="text-2xl font-bold text-[var(--admin-texto)]">Configuración</h1>
           <p className="text-sm text-[var(--admin-texto-suave)]">
             Administrá la información, las ventas y los ajustes de tu tienda.
@@ -149,13 +149,13 @@ export default function PanelConfiguracion({
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <nav className="sticky top-16 sm:top-[88px] z-20 flex gap-1 overflow-x-auto bg-[var(--admin-fondo-opaco)] py-2 backdrop-blur">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <nav aria-label="Ir a una sección" className="flex flex-wrap gap-1.5">
           {gruposNav.map(({ id, titulo, icono: Icono }) => (
             <a
               key={id}
               href={`#grupo-${id}`}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-[var(--admin-fondo-opaco)] px-3 py-2 text-xs font-medium text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"
             >
               <Icono size={13} />
               {titulo}

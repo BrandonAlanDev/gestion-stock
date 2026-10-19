@@ -37,7 +37,7 @@ export default function FilaMovilProducto({
     .join(" · ");
 
   return (
-    <div className="border-b border-[var(--admin-borde)] px-4 py-4 last:border-b-0">
+    <article className="rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-4">
       <div className="flex items-start gap-3">
         <button
           type="button"
@@ -101,6 +101,6 @@ export default function FilaMovilProducto({
           <ProductoVariantesSubfilas variantes={producto.variantes ?? []} />
         </div>
       )}
-    </div>
+    </article>
   );
 }

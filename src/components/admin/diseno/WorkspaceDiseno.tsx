@@ -37,12 +37,12 @@ function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
   const { abrirVistaPrevia } = useVistaPrevia();
 
   return (
-    <div className="w-full min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] backdrop-blur">
-        <div className="mx-auto max-w-7xl px-6 pt-6">
+    <div className="min-h-screen w-full">
+      <header>
+        <div className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-[var(--admin-texto)]">Diseño del sitio</h1>
+              <h1 className="text-2xl font-semibold text-[var(--admin-texto)]">Diseño de la tienda</h1>
               <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">
                 Personalizá la identidad, el contenido y la estructura de tu tienda desde un solo lugar.
               </p>
@@ -57,12 +57,12 @@ function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-6">
             <Tabs elementos={PESTANAS} activo={pathname} />
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

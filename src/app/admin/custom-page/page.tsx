@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Globe, Eye, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, Globe, Eye } from "lucide-react";
 
 import { obtenerPaginasPersonalizadas } from "@/actions/paginas-personalizadas/obtener-paginas";
 import { crearPaginaPersonalizada } from "@/actions/paginas-personalizadas/crear-pagina";
@@ -12,6 +12,7 @@ import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { PageBuilderModal } from "@/components/admin/custom-page/Modals";
 import DeleteConfirmModal from "@/components/admin/custom-page/DeleteConfirmModal";
 import ViewPageModal from "@/components/admin/custom-page/ViewPageModal";
+import { SkeletonFilas } from "@/components/ui/skeleton-vistas";
 
 type PaginaCustomizada = Awaited<ReturnType<typeof obtenerPaginasPersonalizadas>>[number];
 type DatosPagina = Parameters<typeof actualizarContenidoPaginaPersonalizada>[1] & {
@@ -115,33 +116,29 @@ export default function CustomPagesPage() {
 
   return (
     <>
-      <div className="mt-12 min-h-screen w-full bg-[var(--admin-fondo)] p-6 text-[var(--admin-texto)] transition-colors duration-200 sm:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
+        <div className="space-y-6">
 
-          <div className="rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-6 backdrop-blur-xl">
+          <div>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div className="flex flex-row gap-2 items-center">
-                  <span className="text-[var(--admin-primario)]"><Settings size={28} /></span>
-                  <h1 className="text-3xl font-black text-[var(--admin-texto)]">
-                    Páginas Dinámicas
-                  </h1>
-                </div>
+                <h1>Páginas</h1>
                 <p className="mt-1 text-sm font-medium text-[var(--admin-texto-suave)]">
-                  Gestiona el contenido estructurado de las landing pages.
+                  Creá y administrá las páginas de contenido de tu tienda.
                 </p>
               </div>
 
               <button
                 onClick={handleOpenCreate}
-                className="flex items-center gap-2 rounded-xl bg-[var(--admin-primario)] px-6 py-3 font-bold text-[var(--admin-primario-texto)] shadow-md transition-transform hover:opacity-90 active:scale-95"
+                className="flex items-center gap-2 rounded-md bg-[var(--admin-primario)] px-4 py-2.5 text-sm font-semibold text-[var(--admin-primario-texto)] hover:opacity-90"
               >
                 <Plus size={20} />
-                Crear Página
+                Crear página
               </button>
             </div>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] shadow-sm">
+          <div className="overflow-hidden rounded-lg bg-[var(--admin-fondo-opaco)]">
+            {loading && <SkeletonFilas filas={5} />}
             {pages.map((page) => (
               <div
                 key={page.id}
@@ -157,7 +154,7 @@ export default function CustomPagesPage() {
                     <h3 className="truncate text-base font-bold leading-tight text-[var(--admin-texto)] sm:text-lg">
                       {page.title}
                     </h3>
-                    <p className="text-sm font-medium text-[var(--admin-texto-suave)]">
+                    <p className="truncate text-sm text-[var(--admin-texto-suave)]">
                       {`/page/?title=${page.slug}    `}{"  •  "}{page.sections?.length || 0} secciones
                     </p>
                   </div>
@@ -174,7 +171,8 @@ export default function CustomPagesPage() {
                   <div className="flex items-center gap-1 sm:gap-2">
                     <button
                       onClick={() => handleOpenView(page)}
-                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)] sm:h-10 sm:w-10"
+                      aria-label={`Ver estructura de ${page.title}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]"
                       title="Ver estructura"
                     >
                       <Eye size={16} className="sm:size-[18px]" />
@@ -182,7 +180,8 @@ export default function CustomPagesPage() {
 
                     <button
                       onClick={() => handleOpenEdit(page)}
-                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)] sm:h-10 sm:w-10"
+                      aria-label={`Editar ${page.title}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-primario)]"
                       title="Editar constructor"
                     >
                       <Pencil size={16} className="sm:size-[18px]" />
@@ -190,7 +189,8 @@ export default function CustomPagesPage() {
 
                     <button
                       onClick={() => handleOpenDelete(page)}
-                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-peligro-suave)] hover:text-[var(--admin-peligro)] sm:h-10 sm:w-10"
+                      aria-label={`Eliminar ${page.title}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--admin-texto-suave)] transition-colors hover:bg-[var(--admin-peligro-suave)] hover:text-[var(--admin-peligro)]"
                       title="Eliminar"
                     >
                       <Trash2 size={16} className="sm:size-[18px]" />

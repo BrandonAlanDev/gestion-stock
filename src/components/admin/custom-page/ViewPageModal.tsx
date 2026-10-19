@@ -28,7 +28,7 @@ export default function ViewPageModal({ isOpen, onClose, page, primaryColor, sec
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4"
       style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
     >
       <div

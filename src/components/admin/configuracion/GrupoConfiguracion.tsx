@@ -12,13 +12,13 @@ export default function GrupoConfiguracion({
   children,
 }: GrupoConfiguracionProps) {
   return (
-    <section id={idAncla} className="scroll-mt-28">
-      <header className="px-4 py-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-texto-suave)]">
+    <section id={idAncla} className="scroll-mt-20">
+      <header className="px-1 pb-2">
+        <h2 className="text-base font-semibold text-[var(--admin-texto)]">
           {titulo}
         </h2>
       </header>
-      <div className="divide-y divide-[var(--admin-borde)] rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)]">
+      <div className="divide-y divide-[var(--admin-borde)] overflow-hidden rounded-lg bg-[var(--admin-fondo-opaco)]">
         {children}
       </div>
     </section>

@@ -43,7 +43,7 @@ interface FilaSeccionProps extends AccionesFilaSeccion {
 }
 
 const estiloBotonAccion =
-  "cursor-pointer rounded-md p-1.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
+  "cursor-pointer rounded-md p-2.5 text-[var(--admin-texto-suave)] transition hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]";
 
 export default function FilaSeccion({
   id,
@@ -75,7 +75,7 @@ export default function FilaSeccion({
       ref={setNodeRef}
       style={estilo}
       className={cn(
-        "flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3 transition-colors hover:border-[var(--admin-borde)]",
+        "flex flex-wrap items-center gap-3 rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-3 transition-colors hover:bg-[var(--admin-fondo-hover)]",
         isDragging && "opacity-50"
       )}
     >
@@ -88,7 +88,7 @@ export default function FilaSeccion({
         <GripVertical size={15} />
       </button>
 
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--admin-fondo)]">
         <Icono size={16} className="text-[var(--admin-texto)]" />
       </div>
 

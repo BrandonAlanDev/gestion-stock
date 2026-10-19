@@ -10,6 +10,7 @@ import CategoryFilter from "@/components/categories/filters/CategoryFilter";
 import MovementModal from "@/components/movements/MovementModal";
 import FormularioProducto from "@/components/admin/productos/formulario/FormularioProducto";
 import QuickViewTable from "@/components/providers/products/modals/QuickViewTable";
+import { SkeletonFilas } from "@/components/ui/skeleton-vistas";
 
 // --- UTILIDAD PARA CALCULAR EL CONTRASTE ---
 function getContrastColor(hexColor: string) {
@@ -98,7 +99,7 @@ export default function DashboardClient() {
 
       {/* TABLA */}
       {isLoading && (
-        <div className="text-center py-12 font-medium" style={{ color: primaryColor }}>Cargando productos...</div>
+        <SkeletonFilas filas={6} admin={false} />
       )}
       {isError && (
         <div className="text-center py-12 text-red-500 font-medium">Error: {(error as Error).message}</div>

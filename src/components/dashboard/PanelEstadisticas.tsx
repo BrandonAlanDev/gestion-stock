@@ -24,10 +24,10 @@ export default async function PanelEstadisticas({
 
   return (
     <div
-      className={`min-h-screen p-6 md:p-12 transition-colors duration-200 overflow-scroll ${modoAdmin ? "bg-[var(--admin-fondo)] text-[var(--admin-texto)]" : ""}`}
+      className={`min-h-screen px-4 py-7 sm:px-6 lg:px-8 transition-colors duration-200 ${modoAdmin ? "bg-[var(--admin-fondo)] text-[var(--admin-texto)]" : ""}`}
       style={modoAdmin ? undefined : { backgroundColor: colorSecundario, color: colorTexto }}
     >
-      <div className="w-full">
+      <div className={modoAdmin ? "mx-auto max-w-7xl" : "w-full"}>
         <ChartWrapper stats={estadisticas} modoAdmin={modoAdmin} />
       </div>
     </div>

@@ -13,7 +13,7 @@ export default function ProveedorTemaAdmin({
 }: {
   children: ReactNode;
 }) {
-  const [tema, setTema] = useState<TemaAdmin>("oscuro");
+  const [tema, setTema] = useState<TemaAdmin>("claro");
 
   useEffect(() => {
     const temaGuardado = window.localStorage.getItem(CLAVE_TEMA_ADMIN);

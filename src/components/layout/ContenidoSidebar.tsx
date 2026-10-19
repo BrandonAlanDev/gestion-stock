@@ -3,15 +3,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { ChevronLeft, ChevronRight, History, Home, LayoutTemplate, LogOut, Package, Ruler, Settings, Store, Tags, Truck, X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import BotonTemaAdmin from "@/components/admin/tema/BotonTemaAdmin";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
-import {
-  Package, Tags, Truck, Ruler, LogOut, User, History,
-  Store, LayoutDashboard, Settings, Image as ImageIcon,
-  PanelLeftClose, PanelLeftOpen,
-} from "lucide-react";
+
+const grupos = [
+  { titulo: "General", enlaces: [
+    { href: "/admin", etiqueta: "Inicio", icono: Home },
+    { href: "/admin/productos", etiqueta: "Productos", icono: Package },
+    { href: "/admin/categories", etiqueta: "Categorías", icono: Tags },
+    { href: "/admin/provider", etiqueta: "Proveedores", icono: Truck },
+    { href: "/admin/sizes", etiqueta: "Talles", icono: Ruler },
+    { href: "/admin/movements", etiqueta: "Movimientos", icono: History },
+  ] },
+  { titulo: "Tienda online", enlaces: [
+    { href: "/admin/design", etiqueta: "Diseño", icono: LayoutTemplate },
+    { href: "/admin/custom-page", etiqueta: "Páginas", icono: Store },
+    { href: "/admin/pageConfig", etiqueta: "Configuración", icono: Settings },
+  ] },
+];
 
 interface ContenidoSidebarProps {
   colapsado?: boolean;
@@ -19,248 +30,65 @@ interface ContenidoSidebarProps {
   onToggleColapsado?: () => void;
 }
 
-export default function ContenidoSidebar({
-  colapsado = false,
-  onNavegar,
-  onToggleColapsado,
-}: ContenidoSidebarProps) {
+export default function ContenidoSidebar({ colapsado = false, onNavegar, onToggleColapsado }: ContenidoSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const pageConfig = usePageConfig();
+  const logo = pageConfig?.pageConfig?.logo;
+  const nombre = pageConfig?.pageConfig?.storeName || "Mi tienda";
 
-  const rawLogo = pageConfig?.pageConfig?.logo;
-  const rawStoreName = pageConfig?.pageConfig?.storeName;
-
-  const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
-  const storeName =
-    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Mi Tienda";
-
-  const overlaySuave = "color-mix(in srgb, var(--color-fondo-sitio) 8%, transparent)";
-
-  const sesionActual = session;
-  const isAdmin = sesionActual?.user?.role === "ADMIN";
-
-  const userLinks = [
-    { href: "/", label: "Ir a la Tienda", icon: Store },
-  ];
-
-  const adminLinks = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/productos", label: "Productos", icon: Package },
-    { href: "/admin/categories", label: "Categorías", icon: Tags },
-    { href: "/admin/provider", label: "Proveedores", icon: Truck },
-    { href: "/admin/sizes", label: "Talles", icon: Ruler },
-    { href: "/admin/movements", label: "Historial", icon: History },
-    { href: "/admin/design", label: "Diseño", icon: ImageIcon },
-    { href: "/admin/pageConfig", label: "Configuración", icon: Settings },
-  ];
-
-  const handleLogout = async () => {
+  const cerrarSesion = async () => {
     await signOut({ redirect: false });
     window.location.href = "/";
   };
 
-  const hoverFondo = "hover:bg-[color-mix(in_srgb,var(--color-fondo-sitio)_8%,transparent)]";
-
-  const linkClases = (active: boolean) =>
-    `group relative flex items-center py-3 rounded-xl font-bold transition-all active:scale-[0.98] select-none ${colapsado
-      ? `gap-0 pl-3 pr-3${active ? "" : ` ${hoverFondo}`}`
-      : `gap-3 pl-4 pr-4 text-xs uppercase tracking-wide${active ? "" : ` ${hoverFondo}`}`
-    }`;
-
-  const etiquetaClases = (maxW: string) =>
-    `overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : `${maxW} opacity-100`}`;
-
-  const linkStyle = (active: boolean) => ({
-    ...(active ? { backgroundColor: "var(--color-primario)" } : {}),
-    color: active ? "var(--texto-sobre-primario)" : "var(--texto-sobre-fondo)",
-  });
-
-  const bloquearArrastre = (e: React.DragEvent) => e.preventDefault();
-
   return (
     <>
-      <Link
-        href="/"
-        draggable={false}
-        onDragStart={bloquearArrastre}
-        className={`flex items-center gap-3 pb-6 border-b transition-all duration-300 select-none ${colapsado ? "pl-1" : ""}`}
-        style={{ borderColor: overlaySuave }}
-      >
-        {logo ? (
-          <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="w-8 h-8 rounded-lg object-cover shrink-0" draggable={false} />
-        ) : (
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0" style={{ borderColor: "var(--color-primario)" }}>
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-primario)" }} />
-          </div>
-        )}
-        <span className={`${etiquetaClases("max-w-32")} text-sm font-black tracking-tight uppercase italic`} style={{ color: "var(--texto-sobre-fondo)" }}>
-          {storeName}
-        </span>
-      </Link>
-
-      <div className="mt-3">
-        <BotonTemaAdmin colapsado={colapsado} />
+      <div className={`flex min-h-12 items-center gap-2 px-2 ${colapsado ? "justify-center" : "justify-between"}`}>
+        <Link href="/admin" onClick={onNavegar} className="flex min-w-0 items-center gap-2.5" title={nombre}>
+          {typeof logo === "string" && logo ? (
+            <Image src={logo} alt="" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="size-8 shrink-0 rounded-md object-cover" />
+          ) : (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[var(--admin-primario)] text-sm font-bold text-[var(--admin-primario-texto)]">{nombre[0]?.toUpperCase() ?? "T"}</span>
+          )}
+          {!colapsado && <span className="truncate text-sm font-semibold text-[var(--admin-texto)]">{nombre}</span>}
+        </Link>
+        {!colapsado && onNavegar && <button type="button" onClick={onNavegar} className="p-1.5 text-[var(--admin-texto-suave)]" aria-label="Cerrar menú"><X size={18} /></button>}
       </div>
 
-      {sesionActual?.user && (
-        <div className={`group relative flex items-center py-2 rounded-xl transition-all select-none ${colapsado ? "gap-0 px-0" : "gap-3 px-1.5"}`}>
-          <div className="relative shrink-0 w-10 h-10">
-            {sesionActual.user.image ? (
-              <Image
-                src={sesionActual.user.image}
-                alt={sesionActual.user.name ?? "Usuario"}
-                width={40}
-                height={40}
-                unoptimized
-                className="w-10 h-10 rounded-full object-cover"
-                draggable={false}
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
-                {sesionActual.user.name?.[0]?.toUpperCase()}
-              </div>
-            )}
-            <button
-              onClick={onToggleColapsado}
-              aria-label="Expandir menú"
-              className={`absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-300 ${colapsado ? "opacity-0 group-hover:opacity-100" : "opacity-0 pointer-events-none"}`}
-              style={{ backgroundColor: "color-mix(in srgb, var(--color-fondo-sitio) 55%, transparent)", color: "var(--texto-sobre-fondo)" }}
-            >
-              <PanelLeftOpen size={16} />
-            </button>
+      <nav aria-label="Administración" className="mt-6 flex-1 space-y-6">
+        {grupos.map((grupo) => (
+          <div key={grupo.titulo}>
+            {!colapsado && <p className="mb-1 px-3 text-xs font-medium text-[var(--admin-texto-suave)]">{grupo.titulo}</p>}
+            <div className="space-y-0.5">
+              {grupo.enlaces.map(({ href, etiqueta, icono: Icono }) => {
+                const activo = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`)) || (href === "/admin" && pathname === "/admin/dashboard");
+                return (
+                  <Link key={href} href={href} onClick={onNavegar} title={etiqueta} aria-current={activo ? "page" : undefined}
+                    className={`flex min-h-9 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${colapsado ? "justify-center" : ""} ${activo ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]" : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"}`}>
+                    <Icono size={18} strokeWidth={1.8} className="shrink-0" />
+                    {!colapsado && <span>{etiqueta}</span>}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-          <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-full opacity-100"}`}>
-            <span className="text-xs font-bold truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionActual.user.name}</span>
-            <span className="text-[10px] opacity-60 truncate" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionActual.user.email}</span>
-          </div>
-          <button
-            onClick={onToggleColapsado}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = overlaySuave; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-            aria-label="Contraer menú"
-            className={`p-2 rounded-xl overflow-hidden whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-8 opacity-100"}`}
-            style={{ color: "var(--texto-sobre-fondo)", backgroundColor: "transparent" }}
-          >
-            <PanelLeftClose size={16} />
-          </button>
-        </div>
-      )}
+        ))}
+      </nav>
 
-      <div className="space-y-1 mt-4">
-        <div className="h-3 flex items-center overflow-hidden">
-          <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: "var(--texto-sobre-fondo)" }}>
-            Tienda
-          </span>
-          <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
-        </div>
-        {userLinks.map((link) => {
-          const active = pathname === link.href;
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onNavegar}
-              draggable={false}
-              onDragStart={bloquearArrastre}
-              className={linkClases(active)}
-              style={linkStyle(active)}
-              title={link.label}
-            >
-              <Icon size={16} className="shrink-0" />
-              <span className={etiquetaClases("max-w-40")}>{link.label}</span>
-              {colapsado && (
-                <span
-                  className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                  style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-                >
-                  {link.label}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-
-      {isAdmin && (
-        <div className="space-y-1 mt-6">
-          <div className="h-3 flex items-center overflow-hidden">
-            <span className={`px-2 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all duration-300 ${colapsado ? "max-w-0 opacity-0" : "max-w-28 opacity-50"}`} style={{ color: "var(--texto-sobre-fondo)" }}>
-              Admin
-            </span>
-            <div className={`flex-1 h-px mx-3 transition-opacity duration-300 ${colapsado ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: overlaySuave }} />
-          </div>
-          {adminLinks.map((link) => {
-              const active = pathname === link.href;
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={onNavegar}
-                  draggable={false}
-                  onDragStart={bloquearArrastre}
-                  className={linkClases(active)}
-                  style={linkStyle(active)}
-                  title={link.label}
-                >
-                  <Icon size={16} className="shrink-0" />
-                  <span className={etiquetaClases("max-w-40")}>{link.label}</span>
-                  {colapsado && (
-                    <span
-                      className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                      style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-                    >
-                      {link.label}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-        </div>
-      )}
-
-      <div className="mt-auto pt-6 border-t" style={{ borderColor: overlaySuave }}>
-        {sesionActual ? (
-          <button
-            onClick={handleLogout}
-            title="Cerrar Sesión"
-            className={`group relative flex items-center w-full rounded-xl text-xs font-bold text-[var(--admin-peligro)] hover:bg-[var(--admin-peligro-suave)] transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-3 pl-4 pr-4 py-3"}`}
-          >
-            <LogOut size={16} className="shrink-0" />
-            <span className={etiquetaClases("max-w-32")}>Cerrar Sesión</span>
-            {colapsado && (
-              <span
-                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-              >
-                Cerrar Sesión
-              </span>
-            )}
-          </button>
-        ) : (
-          <Link
-            href="/login"
-            onClick={onNavegar}
-            draggable={false}
-            onDragStart={bloquearArrastre}
-            title="Iniciar Sesión"
-            className={`group relative flex items-center w-full rounded-xl font-bold uppercase text-xs transition-all select-none ${colapsado ? "gap-0 pl-3 pr-3 py-3" : "gap-2 pl-4 pr-4 py-3"}`}
-            style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-          >
-            <User size={16} className="shrink-0" />
-            <span className={etiquetaClases("max-w-28")}>Iniciar Sesión</span>
-            {colapsado && (
-              <span
-                className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity z-50 corto:hidden"
-                style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-              >
-                Iniciar Sesión
-              </span>
-            )}
-          </Link>
-        )}
+      <div className="space-y-1 border-t border-[var(--admin-borde)] pt-3">
+        {onToggleColapsado && <button type="button" onClick={onToggleColapsado} title={colapsado ? "Expandir menú" : "Contraer menú"} aria-label={colapsado ? "Expandir menú" : "Contraer menú"} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] ${colapsado ? "justify-center" : ""}`}>
+          {colapsado ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {!colapsado && "Contraer menú"}
+        </button>}
+        {session?.user && <div className={`flex items-center gap-2 px-3 py-2 ${colapsado ? "justify-center" : ""}`} title={session.user.email ?? undefined}>
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-fondo-hover)] text-xs font-semibold text-[var(--admin-texto)]">{session.user.name?.[0]?.toUpperCase() ?? "U"}</span>
+          {!colapsado && <span className="min-w-0 truncate text-xs text-[var(--admin-texto-suave)]">{session.user.email}</span>}
+        </div>}
+        <button type="button" onClick={cerrarSesion} title="Cerrar sesión" className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)] ${colapsado ? "justify-center" : ""}`}>
+          <LogOut size={18} strokeWidth={1.8} />
+          {!colapsado && "Cerrar sesión"}
+        </button>
       </div>
     </>
   );

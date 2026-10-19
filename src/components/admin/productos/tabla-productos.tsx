@@ -27,7 +27,7 @@ export default function TablaProductos({
 
   return (
     <>
-      <div className={`${CLASE_SUPERFICIE} hidden overflow-hidden md:block`}>
+      <div className={`${CLASE_SUPERFICIE} hidden overflow-hidden xl:block`}>
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-[var(--admin-borde)] text-xs uppercase tracking-wide text-[var(--admin-texto-suave)]">
@@ -54,7 +54,7 @@ export default function TablaProductos({
         </table>
       </div>
 
-      <div className={`${CLASE_SUPERFICIE} overflow-hidden md:hidden`}>
+      <div className="space-y-2 xl:hidden">
         {productos.map((producto) => (
           <FilaMovilProducto
             key={producto.id}

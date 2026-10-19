@@ -21,12 +21,12 @@ import {
   Grid2X2,
   Image as ImageIcon,
   LayoutDashboard,
-  Loader2,
   MapPin,
   Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SkeletonFilas } from "@/components/ui/skeleton-vistas";
 
 import { getAllCarousels } from "@/actions/carousel/carousel.actions";
 import { updateSectionOrder } from "@/actions/page-config/order.actions";
@@ -223,9 +223,7 @@ export default function EditorEstructura({
             página de inicio.
           </p>
           {cargando ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-[var(--admin-texto-suave)]" />
-            </div>
+            <SkeletonFilas filas={4} />
           ) : filas.length === 0 ? (
             <p className="text-sm text-[var(--admin-texto-suave)]">
               No hay secciones en la página

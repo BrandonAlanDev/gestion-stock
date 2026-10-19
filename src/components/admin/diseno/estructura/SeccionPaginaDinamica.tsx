@@ -43,7 +43,7 @@ export default function SeccionPaginaDinamica({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-3">
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-[var(--admin-texto)]">{pagina.title}</p>
           <Badge variante={pagina.isActive ? "activo" : "inactivo"}>
@@ -83,7 +83,7 @@ export default function SeccionPaginaDinamica({
             return (
               <div
                 key={seccion.id}
-                className="flex items-center gap-3 rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] px-4 py-3 transition-colors hover:border-[var(--admin-borde)]"
+                className="flex items-center gap-3 rounded-lg bg-[var(--admin-fondo-opaco)] px-4 py-3 transition-colors hover:bg-[var(--admin-fondo-hover)]"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo)]">
                   <Icono size={16} className="text-[var(--admin-texto)]" />
