@@ -52,7 +52,7 @@ export default function AparienciaLayout({
       <div className="grid gap-5 lg:grid-cols-[200px_1fr]">
         <nav
           aria-label="Secciones de apariencia"
-          className="flex gap-1 overflow-x-auto self-start lg:sticky lg:top-20 lg:flex-col"
+          className="hidden gap-1 self-start lg:sticky lg:top-20 lg:flex lg:flex-col"
         >
           {OPCIONES.map((opcion) => {
             const Icono = opcion.icono;

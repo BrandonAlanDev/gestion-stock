@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronDown,
   Eye,
   LayoutDashboard,
   LayoutList,
@@ -8,6 +9,7 @@ import {
   Palette,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import Tabs from "@/components/ui/tabs";
@@ -32,8 +34,19 @@ const PESTANAS: {
     { href: "/admin/design/estructura", etiqueta: "Estructura", icono: ListOrdered },
   ];
 
+const SECCIONES_MOVILES = [
+  { href: "/admin/design", etiqueta: "Resumen" },
+  { href: "/admin/design/apariencia", etiqueta: "Apariencia · Identidad" },
+  { href: "/admin/design/apariencia/colores", etiqueta: "Apariencia · Colores" },
+  { href: "/admin/design/apariencia/tipografia", etiqueta: "Apariencia · Tipografía" },
+  { href: "/admin/design/apariencia/estilo", etiqueta: "Apariencia · Estilo" },
+  { href: "/admin/design/contenido", etiqueta: "Contenido" },
+  { href: "/admin/design/estructura", etiqueta: "Estructura" },
+] as const;
+
 function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const seccionActual = SECCIONES_MOVILES.find((seccion) => seccion.href === pathname);
   const { abrirVistaPrevia } = useVistaPrevia();
 
   return (
@@ -57,7 +70,30 @@ function ContenidoWorkspace({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 min-w-0 max-w-full lg:hidden">
+            <details
+              key={pathname}
+              className="group relative min-w-0 max-w-full"
+            >
+              <summary className="flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] px-3 py-2 text-sm font-medium text-[var(--admin-texto)] focus-visible:outline-2 focus-visible:outline-[var(--admin-primario)] [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 truncate">Sección de diseño: {seccionActual?.etiqueta ?? "Resumen"}</span>
+                <ChevronDown size={18} aria-hidden="true" className="shrink-0 text-[var(--admin-texto-suave)] transition-transform group-open:rotate-180" />
+              </summary>
+              <nav aria-label="Secciones de diseño" className="absolute left-0 top-full z-30 mt-2 max-h-[50dvh] w-full min-w-0 overflow-y-auto rounded-lg border border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] p-1 shadow-lg">
+                {SECCIONES_MOVILES.map((seccion) => (
+                  <Link
+                    key={seccion.href}
+                    href={seccion.href}
+                    aria-current={seccion.href === pathname ? "page" : undefined}
+                    className={`flex min-h-11 items-center rounded-md px-3 py-2 text-sm ${seccion.href === pathname ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]" : "text-[var(--admin-texto)] hover:bg-[var(--admin-fondo-hover)]"}`}
+                  >
+                    {seccion.etiqueta}
+                  </Link>
+                ))}
+              </nav>
+            </details>
+          </div>
+          <div className="mt-6 hidden lg:block">
             <Tabs elementos={PESTANAS} activo={pathname} />
           </div>
         </div>
