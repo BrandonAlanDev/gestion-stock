@@ -4,25 +4,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { ChevronLeft, ChevronRight, ClipboardList, History, Home, LayoutTemplate, LogOut, Package, Ruler, Settings, Store, Tags, Truck, X } from "lucide-react";
+import { ArrowLeftRight, Building2, ChevronLeft, ChevronRight, ClipboardList, Files, LayoutDashboard, LogOut, Package, PackageCheck, Paintbrush, Ruler, Settings, Tags, Truck, X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 const grupos = [
   { titulo: "General", enlaces: [
-    { href: "/admin", etiqueta: "Inicio", icono: Home },
+    { href: "/admin", etiqueta: "Inicio", icono: LayoutDashboard },
+  ] },
+  { titulo: "Catálogo", enlaces: [
     { href: "/admin/productos", etiqueta: "Productos", icono: Package },
     { href: "/admin/categories", etiqueta: "Categorías", icono: Tags },
-    { href: "/admin/provider", etiqueta: "Proveedores", icono: Truck },
+    { href: "/admin/provider", etiqueta: "Proveedores", icono: Building2 },
     { href: "/admin/sizes", etiqueta: "Talles", icono: Ruler },
-    { href: "/admin/movements", etiqueta: "Movimientos", icono: History },
+  ] },
+  { titulo: "Inventario", enlaces: [
+    { href: "/admin/movements", etiqueta: "Movimientos", icono: ArrowLeftRight },
+  ] },
+  { titulo: "Pedidos y envíos", enlaces: [
     { href: "/admin/orders", etiqueta: "Pedidos", icono: ClipboardList },
-    { href: "/admin/envios", etiqueta: "Envíos", icono: Truck },
+    { href: "/admin/envios", etiqueta: "Envíos", icono: PackageCheck },
     { href: "/admin/transportistas", etiqueta: "Transportistas", icono: Truck },
   ] },
   { titulo: "Tienda online", enlaces: [
-    { href: "/admin/design", etiqueta: "Diseño", icono: LayoutTemplate },
-    { href: "/admin/custom-page", etiqueta: "Páginas", icono: Store },
+    { href: "/admin/design", etiqueta: "Diseño", icono: Paintbrush },
+    { href: "/admin/custom-page", etiqueta: "Páginas", icono: Files },
     { href: "/admin/pageConfig", etiqueta: "Configuración", icono: Settings },
   ] },
 ];
@@ -56,18 +62,18 @@ export default function ContenidoSidebar({ colapsado = false, onNavegar, onToggl
           )}
           {!colapsado && <span className="truncate text-sm font-semibold text-[var(--admin-texto)]">{nombre}</span>}
         </Link>
-        {!colapsado && onNavegar && <button type="button" onClick={onNavegar} className="p-1.5 text-[var(--admin-texto-suave)]" aria-label="Cerrar menú"><X size={18} /></button>}
+        {!colapsado && onNavegar && <button type="button" onClick={onNavegar} className="flex size-11 shrink-0 items-center justify-center rounded-lg text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)]" aria-label="Cerrar menú"><X size={18} /></button>}
       </div>
 
-      <nav aria-label="Administración" className="mt-6 flex-1 space-y-6">
-        {grupos.map((grupo) => (
-          <div key={grupo.titulo}>
+      <nav aria-label="Administración" className="mt-5 flex-1 space-y-4">
+        {grupos.map((grupo, indice) => (
+          <div key={grupo.titulo} className={colapsado && indice > 0 ? "border-t border-[var(--admin-borde)] pt-3" : undefined}>
             {!colapsado && <p className="mb-1 px-3 text-xs font-medium text-[var(--admin-texto-suave)]">{grupo.titulo}</p>}
             <div className="space-y-0.5">
               {grupo.enlaces.map(({ href, etiqueta, icono: Icono }) => {
                 const activo = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`)) || (href === "/admin" && pathname === "/admin/dashboard");
                 return (
-                  <Link key={href} href={href} onClick={onNavegar} title={etiqueta} aria-current={activo ? "page" : undefined}
+                  <Link key={href} href={href} onClick={onNavegar} title={etiqueta} aria-label={colapsado ? etiqueta : undefined} aria-current={activo ? "page" : undefined}
                     className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${colapsado ? "justify-center" : ""} ${activo ? "bg-[var(--admin-primario-suave)] font-semibold text-[var(--admin-primario)]" : "text-[var(--admin-texto-suave)] hover:bg-[var(--admin-fondo-hover)] hover:text-[var(--admin-texto)]"}`}>
                     <Icono size={18} strokeWidth={1.8} className="shrink-0" />
                     {!colapsado && <span>{etiqueta}</span>}

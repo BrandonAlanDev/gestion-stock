@@ -5,6 +5,7 @@ import {
   ContextoTemaAdmin,
   type TemaAdmin,
 } from "@/contextos/admin/contexto-tema-admin";
+import CargandoRuta from "@/components/ui/cargando-ruta";
 
 const CLAVE_TEMA_ADMIN = "tema-admin";
 
@@ -13,16 +14,15 @@ export default function ProveedorTemaAdmin({
 }: {
   children: ReactNode;
 }) {
-  const [tema, setTema] = useState<TemaAdmin>("claro");
+  const [tema, setTema] = useState<TemaAdmin | null>(null);
 
   useEffect(() => {
     const temaGuardado = window.localStorage.getItem(CLAVE_TEMA_ADMIN);
-    if (temaGuardado === "claro" || temaGuardado === "oscuro") {
-      setTema(temaGuardado);
-    }
+    setTema(temaGuardado === "oscuro" ? "oscuro" : "claro");
   }, []);
 
   useEffect(() => {
+    if (!tema) return;
     document.documentElement.dataset.temaAdmin = tema;
     document.body.dataset.temaAdmin = tema;
     return () => {
@@ -38,6 +38,8 @@ export default function ProveedorTemaAdmin({
       return siguienteTema;
     });
   };
+
+  if (!tema) return <CargandoRuta />;
 
   return (
     <ContextoTemaAdmin.Provider value={{ tema, alternarTema }}>

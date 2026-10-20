@@ -24,4 +24,21 @@ export const FUENTES_DISPONIBLES = [
   { valor: "Instrument Sans", etiqueta: "Instrument Sans (contemporánea)" },
   { valor: "Cormorant Garamond", etiqueta: "Cormorant Garamond (serif refinada)" },
   { valor: "Fraunces", etiqueta: "Fraunces (serif display expresiva)" },
+  { valor: "Source Sans 3", etiqueta: "Source Sans 3 (lectura clara)" },
+  { valor: "Work Sans", etiqueta: "Work Sans (versátil)" },
+  { valor: "Roboto Slab", etiqueta: "Roboto Slab (serif sólida)" },
+  { valor: "Oswald", etiqueta: "Oswald (títulos condensados)" },
 ] as const;
+
+const FUENTES_SERIF = new Set([
+  "Playfair Display",
+  "Lora",
+  "Merriweather",
+  "Cormorant Garamond",
+  "Fraunces",
+  "Roboto Slab",
+]);
+
+export function respaldoFuente(fuente: string): "serif" | "sans-serif" {
+  return FUENTES_SERIF.has(fuente) ? "serif" : "sans-serif";
+}

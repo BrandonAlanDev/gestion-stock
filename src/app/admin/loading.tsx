@@ -1,5 +1,5 @@
-import { SkeletonAdmin } from "@/components/ui/skeleton-vistas";
+import CargandoRuta from "@/components/ui/cargando-ruta";
 
 export default function LoadingAdmin() {
-  return <SkeletonAdmin tipo="panel" />;
+  return <CargandoRuta />;
 }

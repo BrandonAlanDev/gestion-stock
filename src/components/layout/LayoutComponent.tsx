@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
@@ -17,6 +17,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { isCartOpen, closeCart } = useCart();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [colapsado, setColapsado] = useState(false);
+  const cerrarSidebar = useCallback(() => setSidebarOpen(false), []);
   const pathname = usePathname();
 
   // El sidebar solo se muestra en rutas de administración
@@ -47,14 +48,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {isAdminRoute && (
         <>
           <Sidebar colapsado={colapsado} onToggleColapsado={() => setColapsado((v) => !v)} />
-          <SidebarMovil isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <SidebarMovil isOpen={sidebarOpen} onClose={cerrarSidebar} />
         </>
       )}
 
       {/* Contenido principal + header */}
       <div className="flex-1 flex flex-col min-w-0">
         {isAdminRoute ? (
-          <AdminHeader onOpenMenu={() => setSidebarOpen(true)} />
+          <AdminHeader onOpenMenu={() => setSidebarOpen(true)} menuAbierto={sidebarOpen} />
         ) : !esRutaMantenimiento && (
           <Header
             isSidebarOpen={sidebarOpen}
@@ -63,7 +64,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className={`flex-grow min-w-0 ${isAdminRoute ? "pt-14 md:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
+        <main className={`flex-grow min-w-0 ${isAdminRoute ? "pt-14 lg:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
           {children}
         </main>
       </div>

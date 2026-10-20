@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { eliminarDireccion, guardarDatosPersonales, guardarDireccion } from "@/actions/perfil/gestionar-perfil";
 
 type Direccion = { id: string; alias: string | null; destinatario: string | null; telefono: string | null; calle: string; numero: string; piso: string | null; departamento: string | null; codigoPostal: string; localidad: string; provincia: string; referencias: string | null; esPrincipal: boolean };
-type Props = { nombre: string | null; telefono: string | null; email: string; direcciones: Direccion[] };
+type Props = { nombre: string | null; telefono: string | null; email: string; direcciones: Direccion[]; puedeVincularGoogle: boolean };
 const vacia = { alias: "", destinatario: "", telefono: "", calle: "", numero: "", piso: "", departamento: "", codigoPostal: "", localidad: "", provincia: "", referencias: "", esPrincipal: false };
 
-export default function PerfilCliente({ nombre: inicial, telefono: telefonoInicial, email, direcciones }: Props) {
+export default function PerfilCliente({ nombre: inicial, telefono: telefonoInicial, email, direcciones, puedeVincularGoogle }: Props) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [nombre, setNombre] = useState(inicial ?? "");
@@ -38,6 +39,13 @@ export default function PerfilCliente({ nombre: inicial, telefono: telefonoInici
       <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm">Nombre completo<input value={nombre} onChange={(evento) => setNombre(evento.target.value)} required className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2" /></label><label className="text-sm">Teléfono<input value={telefono} onChange={(evento) => setTelefono(evento.target.value)} className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2" /></label></div>
       <button disabled={pendiente} className="rounded-lg px-4 py-2 text-sm disabled:opacity-50" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>Guardar datos</button>
     </form>
+    {puedeVincularGoogle && (
+      <section className="space-y-3 rounded-xl border p-5">
+        <h2 className="text-lg font-semibold">Acceso a tu cuenta</h2>
+        <p className="text-sm opacity-70">Vinculá Google para poder ingresar también con esa cuenta.</p>
+        <button type="button" onClick={() => void signIn("google", { redirectTo: "/perfil" })} className="rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>Vincular Google</button>
+      </section>
+    )}
     <section className="space-y-4"><h2 className="text-lg font-semibold">Direcciones</h2>
       {direcciones.length === 0 && <p className="text-sm opacity-70">Todavía no guardaste direcciones.</p>}
       {direcciones.map((item) => <div key={item.id} className="rounded-xl border p-4 text-sm"><div className="flex flex-wrap justify-between gap-3"><div><strong>{item.alias || item.destinatario || "Dirección"}{item.esPrincipal ? " · Principal" : ""}</strong><p className="mt-1">{item.calle} {item.numero}, {item.localidad}, {item.provincia} ({item.codigoPostal})</p></div><div className="flex gap-2"><button type="button" onClick={() => { setEditando(item.id); setDireccion({ alias: item.alias ?? "", destinatario: item.destinatario ?? "", telefono: item.telefono ?? "", calle: item.calle, numero: item.numero, piso: item.piso ?? "", departamento: item.departamento ?? "", codigoPostal: item.codigoPostal, localidad: item.localidad, provincia: item.provincia, referencias: item.referencias ?? "", esPrincipal: item.esPrincipal }); }} className="underline">Editar</button><button type="button" disabled={pendiente} onClick={() => ejecutar(() => eliminarDireccion(item.id))} className="underline">Eliminar</button></div></div></div>)}

@@ -1,11 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession, signIn, signOut } from "next-auth/react";
-import {
-  LayoutDashboard, Menu, X, User, Store, LogOut, ShoppingBag,
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { ChevronDown, ChevronRight, LayoutDashboard, LogIn, LogOut, Menu, Package, ShoppingBag, Store, User, X } from "lucide-react";
 import Searchbarfinder from "@/components/home/Searchbarfinder";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
@@ -20,182 +20,193 @@ export default function Header({
   onToggleSidebar: () => void;
   isAdminRoute?: boolean;
 }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
   const pageConfig = usePageConfig();
   const { isCartOpen, openCart, closeCart } = useCart();
 
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
-
   const logo = typeof rawLogo === "string" && rawLogo.length > 0 ? rawLogo : null;
-  const storeName =
-    typeof rawStoreName === "string" && rawStoreName.length > 0 ? rawStoreName : "Gestion OK";
+  const storeName = typeof rawStoreName === "string" && rawStoreName.length > 0
+    ? rawStoreName
+    : "Gestion OK";
   const cartEnabled = pageConfig?.pageConfig?.cartEnabled === true;
+  const isAdmin = session?.user?.role === "ADMIN";
+  const colorTexto = "var(--texto-sobre-fondo)";
+  const colorBorde = "color-mix(in srgb, var(--texto-sobre-fondo) 12%, transparent)";
+  const colorHover = "color-mix(in srgb, var(--texto-sobre-fondo) 8%, transparent)";
+  const headerRef = useRef<HTMLElement>(null);
 
-  const currentTextColor = "var(--texto-sobre-fondo)";
-  const overlaySuave = "color-mix(in srgb, var(--texto-sobre-fondo) 8%, transparent)";
-  const overlayFondoMenu = "var(--superficie-fondo)";
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+    const alPresionarTecla = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") onToggleSidebar();
+    };
+    const alPresionarFuera = (evento: PointerEvent) => {
+      if (!headerRef.current?.contains(evento.target as Node)) onToggleSidebar();
+    };
+    document.addEventListener("keydown", alPresionarTecla);
+    document.addEventListener("pointerdown", alPresionarFuera);
+    return () => {
+      document.removeEventListener("keydown", alPresionarTecla);
+      document.removeEventListener("pointerdown", alPresionarFuera);
+    };
+  }, [isSidebarOpen, onToggleSidebar]);
 
-  const sesionActual = session;
-  const isAdmin = sesionActual?.user?.role === "ADMIN";
-  const mostrarMenuHeader = !(isAdmin && isAdminRoute);
-  const mostrarBotonToggle = (isAdmin && isAdminRoute) || mostrarMenuHeader;
-
-  const handleCartClick = () => {
-    if (isCartOpen) {
-      closeCart();
-    } else {
-      openCart();
-    }
+  const cerrarMenu = () => {
+    if (isSidebarOpen) onToggleSidebar();
   };
 
   const cerrarSesion = async () => {
-    onToggleSidebar();
+    cerrarMenu();
     await signOut({ redirect: false });
     window.location.href = "/";
   };
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[100] flex flex-col border-b md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
-      style={{
-        backgroundColor: "var(--superficie-fondo)",
-        borderColor: overlaySuave,
-      }}
+      ref={headerRef}
+      className={`fixed inset-x-0 top-0 z-[100] border-b md:left-[var(--sidebar-ancho)] ${isAdminRoute ? "md:hidden" : ""}`}
+      style={{ backgroundColor: "var(--superficie-fondo)", borderColor: colorBorde, color: colorTexto }}
     >
-      <div className="w-full max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
-        <Link href="/" onClick={() => { if (isSidebarOpen) onToggleSidebar(); }} className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primario)]">
+      <div className="relative mx-auto w-full max-w-7xl">
+      <div className="flex h-16 w-full items-center gap-3 px-4 md:gap-5 md:px-6">
+        <Link
+          href="/"
+          onClick={cerrarMenu}
+          className="flex min-w-0 shrink-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primario)]"
+        >
           {logo ? (
-            <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="w-8 h-8 rounded-lg object-cover" />
+            <Image src={logo} alt="Logo" width={32} height={32} unoptimized={!imagenAdmiteOptimizacion(logo)} className="size-8 rounded-lg object-cover" />
           ) : (
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>{storeName[0]?.toUpperCase() ?? "T"}</span>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
+              {storeName[0]?.toUpperCase() ?? "T"}
+            </span>
           )}
-          <span className="max-w-32 truncate text-sm font-semibold tracking-tight sm:max-w-48 sm:text-base" style={{ color: currentTextColor }}>
+          <span className="max-w-32 truncate text-sm font-semibold tracking-tight sm:max-w-40 sm:text-base">
             {storeName}
           </span>
         </Link>
-        
-        {/* Buscador en Desktop */}
-        <div className="hidden md:block flex-1 max-w-md mx-4">
-          <Searchbarfinder isHomeTop={false} />
+
+        <div className="mx-auto hidden w-full max-w-md min-w-0 md:block">
+          <Searchbarfinder isHomeTop={false} onNavigate={cerrarMenu} />
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {!sesionActual && (
-            <Link
-              href="/login"
-              className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
-            >
-              <User size={16} />
-              <span className="hidden sm:inline">Ingresar</span>
-            </Link>
-          )}
-
-          {isAdmin && !isAdminRoute && (
-            <Link
-              href="/admin/pageConfig"
-              className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium"
-              style={{ backgroundColor: overlaySuave, color: currentTextColor }}
-            >
-              <LayoutDashboard size={14} />
-              <span className="hidden sm:inline">Admin</span>
-            </Link>
-          )}
-
-          {sesionActual?.user && !isAdminRoute && (
-            <>
-              <Link href="/perfil" className="hidden min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium lg:flex" style={{ backgroundColor: overlaySuave, color: currentTextColor }}>Mi perfil</Link>
-              <Link href="/mis-pedidos" className="hidden min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium lg:flex" style={{ backgroundColor: overlaySuave, color: currentTextColor }}>Mis pedidos</Link>
-            </>
-          )}
-
-          <Link
-            href="/productos"
-            onClick={() => { if (isSidebarOpen) onToggleSidebar(); }}
-            className="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80"
-            style={{ backgroundColor: overlaySuave, color: currentTextColor }}
-          >
-            <Store size={16} />
-            <span className="hidden sm:inline">Catálogo</span>
+        <nav aria-label="Navegación principal" className="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
+          <Link href="/productos" onClick={cerrarMenu} className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)] md:flex" aria-current={pathname === "/productos" ? "page" : undefined}>
+            <Store size={17} /> Catálogo
           </Link>
 
           {cartEnabled && (
             <button
-              onClick={handleCartClick}
-              aria-label="Abrir carrito"
-              className="rounded-lg p-2.5 transition-colors hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
-              style={{ color: currentTextColor }}
+              type="button"
+              onClick={() => {
+                cerrarMenu();
+                if (isCartOpen) closeCart();
+                else openCart();
+              }}
+              aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
+              className="flex size-10 items-center justify-center rounded-lg hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
             >
               <ShoppingBag size={20} />
             </button>
           )}
 
-          {mostrarBotonToggle && (
-            <button
-              onClick={onToggleSidebar}
-              aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
-              aria-expanded={isSidebarOpen}
-              className={`rounded-lg p-2.5 ${isAdmin && isAdminRoute ? "md:hidden" : ""}`}
-              style={{
-                backgroundColor: isSidebarOpen ? overlaySuave : "transparent",
-                color: currentTextColor,
-              }}
-            >
-              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          )}
-        </div>
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-controls="menu-tienda"
+            aria-expanded={isSidebarOpen}
+            className="flex min-h-10 items-center gap-2 rounded-lg px-2.5 hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
+            style={{ backgroundColor: isSidebarOpen ? colorHover : undefined }}
+          >
+            {session?.user ? (
+              <span className="flex size-7 items-center justify-center rounded-full text-xs font-semibold" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
+                {session.user.name?.[0]?.toUpperCase() ?? "U"}
+              </span>
+            ) : isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            <span className="hidden max-w-28 truncate text-sm font-medium sm:inline">
+              {session?.user ? session.user.name || "Mi cuenta" : "Cuenta"}
+            </span>
+            <ChevronDown size={15} className={`hidden transition-transform duration-200 md:block ${isSidebarOpen ? "rotate-180" : ""}`} />
+          </button>
+        </nav>
       </div>
 
-      {mostrarMenuHeader && (
+      {isSidebarOpen && (
         <div
-          className={`block transition-all duration-300 ease-in-out ${
-            isSidebarOpen ? "overflow-visible" : "overflow-hidden"
-          }`}
-          style={{
-            maxHeight: isSidebarOpen ? "100vh" : "0px", 
-            backgroundColor: overlayFondoMenu,
-          }}
+          id="menu-tienda"
+          className="absolute left-4 right-4 top-full mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-xl border p-3 shadow-xl sm:left-auto sm:w-80 md:right-6 md:mt-3 md:w-[348px] md:rounded-[20px] md:p-2 md:shadow-[0_24px_64px_rgba(0,0,0,0.28)]"
+          style={{ backgroundColor: "var(--superficie-fondo)", borderColor: colorBorde }}
         >
-          <div className="max-w-4xl mx-auto py-6 px-6 flex flex-col gap-4">
-            <div className="md:hidden relative w-full z-[110] mx-auto">
-              <Searchbarfinder isHomeTop={false} onNavigate={onToggleSidebar} />
-            </div>
+          <div className="mb-3 md:hidden">
+            <Searchbarfinder isHomeTop={false} onNavigate={cerrarMenu} />
+          </div>
 
-            {sesionActual?.user && (
-              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: overlaySuave }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
-                    {sesionActual.user.name?.[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionActual.user.name}</span>
-                    <span className="text-[10px] opacity-60" style={{ color: "var(--texto-sobre-fondo)" }}>{sesionActual.user.email}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void signIn("google", { redirectTo: "/" })}
-                    className="text-xs font-bold hover:opacity-80"
-                    style={{ color: "var(--texto-sobre-fondo)" }}
-                  >
-                    Vincular Google
-                  </button>
-                  <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:opacity-80">
-                    <LogOut size={14} /> Salir
-                  </button>
-                </div>
+          {session?.user && (
+            <div
+              className="mb-2 border-b px-3 pb-3 md:flex md:items-center md:gap-3 md:rounded-2xl md:border md:p-3"
+              style={{ borderColor: colorBorde, backgroundColor: colorHover }}
+            >
+              <div className="hidden size-11 shrink-0 items-center justify-center rounded-xl text-base font-semibold md:flex" style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}>
+                {session.user.name?.[0]?.toUpperCase() ?? "U"}
               </div>
+              <div className="min-w-0">
+                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] opacity-55 md:block">Tu cuenta</p>
+                <p className="truncate text-sm font-semibold">{session.user.name || "Mi cuenta"}</p>
+                <p className="truncate text-xs opacity-65">{session.user.email}</p>
+              </div>
+            </div>
+          )}
+
+          {!session?.user && status === "unauthenticated" && (
+            <div className="hidden rounded-2xl border p-4 md:block" style={{ borderColor: colorBorde, backgroundColor: colorHover }}>
+              <p className="text-sm font-semibold">Tu espacio en la tienda</p>
+              <p className="mt-1 text-xs leading-relaxed opacity-65">Ingresá para seguir tus pedidos y guardar tus datos.</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1 text-sm md:gap-0.5 md:pt-1">
+            <Link href="/" onClick={cerrarMenu} className="rounded-lg px-3 py-2.5 hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)] md:hidden">Inicio</Link>
+            <Link href="/productos" onClick={cerrarMenu} className="rounded-lg px-3 py-2.5 hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)] md:hidden">Catálogo</Link>
+            {session?.user && (
+              <>
+                <Link href="/mis-pedidos" onClick={cerrarMenu} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]">
+                  <span className="hidden size-9 shrink-0 items-center justify-center rounded-lg md:flex" style={{ backgroundColor: colorHover }}><Package size={17} /></span>
+                  <span className="flex-1 font-medium">Mis pedidos</span>
+                  <ChevronRight size={16} className="hidden opacity-40 transition-transform group-hover:translate-x-0.5 md:block" />
+                </Link>
+                <Link href="/perfil" onClick={cerrarMenu} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]">
+                  <span className="flex size-5 shrink-0 items-center justify-center md:size-9 md:rounded-lg md:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"><User size={17} /></span>
+                  <span className="flex-1 font-medium">Mi perfil</span>
+                  <ChevronRight size={16} className="hidden opacity-40 transition-transform group-hover:translate-x-0.5 md:block" />
+                </Link>
+                {isAdmin && (
+                  <Link href="/admin/pageConfig" onClick={cerrarMenu} className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]">
+                    <span className="flex size-5 shrink-0 items-center justify-center md:size-9 md:rounded-lg md:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"><LayoutDashboard size={17} /></span>
+                    <span className="flex-1 font-medium">Administración</span>
+                    <ChevronRight size={16} className="hidden opacity-40 transition-transform group-hover:translate-x-0.5 md:block" />
+                  </Link>
+                )}
+                <div className="my-1 hidden border-t md:block" style={{ borderColor: colorBorde }} />
+                <button type="button" onClick={cerrarSesion} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-red-500 transition-colors hover:bg-red-500/10">
+                  <span className="flex size-5 shrink-0 items-center justify-center md:size-9"><LogOut size={17} /></span>
+                  <span className="font-medium">Cerrar sesión</span>
+                </button>
+              </>
             )}
-            {sesionActual?.user && <div className="flex flex-col gap-2 lg:hidden">
-              <Link href="/perfil" onClick={onToggleSidebar} className="rounded-lg px-3 py-2 text-sm font-medium" style={{ color: currentTextColor }}>Mi perfil</Link>
-              <Link href="/mis-pedidos" onClick={onToggleSidebar} className="rounded-lg px-3 py-2 text-sm font-medium" style={{ color: currentTextColor }}>Mis pedidos</Link>
-            </div>}
+            {status === "unauthenticated" && (
+              <>
+                <Link href="/login" onClick={cerrarMenu} className="flex items-center gap-2 rounded-lg px-3 py-2.5 font-medium hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)] md:mt-2 md:justify-center md:rounded-xl md:bg-[var(--color-primario)] md:text-[var(--texto-sobre-primario)] md:hover:bg-[var(--color-primario)] md:hover:opacity-90"><LogIn size={16} /> Ingresar</Link>
+                <Link href="/register" onClick={cerrarMenu} className="hidden rounded-lg px-3 py-2.5 text-center text-xs font-medium opacity-70 hover:opacity-100 md:block">Crear una cuenta</Link>
+              </>
+            )}
           </div>
         </div>
       )}
+      </div>
     </header>
   );
 }

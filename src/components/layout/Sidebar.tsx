@@ -11,7 +11,7 @@ export default function Sidebar({
 }) {
   return (
     <aside
-      className="hidden md:flex fixed left-0 top-0 bottom-0 z-[95] flex-col w-[var(--sidebar-ancho)] transition-[width] duration-200 bg-[var(--admin-fondo-opaco)] border-r border-[var(--admin-borde)] select-none"
+      className="fixed bottom-0 left-0 top-0 z-[95] hidden w-[var(--sidebar-ancho)] select-none flex-col border-r border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] transition-[width] duration-200 lg:flex"
     >
       <div
         className="min-h-0 flex-1 overflow-y-auto p-3 flex flex-col"

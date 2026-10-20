@@ -18,7 +18,7 @@ Copiá `.env.example` a `.env`. Configurá `LOGABYTE_CORE_DATABASE_URL` y `CIFRA
 
 Para usar Mercado Pago, configurá `MP_WEBHOOK_SECRET` con la clave de firma de la integración. Sin esa clave, el webhook rechaza las notificaciones, también en desarrollo.
 
-Para habilitar el registro con Google, configurá `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` y agregá en Google Cloud la URI de redirección `https://tu-dominio/api/auth/callback/google` (o `http://localhost:3000/api/auth/callback/google` en desarrollo). Cualquier persona puede registrarse; por defecto se crea un usuario `USER`. Si Core reservó ese correo para un administrador Google, el primer acceso con una identidad Google verificada de Gmail o Google Workspace consume la reserva y crea o vincula la cuenta `ADMIN`. Para una cuenta ya registrada por contraseña, iniciá sesión con ella y elegí **Vincular Google** en el menú de la tienda.
+Para habilitar el registro con Google, configurá `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` y agregá en Google Cloud la URI de redirección `https://tu-dominio/api/auth/callback/google` (o `http://localhost:3000/api/auth/callback/google` en desarrollo). Cualquier persona puede registrarse; por defecto se crea un usuario `USER`. Si Core reservó ese correo para un administrador Google, el primer acceso con una identidad Google verificada de Gmail o Google Workspace consume la reserva y crea o vincula la cuenta `ADMIN`. Para una cuenta ya registrada por contraseña, iniciá sesión con ella y elegí **Vincular Google** en **Mi perfil**. La opción aparece solo si esa cuenta todavía no está vinculada.
 
 ```bash
 npx prisma generate

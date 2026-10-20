@@ -1,5 +1,5 @@
-import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
+import CargandoRuta from "@/components/ui/cargando-ruta";
 
 export default function Loading() {
-  return <SkeletonTienda tipo="contenido" />;
+  return <CargandoRuta />;
 }

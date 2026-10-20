@@ -25,7 +25,7 @@ const nombres: Record<string, string> = {
   "/admin/pageConfig": "Configuración",
 };
 
-export default function AdminHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
+export default function AdminHeader({ onOpenMenu, menuAbierto }: { onOpenMenu: () => void; menuAbierto: boolean }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const seccion = Object.entries(nombres)
@@ -33,10 +33,10 @@ export default function AdminHeader({ onOpenMenu }: { onOpenMenu: () => void }) 
     .sort(([a], [b]) => b.length - a.length)[0]?.[1] ?? "Administración";
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-[var(--sidebar-ancho)] z-[90] h-14 border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] transition-[left] duration-200">
+    <header className="fixed top-0 right-0 left-0 lg:left-[var(--sidebar-ancho)] z-[90] h-14 border-b border-[var(--admin-borde)] bg-[var(--admin-fondo-opaco)] transition-[left] duration-200">
       <div className="flex h-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <button type="button" onClick={onOpenMenu} aria-label="Abrir menú" className="-ml-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--admin-texto)] hover:bg-[var(--admin-fondo-hover)] md:hidden">
+          <button type="button" onClick={onOpenMenu} aria-label="Abrir menú" aria-controls="menu-administracion" aria-expanded={menuAbierto} className="-ml-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--admin-texto)] hover:bg-[var(--admin-fondo-hover)] lg:hidden">
             <Menu size={20} />
           </button>
           <span className="truncate text-sm font-semibold text-[var(--admin-texto)]">{seccion}</span>
