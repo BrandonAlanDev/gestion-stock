@@ -18,6 +18,9 @@ const RUTAS_ADMIN_VALIDAS = new Set([
   "/admin/design/contenido",
   "/admin/design/estructura",
   "/admin/movements",
+  "/admin/orders",
+  "/admin/envios",
+  "/admin/transportistas",
   "/admin/pageConfig",
   "/admin/productos",
   "/admin/provider",
@@ -45,7 +48,8 @@ export default auth(async (solicitud) => {
 
   if (esRutaApiAutenticacion) return NextResponse.next();
 
-  if (esRutaAdmin && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname)) {
+  const esDetallePedido = /^\/admin\/orders\/[^/]+$/.test(nextUrl.pathname);
+  if (esRutaAdmin && !RUTAS_ADMIN_VALIDAS.has(nextUrl.pathname) && !esDetallePedido) {
     return NextResponse.redirect(new URL("/404", nextUrl));
   }
 

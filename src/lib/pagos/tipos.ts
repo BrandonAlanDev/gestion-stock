@@ -59,6 +59,8 @@ export interface ResultadoEstadoPago {
   monedaPago: string | null;
   referencia: string | null;
   externalId: string;
+  /** Preferencia de Checkout Pro confirmada por la orden comercial de la pasarela. */
+  preferenceId?: string | null;
 }
 
 /** Estado de la conexión de un proveedor (sin datos sensibles). */
@@ -78,6 +80,7 @@ export interface PagoWebhookNormalizado {
   estadoExterno: string;
   montoPago: number | null;
   monedaPago: string | null;
+  preferenceId?: string | null;
 }
 
 /** Resultado de procesar un webhook en un proveedor concreto. */

@@ -2,12 +2,14 @@ import type { PrismaClient } from "@/../generated/prisma/client";
 import type { ItemParaCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
+import type { DatosEntrega } from "@/lib/pedidos/datos-entrega";
 import { liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
 
 export type ResultadoIniciarPago =
   | {
       ok: true;
       pedidoId: string;
+      numero?: number;
       paymentId: string;
       checkoutUrl: string | null;
       instrucciones: string | null;
@@ -30,7 +32,8 @@ export interface DependenciasIniciarPago {
     userId: string,
     items: ItemParaCrearPedido[],
     metodoPago: MetodoPagoId,
-  ) => Promise<{ pedidoId: string }>;
+    datosEntrega?: DatosEntrega,
+  ) => Promise<{ pedidoId: string; numero?: number }>;
   conPrisma: <T>(
     operacion: (prisma: PrismaClient) => Promise<T>,
   ) => Promise<T>;
@@ -43,6 +46,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
   return async function iniciarPago(
     metodo: MetodoPagoId,
     items: ItemParaCrearPedido[],
+    datosEntrega?: DatosEntrega,
   ): Promise<ResultadoIniciarPago> {
     let pedidoIdCreado: string | null = null;
     let tenantIdProcesado: string | null = null;
@@ -67,6 +71,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         contexto.usuarioId,
         items,
         metodo,
+        datosEntrega,
       );
       pedidoIdCreado = creado.pedidoId;
 
@@ -135,6 +140,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       return {
         ok: true,
         pedidoId: pedido.id,
+        numero: creado.numero,
         paymentId: payment.id,
         checkoutUrl: resultado.checkoutUrl,
         instrucciones: resultado.instrucciones,

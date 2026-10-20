@@ -103,6 +103,13 @@ export default function Header({
             </Link>
           )}
 
+          {sesionActual?.user && !isAdminRoute && (
+            <>
+              <Link href="/perfil" className="hidden min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium lg:flex" style={{ backgroundColor: overlaySuave, color: currentTextColor }}>Mi perfil</Link>
+              <Link href="/mis-pedidos" className="hidden min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium lg:flex" style={{ backgroundColor: overlaySuave, color: currentTextColor }}>Mis pedidos</Link>
+            </>
+          )}
+
           <Link
             href="/productos"
             onClick={() => { if (isSidebarOpen) onToggleSidebar(); }}
@@ -182,6 +189,10 @@ export default function Header({
                 </div>
               </div>
             )}
+            {sesionActual?.user && <div className="flex flex-col gap-2 lg:hidden">
+              <Link href="/perfil" onClick={onToggleSidebar} className="rounded-lg px-3 py-2 text-sm font-medium" style={{ color: currentTextColor }}>Mi perfil</Link>
+              <Link href="/mis-pedidos" onClick={onToggleSidebar} className="rounded-lg px-3 py-2 text-sm font-medium" style={{ color: currentTextColor }}>Mis pedidos</Link>
+            </div>}
           </div>
         </div>
       )}

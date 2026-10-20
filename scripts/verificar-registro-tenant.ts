@@ -124,15 +124,15 @@ async function verificarCachePersistenteEInvalidacion(): Promise<void> {
   await cache.resolverPorHostname("cache.example.com");
   await cache.resolverPorId(demo.tenant.id);
   await cache.resolverPorId(directo.tenant.id);
-  assert.equal(consultasHost, 1, "Un dominio válido no debe vencer por tiempo");
-  assert.equal(consultasId, 1, "Una referencia válida no debe vencer por tiempo");
+  assert.equal(consultasHost, 2, "Un dominio válido debe revalidarse al vencer");
+  assert.equal(consultasId, 2, "Una referencia válida debe revalidarse al vencer");
 
   cache.invalidar();
   await cache.resolverPorHostname("cache.example.com");
   await cache.resolverPorId(demo.tenant.id);
   await cache.resolverPorId(directo.tenant.id);
-  assert.equal(consultasHost, 2, "La invalidación debe forzar una consulta nueva");
-  assert.equal(consultasId, 2);
+  assert.equal(consultasHost, 3, "La invalidación debe forzar una consulta nueva");
+  assert.equal(consultasId, 3);
 
   let consultasDesconocido = 0;
   const desconocido = new ProveedorRegistroCacheado(crearProveedor({
@@ -251,12 +251,15 @@ async function verificarEstadoHastaInvalidacion(): Promise<void> {
   assert.equal(await cache.verificarAcceso("cliente-a"), 7);
   ahora += 5_001;
   assert.equal(await cache.verificarAcceso("cliente-a"), 7);
-  assert.equal(consultas, 1, "El estado confirmado debe persistir entre vistas");
+  assert.equal(consultas, 1, "El estado confirmado debe persistir dentro del plazo");
+  ahora += 25_000;
+  await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
+  assert.equal(consultas, 2, "La suspensión debe detectarse al vencer el estado cacheado");
   cache.invalidar();
   await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
-  assert.equal(consultas, 2, "La invalidación debe volver a consultar el estado");
+  assert.equal(consultas, 3, "La invalidación debe volver a consultar el estado");
   await assert.rejects(cache.verificarAcceso("cliente-a"), /tenant suspendido/);
-  assert.equal(consultas, 3, "Un fallo de estado no debe quedar cacheado como activo");
+  assert.equal(consultas, 4, "Un fallo de estado no debe quedar cacheado como activo");
 }
 
 async function verificarInvalidacionDuranteConsultaDeEstado(): Promise<void> {
@@ -296,7 +299,7 @@ async function verificarNavegacionSinConsultasRepetidas(): Promise<void> {
     await cache.verificarAcceso(entrada.tenant.id);
     await cache.resolverCredenciales(entrada.referenciaBase, entrada.versionCredenciales, entrada.tenant.id);
   }
-  assert.deepEqual(consultas, { dominio: 1, id: 0, estado: 1, credenciales: 1 });
+  assert.deepEqual(consultas, { dominio: 3, id: 0, estado: 3, credenciales: 1 });
 }
 
 async function verificarFallosSinFallback(): Promise<void> {

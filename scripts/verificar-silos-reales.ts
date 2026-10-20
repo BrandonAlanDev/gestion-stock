@@ -147,7 +147,7 @@ async function main(): Promise<void> {
   const entorno: NodeJS.ProcessEnv = {
     ...process.env,
     NODE_ENV: "development",
-    DATABASE_URL: "mysql://disabled:disabled@127.0.0.1:1/no_database_selected",
+    LOGABYTE_CORE_SELECTED_DATABASE_URL: "mysql://disabled:disabled@127.0.0.1:1/no_database_selected",
     DOTENV_CONFIG_PATH: archivoVacio,
     TENANT_REGISTRY_FILE: rutaRegistro,
     TENANT_REGISTRY_ENCRYPTION_KEY: claveRegistro,

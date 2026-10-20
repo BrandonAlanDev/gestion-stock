@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { ChevronLeft, ChevronRight, History, Home, LayoutTemplate, LogOut, Package, Ruler, Settings, Store, Tags, Truck, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, History, Home, LayoutTemplate, LogOut, Package, Ruler, Settings, Store, Tags, Truck, X } from "lucide-react";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
@@ -16,6 +16,9 @@ const grupos = [
     { href: "/admin/provider", etiqueta: "Proveedores", icono: Truck },
     { href: "/admin/sizes", etiqueta: "Talles", icono: Ruler },
     { href: "/admin/movements", etiqueta: "Movimientos", icono: History },
+    { href: "/admin/orders", etiqueta: "Pedidos", icono: ClipboardList },
+    { href: "/admin/envios", etiqueta: "Envíos", icono: Truck },
+    { href: "/admin/transportistas", etiqueta: "Transportistas", icono: Truck },
   ] },
   { titulo: "Tienda online", enlaces: [
     { href: "/admin/design", etiqueta: "Diseño", icono: LayoutTemplate },

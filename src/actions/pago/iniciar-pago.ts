@@ -13,6 +13,7 @@ import { obtenerMetodosPagoDisponibles } from "@/lib/pagos/obtener-metodos-dispo
 import { filtrarMetodosDisponibles } from "@/lib/pagos/filtrar-metodos-disponibles";
 import { crearAccionIniciarPago } from "@/lib/actions/pago/crear-accion-iniciar-pago";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import { esquemaDatosEntrega } from "@/lib/pedidos/datos-entrega";
 
 export type { ResultadoIniciarPago } from "@/lib/actions/pago/crear-accion-iniciar-pago";
 
@@ -55,6 +56,11 @@ export async function iniciarPago(
     variantId: string | number;
     cantidad: number;
   }>,
+  datosEntrega?: unknown,
 ) {
-  return ejecutarIniciarPago(metodo, items);
+  const datos = esquemaDatosEntrega.safeParse(datosEntrega);
+  if (!datos.success) {
+    return { ok: false as const, error: "Completá los datos de entrega." };
+  }
+  return ejecutarIniciarPago(metodo, items, datos.data);
 }

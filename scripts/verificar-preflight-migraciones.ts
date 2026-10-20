@@ -132,7 +132,7 @@ assert.throws(() => validarAprobacionMigracionesDestructivas(
 ), /TENANT_MIGRATION_ACK_DESTRUCTIVE/);
 assert.throws(() => validarAprobacionMigracionesDestructivas("extra", []), /solo se permite/);
 
-const directorioMigraciones = path.join(process.cwd(), "prisma", "migrations");
+const directorioMigraciones = path.join(process.cwd(), "prisma", "migrations-base-unica");
 const migracionesDelRepositorio = readdirSync(directorioMigraciones, { withFileTypes: true })
   .filter((entrada) => entrada.isDirectory())
   .map((entrada) => ({
@@ -144,11 +144,7 @@ const migracionesDelRepositorio = readdirSync(directorioMigraciones, { withFileT
   }));
 assert.deepEqual(
   detectarMigracionesConRiesgoDeDatos(migracionesDelRepositorio),
-  [
-    "20260715030342_add_carousel_limits_to_pageconfig",
-    "20260830020000_multitenancy_paso2",
-    "20260910000000_eliminar_tablas_surf_y_flags",
-  ],
+  ["20261020010000_pedidos_envios"],
 );
 
 const migracionesVersionadas = [

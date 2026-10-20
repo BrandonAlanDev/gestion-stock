@@ -7,9 +7,8 @@ import type { DatosEstadoPago, ResultadoEstadoPago, ResultadoWebhook } from "../
 export function firmaWebhookMPValida(req: NextRequest, paymentId: string): boolean {
   const secreto = process.env.MP_WEBHOOK_SECRET;
   if (!secreto) {
-    if (process.env.NODE_ENV === "production") return false;
-    console.warn("MP_WEBHOOK_SECRET no configurado: no se verificó la firma del webhook.");
-    return true;
+    console.error("MP_WEBHOOK_SECRET no configurado: se rechazó el webhook.");
+    return false;
   }
 
   try {
@@ -71,6 +70,7 @@ export function crearProcesadorWebhookMP(dependencias: DependenciasProcesadorWeb
         estadoExterno: pago.estadoExterno,
         montoPago: pago.montoPago,
         monedaPago: pago.monedaPago,
+        preferenceId: pago.preferenceId,
       },
     };
   };

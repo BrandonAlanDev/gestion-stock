@@ -42,7 +42,7 @@ async function main(): Promise<void> {
     const llamadasProveedor: string[] = [];
     const procesar = crearProcesadorWebhookMP({
       validarFirma: firmaWebhookMPValida,
-      async obtenerEstadoPago(datos) {
+      async obtenerEstadoPago(_tenantId, datos) {
         llamadasProveedor.push(datos.externalId);
         return {
           externalId: datos.externalId,
@@ -50,6 +50,7 @@ async function main(): Promise<void> {
           estadoExterno: "approved",
           montoPago: 2500,
           monedaPago: "ARS",
+          preferenceId: "pref-a",
         };
       },
     });
@@ -60,6 +61,7 @@ async function main(): Promise<void> {
         dataId: PAYMENT_ID,
         firma: firmaValida.firma,
       }),
+      "tenant-a",
     );
     assert.deepEqual(resultado, {
       tipo: "pago",
@@ -69,6 +71,7 @@ async function main(): Promise<void> {
         estadoExterno: "approved",
         montoPago: 2500,
         monedaPago: "ARS",
+        preferenceId: "pref-a",
       },
     });
     assert.deepEqual(llamadasProveedor, [PAYMENT_ID]);
@@ -82,6 +85,7 @@ async function main(): Promise<void> {
           dataId: PAYMENT_ID,
           firma: firmaAlterada,
         }),
+        "tenant-a",
       ),
       /Firma inválida/,
     );
@@ -94,12 +98,27 @@ async function main(): Promise<void> {
           dataId: "mp-otro",
           firma: firmaDeOtroPago.firma,
         }),
+        "tenant-a",
       ),
       /Firma inválida/,
     );
     assert.equal(llamadasProveedor.length, llamadasAntesFirmaInvalida);
 
-    const ignorar = await procesar(crearRequest({ type: "merchant_order", data: {} }));
+    delete process.env.MP_WEBHOOK_SECRET;
+    assert.equal(
+      firmaWebhookMPValida(
+        crearRequest({ type: "payment", data: { id: PAYMENT_ID } }, {
+          dataId: PAYMENT_ID,
+          firma: firmaValida.firma,
+        }),
+        PAYMENT_ID,
+      ),
+      false,
+      "Un secreto ausente debe rechazar el webhook en cualquier entorno",
+    );
+    process.env.MP_WEBHOOK_SECRET = SECRETO;
+
+    const ignorar = await procesar(crearRequest({ type: "merchant_order", data: {} }), "tenant-a");
     assert.deepEqual(ignorar, { tipo: "ignorar" });
     assert.equal(llamadasProveedor.length, llamadasAntesFirmaInvalida);
 

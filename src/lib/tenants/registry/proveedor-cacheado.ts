@@ -33,7 +33,7 @@ const credencialesSchema = z.object({
   ssl: z.boolean(),
 });
 
-/** Conserva por proceso las respuestas validadas de Core hasta una invalidación. */
+/** Conserva por proceso las respuestas validadas de Core durante un plazo breve. */
 export class ProveedorRegistroCacheado implements TenantRegistryProvider {
   private readonly porHostname = new Map<string, ValorCacheado<TenantRegistryEntry | null>>();
   private readonly porId = new Map<string, ValorCacheado<TenantRegistryEntry | null>>();
@@ -63,8 +63,10 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
       }),
     );
     const claveId = entrada ? `id:${entrada.tenant.id}` : null;
-    if (entrada && claveId && generacion === this.generacionCache && !this.porId.has(claveId)) {
-      this.porId.set(claveId, { valor: clonarEntrada(entrada) });
+    const porId = claveId ? this.porId.get(claveId) : undefined;
+    if (entrada && claveId && generacion === this.generacionCache &&
+        (!porId || porId.venceEn === undefined || this.ahora() >= porId.venceEn)) {
+      this.porId.set(claveId, { valor: clonarEntrada(entrada), venceEn: this.ahora() + this.ttlMs });
     }
     return entrada;
   }
@@ -107,12 +109,14 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
 
   async verificarAcceso(tenantId: string): Promise<number | void> {
     const vigente = this.estados.get(tenantId);
-    if (vigente) return vigente.valor;
+    if (vigente && vigente.venceEn !== undefined && this.ahora() < vigente.venceEn) {
+      return vigente.valor;
+    }
     const generacion = this.generacionCache;
     const version = await this.cargar(`estado:${tenantId}`, async () => {
       const version = await (this.origen.verificarAcceso?.(tenantId) ?? Promise.resolve());
       if (generacion === this.generacionCache) {
-        this.estados.set(tenantId, { valor: version });
+        this.estados.set(tenantId, { valor: version, venceEn: this.ahora() + this.ttlMs });
       }
       return version;
     });
@@ -157,8 +161,7 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
     const generacion = this.generacionCache;
     const valor = await this.cargar(clave, cargar);
     if (generacion !== this.generacionCache) return this.obtener(clave, mapa, cargar);
-    // Los dominios desconocidos se reconsultan para admitir altas posteriores.
-    mapa.set(clave, valor ? { valor } : { valor, venceEn: this.ahora() + this.ttlMs });
+    mapa.set(clave, { valor, venceEn: this.ahora() + this.ttlMs });
     return valor ? (clonarEntrada(valor) as T) : null as T;
   }
 

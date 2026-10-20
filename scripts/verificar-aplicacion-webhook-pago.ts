@@ -75,6 +75,7 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
   let secuenciaPago = pagos.length;
 
   const clienteTx = {
+    pedidoEvento: { async create() { return { id: "evento-falso" }; } },
     pedido: {
       async findFirst() {
         return pedido ? { ...pedido } : null;
@@ -167,6 +168,7 @@ function crearPago(estadoExterno = "approved"): PagoWebhookNormalizado {
     estadoExterno,
     montoPago: 2500,
     monedaPago: "ARS",
+    preferenceId: "pref-a",
   };
 }
 
@@ -232,6 +234,8 @@ async function verificarMontoMonedaYAsociacion(): Promise<void> {
   const montoIncorrecto = { ...crearPago(), montoPago: 2499 };
   await aplicador.aplicar(montoIncorrecto);
   await aplicador.aplicar({ ...crearPago(), monedaPago: "USD" });
+  await aplicador.aplicar({ ...crearPago(), preferenceId: "pref-otra" });
+  await aplicador.aplicar({ ...crearPago(), preferenceId: null });
   assert.equal(prisma.obtenerPagos().length, 0);
   assert.equal(aplicador.pedidosConDescuento.length, 0);
 

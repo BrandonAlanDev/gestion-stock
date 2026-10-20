@@ -2,6 +2,7 @@ import "server-only";
 
 import { conPrisma } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import type { DatosEntrega } from "./datos-entrega";
 import { reservarStockPedido } from "./gestionar-reserva-stock";
 import { obtenerVencimientoReserva } from "./politica-reserva-stock";
 
@@ -13,6 +14,7 @@ export type ItemParaCrearPedido = {
 
 export type ResultadoCrearPedido = {
   pedidoId: string;
+  numero: number;
   total: number;
   moneda: string;
 };
@@ -21,6 +23,8 @@ type ItemPreparado = {
   garmentId: string;
   variantId: string;
   nombre: string;
+  varianteNombre: string | null;
+  imagen: string | null;
   precioUnitario: number;
   cantidad: number;
   subtotal: number;
@@ -36,6 +40,7 @@ export async function crearPedidoDesdeCarrito(
   userId: string,
   items: ItemParaCrearPedido[],
   metodoPago: MetodoPagoId,
+  datosEntrega?: DatosEntrega,
 ): Promise<ResultadoCrearPedido> {
   if (!items.length) throw new Error("El carrito está vacío");
 
@@ -77,7 +82,10 @@ export async function crearPedidoDesdeCarrito(
         garmentId: item.productId,
         garment: { active: true },
       },
-      include: { garment: { select: { name: true, price: true, controlaStock: true } } },
+      include: {
+        garment: { select: { name: true, price: true, controlaStock: true, images: { orderBy: { order: "asc" }, take: 1, select: { srcImage: true } } } },
+        optionValues: { include: { optionValue: true } },
+      },
     });
 
     if (!variante) throw new Error("Uno de los productos ya no está disponible");
@@ -92,6 +100,8 @@ export async function crearPedidoDesdeCarrito(
       garmentId: item.productId,
       variantId,
       nombre: variante.garment.name,
+      varianteNombre: variante.optionValues.map((valor) => valor.optionValue.value).join(" · ") || null,
+      imagen: variante.garment.images[0]?.srcImage ?? null,
       precioUnitario,
       cantidad: item.cantidad,
       subtotal: precioUnitario * item.cantidad,
@@ -108,22 +118,42 @@ export async function crearPedidoDesdeCarrito(
   });
 
   const pedido = await prisma.$transaction(async (tx) => {
+    const numeracion = await tx.numeroPedido.create({ data: {} });
     const creado = await tx.pedido.create({
       data: {
+        numero: numeracion.id,
         userId,
         total,
+        subtotal: total,
         moneda,
-        nombreCliente: user?.name ?? null,
+        nombreCliente: datosEntrega?.nombre ?? user?.name ?? null,
+        apellidoCliente: datosEntrega?.apellido ?? null,
+        telefonoCliente: datosEntrega?.telefono ?? null,
         emailCliente: user?.email ?? null,
+        metodoEntrega: datosEntrega?.metodoEntrega ?? "RETIRO_TIENDA",
         stockReservado: true,
         reservaExpiraEn: obtenerVencimientoReserva(metodoPago, new Date()),
         items: { create: itemsPreparados },
+        envio: datosEntrega?.metodoEntrega === "DOMICILIO" ? { create: {
+          metodoEntrega: "DOMICILIO",
+          destinatario: datosEntrega.destinatario,
+          telefono: datosEntrega.telefono,
+          calle: datosEntrega.calle,
+          numero: datosEntrega.numero,
+          piso: datosEntrega.piso || null,
+          departamento: datosEntrega.departamento || null,
+          codigoPostal: datosEntrega.codigoPostal,
+          localidad: datosEntrega.localidad,
+          provincia: datosEntrega.provincia,
+          referencias: datosEntrega.referencias || null,
+        } } : undefined,
+        eventos: { create: { tipo: "CREACION", descripcion: "Pedido creado" } },
       },
     });
     await reservarStockPedido(creado.id, tx);
     return creado;
   });
 
-  return { pedidoId: pedido.id, total, moneda };
+  return { pedidoId: pedido.id, numero: pedido.numero ?? 0, total, moneda };
   });
 }

@@ -3,6 +3,7 @@ import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
 
 export type PedidoConfirmado = {
   id: string;
+  numero: number | null;
   estado: string;
   estadoPago: string;
   total: number;
@@ -30,6 +31,7 @@ export interface DependenciasConfirmarPago {
       estadoExterno: string;
       montoPago: number | null;
       monedaPago: string | null;
+      preferenceId?: string | null;
     },
   ) => Promise<unknown>;
   registrarError: (mensaje: string, detalle: string) => void;
@@ -46,6 +48,7 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
     if (!pedido) return null;
     return {
       id: pedido.id,
+      numero: pedido.numero,
       estado: pedido.estado,
       estadoPago: pedido.estadoPago,
       total: Number(pedido.total),
@@ -87,12 +90,17 @@ export function crearAccionConfirmarPago(dependencias: DependenciasConfirmarPago
           externalId: paymentId,
         });
 
+        if (estado.referencia !== pedido.id) {
+          return { ok: false, error: "El pago no corresponde a este pedido" };
+        }
+
         await dependencias.aplicarWebhookPago({
           externalId: estado.externalId,
           pedidoId: estado.referencia,
           estadoExterno: estado.estadoExterno,
           montoPago: estado.montoPago,
           monedaPago: estado.monedaPago,
+          preferenceId: estado.preferenceId,
         });
       }
 

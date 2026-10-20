@@ -1,9 +1,9 @@
 import 'dotenv/config'
 import { defineConfig } from 'prisma/config'
 
-// Prisma necesita una URL para cargar la configuración incluso durante generate.
-// Esta dirección inválida falla cerrada si se intenta migrar sin elegir una base.
-const urlCli = process.env.DATABASE_URL ??
+// Solo el runner administrativo resuelve esta URL desde Logabyte Core.
+// Sin un destino confirmado, los comandos de migración fallan cerrados.
+const urlCli = process.env.LOGABYTE_CORE_SELECTED_DATABASE_URL ??
   'mysql://disabled:disabled@127.0.0.1:1/no_database_selected'
 
 export default defineConfig({

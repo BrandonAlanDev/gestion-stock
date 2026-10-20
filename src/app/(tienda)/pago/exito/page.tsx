@@ -55,7 +55,7 @@ export default async function PaginaPagoExito({ searchParams }: ExitoPageProps) 
           </h1>
           <p className="opacity-70">
             {aprobado
-              ? "Tu pedido quedó confirmado. Te contactaremos por WhatsApp para coordinar la entrega."
+              ? "Tu pedido quedó confirmado. Podés seguir su estado en Mis pedidos."
               : "Tu pago está en proceso. Te avisaremos cuando se confirme."}
           </p>
         </div>
@@ -70,7 +70,7 @@ export default async function PaginaPagoExito({ searchParams }: ExitoPageProps) 
             </p>
             <p className="text-sm">
               <span className="opacity-60">Pedido:</span>{" "}
-              <span className="font-mono">{pedido.id.slice(0, 10)}...</span>
+              <span className="font-mono">#{pedido.numero ?? pedido.id.slice(-8).toUpperCase()}</span>
             </p>
             <p className="text-sm">
               <span className="opacity-60">Total:</span>{" "}
@@ -86,11 +86,11 @@ export default async function PaginaPagoExito({ searchParams }: ExitoPageProps) 
         )}
 
         <Link
-          href="/"
+          href="/mis-pedidos"
           className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-black uppercase tracking-widest text-sm transition hover:opacity-90"
           style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
         >
-          Volver a la tienda
+          Ver mis pedidos
         </Link>
       </div>
     </div>

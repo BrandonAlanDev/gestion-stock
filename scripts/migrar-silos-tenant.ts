@@ -119,7 +119,7 @@ async function resolverDestinoConfirmado(
 }
 
 async function obtenerMigracionesVersionadas(): Promise<MigracionVersionadaConContenido[]> {
-  const directorio = path.join(process.cwd(), "prisma", "migrations");
+  const directorio = path.join(process.cwd(), "prisma", "migrations-base-unica");
   const entradas = await readdir(directorio, { withFileTypes: true });
   const nombres = entradas
     .filter((entrada) => entrada.isDirectory())
@@ -290,7 +290,7 @@ async function main(): Promise<void> {
     console.log(`Aplicando migraciones versionadas al tenant ${tenantId}`);
     const env = {
       ...process.env,
-      DATABASE_URL: construirUrlMysql(credenciales),
+      LOGABYTE_CORE_SELECTED_DATABASE_URL: construirUrlMysql(credenciales),
     };
     execFileSync(process.execPath, [prismaCli, "migrate", "deploy"], {
       cwd: process.cwd(),
@@ -302,8 +302,8 @@ async function main(): Promise<void> {
   }
 }
 
-void main().catch((error: unknown) => {
+void main().then(() => process.exit(0)).catch((error: unknown) => {
   const mensaje = error instanceof Error ? error.message : String(error);
   console.error(`FATAL: ${mensaje}`);
-  process.exitCode = 1;
+  process.exit(1);
 });

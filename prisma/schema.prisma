@@ -43,6 +43,7 @@ model user {
   telefono      String?
   account       account[]
   pedidos       Pedido[]
+  direcciones   DireccionUsuario[]
 
   @@unique([email])
   @@index([role])
@@ -543,14 +544,23 @@ model CuentaMercadoPago {
 
 model Pedido {
   id             String           @id @default(cuid())
+  numero         Int?             @unique
   userId         String
   estado         PedidoEstado     @default(PENDIENTE)
   estadoPago     PedidoEstadoPago @default(PENDIENTE)
+  estadoEnvio    PedidoEstadoEnvio @default(PENDIENTE)
+  metodoEntrega  MetodoEntrega    @default(DOMICILIO)
   stockReservado Boolean          @default(false)
   reservaExpiraEn DateTime?
+  subtotal       Decimal          @default(0) @db.Decimal(10, 2)
+  descuento      Decimal          @default(0) @db.Decimal(10, 2)
+  costoEnvio     Decimal          @default(0) @db.Decimal(10, 2)
   total          Decimal          @db.Decimal(10, 2)
   moneda         String           @default("ARS")
   nombreCliente  String?
+  apellidoCliente String?
+  dniCliente     String?
+  telefonoCliente String?
   emailCliente   String?
   mpPreferenceId String?
   mpPaymentId    String?
@@ -560,10 +570,16 @@ model Pedido {
   user           user             @relation(fields: [userId], references: [id])
   items          PedidoItem[]
   payments       Payment[]
+  envio          PedidoEnvio?
+  eventos        PedidoEvento[]
 
   @@index([createdAt])
   @@index([estado, reservaExpiraEn])
   @@index([userId])
+}
+
+model NumeroPedido {
+  id Int @id @default(autoincrement())
 }
 
 model PedidoItem {
@@ -573,6 +589,8 @@ model PedidoItem {
   garmentId      String
   variantId      String
   nombre         String
+  varianteNombre String?
+  imagen         String?  @db.Text
   precioUnitario Decimal  @db.Decimal(10, 2)
   cantidad       Int
   subtotal       Decimal  @db.Decimal(10, 2)
@@ -581,9 +599,96 @@ model PedidoItem {
   @@index([pedidoId])
 }
 
+model PedidoEnvio {
+  id               String       @id @default(cuid())
+  pedidoId         String       @unique
+  metodoEntrega    MetodoEntrega @default(DOMICILIO)
+  destinatario     String?
+  telefono         String?
+  calle            String?
+  numero           String?
+  piso             String?
+  departamento     String?
+  codigoPostal     String?
+  localidad        String?
+  provincia        String?
+  pais             String       @default("AR")
+  referencias      String?      @db.Text
+  transportista    String?
+  transportistaId  String?
+  trackingNumero   String?
+  trackingUrl      String?      @db.Text
+  fechaDespacho    DateTime?
+  fechaEstimada    DateTime?
+  fechaEntrega     DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  pedido           Pedido       @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  transportistaRel Transportista? @relation(fields: [transportistaId], references: [id])
+
+  @@index([transportistaId])
+}
+
+model DireccionUsuario {
+  id           String   @id @default(cuid())
+  userId       String
+  alias        String?
+  destinatario String?
+  telefono     String?
+  calle        String
+  numero       String
+  piso         String?
+  departamento String?
+  codigoPostal String
+  localidad    String
+  provincia    String
+  pais         String   @default("AR")
+  referencias  String?  @db.Text
+  esPrincipal  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, esPrincipal])
+}
+
+model Transportista {
+  id           String        @id @default(cuid())
+  nombre       String
+  slug         String        @unique
+  plantillaUrl String?       @db.Text
+  requiereUrl  Boolean       @default(false)
+  activo       Boolean       @default(true)
+  orden        Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  pedidoEnvios PedidoEnvio[]
+
+  @@index([activo, orden])
+}
+
+model PedidoEvento {
+  id             String           @id @default(cuid())
+  pedidoId       String
+  tipo           PedidoEventoTipo
+  descripcion    String
+  estadoAnterior String?
+  estadoNuevo    String?
+  usuarioId      String?
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+  pedido         Pedido           @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId, createdAt])
+}
+
 enum PedidoEstado {
   PENDIENTE
   CONFIRMADO
+  EN_PREPARACION
+  LISTO
+  ENVIADO
+  ENTREGADO
   CANCELADO
 }
 
@@ -593,6 +698,32 @@ enum PedidoEstadoPago {
   RECHAZADO
   CANCELADO
   EN_ACREDITACION
+  REEMBOLSADO
+}
+
+enum PedidoEstadoEnvio {
+  PENDIENTE
+  PREPARANDO
+  DESPACHADO
+  ENTREGADO
+}
+
+enum MetodoEntrega {
+  DOMICILIO
+  RETIRO_TIENDA
+  PUNTO_RETIRO
+}
+
+enum PedidoEventoTipo {
+  CREACION
+  PAGO_APROBADO
+  PAGO_RECHAZADO
+  PAGO_EN_ACREDITACION
+  CANCELADO
+  REEMBOLSADO
+  CAMBIO_ESTADO
+  CAMBIO_ENVIO
+  NOTA
 }
 
 model MetodoPago {

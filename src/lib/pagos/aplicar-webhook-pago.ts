@@ -117,12 +117,14 @@ export function crearAplicadorWebhookPago(
               moneda: true,
               metodoPago: true,
               estado: true,
+              estadoPago: true,
               stockReservado: true,
               mpPreferenceId: true,
               mpPaymentId: true,
             },
           });
-          if (!pedido || pedido.metodoPago !== "mercadopago" || !pedido.mpPreferenceId) return;
+          if (!pedido || pedido.metodoPago !== "mercadopago" ||
+              !pedido.mpPreferenceId || pedido.mpPreferenceId !== pago.preferenceId) return;
           if (pedido.estado === "CANCELADO" && !mapa.acreditar) return;
 
           const montoEsperado = Math.round(Number(pedido.total) * 100);
@@ -215,6 +217,10 @@ export function crearAplicadorWebhookPago(
               // Pedidos anteriores al despliegue no tienen stock reservado.
               await dependencias.descontarStockPedido(pedidoId, tx);
             }
+            await tx.pedidoEvento.create({ data: {
+              pedidoId, tipo: "PAGO_APROBADO", descripcion: "Pago acreditado por Mercado Pago",
+              estadoAnterior: pedido.estadoPago, estadoNuevo: "APROBADO",
+            } });
             return;
           }
 
@@ -248,13 +254,26 @@ export function crearAplicadorWebhookPago(
               );
               if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
             }
+            if (cancelado.count === 1) await tx.pedidoEvento.create({ data: {
+              pedidoId, tipo: "CANCELADO", descripcion: "Pago cancelado por Mercado Pago",
+              estadoAnterior: pedido.estadoPago, estadoNuevo: "CANCELADO",
+            } });
             return;
           }
 
-          await tx.pedido.updateMany({
+          const cambioEstado = await tx.pedido.updateMany({
             where: { id: pedidoId, estado: "PENDIENTE" },
             data: { estadoPago: mapa.estadoPago },
           });
+          if (cambioEstado.count === 1 && pedido.estadoPago !== mapa.estadoPago) {
+            await tx.pedidoEvento.create({ data: {
+              pedidoId,
+              tipo: mapa.estadoPago === "RECHAZADO" ? "PAGO_RECHAZADO" : "PAGO_EN_ACREDITACION",
+              descripcion: mapa.estadoPago === "RECHAZADO" ? "Pago rechazado por Mercado Pago" : "Pago pendiente de acreditación",
+              estadoAnterior: pedido.estadoPago,
+              estadoNuevo: mapa.estadoPago,
+            } });
+          }
       }));
     } catch (error) {
       if (error instanceof Error && error.message === ERROR_REVERTIR_PAGO_SIN_PEDIDO) return;

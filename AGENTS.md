@@ -12,7 +12,7 @@ Estas instrucciones rigen el repositorio completo. Consultá `ARCHITECTURE.md` p
 
 ## Invariantes del negocio
 
-- El servidor resuelve el dominio mediante Logabyte Core y obtiene allí la referencia de conexión del cliente; `DATABASE_URL` solo configura Prisma CLI para una base elegida explícitamente. Nunca aceptes destinos de conexión enviados por clientes. En operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
+- El servidor resuelve el dominio mediante Logabyte Core y obtiene allí la referencia de conexión del cliente. El ejecutor de migraciones también resuelve la conexión en Core y la entrega temporalmente a Prisma CLI para el cliente seleccionado; no uses `DATABASE_URL`. Nunca aceptes destinos de conexión enviados por clientes. En operaciones administrativas usá `requiereAdmin()` o el control equivalente vigente.
 - Validá IDs y relaciones recibidos del cliente antes de mutar datos. Mantené las claves de caché separadas por cliente y las invalidaciones coherentes con el alcance de cada base.
 - Mantené atómicas las operaciones que cambian stock y movimientos. En pedidos, pagos y callbacks externos, preservá los controles existentes de autorización, consistencia e idempotencia; verificá su flujo antes de editarlo.
 - `prisma/schema.prisma` es la fuente de verdad del modelo. No edites `generated/` ni `.next/` manualmente. No ejecutes cambios de esquema contra una base compartida sin conocer el entorno y el alcance.

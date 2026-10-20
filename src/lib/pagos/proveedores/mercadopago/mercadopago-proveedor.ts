@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Payment } from "mercadopago";
+import { MerchantOrder, Payment } from "mercadopago";
 import { crearPreferenciaPago } from "@/lib/mercadopago/crear-preferencia-pago";
 import { eliminarCuentaMP } from "@/lib/mercadopago/eliminar-cuenta";
 import { guardarCuentaMP } from "@/lib/mercadopago/guardar-cuenta";
@@ -90,6 +90,14 @@ export const proveedorMercadoPago: PaymentProvider = {
     const { cliente } = await obtenerCredencialesMP(tenantId);
     const payment = new Payment(cliente);
     const pago = await payment.get({ id: datos.externalId });
+    if (!pago.id || !pago.order?.id) {
+      throw new Error("El pago no tiene una orden comercial verificable");
+    }
+    const orden = await new MerchantOrder(cliente).get({ merchantOrderId: pago.order.id });
+    if (!orden.preference_id ||
+        !orden.payments?.some((asociado) => String(asociado.id) === String(pago.id))) {
+      throw new Error("El pago no pertenece a una preferencia verificable");
+    }
 
     return {
       estadoExterno: String(pago.status ?? ""),
@@ -97,6 +105,7 @@ export const proveedorMercadoPago: PaymentProvider = {
       monedaPago: pago.currency_id ? String(pago.currency_id) : null,
       referencia: pago.external_reference ? String(pago.external_reference) : null,
       externalId: String(pago.id),
+      preferenceId: orden.preference_id,
     };
   },
 };

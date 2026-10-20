@@ -54,7 +54,7 @@ interface MigracionEsperada {
 }
 
 async function obtenerMigracionesDelRepositorio(): Promise<MigracionEsperada[]> {
-  const directorio = path.join(process.cwd(), "prisma", "migrations");
+  const directorio = path.join(process.cwd(), "prisma", "migrations-base-unica");
   const entradas = await readdir(directorio, { withFileTypes: true });
   const nombres = entradas
     .filter((entrada) => entrada.isDirectory())
@@ -76,7 +76,7 @@ function verificarEsquemaContraPrisma(
   const requireDesdeProyecto = createRequire(path.join(process.cwd(), "package.json"));
   const rutaPaquetePrisma = requireDesdeProyecto.resolve("prisma/package.json");
   const prismaCli = path.join(path.dirname(rutaPaquetePrisma), "build", "index.js");
-  const env = { ...process.env, DATABASE_URL: construirUrlMysql(credenciales) };
+  const env = { ...process.env, LOGABYTE_CORE_SELECTED_DATABASE_URL: construirUrlMysql(credenciales) };
 
   try {
     execFileSync(process.execPath, [

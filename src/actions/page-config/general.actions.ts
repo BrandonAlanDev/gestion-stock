@@ -3,6 +3,7 @@
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { obtenerTenantDeSesion } from "@/lib/tenants/obtener-tenant-de-sesion";
 import { conPrismaTenant } from "@/lib/prisma";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
@@ -98,6 +99,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
             id: true,
             type: true,
             title: true,
+            active: true,
             settings: true,
           },
         },
@@ -149,5 +151,18 @@ const obtenerPageConfigSolicitud = cache(async () => {
 });
 
 export async function getPageConfig() {
-  return obtenerPageConfigSolicitud();
+  const resultado = await obtenerPageConfigSolicitud();
+  if (!resultado.ok || !resultado.pageConfig) return resultado;
+
+  const sesion = await obtenerTenantDeSesion();
+  if (sesion?.rol === "ADMIN") return resultado;
+
+  return {
+    ...resultado,
+    pageConfig: {
+      ...resultado.pageConfig,
+      homegrids: resultado.pageConfig.homegrids.filter((homegrid) => homegrid.active),
+      carousels: resultado.pageConfig.carousels.filter((carousel) => carousel.active),
+    },
+  };
 }

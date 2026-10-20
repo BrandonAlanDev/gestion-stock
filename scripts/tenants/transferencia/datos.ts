@@ -282,7 +282,7 @@ export async function leerHistorial(cliente: ClienteTransferencia): Promise<{
 }
 
 export async function obtenerMigracionesVersionadas(): Promise<Array<{ nombre: string; checksum: string }>> {
-  const directorio = path.join(process.cwd(), "prisma", "migrations");
+  const directorio = path.join(process.cwd(), "prisma", "migrations-base-unica");
   const entradas = await readdir(directorio, { withFileTypes: true });
   const nombres = entradas.filter((entrada) => entrada.isDirectory()).map((entrada) => entrada.name).sort();
   return Promise.all(nombres.map(async (nombre) => ({
@@ -297,7 +297,7 @@ export function validarEsquemaConPrisma(credenciales: CredencialesBaseTenant, et
   const requireDesdeProyecto = createRequire(path.join(process.cwd(), "package.json"));
   const rutaPaquetePrisma = requireDesdeProyecto.resolve("prisma/package.json");
   const prismaCli = path.join(path.dirname(rutaPaquetePrisma), "build", "index.js");
-  const env = { ...process.env, DATABASE_URL: construirUrlMysql(credenciales) };
+  const env = { ...process.env, LOGABYTE_CORE_SELECTED_DATABASE_URL: construirUrlMysql(credenciales) };
 
   try {
     execFileSync(process.execPath, [

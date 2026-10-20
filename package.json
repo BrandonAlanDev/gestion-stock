@@ -11,12 +11,12 @@
     "verificar:imports-prisma": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-imports-prisma-global.ts"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.11.1",
+    "@auth/prisma-adapter": "^2.11.3",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@prisma/adapter-mariadb": "^7.2.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/adapter-mariadb": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@radix-ui/react-slot": "^1.3.3",
     "@tanstack/react-query": "^5.100.14",
     "bcryptjs": "^3.0.3",
@@ -28,10 +28,10 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
+    "mariadb": "^3.5.4",
     "mercadopago": "^3.6.1",
-    "mariadb": "^3.4.5",
-    "next": "15.2.8",
-    "next-auth": "^5.0.0-beta.30",
+    "next": "^15.5.28",
+    "next-auth": "^5.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-easy-crop": "^6.2.3",
@@ -48,10 +48,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.2.8",
-    "prisma": "^7.2.0",
+    "eslint-config-next": "^15.5.28",
+    "prisma": "^7.10.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.31",
+    "nanoid": "^3.3.18",
+    "source-map-js": "^1.2.2"
   }
 }
