@@ -19,6 +19,8 @@ Las operaciones de inventario que cambian stock y movimientos se ejecutan en tra
 
 Auth.js usa un adaptador que opera en la base del cliente. El JWT vincula usuario, cliente y dominio; el middleware protege rutas de gestión y el servidor vuelve a verificar autorización y pertenencia. Las claves y etiquetas de caché de datos incluyen el ID del cliente. El catálogo público selecciona solo campos de tienda y excluye productos inactivos; la configuración pública excluye carruseles y secciones destacadas desactivadas. Las consultas de movimientos requieren permisos de administrador.
 
+La caché de productos públicos conserva únicamente las primeras cinco páginas del catálogo general de 20 artículos por cliente (hasta 100 artículos recientes, ordenados por fecha de creación e ID). Las páginas siguientes, las consultas con filtros o búsqueda y el detalle por ID se leen directamente de la base del cliente. Las entradas cacheadas se revalidan a los 300 segundos o al invalidar la etiqueta de productos del cliente.
+
 ## Migraciones
 
 `prisma.config.ts` apunta a `prisma/migrations-base-unica/`. El ejecutor administrativo resuelve cada destino en Logabyte Core y entrega una URL temporal a Prisma CLI. Sin ese destino confirmado, los comandos de migración fallan cerrados. El catálogo de Logabyte Core provisiona bases nuevas con el mismo baseline. Las bases antiguas requieren una migración evaluada individualmente. Consultá [README.md](README.md).

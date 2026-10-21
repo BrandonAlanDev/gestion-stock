@@ -1,6 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 
+const MAX_PRODUCTOS_CACHEADOS_POR_TENANT = 100;
+const LIMITE_CATALOGO_CACHEADO = 20;
+
 export async function obtenerProductosCacheados(
   tenantId: string,
   page: number,
@@ -13,15 +16,22 @@ export async function obtenerProductosCacheados(
   const limiteSeguro = Math.min(50, Math.max(1, Math.trunc(limit) || 20));
   const busqueda = search?.trim();
 
-  if (busqueda) {
+  // Cada tenant genera como máximo cinco entradas para el catálogo general.
+  if (
+    busqueda ||
+    categoryId ||
+    subCategoryId ||
+    limiteSeguro !== LIMITE_CATALOGO_CACHEADO ||
+    paginaSegura * limiteSeguro > MAX_PRODUCTOS_CACHEADOS_POR_TENANT
+  ) {
     return obtenerPrendasPaginadas(
-        tenantId,
-        paginaSegura,
-        limiteSeguro,
-        categoryId,
-        busqueda,
-        subCategoryId
-      );
+      tenantId,
+      paginaSegura,
+      limiteSeguro,
+      categoryId,
+      busqueda,
+      subCategoryId
+    );
   }
 
   return unstable_cache(
@@ -36,11 +46,8 @@ export async function obtenerProductosCacheados(
       ),
     [
       `tenant:${tenantId}`,
-      `public-products:v2`,
+      `public-products:v3`,
       String(paginaSegura),
-      String(limiteSeguro),
-      categoryId ?? "",
-      subCategoryId ?? "",
     ],
     { revalidate: 300, tags: [`tenant:${tenantId}:products`] }
   )();

@@ -31,7 +31,7 @@ export async function obtenerPrendasPaginadas(
         },
         skip,
         take: limiteSeguro,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       }),
       prisma.garment.count({ where }),
     ]);
