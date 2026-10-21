@@ -10,7 +10,6 @@ import AllCarousels from "@/components/carousel/AllCarousels";
 import FeaturedSection from "@/components/home/FeaturedSection";
 import LocationCard from "@/components/ui/LocationCard";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
-import { getSectionMt } from "@/lib/section-mt";
 
 interface CarouselSlide {
   id: string;
@@ -111,11 +110,6 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
     return new Map(homegrids.map((h) => [String(h.id), h as HomegridRender]));
   }, [config]);
 
-  const carousels = (config?.carousels as CarouselData[]) || [];
-  const heroSettings = carousels.find(c => c.type === "HERO")?.settings as Record<string, unknown> | undefined;
-  const cardsSettings = carousels.find(c => c.type === "CARDS")?.settings as Record<string, unknown> | undefined;
-  const featuredLayout = config?.featuredLayout as string | undefined;
-
   const isNewFormat = hasCustomOrder && sectionOrder.some((s) => s.startsWith("carousel_"));
 
   const { data: fetchedCarousels } = useQuery({
@@ -141,31 +135,6 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
     }
     return map;
   }, [fetchedCarousels]);
-
-  const getSubtype = (section: string): string | undefined => {
-    if (section.startsWith("carousel_")) {
-      const id = section.slice("carousel_".length);
-      const c = carouselMap.get(id);
-      if (!c) return undefined;
-      if (c.settings?.heroStyle === "SHOWCASE") return "showcase";
-      return (c.settings?.slideLayout as string) || "default";
-    }
-    if (section.startsWith(PREFIJO_DESTACADA)) {
-      const hg = homegridPorId.get(section.slice(PREFIJO_DESTACADA.length));
-      return (hg?.featuredLayout as string | undefined) || "GRID";
-    }
-    switch (section) {
-      case "hero":
-        if (heroSettings?.heroStyle === "SHOWCASE") return "showcase";
-        return (heroSettings?.slideLayout as string) || "default";
-      case "featured":
-        return featuredLayout || "GRID";
-      case "cards":
-        return (cardsSettings?.layout as string) || "simple";
-      default:
-        return undefined;
-    }
-  };
 
   const renderSection = (section: string) => {
     if (section.startsWith("carousel_")) {
@@ -234,18 +203,10 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
     }
   };
 
-  const renderWithMt = (section: string, index: number) => {
-    const content = renderSection(section);
-    if (!content) return null;
-    const mt = index === 0 ? getSectionMt(section, getSubtype(section)) : 0;
-    if (mt <= 0) return content;
-    return <div key={section} className={`mt-${mt}`}>{content}</div>;
-  };
-
   return (
-    <div className="min-h-screen overflow-x-hidden max-w-full" style={{ backgroundColor: "var(--color-fondo-sitio)" }}>
+    <div className="inicio-contenido min-h-screen max-w-full overflow-x-hidden pt-16" style={{ backgroundColor: "var(--color-fondo-sitio)" }}>
       {hasCustomOrder ? (
-        sectionOrder.map((section, index) => renderWithMt(section, index))
+        sectionOrder.map((section) => renderSection(section))
       ) : (
         <>
           <AllCarousels storeName={config?.storeName as string} initialCarousels={carouselsIniciales as ComponentProps<typeof AllCarousels>["initialCarousels"]} />

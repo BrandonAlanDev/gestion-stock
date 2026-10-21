@@ -429,3 +429,9 @@ h3 {
   background: var(--admin-primario, var(--color-primario));
   border-radius: 10px;
 }
+
+/* La primera sección comienza justo debajo de la barra fija de la tienda. */
+.inicio-contenido > :first-child,
+.inicio-contenido > .carousel-container:first-child > :first-child {
+  padding-top: 0;
+}

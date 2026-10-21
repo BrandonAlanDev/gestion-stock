@@ -85,7 +85,7 @@ export default function ControlesConfiguracion({
             step={control.step}
             value={control.aMostrar(valor)}
             onChange={(e) => alCambiar(d.clave, control.aGuardar(Number(e.target.value)))}
-            className="h-2 w-full appearance-none rounded-lg accent-[var(--admin-primario)]"
+            className="w-full cursor-pointer accent-[var(--admin-primario)]"
           />
         </div>
       );

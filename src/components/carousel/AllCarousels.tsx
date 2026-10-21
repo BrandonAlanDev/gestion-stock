@@ -58,10 +58,8 @@ export default function AllCarousels({ storeName, initialCarousels }: { storeNam
     return null;
   }
 
-  const firstIsHero = carousels[0]?.type === "HERO";
-
   return (
-    <div className={"carousel-container space-y-0" + (firstIsHero ? "" : " mt-16")}>
+    <div className="carousel-container space-y-0">
       {carousels.map((carousel) => {
         const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
         const carruselNormalizado = {
