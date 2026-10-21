@@ -68,6 +68,16 @@ export class ProveedorRegistroCacheado implements TenantRegistryProvider {
         (!porId || porId.venceEn === undefined || this.ahora() >= porId.venceEn)) {
       this.porId.set(claveId, { valor: clonarEntrada(entrada), venceEn: this.ahora() + this.ttlMs });
     }
+    if (entrada?.tenant.estado === "ACTIVO" && entrada.versionCache !== undefined &&
+        generacion === this.generacionCache) {
+      const estado = this.estados.get(entrada.tenant.id);
+      if (!estado || estado.venceEn === undefined || this.ahora() >= estado.venceEn) {
+        this.estados.set(entrada.tenant.id, {
+          valor: entrada.versionCache,
+          venceEn: this.ahora() + this.ttlMs,
+        });
+      }
+    }
     return entrada;
   }
 

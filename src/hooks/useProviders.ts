@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProviders } from "@/actions/proveedores/obtener-proveedores";
 
-export function useProviders() {
+export function useProviders(initialData?: Awaited<ReturnType<typeof getProviders>>) {
 
   return useQuery({
     queryKey: ["providers"],
+    initialData,
     queryFn: async () => {
       const data = await getProviders();
       if (!data) throw new Error("Error al cargar proveedores");

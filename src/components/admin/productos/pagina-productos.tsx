@@ -23,6 +23,9 @@ import { eliminarPrenda } from "@/actions/prendas/eliminar-prenda";
 import { actualizarVisibilidadProducto } from "@/actions/productos/actualizar-visibilidad-producto";
 import { LIMITE_DEFECTO } from "@/lib/productos/query-params";
 import type { ProductoAdminRow } from "@/lib/productos/tipos";
+import type { RespuestaProductosAdmin } from "@/lib/productos/tipos";
+import type { getCategories } from "@/actions/categorias/obtener-categorias";
+import type { getProviders } from "@/actions/proveedores/obtener-proveedores";
 import type {
   ProductoAdministracion,
   CategoriaAdministracion,
@@ -42,12 +45,20 @@ function adaptarProducto(producto: ProductoAdminRow): ProductoAdministracion {
   };
 }
 
-export default function PaginaProductos() {
+export default function PaginaProductos({
+  productosIniciales,
+  categoriasIniciales,
+  proveedoresIniciales,
+}: {
+  productosIniciales?: RespuestaProductosAdmin;
+  categoriasIniciales: Awaited<ReturnType<typeof getCategories>>;
+  proveedoresIniciales: Awaited<ReturnType<typeof getProviders>>;
+}) {
   const queryClient = useQueryClient();
   const { filtros, actualizar, limpiar } = useFiltrosProductos();
-  const { data, isPending, isError } = useProductosAdmin(filtros);
-  const { data: categorias } = useCategories();
-  const { data: proveedores } = useProviders();
+  const { data, isPending, isError } = useProductosAdmin(filtros, productosIniciales);
+  const { data: categorias } = useCategories(categoriasIniciales);
+  const { data: proveedores } = useProviders(proveedoresIniciales);
 
   const [crearAbierto, setCrearAbierto] = useState(false);
   const [edicion, setEdicion] = useState<ProductoAdminRow | null>(null);

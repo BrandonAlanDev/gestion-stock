@@ -35,6 +35,8 @@ La base de Core debe estar disponible para la primera carga o tras una invalidac
 
 La migración `20261020010000_pedidos_envios` añade números de pedido, direcciones, transportistas, envíos e historial a cada base de cliente. Antes de aplicarla a una base con datos, compará su DDL e historial, prepará respaldo y reversión y verificá que siga el baseline activo. No se aplica automáticamente desde la aplicación.
 
+La migración `20261021010000_indices_listados` agrega índices compuestos para el catálogo activo por fecha y los pedidos de un usuario por fecha. Logabyte Core publica su SQL en el catálogo de `gestion-stock` y lo aplica a bases existentes mediante la actualización administrativa explícita. Las bases nuevas ya incluyen esos índices en la baseline de Core. Antes de ejecutarla sobre datos reales, revisá el historial y el DDL, prepará respaldo y reversión y medí el costo de creación de índices.
+
 En el checkout se elige envío a domicilio o retiro en tienda. El costo del envío a domicilio se coordina con la tienda y queda en cero en el total cobrado por la aplicación. El cliente puede guardar direcciones en **Mi perfil** y consultar compras en **Mis pedidos**. La administración dispone de **Pedidos**, **Envíos** y **Transportistas**; las transferencias pendientes se aprueban desde el detalle del pedido.
 
 `prisma/schema.prisma` es la fuente de verdad del esquema de **una base por cliente**. Logabyte Core contiene el catálogo de provisionamiento correspondiente. El servidor y el ejecutor administrativo obtienen las conexiones de Core. `prisma.config.ts` acepta un destino temporal únicamente durante la ejecución del comando administrativo; sin un destino resuelto, los comandos de migración fallan cerrados.

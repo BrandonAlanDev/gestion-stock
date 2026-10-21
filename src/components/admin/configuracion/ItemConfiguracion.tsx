@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight, Lock } from "lucide-react";
 
@@ -16,6 +17,7 @@ interface ItemConfiguracionProps {
     | "info";
   textoBadge?: string;
   proximamente?: boolean;
+  href?: string;
   alClick?: () => void;
 }
 
@@ -26,6 +28,7 @@ export default function ItemConfiguracion({
   varianteBadge,
   textoBadge,
   proximamente = false,
+  href,
   alClick,
 }: ItemConfiguracionProps) {
   const contenido = (
@@ -59,6 +62,17 @@ export default function ItemConfiguracion({
       <div className="pointer-events-none flex w-full items-center gap-3 px-4 py-3 opacity-50">
         {contenido}
       </div>
+    );
+  }
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--admin-fondo-hover)]"
+      >
+        {contenido}
+      </Link>
     );
   }
 

@@ -113,6 +113,7 @@ model Garment {
   @@index([subCategoryId])
   @@index([supplierId])
   @@index([active])
+  @@index([active, createdAt])
   @@index([createdAt])
 }
 
@@ -576,6 +577,7 @@ model Pedido {
   @@index([createdAt])
   @@index([estado, reservaExpiraEn])
   @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model NumeroPedido {

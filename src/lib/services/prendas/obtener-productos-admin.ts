@@ -125,16 +125,38 @@ export async function obtenerProductosAdmin(
   const teniendo = construirHaving(p.stock);
   const orden = ORDENES_SQL[p.orden ?? "recientes"];
 
-  const consultaFilas = Prisma.sql`
+  const consultaFilasConStock = Prisma.sql`
     ${SELECT_BASE}
     WHERE ${donde}
     ${GROUP_BY}
     HAVING ${teniendo}
-    ORDER BY ${orden}
+    ORDER BY ${orden}, g.id DESC
     LIMIT ${limite} OFFSET ${skip}
   `;
+  const consultaFilasPaginadas = Prisma.sql`
+    SELECT ${COLUMNAS_SELECT}
+    FROM (
+      SELECT g.id
+      FROM Garment g
+      LEFT JOIN Category c ON c.id = g.categoryId
+      LEFT JOIN SubCategory sc ON sc.id = g.subCategoryId
+      WHERE ${donde}
+      ORDER BY ${orden}, g.id DESC
+      LIMIT ${limite} OFFSET ${skip}
+    ) AS seleccion
+    JOIN Garment g ON g.id = seleccion.id
+    LEFT JOIN Category c ON c.id = g.categoryId
+    LEFT JOIN SubCategory sc ON sc.id = g.subCategoryId
+    LEFT JOIN Provider p ON p.id = g.supplierId
+    LEFT JOIN GarmentVariant v ON v.garmentId = g.id
+    ${GROUP_BY}
+    ORDER BY ${orden}, g.id DESC
+  `;
+  const consultaFilas = p.stock || p.orden?.startsWith("stock-")
+    ? consultaFilasConStock
+    : consultaFilasPaginadas;
 
-  const consultaTotal = Prisma.sql`
+  const consultaTotalConStock = Prisma.sql`
     SELECT COUNT(*) AS total
     FROM (
       SELECT g.id
@@ -148,6 +170,17 @@ export async function obtenerProductosAdmin(
       HAVING ${teniendo}
     ) AS subconsulta
   `;
+  const consultaTotal = p.stock
+    ? consultaTotalConStock
+    : p.busqueda?.trim()
+      ? Prisma.sql`
+        SELECT COUNT(*) AS total
+        FROM Garment g
+        LEFT JOIN Category c ON c.id = g.categoryId
+        LEFT JOIN SubCategory sc ON sc.id = g.subCategoryId
+        WHERE ${donde}
+      `
+      : Prisma.sql`SELECT COUNT(*) AS total FROM Garment g WHERE ${donde}`;
 
   return conPrismaTenant(tenantId, async (prisma) => {
     const [filasCrudas, conteo] = await Promise.all([

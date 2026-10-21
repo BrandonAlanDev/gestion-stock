@@ -11,13 +11,19 @@ export async function obtenerMovimientos(
   return conPrismaTenant(tenantId, async (prisma) => {
     const [registros, total] = await Promise.all([
     prisma.movement.findMany({
-      where: {},
-      include: {
+      select: {
+        id: true,
+        type: true,
+        quantity: true,
+        priceAtTime: true,
+        note: true,
+        createdAt: true,
         garmentVariant: {
-          include: {
-            garment: true,
-            size: true,
-            optionValues: { include: { optionValue: { include: { option: true } } } },
+          select: {
+            attributes: true,
+            garment: { select: { name: true } },
+            size: { select: { value: true } },
+            optionValues: { select: { optionValue: { select: { value: true } } } },
           },
         },
       },

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import CookieModal from "@/components/legal/CookieModal";
 import PrivacyModal from "@/components/legal/PrivacyModal";
@@ -9,15 +9,7 @@ import PiePagina from "@/components/footer/PiePagina";
 export default function AppGate({ children }: { children: React.ReactNode }) {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-
-  // Evitamos errores de hidratación asegurándonos de que se renderice en el cliente
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   const esRutaAdmin = pathname.startsWith("/admin");
   const esRutaMantenimiento = pathname === "/mantenimiento";

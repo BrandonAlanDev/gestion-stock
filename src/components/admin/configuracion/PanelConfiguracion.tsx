@@ -281,15 +281,15 @@ export default function PanelConfiguracion({
               }
               alClick={() => setDrawerAbierto("pagos")}
             />
-            <ItemConfiguracion icono={Truck} titulo="Envíos" proximamente />
+            <ItemConfiguracion icono={Truck} titulo="Envíos" descripcion="Gestioná las entregas a domicilio" href="/admin/envios" />
             <ItemConfiguracion icono={Percent} titulo="Impuestos" proximamente />
-            <ItemConfiguracion icono={ClipboardList} titulo="Pedidos" proximamente />
+            <ItemConfiguracion icono={ClipboardList} titulo="Pedidos" descripcion="Consultá y gestioná los pedidos" href="/admin/orders" />
           </GrupoConfiguracion>
 
           <GrupoConfiguracion idAncla="grupo-cuenta" titulo="Cuenta">
             <ItemConfiguracion icono={Users} titulo="Usuarios" proximamente />
             <ItemConfiguracion icono={ShieldCheck} titulo="Permisos" proximamente />
-            <ItemConfiguracion icono={UserCircle} titulo="Perfil" proximamente />
+            <ItemConfiguracion icono={UserCircle} titulo="Perfil" descripcion="Tus datos personales" href="/perfil" />
           </GrupoConfiguracion>
 
           <GrupoConfiguracion idAncla="grupo-integraciones" titulo="Integraciones">

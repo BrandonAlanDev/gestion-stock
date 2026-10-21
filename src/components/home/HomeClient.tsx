@@ -51,6 +51,7 @@ interface HomegridRender {
 }
 
 interface HomeClientProps {
+  carouselsIniciales?: CarouselData[];
   pageConfig: {
     address?: string | null;
     city?: string | null;
@@ -95,7 +96,7 @@ function renderCarousel(carousel: CarouselData, storeName?: string) {
 
 const PREFIJO_DESTACADA = "featured_";
 
-export default function HomeClient({ pageConfig }: HomeClientProps) {
+export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClientProps) {
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
@@ -128,6 +129,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
     staleTime: 60_000,
     gcTime: 10 * 60_000,
     enabled: isNewFormat,
+    initialData: carouselsIniciales,
   });
 
   const carouselMap = useMemo(() => {
@@ -246,7 +248,7 @@ export default function HomeClient({ pageConfig }: HomeClientProps) {
         sectionOrder.map((section, index) => renderWithMt(section, index))
       ) : (
         <>
-          <AllCarousels storeName={config?.storeName as string} />
+          <AllCarousels storeName={config?.storeName as string} initialCarousels={carouselsIniciales as ComponentProps<typeof AllCarousels>["initialCarousels"]} />
 
           <FeaturedSection homegrid={config?.homegrid as HomegridRender | undefined} />
 

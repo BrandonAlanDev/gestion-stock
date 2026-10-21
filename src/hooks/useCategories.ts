@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/actions/categorias/obtener-categorias";
 
-export function useCategories() {
+export function useCategories(initialData?: Awaited<ReturnType<typeof getCategories>>) {
 
   return useQuery({
     queryKey: ["categories"],
+    initialData,
     queryFn: async () => {
       const data = await getCategories();
       if (!data) throw new Error("Error al cargar categorías");

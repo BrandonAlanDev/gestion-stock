@@ -1,8 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { getMovements } from "@/actions/movimientos/obtener-movimientos";
-import { SkeletonFilas } from "@/components/ui/skeleton-vistas";
 
 type Movimiento = Awaited<ReturnType<typeof getMovements>>["movements"][number];
 
@@ -16,17 +12,8 @@ function colorTipo(tipo: string) {
     : "bg-[var(--admin-peligro-suave)] text-[var(--admin-peligro)]";
 }
 
-export default function MovementsPage() {
-  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    getMovements(1, 100)
-      .then((datos) => setMovimientos(datos.movements))
-      .catch(() => setError(true))
-      .finally(() => setCargando(false));
-  }, []);
+export default async function MovementsPage() {
+  const { movements: movimientos }: { movements: Movimiento[] } = await getMovements(1, 100);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-7 text-[var(--admin-texto)] sm:px-6 lg:px-8">
@@ -35,11 +22,7 @@ export default function MovementsPage() {
         <p className="mt-1 text-sm text-[var(--admin-texto-suave)]">Entradas y salidas registradas en el inventario.</p>
       </div>
 
-      {cargando ? (
-        <SkeletonFilas filas={8} tipo="movimientos" />
-      ) : error ? (
-        <div className="admin-panel p-10 text-center text-sm text-[var(--admin-texto-suave)]">No se pudieron cargar los movimientos.</div>
-      ) : movimientos.length === 0 ? (
+      {movimientos.length === 0 ? (
         <div className="admin-panel p-10 text-center text-sm text-[var(--admin-texto-suave)]">Todavía no hay movimientos registrados.</div>
       ) : (
         <>

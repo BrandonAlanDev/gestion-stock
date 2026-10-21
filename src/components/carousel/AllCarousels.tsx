@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import HeroLayout from "./layouts/hero/HeroLayout";
 import BannerLayout from "./layouts/banner/BannerLayout";
@@ -29,13 +28,7 @@ interface Carousel {
   slides: CarouselSlide[];
 }
 
-export default function AllCarousels({ storeName }: { storeName?: string }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+export default function AllCarousels({ storeName, initialCarousels }: { storeName?: string; initialCarousels?: Carousel[] }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["carousels", "all"],
     queryFn: async () => {
@@ -46,12 +39,8 @@ export default function AllCarousels({ storeName }: { storeName?: string }) {
     },
     staleTime: 60_000,
     gcTime: 10 * 60_000,
-    enabled: mounted,
+    initialData: initialCarousels,
   });
-
-  if (!mounted) {
-    return <SkeletonAll />;
-  }
 
   if (isLoading) {
     return <SkeletonAll />;

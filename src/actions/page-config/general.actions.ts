@@ -5,15 +5,16 @@ import { cache } from "react";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { obtenerTenantDeSesion } from "@/lib/tenants/obtener-tenant-de-sesion";
 import { conPrismaTenant } from "@/lib/prisma";
-import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
+import { DEFAULT_VALUES } from "@/actions/page-config/shared/defaults";
 import { TIPOS_CARRUSEL_ADMITIDOS } from "@/lib/services/carruseles/constantes";
 
 async function obtenerPageConfigCacheada(tenantId: string) {
-  return unstable_cache(
-    async () => {
   try {
-    const pageConfig = await conPrismaTenant(tenantId, (prisma) => prisma.pageConfig.findFirst({
-      where: {},
+    return await unstable_cache(
+    async () => {
+    const { pageConfig, homegrids } = await conPrismaTenant(tenantId, async (prisma) => {
+      const cargar = () => prisma.pageConfig.findUnique({
+      where: { clave: "principal" },
       select: {
         storeName: true,
         slogan: true,
@@ -73,25 +74,7 @@ async function obtenerPageConfigCacheada(tenantId: string) {
           },
         },
 
-        homegrid: {
-          select: {
-            id: true,
-            title: true,
-            subtitle: true,
-            style: true,
-            columns: true,
-            active: true,
-            featuredLayout: true,
-            grids: {
-              where: {},
-              orderBy: [{
-                order: "asc",
-              },{
-                title: "asc",
-              },],
-            },
-          },
-        },
+        homegridId: true,
 
         carousels: {
           where: { type: { in: [...TIPOS_CARRUSEL_ADMITIDOS] } },
@@ -104,49 +87,60 @@ async function obtenerPageConfigCacheada(tenantId: string) {
           },
         },
       },
-    }));
+      });
+      const [existente, homegrids] = await Promise.all([
+        cargar(),
+        prisma.homegrid.findMany({
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            title: true,
+            subtitle: true,
+            style: true,
+            columns: true,
+            active: true,
+            featuredLayout: true,
+            grids: { orderBy: [{ order: "asc" }, { title: "asc" }] },
+          },
+        }),
+      ]);
+      if (existente) return { pageConfig: existente, homegrids };
+      await prisma.pageConfig.upsert({
+        where: { clave: "principal" },
+        update: {},
+        create: {
+          storeName: DEFAULT_VALUES.storeName,
+          primaryColor: DEFAULT_VALUES.primaryColor,
+          secondaryColor: DEFAULT_VALUES.secondaryColor,
+          bgColor: DEFAULT_VALUES.bgColor,
+        },
+      });
+      return { pageConfig: await cargar(), homegrids };
+    });
     if (!pageConfig) {
       throw new Error("Configuración de página no encontrada");
     }
 
-    const homegrids = await conPrismaTenant(tenantId, (prisma) => prisma.homegrid.findMany({
-      where: {},
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        title: true,
-        subtitle: true,
-        style: true,
-        columns: true,
-        active: true,
-        featuredLayout: true,
-        grids: {
-          where: {},
-          orderBy: [{ order: "asc" }, { title: "asc" }],
-        },
+    return {
+      ok: true as const,
+      pageConfig: {
+        ...pageConfig,
+        homegrid: homegrids.find((homegrid) => homegrid.id === pageConfig.homegridId) ?? null,
+        homegrids,
       },
-    }));
-
-    return {
-      ok: true,
-      pageConfig: { ...pageConfig, homegrids },
     };
-  } catch (error: unknown) {
-    console.error("Error real:", error instanceof Error ? error.message : error);
-    return {
-      ok: false,
-      error: "Error configuración",
-    };
-  }
     },
     [`tenant:${tenantId}:page-config-completa`],
     { revalidate: 3600, tags: [`tenant:${tenantId}:page-config`] }
-  )();
+    )();
+  } catch (error: unknown) {
+    console.error("Error real:", error instanceof Error ? error.message : error);
+    return { ok: false as const, pageConfig: null, error: "Error configuración" };
+  }
 }
 
 const obtenerPageConfigSolicitud = cache(async () => {
   const { id: tenantId } = await requiereTenantActivo();
-  await getOrCreatePageConfig(tenantId);
   return obtenerPageConfigCacheada(tenantId);
 });
 

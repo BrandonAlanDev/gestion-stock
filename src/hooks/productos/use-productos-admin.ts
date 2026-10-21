@@ -5,10 +5,11 @@ import { obtenerProductosAdmin } from "@/actions/productos/obtener-productos-adm
 import type { RespuestaProductosAdmin } from "@/lib/productos/tipos";
 import type { FiltrosProductos } from "@/lib/productos/query-params";
 
-export function useProductosAdmin(filtros: FiltrosProductos) {
+export function useProductosAdmin(filtros: FiltrosProductos, initialData?: RespuestaProductosAdmin) {
 
   return useQuery({
     queryKey: ["productos-admin", filtros],
+    initialData,
     queryFn: async (): Promise<RespuestaProductosAdmin> => {
       const resultado = await obtenerProductosAdmin({
         pagina: filtros.pagina,

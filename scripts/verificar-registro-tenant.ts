@@ -302,6 +302,42 @@ async function verificarNavegacionSinConsultasRepetidas(): Promise<void> {
   assert.deepEqual(consultas, { dominio: 3, id: 0, estado: 3, credenciales: 1 });
 }
 
+async function verificarEstadoConfirmadoPorDominio(): Promise<void> {
+  let ahora = 0;
+  let version = 4;
+  let suspendido = false;
+  let consultasEstado = 0;
+  const cache = new ProveedorRegistroCacheado(crearProveedor({
+    async resolverPorHostname() {
+      return {
+        ...crearEntrada("tenant-dominio", "dominio.example.com", suspendido ? "SUSPENDIDO" : "ACTIVO"),
+        versionCache: version,
+      };
+    },
+    async verificarAcceso() {
+      consultasEstado += 1;
+      if (suspendido) throw new Error("tenant suspendido");
+      return version;
+    },
+  }), 30, () => ahora);
+
+  await cache.resolverPorHostname("dominio.example.com");
+  assert.equal(await cache.verificarAcceso("tenant-dominio"), 4);
+  assert.equal(consultasEstado, 0, "La resolución vigente ya confirmó el estado en Core");
+
+  ahora = 31;
+  version = 5;
+  await cache.resolverPorHostname("dominio.example.com");
+  assert.equal(await cache.verificarAcceso("tenant-dominio"), 5);
+  assert.equal(consultasEstado, 0, "La versión nueva se reutiliza sin otra lectura");
+
+  ahora = 62;
+  suspendido = true;
+  await cache.resolverPorHostname("dominio.example.com");
+  await assert.rejects(cache.verificarAcceso("tenant-dominio"), /tenant suspendido/);
+  assert.equal(consultasEstado, 1, "Una suspensión no debe reutilizar el estado activo anterior");
+}
+
 async function verificarFallosSinFallback(): Promise<void> {
   let operacionEjecutada = false;
   configurarProveedorRegistroTenant(crearProveedor({
@@ -347,6 +383,7 @@ async function main(): Promise<void> {
   await verificarEstadoHastaInvalidacion();
   await verificarInvalidacionDuranteConsultaDeEstado();
   await verificarNavegacionSinConsultasRepetidas();
+  await verificarEstadoConfirmadoPorDominio();
   await verificarFallosSinFallback();
   console.log("Registro tenant: dominios, estados, caché, invalidación y fallos verificados.");
 }

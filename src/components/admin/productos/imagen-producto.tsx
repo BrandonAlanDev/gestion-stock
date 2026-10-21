@@ -1,6 +1,8 @@
 "use client";
 
 import { Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 
 interface ImagenProductoProps {
   src: string | null;
@@ -11,11 +13,12 @@ interface ImagenProductoProps {
 export default function ImagenProducto({ src, alt, tamano = 44 }: ImagenProductoProps) {
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={alt}
         width={tamano}
         height={tamano}
+        unoptimized={!imagenAdmiteOptimizacion(src)}
         className="shrink-0 rounded-xl border border-[var(--admin-borde)] object-cover"
       />
     );

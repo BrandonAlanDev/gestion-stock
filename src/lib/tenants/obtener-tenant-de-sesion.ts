@@ -1,31 +1,30 @@
 import "server-only";
 
 import { cache } from "react";
-import { auth } from "@/auth";
-import { conPrismaTenant } from "@/lib/prisma";
+import { obtenerSesionSolicitud } from "@/lib/autenticacion/obtener-sesion-solicitud";
 import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
-import { resolverContextoSesionTenant } from "@/lib/tenants/resolver-contexto-sesion";
 import type { ContextoTenantSesion } from "@/types/tenants";
 
 const obtenerTenantDeSesionMemoizado = cache(
   async (): Promise<ContextoTenantSesion | null> => {
     const [tenant, sesion] = await Promise.all([
       obtenerTenantPublico(),
-      auth(),
+      obtenerSesionSolicitud(),
     ]);
-    return resolverContextoSesionTenant(
-      tenant,
-      {
-        id: sesion?.user?.id,
-        tenantId: sesion?.user?.tenantId,
-      },
-      (tenantId, usuarioId) => conPrismaTenant(tenantId, (prisma) =>
-        prisma.user.findFirst({
-          where: { id: usuarioId },
-          select: { id: true, role: true },
-        }),
-      ),
-    );
+    const usuario = sesion?.user;
+    if (!tenant || tenant.estado !== "ACTIVO" || !usuario?.id ||
+        usuario.tenantId !== tenant.id ||
+        (usuario.role !== "ADMIN" && usuario.role !== "USER")) return null;
+
+    return {
+      tenantId: tenant.id,
+      tenantNombre: tenant.nombre,
+      tenantSlug: tenant.slug,
+      tenantDominio: tenant.dominio,
+      tenantEstado: tenant.estado,
+      usuarioId: usuario.id,
+      rol: usuario.role,
+    };
   },
 );
 

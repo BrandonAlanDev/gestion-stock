@@ -1,5 +1,5 @@
 import "./globals.css";
-import { auth } from "@/auth";
+import { obtenerSesionSolicitud } from "@/lib/autenticacion/obtener-sesion-solicitud";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryProvider from "@/providers/QueryProvider";
@@ -81,8 +81,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  const configuracion = await obtenerConfiguracionPaginaSolicitud();
+  const [session, configuracion] = await Promise.all([
+    obtenerSesionSolicitud(),
+    obtenerConfiguracionPaginaSolicitud(),
+  ]);
   const pageConfig = configuracion.pageConfig;
 
   return (

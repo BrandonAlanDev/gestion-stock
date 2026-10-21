@@ -22,13 +22,17 @@ export async function obtenerEstadisticasDashboard(tenantId: string) {
   desde.setMonth(desde.getMonth() - 6);
 
   return conPrismaTenant(tenantId, async (prisma) => {
-    const [movimientos, variantesStockBajo, totalProductos, totalSalidas, totalEntradas] =
+    const [ventasMensuales, variantesStockBajo, totalProductos, totalSalidas, totalEntradas] =
     await Promise.all([
-      prisma.movement.findMany({
-        where: { type: "OUT", createdAt: { gte: desde } },
-        select: { quantity: true, priceAtTime: true, createdAt: true },
-        orderBy: { createdAt: "asc" },
-      }),
+      prisma.$queryRaw<Array<{ mes: string; cantidad: bigint | number; ingresos: string | number }>>`
+        SELECT DATE_FORMAT(createdAt, '%Y-%m') AS mes,
+          SUM(quantity) AS cantidad,
+          SUM(priceAtTime * quantity) AS ingresos
+        FROM Movement
+        WHERE type = 'OUT' AND createdAt >= ${desde}
+        GROUP BY DATE_FORMAT(createdAt, '%Y-%m')
+        ORDER BY mes ASC
+      `,
       prisma.garmentVariant.findMany({
         where: {
           stock: { lte: 3 },
@@ -54,21 +58,11 @@ export async function obtenerEstadisticasDashboard(tenantId: string) {
       prisma.movement.count({ where: { type: "IN" } }),
     ]);
 
-    const ventasPorMes: Record<string, { cantidad: number; ingresos: number }> = {};
-    for (const movimiento of movimientos) {
-      const fecha = new Date(movimiento.createdAt);
-      const clave = `${NOMBRES_MESES[fecha.getMonth()]} ${fecha.getFullYear()}`;
-      ventasPorMes[clave] ??= { cantidad: 0, ingresos: 0 };
-      ventasPorMes[clave].cantidad += movimiento.quantity;
-      ventasPorMes[clave].ingresos +=
-        Number(movimiento.priceAtTime) * movimiento.quantity;
-    }
-
     return {
-      salesChart: Object.entries(ventasPorMes).map(([name, valores]) => ({
-        name,
-        Unidades: valores.cantidad,
-        Ingresos: Math.round(valores.ingresos),
+      salesChart: ventasMensuales.map(({ mes, cantidad, ingresos }) => ({
+        name: `${NOMBRES_MESES[Number(mes.slice(5, 7)) - 1]} ${mes.slice(0, 4)}`,
+        Unidades: Number(cantidad),
+        Ingresos: Math.round(Number(ingresos)),
       })),
       lowStockVariants: variantesStockBajo,
       totals: {
