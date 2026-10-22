@@ -26,7 +26,7 @@ function crearProveedorConfigurado(): TenantRegistryProvider {
   }
   return new ProveedorBaseCore(
     urlConexion,
-    process.env.LOGABYTE_CORE_PRODUCTO ?? "gestion-stock",
+    "gestion-stock",
     secreto,
   );
 }
