@@ -10,6 +10,7 @@ import { useCart } from "@/contextos/carrito/use-carrito";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { obtenerMetodosCheckout } from "@/actions/pagos/obtener-metodos-checkout";
 import { obtenerOpcionesEntregaCheckout } from "@/actions/pedidos/obtener-opciones-entrega-checkout";
+import { obtenerResumenCheckout } from "@/actions/pedidos/obtener-resumen-checkout";
 import { iniciarPago } from "@/actions/pago/iniciar-pago";
 import { obtenerDatosCheckout } from "@/actions/perfil/gestionar-perfil";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
@@ -30,6 +31,8 @@ export interface MetodoPagoDisponible {
 }
 
 type DireccionCheckout = NonNullable<Awaited<ReturnType<typeof obtenerDatosCheckout>>>["direcciones"][number];
+type ResultadoResumenCheckout = Awaited<ReturnType<typeof obtenerResumenCheckout>>;
+type ResumenCheckoutValidadoResultado = Extract<ResultadoResumenCheckout, { ok: true }>;
 
 export default function CheckoutCliente() {
   const { cartItems } = useCart();
@@ -53,16 +56,67 @@ export default function CheckoutCliente() {
   const [direcciones, setDirecciones] = useState<DireccionCheckout[]>([]);
   const [direccionSeleccionada, setDireccionSeleccionada] = useState("");
   const [pendiente, iniciarTransicion] = useTransition();
+  const [resumenValidado, setResumenValidado] = useState<ResumenCheckoutValidadoResultado | null>(null);
+  const [cargandoResumen, setCargandoResumen] = useState(true);
+  const [errorResumen, setErrorResumen] = useState<string | null>(null);
 
   const moneda =
     typeof pageConfig?.currency === "string" && pageConfig.currency
       ? pageConfig.currency
       : "ARS";
 
-  const subtotal = useMemo(
-    () => cartItems.reduce((acc, item) => acc + Number(item.price) * item.qty, 0),
+  const itemsParaResumen = useMemo(
+    () => cartItems.map((item, indice) => ({
+      clave: `${item.uid}-${indice}`,
+      productId: item.id,
+      variantId: item.variantId ?? "",
+      cantidad: item.qty,
+    })),
     [cartItems],
   );
+  const claveItemsParaResumen = useMemo(
+    () => JSON.stringify(itemsParaResumen),
+    [itemsParaResumen],
+  );
+  const [claveResumenValidado, setClaveResumenValidado] = useState<string | null>(null);
+
+  useEffect(() => {
+    let activo = true;
+
+    setResumenValidado(null);
+    setClaveResumenValidado(null);
+    setErrorResumen(null);
+    if (cartItems.length === 0) {
+      setCargandoResumen(false);
+      return () => { activo = false; };
+    }
+
+    if (cartItems.some((item) => !item.variantId)) {
+      setErrorResumen("Hay un producto sin una variante válida. Revisá el carrito antes de continuar.");
+      setCargandoResumen(false);
+      return () => { activo = false; };
+    }
+
+    setCargandoResumen(true);
+    obtenerResumenCheckout(itemsParaResumen)
+      .then((resultado) => {
+        if (!activo) return;
+        if (resultado.ok) {
+          setResumenValidado(resultado);
+          setClaveResumenValidado(claveItemsParaResumen);
+        } else {
+          setErrorResumen(resultado.error);
+        }
+      })
+      .catch(() => {
+        if (activo) setErrorResumen("No se pudo validar el resumen del pedido. Intentá nuevamente.");
+      })
+      .finally(() => {
+        if (activo) setCargandoResumen(false);
+      });
+
+    return () => { activo = false; };
+  }, [cartItems, claveItemsParaResumen, itemsParaResumen]);
 
   const modalidadesEntrega = [
     ...(opcionesEntrega?.domicilioDisponible
@@ -403,27 +457,38 @@ export default function CheckoutCliente() {
           )}
         </div>
 
-        <div className="flex flex-col gap-4">
-          <ResumenPedido items={cartItems} subtotal={subtotal} moneda={moneda} />
-
-          <button
-            onClick={manejarContinuarCompra}
-            disabled={
-              pendiente ||
-              cargandoEntrega ||
-              Boolean(errorCargaEntrega) ||
-              modalidadesEntrega.length === 0 ||
-              !metodoEntrega ||
-              !metodoSeleccionado ||
-              cartItems.length === 0
-            }
-            className="w-full py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
+        <aside className="lg:sticky lg:top-20">
+          <ResumenPedido
+            items={resumenValidado?.items ?? []}
+            subtotal={resumenValidado?.subtotal ?? null}
+            moneda={resumenValidado?.moneda ?? moneda}
+            modalidadEntrega={metodoEntrega}
+            cargando={cargandoResumen}
+            error={errorResumen}
           >
-            {pendiente && <Loader2 className="animate-spin" size={18} />}
-            {pendiente ? "Procesando..." : "Continuar con el pago"}
-          </button>
-        </div>
+            <button
+              onClick={manejarContinuarCompra}
+              disabled={
+                pendiente ||
+                cargandoResumen ||
+                Boolean(errorResumen) ||
+                !resumenValidado ||
+                claveResumenValidado !== claveItemsParaResumen ||
+                cargandoEntrega ||
+                Boolean(errorCargaEntrega) ||
+                modalidadesEntrega.length === 0 ||
+                !metodoEntrega ||
+                !metodoSeleccionado ||
+                cartItems.length === 0
+              }
+              className="w-full rounded-lg py-3 flex items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
+            >
+              {pendiente && <Loader2 className="animate-spin" size={18} />}
+              {pendiente ? "Procesando..." : "Continuar con el pago"}
+            </button>
+          </ResumenPedido>
+        </aside>
       </div>
     </div>
   );
