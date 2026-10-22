@@ -9,9 +9,15 @@ import { toast } from "sonner";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { obtenerMetodosCheckout } from "@/actions/pagos/obtener-metodos-checkout";
+import { obtenerOpcionesEntregaCheckout } from "@/actions/pedidos/obtener-opciones-entrega-checkout";
 import { iniciarPago } from "@/actions/pago/iniciar-pago";
 import { obtenerDatosCheckout } from "@/actions/perfil/gestionar-perfil";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import {
+  estaDisponibleMetodoEntrega,
+  type MetodoEntregaCheckout,
+  type OpcionesEntregaCheckout,
+} from "@/lib/pedidos/opciones-entrega";
 import SelectorMetodoPago from "@/components/checkout/SelectorMetodoPago";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import PanelInstruccionesPago from "@/components/checkout/PanelInstruccionesPago";
@@ -38,7 +44,11 @@ export default function CheckoutCliente() {
   const [numeroPedido, setNumeroPedido] = useState<number | null>(null);
   const [instrucciones, setInstrucciones] = useState<string | null>(null);
   const [esSandbox, setEsSandbox] = useState(false);
-  const [metodoEntrega, setMetodoEntrega] = useState<"DOMICILIO" | "RETIRO_TIENDA">("DOMICILIO");
+  const [opcionesEntrega, setOpcionesEntrega] = useState<OpcionesEntregaCheckout | null>(null);
+  const [cargandoEntrega, setCargandoEntrega] = useState(true);
+  const [errorCargaEntrega, setErrorCargaEntrega] = useState<string | null>(null);
+  const [avisoEntrega, setAvisoEntrega] = useState<string | null>(null);
+  const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaCheckout | null>(null);
   const [entrega, setEntrega] = useState<Record<string, string>>({});
   const [direcciones, setDirecciones] = useState<DireccionCheckout[]>([]);
   const [direccionSeleccionada, setDireccionSeleccionada] = useState("");
@@ -53,6 +63,15 @@ export default function CheckoutCliente() {
     () => cartItems.reduce((acc, item) => acc + Number(item.price) * item.qty, 0),
     [cartItems],
   );
+
+  const modalidadesEntrega = [
+    ...(opcionesEntrega?.domicilioDisponible
+      ? [["DOMICILIO", "Envío a domicilio"] as const]
+      : []),
+    ...(opcionesEntrega?.retiroTiendaDisponible
+      ? [["RETIRO_TIENDA", "Retiro en tienda"] as const]
+      : []),
+  ];
 
   useEffect(() => {
     let activo = true;
@@ -70,6 +89,42 @@ export default function CheckoutCliente() {
       }
       setCargandoMetodos(false);
     });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    obtenerOpcionesEntregaCheckout()
+      .then((resultado) => {
+        if (!activo) return;
+        if (resultado.ok) {
+          setOpcionesEntrega(resultado.opciones);
+          setErrorCargaEntrega(null);
+          setMetodoEntrega(
+            resultado.opciones.domicilioDisponible
+              ? "DOMICILIO"
+              : resultado.opciones.retiroTiendaDisponible
+                ? "RETIRO_TIENDA"
+                : null,
+          );
+        } else {
+          setOpcionesEntrega(null);
+          setMetodoEntrega(null);
+          setErrorCargaEntrega(resultado.error);
+        }
+        setCargandoEntrega(false);
+      })
+      .catch(() => {
+        if (!activo) return;
+        setOpcionesEntrega(null);
+        setMetodoEntrega(null);
+        setErrorCargaEntrega("No se pudieron validar las modalidades de entrega.");
+        setCargandoEntrega(false);
+      });
 
     return () => {
       activo = false;
@@ -126,6 +181,15 @@ export default function CheckoutCliente() {
       return;
     }
 
+    if (
+      !opcionesEntrega ||
+      !metodoEntrega ||
+      !estaDisponibleMetodoEntrega(opcionesEntrega, metodoEntrega)
+    ) {
+      toast.error("Elegí una modalidad de entrega disponible para continuar.");
+      return;
+    }
+
     const camposObligatorios = metodoEntrega === "DOMICILIO"
       ? ["nombre", "apellido", "telefono", "destinatario", "calle", "numero", "codigoPostal", "localidad", "provincia"]
       : ["nombre", "apellido", "telefono"];
@@ -146,6 +210,36 @@ export default function CheckoutCliente() {
 
       if (!resultado.ok) {
         toast.error(resultado.error);
+        const errorEntrega = resultado.error.toLocaleLowerCase();
+        if (errorEntrega.includes("modalidad") && errorEntrega.includes("entrega")) {
+          setMetodoEntrega(null);
+          setAvisoEntrega(
+            "La modalidad seleccionada dejó de estar disponible. Elegí una opción válida para continuar.",
+          );
+          setCargandoEntrega(true);
+          try {
+            const opcionesActualizadas = await obtenerOpcionesEntregaCheckout();
+            if (opcionesActualizadas.ok) {
+              setOpcionesEntrega(opcionesActualizadas.opciones);
+              setErrorCargaEntrega(null);
+              setMetodoEntrega(
+                opcionesActualizadas.opciones.domicilioDisponible
+                  ? "DOMICILIO"
+                  : opcionesActualizadas.opciones.retiroTiendaDisponible
+                    ? "RETIRO_TIENDA"
+                    : null,
+              );
+            } else {
+              setOpcionesEntrega(null);
+              setErrorCargaEntrega(opcionesActualizadas.error);
+            }
+          } catch {
+            setOpcionesEntrega(null);
+            setErrorCargaEntrega("No se pudieron validar las modalidades de entrega.");
+          } finally {
+            setCargandoEntrega(false);
+          }
+        }
         return;
       }
 
@@ -195,16 +289,47 @@ export default function CheckoutCliente() {
           <section className="rounded-xl border p-5" style={{ borderColor: "var(--color-primario)" }}>
             <h2 className="text-lg font-semibold">Datos de entrega</h2>
             <p className="mt-1 text-sm opacity-70">Indicá cómo querés recibir tu pedido.</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {([ ["DOMICILIO", "Envío a domicilio"], ["RETIRO_TIENDA", "Retiro en tienda"] ] as const).map(([valor, etiqueta]) => (
-                <button key={valor} type="button" onClick={() => setMetodoEntrega(valor)}
-                  aria-pressed={metodoEntrega === valor}
-                  className="rounded-lg border px-4 py-2 text-sm font-medium"
-                  style={{ borderColor: "var(--color-primario)", backgroundColor: metodoEntrega === valor ? "var(--color-primario)" : "transparent", color: metodoEntrega === valor ? "var(--texto-sobre-primario)" : "inherit" }}>
-                  {etiqueta}
-                </button>
-              ))}
-            </div>
+            {cargandoEntrega ? (
+              <p className="mt-4 text-sm opacity-70" role="status">
+                Verificando las modalidades de entrega…
+              </p>
+            ) : errorCargaEntrega ? (
+              <p className="mt-4 text-sm text-red-500" role="alert">
+                {errorCargaEntrega}
+              </p>
+            ) : modalidadesEntrega.length === 0 ? (
+              <p className="mt-4 text-sm text-red-500" role="alert">
+                La tienda no tiene modalidades de entrega disponibles. Contactá a la tienda para continuar.
+              </p>
+            ) : (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {modalidadesEntrega.map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => {
+                      setMetodoEntrega(valor);
+                      setAvisoEntrega(null);
+                    }}
+                    aria-pressed={metodoEntrega === valor}
+                    className="rounded-lg border px-4 py-2 text-sm font-medium"
+                    style={{ borderColor: "var(--color-primario)", backgroundColor: metodoEntrega === valor ? "var(--color-primario)" : "transparent", color: metodoEntrega === valor ? "var(--texto-sobre-primario)" : "inherit" }}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            )}
+            {avisoEntrega && (
+              <p className="mt-3 text-sm text-amber-500" role="alert">
+                {avisoEntrega}
+              </p>
+            )}
+            {opcionesEntrega?.retiroTiendaDisponible && opcionesEntrega.direccionRetiro && (
+              <p className="mt-3 text-sm opacity-80">
+                Dirección de retiro: <span className="font-medium">{opcionesEntrega.direccionRetiro}</span>
+              </p>
+            )}
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {metodoEntrega === "DOMICILIO" && direcciones.length > 0 && <label className="text-sm sm:col-span-2">Dirección guardada
                 <select value={direccionSeleccionada} onChange={(evento) => {
@@ -283,7 +408,15 @@ export default function CheckoutCliente() {
 
           <button
             onClick={manejarContinuarCompra}
-            disabled={pendiente || !metodoSeleccionado || cartItems.length === 0}
+            disabled={
+              pendiente ||
+              cargandoEntrega ||
+              Boolean(errorCargaEntrega) ||
+              modalidadesEntrega.length === 0 ||
+              !metodoEntrega ||
+              !metodoSeleccionado ||
+              cartItems.length === 0
+            }
             className="w-full py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
           >

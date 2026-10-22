@@ -14,8 +14,7 @@ import { filtrarMetodosDisponibles } from "@/lib/pagos/filtrar-metodos-disponibl
 import { crearAccionIniciarPago } from "@/lib/actions/pago/crear-accion-iniciar-pago";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { esquemaDatosEntrega } from "@/lib/pedidos/datos-entrega";
-
-export type { ResultadoIniciarPago } from "@/lib/actions/pago/crear-accion-iniciar-pago";
+import { obtenerOpcionesEntregaTienda } from "@/lib/pedidos/obtener-opciones-entrega-tienda";
 
 async function obtenerBaseUrl(): Promise<string> {
   const cabeceras = await headers();
@@ -35,6 +34,7 @@ async function obtenerBaseUrl(): Promise<string> {
 const ejecutarIniciarPago = crearAccionIniciarPago({
   obtenerContextoTenant,
   obtenerMetodosPagoDisponibles,
+  obtenerOpcionesEntrega: obtenerOpcionesEntregaTienda,
   filtrarMetodosDisponibles,
   obtenerBaseUrl,
   crearPedidoDesdeCarrito,

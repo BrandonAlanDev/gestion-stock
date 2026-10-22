@@ -184,7 +184,7 @@ export default function PanelConfiguracion({
             <ItemConfiguracion
               icono={MapPin}
               titulo="Ubicación"
-              descripcion="Dirección que se muestra en la tienda"
+              descripcion="Ubicación pública y disponibilidad de retiro en tienda"
               varianteBadge={
                 tieneUbicacion ? "activo" : config.address ? "inactivo" : "sin-configurar"
               }

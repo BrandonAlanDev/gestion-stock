@@ -19,6 +19,7 @@ interface Props {
   config?: {
     locationEnabled?: boolean | null;
     address?: string | null;
+    postalCode?: string | null;
     city?: string | null;
     province?: string | null;
     country?: string | null;
@@ -39,6 +40,9 @@ export default function LocationSection({
 
     address:
       config?.address || "",
+
+    postalCode:
+      config?.postalCode || "",
 
     city:
       config?.city || "",
@@ -88,14 +92,14 @@ export default function LocationSection({
 
         <div>
           <h2 className="text-xl font-black uppercase italic tracking-tight">
-            Ubicación
+            Ubicación del comercio
           </h2>
         </div>
       </div>
 
       <div className="p-4 sm:p-8 space-y-6">
         <SwitchCard
-          title="Ubicación Activada"
+          title="Habilitar retiro en tienda"
           checked={
             form.locationEnabled
           }
@@ -107,6 +111,10 @@ export default function LocationSection({
           }
         />
 
+        <p className="-mt-3 text-sm text-[var(--admin-texto-suave)]">
+          Al activarlo, la dirección se publica en la tienda y se ofrece para retiro cuando todos sus datos estén completos.
+        </p>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Dirección"
@@ -116,6 +124,14 @@ export default function LocationSection({
                 "address",
                 v
               )
+            }
+          />
+
+          <Input
+            label="Código postal"
+            value={form.postalCode}
+            onChange={(v) =>
+              handleChange("postalCode", v)
             }
           />
 

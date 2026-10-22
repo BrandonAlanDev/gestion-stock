@@ -27,6 +27,7 @@ export interface ConfigCompleta {
   email: string | null;
   locationEnabled: boolean;
   address: string | null;
+  postalCode: string | null;
   city: string | null;
   province: string | null;
   country: string | null;

@@ -99,13 +99,14 @@ export default function DrawersConfiguracion({
       <DrawerSeccion
         abierto={drawerAbierto === "ubicacion"}
         alCerrar={alCerrar}
-        titulo="Ubicación"
-        descripcion="Dirección que se muestra en la tienda"
+        titulo="Ubicación y retiro"
+        descripcion="Dirección pública y lugar de retiro en el checkout"
       >
         <LocationSection
           config={{
             locationEnabled: config.locationEnabled,
             address: config.address,
+            postalCode: config.postalCode,
             city: config.city,
             province: config.province,
             country: config.country,

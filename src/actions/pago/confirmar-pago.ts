@@ -7,11 +7,6 @@ import { obtenerProveedor } from "@/lib/pagos/registro";
 import { aplicarWebhookPago } from "@/lib/pagos/aplicar-webhook-pago";
 import { crearAccionConfirmarPago } from "@/lib/actions/pago/crear-accion-confirmar-pago";
 
-export type {
-  PedidoConfirmado,
-  ResultadoConfirmarPago,
-} from "@/lib/actions/pago/crear-accion-confirmar-pago";
-
 const ejecutarConfirmarPago = crearAccionConfirmarPago({
   obtenerContextoTenant,
   conPrisma,

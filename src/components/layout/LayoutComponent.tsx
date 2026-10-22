@@ -23,6 +23,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // El sidebar solo se muestra en rutas de administración
   const isAdminRoute = pathname.startsWith("/admin");
   const esRutaMantenimiento = pathname === "/mantenimiento";
+  const esRutaCheckout = pathname === "/checkout";
 
   useEffect(() => {
     const guardado = window.localStorage.getItem(
@@ -64,7 +65,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className={`flex-grow min-w-0 ${isAdminRoute ? "pt-14 lg:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : ""}`}>
+        <main className={`flex-grow min-w-0 ${isAdminRoute ? "pt-14 lg:pl-[var(--sidebar-ancho)] transition-[padding] duration-300" : esRutaCheckout ? "pt-16" : ""}`}>
           {children}
         </main>
       </div>

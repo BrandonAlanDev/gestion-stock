@@ -40,6 +40,7 @@ export default async function PageConfigPage() {
         email: pageConfig.email ?? null,
         locationEnabled: pageConfig.locationEnabled ?? false,
         address: pageConfig.address ?? null,
+        postalCode: pageConfig.postalCode ?? null,
         city: pageConfig.city ?? null,
         province: pageConfig.province ?? null,
         country: pageConfig.country ?? null,

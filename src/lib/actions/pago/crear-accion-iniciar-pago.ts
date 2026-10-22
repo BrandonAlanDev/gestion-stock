@@ -3,6 +3,10 @@ import type { ItemParaCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
 import type { DatosEntrega } from "@/lib/pedidos/datos-entrega";
+import {
+  estaDisponibleMetodoEntrega,
+  type OpcionesEntregaCheckout,
+} from "@/lib/pedidos/opciones-entrega";
 import { liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
 
 export type ResultadoIniciarPago =
@@ -23,6 +27,7 @@ export interface DependenciasIniciarPago {
     usuarioId?: string | null;
   } | null>;
   obtenerMetodosPagoDisponibles: (tenantId: string) => Promise<ResumenMetodoPago[]>;
+  obtenerOpcionesEntrega: (tenantId: string) => Promise<OpcionesEntregaCheckout>;
   filtrarMetodosDisponibles: (
     metodos: ResumenMetodoPago[],
   ) => Array<Pick<ResumenMetodoPago, "id">>;
@@ -63,6 +68,30 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       const seleccionado = disponibles.find((metodoDisponible) => metodoDisponible.id === metodo);
       if (!seleccionado) {
         return { ok: false, error: "El método de pago no está disponible" };
+      }
+
+      const metodoEntrega = datosEntrega?.metodoEntrega;
+      if (!metodoEntrega) {
+        return { ok: false, error: "Seleccioná una modalidad de entrega." };
+      }
+
+      const opcionesEntrega = await dependencias.obtenerOpcionesEntrega(
+        contexto.tenantId,
+      );
+      if (
+        !opcionesEntrega.domicilioDisponible &&
+        !opcionesEntrega.retiroTiendaDisponible
+      ) {
+        return {
+          ok: false,
+          error: "La tienda no tiene modalidades de entrega disponibles.",
+        };
+      }
+      if (!estaDisponibleMetodoEntrega(opcionesEntrega, metodoEntrega)) {
+        return {
+          ok: false,
+          error: "La modalidad de entrega seleccionada ya no está disponible.",
+        };
       }
 
       const baseUrl = await dependencias.obtenerBaseUrl();
