@@ -2,7 +2,7 @@
 // Este archivo NO exporta funciones; solo tipos/interfaces de dominio,
 // para poder ser importado tanto desde el servidor como desde el cliente.
 
-export type MetodoPagoId = "mercadopago" | "transferencia";
+export type MetodoPagoId = "efectivo" | "mercadopago" | "transferencia";
 
 export type EstadoPagoId =
   | "PENDIENTE"
@@ -38,7 +38,7 @@ export interface ResultadoCrearPago {
   externalId: string | null;
   /** URL a la que se redirige al cliente (MP Checkout Pro). */
   checkoutUrl: string | null;
-  /** Instrucciones para métodos offline (transferencia bancaria). */
+  /** Instrucciones para métodos de pago manuales. */
   instrucciones: string | null;
   /** Indica si la operación se hace en modo sandbox (credenciales de prueba). */
   esSandbox: boolean;
@@ -96,6 +96,8 @@ export interface DefinicionMetodoPago {
   descripcion: string;
   /** true si el método requiere conectar una cuenta externa (OAuth). */
   requiereConexion: boolean;
+  /** true si necesita configuración propia antes de ofrecerse en checkout. */
+  requiereConfiguracion: boolean;
 }
 
 /**

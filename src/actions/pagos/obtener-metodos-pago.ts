@@ -4,7 +4,7 @@ import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { obtenerMetodosPagoDisponibles } from "@/lib/pagos/obtener-metodos-disponibles";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 
 export interface MetodoPagoAdmin {
   id: MetodoPagoId;
@@ -29,7 +29,7 @@ export async function obtenerMetodosPago(): Promise<ResultadoMetodosPago> {
   try {
     const contexto = await requiereAdmin();
 
-    const registros = await conPrisma((prisma) =>
+    const registros = await conPrismaTenant(contexto.tenantId, (prisma) =>
       prisma.metodoPago.findMany({ where: {} }),
     );
     const disponibles = await obtenerMetodosPagoDisponibles(contexto.tenantId, registros);

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { conPrisma } from "@/lib/prisma";
+import { conPrisma, conPrismaTenant } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { confirmarReservaStockPedido, liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
 import { descontarStockPedido } from "@/lib/pedidos/descontar-stock-pedido";
@@ -34,24 +34,32 @@ export async function aprobarPagoManual(pedidoIdRecibido: unknown): Promise<Resu
   const parsed = id.safeParse(pedidoIdRecibido);
   if (!parsed.success) return { ok: false, error: "Pedido inválido" };
   try {
-    await requiereAdmin();
-    const aprobado = await conPrisma((prisma) => prisma.$transaction(async (tx) => {
+    const contexto = await requiereAdmin();
+    const aprobado = await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.findUnique({ where: { id: parsed.data }, select: {
         estado: true, estadoPago: true, metodoPago: true, stockReservado: true,
       } });
-      if (!pedido || pedido.estado !== "PENDIENTE" || pedido.estadoPago === "APROBADO" || pedido.metodoPago !== "transferencia") return false;
+      if (!pedido || pedido.estado !== "PENDIENTE" || pedido.estadoPago === "APROBADO") return false;
+      if (pedido.metodoPago !== "efectivo" && pedido.metodoPago !== "transferencia") return false;
+      const metodoPago = pedido.metodoPago;
       const cambio = await tx.pedido.updateMany({
-        where: { id: parsed.data, estado: "PENDIENTE", estadoPago: { not: "APROBADO" }, metodoPago: "transferencia" },
+        where: { id: parsed.data, estado: "PENDIENTE", estadoPago: { not: "APROBADO" }, metodoPago },
         data: { estado: "CONFIRMADO", estadoPago: "APROBADO", stockReservado: false },
       });
       if (cambio.count !== 1) return false;
       if (pedido.stockReservado) await confirmarReservaStockPedido(parsed.data, tx);
       else await descontarStockPedido(parsed.data, tx);
-      await tx.payment.updateMany({ where: { pedidoId: parsed.data, proveedor: "transferencia" }, data: { estado: "APROBADO" } });
-      await tx.pedidoEvento.create({ data: { pedidoId: parsed.data, tipo: "PAGO_APROBADO", descripcion: "Pago por transferencia aprobado por administración" } });
+      await tx.payment.updateMany({ where: { pedidoId: parsed.data, proveedor: metodoPago }, data: { estado: "APROBADO" } });
+      await tx.pedidoEvento.create({ data: {
+        pedidoId: parsed.data,
+        tipo: "PAGO_APROBADO",
+        descripcion: metodoPago === "efectivo"
+          ? "Pago en efectivo confirmado por administración"
+          : "Pago por transferencia aprobado por administración",
+      } });
       return true;
     }));
-    if (!aprobado) return { ok: false, error: "Solo se puede aprobar una transferencia pendiente" };
+    if (!aprobado) return { ok: false, error: "Solo se puede confirmar un pago manual pendiente" };
     invalidar(parsed.data);
     return { ok: true };
   } catch (error) {

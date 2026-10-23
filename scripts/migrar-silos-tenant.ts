@@ -127,9 +127,11 @@ async function obtenerMigracionesVersionadas(): Promise<MigracionVersionadaConCo
     .sort();
   return Promise.all(nombres.map(async (nombre) => {
     const contenido = await readFile(path.join(directorio, nombre, "migration.sql"), "utf8");
+    const contenidoNormalizado = contenido.replace(/\r\n/g, "\n");
     return {
       nombre,
-      checksum: createHash("sha256").update(contenido).digest("hex"),
+      checksum: createHash("sha256").update(contenidoNormalizado).digest("hex"),
+      checksumAlternativo: createHash("sha256").update(contenido).digest("hex"),
       contenido,
     };
   }));

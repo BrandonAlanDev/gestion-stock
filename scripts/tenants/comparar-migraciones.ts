@@ -1,6 +1,7 @@
 export interface MigracionVersionada {
   nombre: string;
   checksum: string;
+  checksumAlternativo?: string;
 }
 
 export interface RegistroMigracionAplicada {
@@ -30,7 +31,10 @@ export function coincideHistorialMigraciones(
 
   return historialAplicado.every((migracion, indice) => {
     const versionada = historialVersionado[indice];
-    return migracion.nombre === versionada?.nombre && migracion.checksum === versionada.checksum;
+    return migracion.nombre === versionada?.nombre && (
+      migracion.checksum === versionada.checksum ||
+      migracion.checksum === versionada.checksumAlternativo
+    );
   });
 }
 

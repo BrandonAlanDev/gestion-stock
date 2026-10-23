@@ -2,8 +2,9 @@
 
 import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import { METODOS_PAGO_CONOCIDOS } from "@/lib/pagos/constantes";
 
 export type ResultadoActivacion = { success: boolean; error?: string };
 
@@ -16,9 +17,12 @@ export async function activarMetodo(
   activo: boolean,
 ): Promise<ResultadoActivacion> {
   try {
-    await requiereAdmin();
+    const contexto = await requiereAdmin();
+    if (!METODOS_PAGO_CONOCIDOS.some((definicion) => definicion.id === metodo)) {
+      return { success: false, error: "Método de pago inválido" };
+    }
 
-    await conPrisma((prisma) => prisma.metodoPago.upsert({
+    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
       where: {
         metodo,
       },

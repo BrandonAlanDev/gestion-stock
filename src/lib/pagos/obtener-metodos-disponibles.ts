@@ -1,6 +1,6 @@
 import "server-only";
 
-import { conPrisma } from "@/lib/prisma";
+import { conPrismaTenant } from "@/lib/prisma";
 import { METODOS_PAGO_CONOCIDOS } from "@/lib/pagos/constantes";
 import { obtenerProveedor } from "@/lib/pagos/registro";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
@@ -11,6 +11,7 @@ export interface ResumenMetodoPago {
   descripcion: string;
   activo: boolean;
   requiereConexion: boolean;
+  requiereConfiguracion: boolean;
   conectado: boolean;
 }
 
@@ -24,7 +25,7 @@ export async function obtenerMetodosPagoDisponibles(
   tenantId: string,
   registrosExistentes?: ReadonlyArray<{ metodo: string; activo: boolean }>,
 ): Promise<ResumenMetodoPago[]> {
-  const registros = registrosExistentes ?? await conPrisma((prisma) =>
+  const registros = registrosExistentes ?? await conPrismaTenant(tenantId, (prisma) =>
     prisma.metodoPago.findMany({ where: {} }),
   );
   const porMetodo = new Map<string, { activo: boolean }>();
@@ -38,7 +39,7 @@ export async function obtenerMetodosPagoDisponibles(
     const registro = porMetodo.get(definicion.id);
 
     let conectado = false;
-    if (definicion.requiereConexion) {
+    if (definicion.requiereConexion || definicion.requiereConfiguracion) {
       try {
         const proveedor = obtenerProveedor(definicion.id);
         const estado = await proveedor.obtenerEstado(tenantId);
@@ -48,19 +49,14 @@ export async function obtenerMetodosPagoDisponibles(
       }
     }
 
-    let activo = registro?.activo ?? false;
-    // Regla por defecto: si aún no se configuró, Mercado Pago se considera activo
-    // cuando hay una cuenta conectada (experiencia esperada al conectar por OAuth).
-    if (!registro && definicion.requiereConexion) {
-      activo = conectado;
-    }
-
+    const activo = registro?.activo ?? false;
     resultados.push({
       id: definicion.id,
       nombre: definicion.nombre,
       descripcion: definicion.descripcion,
       activo,
       requiereConexion: definicion.requiereConexion,
+      requiereConfiguracion: definicion.requiereConfiguracion,
       conectado,
     });
   }

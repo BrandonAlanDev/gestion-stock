@@ -3,8 +3,10 @@ import "server-only";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
 import { proveedorMercadoPago } from "@/lib/pagos/proveedores/mercadopago/mercadopago-proveedor";
 import { proveedorTransferencia } from "@/lib/pagos/proveedores/transferencia/transferencia-proveedor";
+import { proveedorEfectivo } from "@/lib/pagos/proveedores/efectivo/efectivo-proveedor";
 
 const proveedores: Record<MetodoPagoId, PaymentProvider> = {
+  efectivo: proveedorEfectivo,
   mercadopago: proveedorMercadoPago,
   transferencia: proveedorTransferencia,
 };

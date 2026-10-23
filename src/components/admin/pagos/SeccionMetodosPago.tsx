@@ -11,6 +11,7 @@ import { guardarConfigMetodo } from "@/actions/pagos/guardar-config-metodo";
 import { desconectarMetodo } from "@/actions/pagos/desconectar-metodo";
 import TarjetaMercadoPago from "./TarjetaMercadoPago";
 import TarjetaTransferencia from "./TarjetaTransferencia";
+import TarjetaEfectivo from "./TarjetaEfectivo";
 
 export default function SeccionMetodosPago({
   resultado,
@@ -96,13 +97,20 @@ export default function SeccionMetodosPago({
               alCambiarActivo={(valor) => manejarCambioActivo("mercadopago", valor)}
               alDesconectar={manejarDesconexionMercadoPago}
             />
-          ) : (
+          ) : metodo.id === "transferencia" ? (
             <TarjetaTransferencia
               key={metodo.id}
               metodo={metodo}
               activo={metodo.activo}
               alCambiarActivo={(valor) => manejarCambioActivo("transferencia", valor)}
               alGuardarConfig={manejarGuardarConfig}
+            />
+          ) : (
+            <TarjetaEfectivo
+              key={metodo.id}
+              metodo={metodo}
+              activo={metodo.activo}
+              alCambiarActivo={(valor) => manejarCambioActivo("efectivo", valor)}
             />
           ),
         )}

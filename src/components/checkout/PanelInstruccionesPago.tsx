@@ -26,7 +26,7 @@ export default function PanelInstruccionesPago({
       </div>
       <p className="whitespace-pre-wrap text-sm opacity-80">{instrucciones}</p>
       <p className="text-sm opacity-70">
-        Tu pedido queda pendiente hasta que acreditemos la transferencia.
+        Tu pedido queda pendiente hasta que el comercio confirme el pago.
       </p>
       {pedidoId && (
         <p className="text-sm font-medium">

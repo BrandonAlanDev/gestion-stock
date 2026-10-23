@@ -14,6 +14,7 @@ import { obtenerResumenCheckout } from "@/actions/pedidos/obtener-resumen-checko
 import { iniciarPago } from "@/actions/pago/iniciar-pago";
 import { obtenerDatosCheckout } from "@/actions/perfil/gestionar-perfil";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import {
   estaDisponibleMetodoEntrega,
   type MetodoEntregaCheckout,
@@ -127,6 +128,13 @@ export default function CheckoutCliente() {
       : []),
   ];
 
+  const metodosParaEntrega = useMemo(
+    () => metodoEntrega
+      ? metodos.filter((metodo) => esMetodoPagoCompatibleConEntrega(metodo.id, metodoEntrega))
+      : [],
+    [metodoEntrega, metodos],
+  );
+
   useEffect(() => {
     let activo = true;
 
@@ -135,9 +143,6 @@ export default function CheckoutCliente() {
 
       if (resultado.ok) {
         setMetodos(resultado.metodos);
-        if (resultado.metodos.length > 0) {
-          setMetodoSeleccionado(resultado.metodos[0].id);
-        }
       } else {
         toast.error(resultado.error);
       }
@@ -148,6 +153,11 @@ export default function CheckoutCliente() {
       activo = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (metodosParaEntrega.some((metodo) => metodo.id === metodoSeleccionado)) return;
+    setMetodoSeleccionado(metodosParaEntrega[0]?.id ?? null);
+  }, [metodoSeleccionado, metodosParaEntrega]);
 
   useEffect(() => {
     let activo = true;
@@ -230,8 +240,8 @@ export default function CheckoutCliente() {
       return;
     }
 
-    if (!metodoSeleccionado) {
-      toast.error("Seleccioná un método de pago");
+    if (!metodoSeleccionado || !metodosParaEntrega.some((metodo) => metodo.id === metodoSeleccionado)) {
+      toast.error("Seleccioná un método de pago disponible para esta modalidad de entrega.");
       return;
     }
 
@@ -307,7 +317,11 @@ export default function CheckoutCliente() {
         setNumeroPedido(resultado.numero ?? null);
         setInstrucciones(resultado.instrucciones);
         setEsSandbox(resultado.esSandbox);
-        toast.success("Pedido registrado. Completá la transferencia.");
+        toast.success(
+          metodoSeleccionado === "efectivo"
+            ? "Pedido registrado. Pagá en efectivo al retirar en tienda."
+            : "Pedido registrado. Completá las instrucciones de pago.",
+        );
         return;
       }
 
@@ -423,15 +437,15 @@ export default function CheckoutCliente() {
             <p className="mt-1 opacity-70">Seleccioná cómo querés pagar.</p>
           </div>
 
-          {cargandoMetodos ? (
+          {cargandoMetodos || cargandoEntrega ? (
             <SkeletonTarjetas cantidad={2} admin={false} tipo="pagos" />
-          ) : metodos.length === 0 ? (
+          ) : metodosParaEntrega.length === 0 ? (
             <p className="text-sm opacity-70">
               No hay métodos de pago disponibles en este momento.
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {metodos.map((metodo) => (
+              {metodosParaEntrega.map((metodo) => (
                 <SelectorMetodoPago
                   key={metodo.id}
                   metodo={metodo}
@@ -479,6 +493,7 @@ export default function CheckoutCliente() {
                 modalidadesEntrega.length === 0 ||
                 !metodoEntrega ||
                 !metodoSeleccionado ||
+                !metodosParaEntrega.some((metodo) => metodo.id === metodoSeleccionado) ||
                 cartItems.length === 0
               }
               className="w-full rounded-lg py-3 flex items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"

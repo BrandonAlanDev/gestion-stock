@@ -12,7 +12,10 @@ export function filtrarMetodosDisponibles(
   metodos: ResumenMetodoPago[],
 ): MetodoPagoCheckout[] {
   return metodos
-    .filter((metodo) => metodo.activo && (!metodo.requiereConexion || metodo.conectado))
+    .filter((metodo) =>
+      metodo.activo &&
+      (!(metodo.requiereConexion || metodo.requiereConfiguracion) || metodo.conectado),
+    )
     .map((metodo) => ({
       id: metodo.id,
       nombre: metodo.nombre,

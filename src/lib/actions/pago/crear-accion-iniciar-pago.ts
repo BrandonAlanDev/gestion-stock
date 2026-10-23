@@ -2,6 +2,7 @@ import type { PrismaClient } from "@/../generated/prisma/client";
 import type { ItemParaCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
+import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import type { DatosEntrega } from "@/lib/pedidos/datos-entrega";
 import {
   estaDisponibleMetodoEntrega,
@@ -39,7 +40,8 @@ export interface DependenciasIniciarPago {
     metodoPago: MetodoPagoId,
     datosEntrega?: DatosEntrega,
   ) => Promise<{ pedidoId: string; numero?: number }>;
-  conPrisma: <T>(
+  conPrismaTenant: <T>(
+    tenantId: string,
     operacion: (prisma: PrismaClient) => Promise<T>,
   ) => Promise<T>;
   liberarReservaStockPedido: typeof liberarReservaStockPedido;
@@ -93,6 +95,12 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
           error: "La modalidad de entrega seleccionada ya no está disponible.",
         };
       }
+      if (!esMetodoPagoCompatibleConEntrega(metodo, metodoEntrega)) {
+        return {
+          ok: false,
+          error: "El efectivo solo está disponible para retiro en tienda.",
+        };
+      }
 
       const baseUrl = await dependencias.obtenerBaseUrl();
       const creado = await dependencias.crearPedidoDesdeCarrito(
@@ -104,7 +112,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       );
       pedidoIdCreado = creado.pedidoId;
 
-      const pedido = await dependencias.conPrisma((prisma) =>
+      const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.pedido.findFirst({
           where: { id: creado.pedidoId },
           include: {
@@ -121,7 +129,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         throw new Error("La reserva del pedido ya venció");
       }
 
-      const payment = await dependencias.conPrisma((prisma) =>
+      const payment = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.payment.create({
           data: {
             pedidoId: pedido.id,
@@ -134,7 +142,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         }),
       );
 
-      await dependencias.conPrisma((prisma) =>
+      await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.pedido.updateMany({
           where: { id: pedido.id, estado: "PENDIENTE" },
           data: { metodoPago: metodo },
@@ -159,7 +167,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         })),
       });
 
-      await dependencias.conPrisma((prisma) =>
+      await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.payment.updateMany({
           where: { id: payment.id, pedidoId: pedido.id },
           data: { estado: resultado.estado },
@@ -179,7 +187,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       if (pedidoIdCreado && tenantIdProcesado) {
         try {
           const pedidoId = pedidoIdCreado;
-          await dependencias.conPrisma((prisma) => prisma.$transaction(async (tx) => {
+          await dependencias.conPrismaTenant(tenantIdProcesado, (prisma) => prisma.$transaction(async (tx) => {
             const cancelado = await tx.pedido.updateMany({
               where: { id: pedidoId, estado: "PENDIENTE" },
               data: { estado: "CANCELADO", estadoPago: "CANCELADO" },

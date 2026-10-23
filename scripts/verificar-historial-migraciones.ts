@@ -20,6 +20,22 @@ assert.equal(
   "Un checksum distinto debe invalidar el historial",
 );
 assert.equal(
+  coincideHistorialMigraciones(
+    [{ nombre: "20260101000000_inicio", checksum: "crlf" }],
+    [{ nombre: "20260101000000_inicio", checksum: "lf", checksumAlternativo: "crlf" }],
+  ),
+  true,
+  "El mismo SQL con finales de línea distintos debe conservar un historial válido",
+);
+assert.equal(
+  coincideHistorialMigraciones(
+    [{ nombre: "20260101000000_inicio", checksum: "sql-modificado" }],
+    [{ nombre: "20260101000000_inicio", checksum: "lf", checksumAlternativo: "crlf" }],
+  ),
+  false,
+  "Un cambio de contenido debe invalidar el historial incluso si existen variantes de fin de línea",
+);
+assert.equal(
   coincideHistorialMigraciones(migraciones, [migraciones[0]!]),
   false,
   "Una migración faltante debe invalidar el historial",
@@ -33,4 +49,4 @@ assert.equal(
   "Una migración adicional debe invalidar el historial",
 );
 
-console.log("Historial de migraciones: nombres, checksums, faltantes y orden verificados.");
+console.log("Historial de migraciones: nombres, checksums, finales de línea, faltantes y orden verificados.");
