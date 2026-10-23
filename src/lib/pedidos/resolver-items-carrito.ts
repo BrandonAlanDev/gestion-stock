@@ -3,10 +3,24 @@ import "server-only";
 import type { PrismaClient } from "@/../generated/prisma/client";
 
 export type ItemParaCrearPedido = {
+  clave?: string;
   productId: string | number;
   variantId: string | number;
   cantidad: number;
 };
+
+export type CodigoErrorItemCarrito = "PRODUCTO_NO_DISPONIBLE" | "STOCK_INSUFICIENTE";
+
+export class ErrorItemCarrito extends Error {
+  constructor(
+    readonly codigo: CodigoErrorItemCarrito,
+    mensaje: string,
+    readonly nombreProducto: string | null = null,
+  ) {
+    super(mensaje);
+    this.name = "ErrorItemCarrito";
+  }
+}
 
 export type ItemPreparado = {
   garmentId: string;
@@ -56,11 +70,11 @@ export async function resolverItemsCarrito(
   const variantes = await prisma.garmentVariant.findMany({
     where: {
       id: { in: [...cantidadesPorVariante.keys()] },
-      garment: { active: true },
     },
     include: {
       garment: {
         select: {
+          active: true,
           name: true,
           price: true,
           maxPrice: true,
@@ -88,9 +102,33 @@ export async function resolverItemsCarrito(
     const encontrada = variantesPorId.get(variantId);
     const variante = encontrada?.garmentId === item.productId ? encontrada : undefined;
 
-    if (!variante) throw new Error("Uno de los productos ya no está disponible");
+    if (!variante) {
+      const producto = await prisma.garment.findUnique({
+        where: { id: String(item.productId) },
+        select: { name: true },
+      });
+      const nombreProducto = producto?.name ?? null;
+      throw new ErrorItemCarrito(
+        "PRODUCTO_NO_DISPONIBLE",
+        nombreProducto
+          ? `“${nombreProducto}” ya no está disponible. Revisá el carrito para quitarlo.`
+          : "Uno de los productos ya no está disponible. Revisá el carrito para corregirlo.",
+        nombreProducto,
+      );
+    }
+    if (!variante.garment.active) {
+      throw new ErrorItemCarrito(
+        "PRODUCTO_NO_DISPONIBLE",
+        `“${variante.garment.name}” ya no está disponible. Revisá el carrito para quitarlo.`,
+        variante.garment.name,
+      );
+    }
     if (variante.garment.controlaStock && item.cantidad > variante.stock) {
-      throw new Error(`Stock insuficiente para un producto (${variante.stock} disponibles)`);
+      throw new ErrorItemCarrito(
+        "STOCK_INSUFICIENTE",
+        `Stock insuficiente para “${variante.garment.name}”. Quedan ${variante.stock} unidades disponibles.`,
+        variante.garment.name,
+      );
     }
 
     const precioUnitario = Number(variante.priceOverride ?? variante.garment.price);

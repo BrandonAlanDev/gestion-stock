@@ -1,9 +1,12 @@
 import type { PrismaClient } from "@/../generated/prisma/client";
 import type { ItemParaCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
+import { ErrorItemCarrito } from "@/lib/pedidos/resolver-items-carrito";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
 import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import type { DatosEntrega } from "@/lib/pedidos/datos-entrega";
+import type { ResultadoCrearPedido } from "@/lib/pedidos/crear-pedido";
+import type { ResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 import {
   estaDisponibleMetodoEntrega,
   type OpcionesEntregaCheckout,
@@ -20,7 +23,17 @@ export type ResultadoIniciarPago =
       instrucciones: string | null;
       esSandbox: boolean;
     }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      error: string;
+      codigo?:
+        | "SIN_MODALIDADES_ENTREGA"
+        | "MODALIDAD_ENTREGA_NO_DISPONIBLE"
+        | "PRECIOS_CAMBIARON"
+        | "PRODUCTO_NO_DISPONIBLE"
+        | "STOCK_INSUFICIENTE";
+      resumen?: ResumenCheckout;
+    };
 
 export interface DependenciasIniciarPago {
   obtenerContextoTenant: () => Promise<{
@@ -38,8 +51,9 @@ export interface DependenciasIniciarPago {
     userId: string,
     items: ItemParaCrearPedido[],
     metodoPago: MetodoPagoId,
-    datosEntrega?: DatosEntrega,
-  ) => Promise<{ pedidoId: string; numero?: number }>;
+    datosEntrega: DatosEntrega | undefined,
+    subtotalMostrado: number,
+  ) => Promise<ResultadoCrearPedido>;
   conPrismaTenant: <T>(
     tenantId: string,
     operacion: (prisma: PrismaClient) => Promise<T>,
@@ -53,7 +67,8 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
   return async function iniciarPago(
     metodo: MetodoPagoId,
     items: ItemParaCrearPedido[],
-    datosEntrega?: DatosEntrega,
+    datosEntrega: DatosEntrega | undefined,
+    subtotalMostrado: number,
   ): Promise<ResultadoIniciarPago> {
     let pedidoIdCreado: string | null = null;
     let tenantIdProcesado: string | null = null;
@@ -86,12 +101,14 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       ) {
         return {
           ok: false,
+          codigo: "SIN_MODALIDADES_ENTREGA",
           error: "La tienda no tiene modalidades de entrega disponibles.",
         };
       }
       if (!estaDisponibleMetodoEntrega(opcionesEntrega, metodoEntrega)) {
         return {
           ok: false,
+          codigo: "MODALIDAD_ENTREGA_NO_DISPONIBLE",
           error: "La modalidad de entrega seleccionada ya no está disponible.",
         };
       }
@@ -109,7 +126,16 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         items,
         metodo,
         datosEntrega,
+        subtotalMostrado,
       );
+      if (!creado.ok) {
+        return {
+          ok: false,
+          codigo: creado.codigo,
+          error: creado.error,
+          resumen: creado.resumen,
+        };
+      }
       pedidoIdCreado = creado.pedidoId;
 
       const pedido = await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
@@ -212,6 +238,13 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         "Error iniciando pago:",
         error instanceof Error ? error.message : String(error),
       );
+      if (error instanceof ErrorItemCarrito) {
+        return {
+          ok: false,
+          codigo: error.codigo,
+          error: error.message,
+        };
+      }
       return {
         ok: false,
         error:

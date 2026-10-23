@@ -9,6 +9,9 @@ import type { ResumenMetodoPago } from "../src/lib/pagos/obtener-metodos-disponi
 import type { DatosEntrega } from "../src/lib/pedidos/datos-entrega";
 import type { MetodoPagoId, PaymentProvider } from "../src/lib/pagos/tipos";
 import { esMetodoPagoCompatibleConEntrega } from "../src/lib/pagos/es-metodo-pago-compatible-entrega";
+import { coincidenSubtotalesCheckout } from "../src/lib/pedidos/comparar-subtotales-checkout";
+import { construirResumenCheckout } from "../src/lib/pedidos/construir-resumen-checkout";
+import { ErrorItemCarrito, resolverItemsCarrito } from "../src/lib/pedidos/resolver-items-carrito";
 
 function crearMetodo(
   id: MetodoPagoId,
@@ -157,9 +160,10 @@ function crearDependencias(metodoDisponible: MetodoPagoId) {
     filtrarMetodosDisponibles: (resumen) =>
       filtrarMetodosDisponibles(resumen).map(({ id }) => ({ id })),
     obtenerBaseUrl: async () => "https://tienda.example.invalid",
-    crearPedidoDesdeCarrito: async (_tenantId, _userId, _items, _metodo, datosEntrega) => {
+    crearPedidoDesdeCarrito: async (_tenantId, _userId, _items, _metodo, datosEntrega, subtotalMostrado) => {
+      assert.equal(subtotalMostrado, 1200);
       if (datosEntrega) modalidadesUsadas.push(datosEntrega.metodoEntrega);
-      return { pedidoId: "pedido-prueba" };
+      return { ok: true, pedidoId: "pedido-prueba", numero: 1, total: 1200, moneda: "ARS" };
     },
     conPrismaTenant: async (_tenantId, operacion) => operacion(prismaFalso),
     liberarReservaStockPedido: async () => true,
@@ -181,7 +185,7 @@ async function verificarMetodoManipulado(): Promise<void> {
     productId: "producto-prueba",
     variantId: "variante-prueba",
     cantidad: 1,
-  }], crearDatosEntrega("RETIRO_TIENDA"));
+  }], crearDatosEntrega("RETIRO_TIENDA"), 1200);
 
   assert.deepEqual(resultado, { ok: false, error: "El método de pago no está disponible" });
   assert.deepEqual(estado.estadosPago, []);
@@ -200,7 +204,7 @@ async function verificarEfectivoSoloConRetiro(): Promise<void> {
     productId: "producto-prueba",
     variantId: "variante-prueba",
     cantidad: 1,
-  }], crearDatosEntrega("DOMICILIO"));
+  }], crearDatosEntrega("DOMICILIO"), 1200);
   assert.deepEqual(resultadoEnvio, {
     ok: false,
     error: "El efectivo solo está disponible para retiro en tienda.",
@@ -214,7 +218,7 @@ async function verificarEfectivoSoloConRetiro(): Promise<void> {
     productId: "producto-prueba",
     variantId: "variante-prueba",
     cantidad: 1,
-  }], crearDatosEntrega("RETIRO_TIENDA"));
+  }], crearDatosEntrega("RETIRO_TIENDA"), 1200);
   assert.equal(resultadoRetiro.ok, true);
   if (!resultadoRetiro.ok) return;
   assert.equal(resultadoRetiro.checkoutUrl, null);
@@ -223,11 +227,131 @@ async function verificarEfectivoSoloConRetiro(): Promise<void> {
   assert.deepEqual(retiro.modalidadesUsadas, ["RETIRO_TIENDA"]);
 }
 
+async function verificarCambioDePrecioRequiereConfirmacion(): Promise<void> {
+  assert.equal(coincidenSubtotalesCheckout(1200, 1200.004), true);
+  assert.equal(coincidenSubtotalesCheckout(1200, 1201), false);
+  assert.equal(coincidenSubtotalesCheckout(Number.NaN, 1200), false);
+  const resumenActualizado = construirResumenCheckout(
+    [{ clave: "linea-carrito-1", productId: "producto-prueba", variantId: "variante-prueba", cantidad: 2 }],
+    [{
+      garmentId: "producto-prueba",
+      variantId: "variante-prueba",
+      nombre: "Producto actualizado",
+      varianteNombre: "Azul",
+      varianteDetalle: "Color: Azul",
+      imagen: null,
+      precioUnitario: 650,
+      precioAnterior: null,
+      cantidad: 2,
+      subtotal: 1300,
+    }],
+    "ARS",
+  );
+  assert.equal(resumenActualizado.items[0].clave, "linea-carrito-1");
+  assert.equal(resumenActualizado.items[0].nombre, "Producto actualizado");
+  assert.equal(resumenActualizado.subtotal, 1300);
+
+  const estado = crearDependencias("transferencia");
+  estado.dependencias.crearPedidoDesdeCarrito = async () => ({
+    ok: false,
+    codigo: "PRECIOS_CAMBIARON",
+    error: "Los precios cambiaron mientras completabas la compra.",
+    resumen: {
+      items: [{
+        clave: "producto-1",
+        productId: "producto-prueba",
+        variantId: "variante-prueba",
+        nombre: "Producto actualizado",
+        variante: null,
+        imagen: null,
+        cantidad: 1,
+        precioUnitario: 1300,
+        precioAnterior: null,
+        subtotal: 1300,
+      }],
+      subtotal: 1300,
+      moneda: "ARS",
+    },
+  });
+  const accion = crearAccionIniciarPago(estado.dependencias);
+  const resultado = await accion("transferencia", [{
+    clave: "producto-1",
+    productId: "producto-prueba",
+    variantId: "variante-prueba",
+    cantidad: 1,
+  }], crearDatosEntrega("RETIRO_TIENDA"), 1200);
+
+  assert.equal(resultado.ok, false);
+  if (resultado.ok) return;
+  assert.equal(resultado.codigo, "PRECIOS_CAMBIARON");
+  assert.equal(resultado.resumen?.subtotal, 1300);
+  assert.deepEqual(estado.estadosPago, []);
+  assert.deepEqual(estado.modalidadesUsadas, []);
+}
+
+async function verificarModalidadConCodigoEstable(): Promise<void> {
+  const estado = crearDependencias("transferencia");
+  estado.dependencias.obtenerOpcionesEntrega = async () => ({
+    domicilioDisponible: false,
+    retiroTiendaDisponible: true,
+    direccionRetiro: "Calle 1",
+  });
+  const accion = crearAccionIniciarPago(estado.dependencias);
+  const resultado = await accion("transferencia", [{
+    productId: "producto-prueba",
+    variantId: "variante-prueba",
+    cantidad: 1,
+  }], crearDatosEntrega("DOMICILIO"), 1200);
+
+  assert.equal(resultado.ok, false);
+  if (resultado.ok) return;
+  assert.equal(resultado.codigo, "MODALIDAD_ENTREGA_NO_DISPONIBLE");
+  assert.deepEqual(estado.estadosPago, []);
+}
+
+async function verificarErroresDeProductoIdentificanElCarrito(): Promise<void> {
+  const prismaFalso = {
+    garmentVariant: {
+      findMany: async () => [{
+        id: "variante-prueba",
+        garmentId: "producto-prueba",
+        stock: 0,
+        priceOverride: null,
+        optionValues: [],
+        garment: {
+          active: true,
+          name: "Camisa azul",
+          price: 1200,
+          maxPrice: null,
+          controlaStock: true,
+          images: [],
+        },
+      }],
+    },
+  } as unknown as PrismaClient;
+
+  await assert.rejects(
+    resolverItemsCarrito(prismaFalso, [{
+      productId: "producto-prueba",
+      variantId: "variante-prueba",
+      cantidad: 1,
+    }]),
+    (error: unknown) =>
+      error instanceof ErrorItemCarrito &&
+      error.codigo === "STOCK_INSUFICIENTE" &&
+      error.message.includes("Camisa azul") &&
+      error.message.includes("0 unidades disponibles"),
+  );
+}
+
 async function main(): Promise<void> {
   verificarFiltroDeMetodos();
   await verificarMetodoManipulado();
   await verificarEfectivoSoloConRetiro();
-  console.log("Métodos de checkout: disponibilidad, configuración, método manipulado y efectivo solo con retiro verificados.");
+  await verificarCambioDePrecioRequiereConfirmacion();
+  await verificarModalidadConCodigoEstable();
+  await verificarErroresDeProductoIdentificanElCarrito();
+  console.log("Checkout: métodos de pago, efectivo por modalidad, cambios de precio y error tipado de entrega verificados.");
 }
 
 void main().catch((error: unknown) => {

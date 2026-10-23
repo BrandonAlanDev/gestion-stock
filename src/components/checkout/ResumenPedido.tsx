@@ -12,6 +12,8 @@ interface PropiedadesResumenPedido {
   modalidadEntrega: "DOMICILIO" | "RETIRO_TIENDA" | null;
   cargando: boolean;
   error: string | null;
+  avisoPrecio: string | null;
+  alRevisarCarrito: () => void;
   children: ReactNode;
 }
 
@@ -22,6 +24,8 @@ export default function ResumenPedido({
   modalidadEntrega,
   cargando,
   error,
+  avisoPrecio,
+  alRevisarCarrito,
   children,
 }: PropiedadesResumenPedido) {
   const monedaSegura = /^[A-Z]{3}$/.test(moneda) ? moneda : "ARS";
@@ -35,49 +39,97 @@ export default function ResumenPedido({
   return (
     <section
       aria-labelledby="titulo-resumen-pedido"
-      className="overflow-hidden rounded-2xl border bg-white"
+      className="overflow-hidden rounded-2xl border"
       style={{
         backgroundColor: "var(--superficie-fondo)",
         borderColor: "color-mix(in srgb, var(--texto-sobre-fondo) 12%, transparent)",
       }}
     >
-      <header className="flex items-start justify-between gap-3 border-b px-5 py-4 sm:px-6">
+      <header
+        className="flex items-start justify-between gap-3 border-b px-5 py-4 sm:px-6"
+        style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-fondo) 10%, transparent)" }}
+      >
         <div>
           <h2 id="titulo-resumen-pedido" className="text-lg font-semibold tracking-tight">
             Resumen de tu pedido
           </h2>
-          <p className="mt-1 text-sm opacity-65">
-            {cargando
-              ? "Actualizando precios…"
-              : `${cantidadArticulos} ${cantidadArticulos === 1 ? "artículo" : "artículos"}`}
+          <p className="mt-1 text-sm opacity-65" aria-live="polite">
+            {error
+              ? "No se pudo validar el carrito"
+              : cargando
+                ? "Actualizando precios…"
+                : `${cantidadArticulos} ${cantidadArticulos === 1 ? "artículo" : "artículos"}`}
           </p>
         </div>
         <span
-          aria-hidden="true"
           className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-          style={{ backgroundColor: "color-mix(in srgb, var(--color-primario) 10%, white)", color: "var(--color-primario)" }}
+          aria-label={error
+            ? "Hay productos que requieren revisión"
+            : `${cantidadArticulos} ${cantidadArticulos === 1 ? "artículo" : "artículos"}`}
+          style={{
+            backgroundColor: error
+              ? "color-mix(in srgb, hsl(var(--destructive)) 10%, var(--superficie-fondo))"
+              : "color-mix(in srgb, var(--color-primario) 10%, var(--superficie-fondo))",
+            color: error ? "hsl(var(--destructive))" : "var(--color-primario)",
+          }}
         >
-          {cantidadArticulos}
+          {error ? "!" : cantidadArticulos}
         </span>
       </header>
 
       <div className="px-5 sm:px-6">
+        {avisoPrecio && !error && (
+          <p
+            className="mt-4 rounded-lg border p-3 text-sm"
+            role="status"
+            aria-live="polite"
+            style={{
+              borderColor: "color-mix(in srgb, var(--color-primario) 35%, transparent)",
+              backgroundColor: "color-mix(in srgb, var(--color-primario) 8%, var(--superficie-fondo))",
+            }}
+          >
+            {avisoPrecio}
+          </p>
+        )}
         {error ? (
-          <p className="py-5 text-sm text-red-600" role="alert">{error}</p>
+          <div className="space-y-3 py-5">
+            <p
+              className="text-sm"
+              role="alert"
+              style={{ color: "hsl(var(--destructive))" }}
+            >
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={alRevisarCarrito}
+              className="rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{
+                borderColor: "color-mix(in srgb, var(--color-primario) 40%, transparent)",
+                color: "var(--color-primario)",
+              }}
+            >
+              Revisar carrito
+            </button>
+          </div>
         ) : cargando && items.length === 0 ? (
           <p className="py-5 text-sm opacity-65" role="status">Validando los productos del carrito…</p>
         ) : items.length === 0 ? (
           <p className="py-5 text-sm opacity-65">No hay productos para mostrar.</p>
         ) : (
-          <ul className="max-h-72 divide-y overflow-y-auto overscroll-contain">
+          <ul className="max-h-72 overflow-y-auto overscroll-contain">
             {items.map((item) => {
               const imagen = item.imagen || "/images/placeholder.svg";
               return (
-                <li key={item.clave} className="flex min-w-0 gap-3 py-4 first:pt-5 last:pb-5">
+                <li
+                  key={item.clave}
+                  className="flex min-w-0 gap-3 border-b py-4 first:pt-5 last:border-b-0 last:pb-5"
+                  style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-fondo) 10%, transparent)" }}
+                >
                   <div
                     className="relative size-[68px] shrink-0 overflow-hidden rounded-xl border sm:size-[76px]"
                     style={{
-                      backgroundColor: "color-mix(in srgb, var(--texto-sobre-fondo) 3%, white)",
+                      backgroundColor: "color-mix(in srgb, var(--texto-sobre-fondo) 3%, var(--superficie-fondo))",
                       borderColor: "color-mix(in srgb, var(--texto-sobre-fondo) 10%, transparent)",
                     }}
                   >

@@ -70,3 +70,13 @@ export function estaDisponibleMetodoEntrega(
     ? opciones.domicilioDisponible
     : opciones.retiroTiendaDisponible;
 }
+
+/** Conserva una selección tras refrescar la configuración y limpia la obsoleta. */
+export function conservarMetodoEntregaDisponible(
+  opciones: OpcionesEntregaCheckout,
+  metodoActual: MetodoEntregaCheckout | null,
+): MetodoEntregaCheckout | null {
+  return metodoActual && estaDisponibleMetodoEntrega(opciones, metodoActual)
+    ? metodoActual
+    : null;
+}

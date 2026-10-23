@@ -16,6 +16,7 @@ import { obtenerDatosCheckout } from "@/actions/perfil/gestionar-perfil";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import {
+  conservarMetodoEntregaDisponible,
   estaDisponibleMetodoEntrega,
   type MetodoEntregaCheckout,
   type OpcionesEntregaCheckout,
@@ -36,7 +37,7 @@ type ResultadoResumenCheckout = Awaited<ReturnType<typeof obtenerResumenCheckout
 type ResumenCheckoutValidadoResultado = Extract<ResultadoResumenCheckout, { ok: true }>;
 
 export default function CheckoutCliente() {
-  const { cartItems } = useCart();
+  const { cartItems, openCart } = useCart();
   const { status } = useSession();
   const { pageConfig } = usePageConfig();
   const router = useRouter();
@@ -60,6 +61,7 @@ export default function CheckoutCliente() {
   const [resumenValidado, setResumenValidado] = useState<ResumenCheckoutValidadoResultado | null>(null);
   const [cargandoResumen, setCargandoResumen] = useState(true);
   const [errorResumen, setErrorResumen] = useState<string | null>(null);
+  const [avisoPrecio, setAvisoPrecio] = useState<string | null>(null);
 
   const moneda =
     typeof pageConfig?.currency === "string" && pageConfig.currency
@@ -87,6 +89,7 @@ export default function CheckoutCliente() {
     setResumenValidado(null);
     setClaveResumenValidado(null);
     setErrorResumen(null);
+    setAvisoPrecio(null);
     if (cartItems.length === 0) {
       setCargandoResumen(false);
       return () => { activo = false; };
@@ -227,16 +230,17 @@ export default function CheckoutCliente() {
       return;
     }
 
-    const items = cartItems
-      .filter((item) => item.variantId)
-      .map((item) => ({
-        productId: item.id,
-        variantId: item.variantId as string,
-        cantidad: item.qty,
-      }));
-
-    if (items.length === 0) {
+    if (cartItems.length === 0) {
       toast.error("El carrito está vacío");
+      return;
+    }
+
+    if (
+      !resumenValidado ||
+      errorResumen ||
+      claveResumenValidado !== claveItemsParaResumen
+    ) {
+      toast.error("Esperá a que se valide el resumen actualizado antes de continuar.");
       return;
     }
 
@@ -270,35 +274,58 @@ export default function CheckoutCliente() {
       : { metodoEntrega, nombre: entrega.nombre, apellido: entrega.apellido, telefono: entrega.telefono };
 
     iniciarTransicion(async () => {
-      const resultado = await iniciarPago(metodoSeleccionado as MetodoPagoId, items, datosEntrega);
+      const resultado = await iniciarPago(
+        metodoSeleccionado as MetodoPagoId,
+        itemsParaResumen,
+        datosEntrega,
+        resumenValidado.subtotal,
+      );
 
       if (!resultado.ok) {
-        toast.error(resultado.error);
-        const errorEntrega = resultado.error.toLocaleLowerCase();
-        if (errorEntrega.includes("modalidad") && errorEntrega.includes("entrega")) {
-          setMetodoEntrega(null);
-          setAvisoEntrega(
-            "La modalidad seleccionada dejó de estar disponible. Elegí una opción válida para continuar.",
+        if (resultado.codigo === "PRECIOS_CAMBIARON" && resultado.resumen) {
+          setResumenValidado({ ok: true, ...resultado.resumen });
+          setClaveResumenValidado(claveItemsParaResumen);
+          setAvisoPrecio(
+            "Los precios cambiaron mientras completabas la compra. Revisá el nuevo total y volvé a confirmar para continuar.",
           );
+          toast.info("Actualizamos los precios. Revisá el nuevo total antes de confirmar.");
+          return;
+        }
+
+        if (
+          resultado.codigo === "PRODUCTO_NO_DISPONIBLE" ||
+          resultado.codigo === "STOCK_INSUFICIENTE"
+        ) {
+          setResumenValidado(null);
+          setClaveResumenValidado(null);
+          setErrorResumen(resultado.error);
+          toast.error(resultado.error);
+          return;
+        }
+
+        toast.error(resultado.error);
+        if (
+          resultado.codigo === "MODALIDAD_ENTREGA_NO_DISPONIBLE" ||
+          resultado.codigo === "SIN_MODALIDADES_ENTREGA"
+        ) {
+          setAvisoEntrega("La configuración de entrega cambió. Verificá la opción seleccionada o elegí una modalidad disponible.");
           setCargandoEntrega(true);
           try {
             const opcionesActualizadas = await obtenerOpcionesEntregaCheckout();
             if (opcionesActualizadas.ok) {
               setOpcionesEntrega(opcionesActualizadas.opciones);
               setErrorCargaEntrega(null);
-              setMetodoEntrega(
-                opcionesActualizadas.opciones.domicilioDisponible
-                  ? "DOMICILIO"
-                  : opcionesActualizadas.opciones.retiroTiendaDisponible
-                    ? "RETIRO_TIENDA"
-                    : null,
+              setMetodoEntrega((actual) =>
+                conservarMetodoEntregaDisponible(opcionesActualizadas.opciones, actual),
               );
             } else {
               setOpcionesEntrega(null);
+              setMetodoEntrega(null);
               setErrorCargaEntrega(opcionesActualizadas.error);
             }
           } catch {
             setOpcionesEntrega(null);
+            setMetodoEntrega(null);
             setErrorCargaEntrega("No se pudieron validar las modalidades de entrega.");
           } finally {
             setCargandoEntrega(false);
@@ -306,6 +333,8 @@ export default function CheckoutCliente() {
         }
         return;
       }
+
+      setAvisoPrecio(null);
 
       if (resultado.checkoutUrl) {
         window.location.href = resultado.checkoutUrl;
@@ -479,6 +508,8 @@ export default function CheckoutCliente() {
             modalidadEntrega={metodoEntrega}
             cargando={cargandoResumen}
             error={errorResumen}
+            avisoPrecio={avisoPrecio}
+            alRevisarCarrito={openCart}
           >
             <button
               onClick={manejarContinuarCompra}

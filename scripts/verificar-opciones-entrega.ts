@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   calcularOpcionesEntregaCheckout,
+  conservarMetodoEntregaDisponible,
   estaDisponibleMetodoEntrega,
   obtenerDatosFaltantesRetiro,
 } from "../src/lib/pedidos/opciones-entrega";
@@ -37,6 +38,9 @@ assert.equal(soloRetiro.domicilioDisponible, false);
 assert.equal(soloRetiro.retiroTiendaDisponible, true);
 assert.equal(estaDisponibleMetodoEntrega(soloRetiro, "DOMICILIO"), false);
 assert.equal(estaDisponibleMetodoEntrega(soloRetiro, "RETIRO_TIENDA"), true);
+assert.equal(conservarMetodoEntregaDisponible(soloRetiro, "DOMICILIO"), null);
+assert.equal(conservarMetodoEntregaDisponible(soloRetiro, "RETIRO_TIENDA"), "RETIRO_TIENDA");
+assert.equal(conservarMetodoEntregaDisponible(soloRetiro, null), null);
 
 // Sin checkout no se ofrece ninguna modalidad.
 assert.deepEqual(calcularOpcionesEntregaCheckout({ ...base, checkoutEnabled: false }), {

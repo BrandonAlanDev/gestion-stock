@@ -9,6 +9,7 @@ import {
   type DependenciasIniciarPago,
 } from "../src/lib/actions/pago/crear-accion-iniciar-pago";
 import type { PaymentProvider } from "../src/lib/pagos/tipos";
+import { ErrorItemCarrito } from "../src/lib/pedidos/resolver-items-carrito";
 
 const pedidoFalso = {
   id: "pedido-a",
@@ -24,6 +25,13 @@ const pedidoFalso = {
   items: [{ nombre: "Producto A", cantidad: 1, precioUnitario: 3500 }],
 };
 
+const datosEntregaRetiro = {
+  metodoEntrega: "RETIRO_TIENDA" as const,
+  nombre: "Cliente",
+  apellido: "Prueba",
+  telefono: "0000000000",
+};
+
 function crearDependenciasInicioPago(
   contexto: { tenantId: string; usuarioId?: string | null } | null,
   rechazarProductoB = false,
@@ -35,22 +43,19 @@ function crearDependenciasInicioPago(
   const errores: string[] = [];
   const prismaFalso = {
     pedido: {
-      findFirst: async (args: { where: { tenantId: string } }) => {
-        tenantsPrisma.push(args.where.tenantId);
+      findFirst: async () => {
         return pedidoFalso;
       },
-      updateMany: async (args: { where: { tenantId: string } }) => {
-        tenantsPrisma.push(args.where.tenantId);
+      updateMany: async () => {
         return { count: 1 };
       },
     },
     payment: {
-      create: async (args: { data: { tenantId: string } }) => {
-        pagoTenant.push(args.data.tenantId);
+      create: async () => {
+        pagoTenant.push(tenantsPrisma[tenantsPrisma.length - 1] ?? "sin-tenant");
         return { id: "pago-a" };
       },
-      updateMany: async (args: { where: { tenantId: string } }) => {
-        tenantsPrisma.push(args.where.tenantId);
+      updateMany: async () => {
         return { count: 1 };
       },
     },
@@ -77,17 +82,27 @@ function crearDependenciasInicioPago(
         descripcion: "Pago manual",
         activo: true,
         requiereConexion: false,
+        requiereConfiguracion: false,
         conectado: false,
       }];
     },
+    obtenerOpcionesEntrega: async () => ({
+      domicilioDisponible: true,
+      retiroTiendaDisponible: true,
+      direccionRetiro: "Calle 1",
+    }),
     filtrarMetodosDisponibles: (metodos) => metodos.filter((metodo) => metodo.activo),
     obtenerBaseUrl: async () => "https://tienda-a.example.com",
-    crearPedidoDesdeCarrito: async (tenantId, _userId, items) => {
+    crearPedidoDesdeCarrito: async (tenantId, _userId, items, _metodo, _datosEntrega, subtotalMostrado) => {
+      assert.equal(subtotalMostrado, 3500);
       tenantsPedidos.push(`pedido:${tenantId}`);
       if (rechazarProductoB && items.some((item) => item.productId === "producto-b")) {
-        throw new Error("Uno de los productos ya no está disponible");
+        throw new ErrorItemCarrito(
+          "PRODUCTO_NO_DISPONIBLE",
+          "Uno de los productos ya no está disponible.",
+        );
       }
-      return { pedidoId: "pedido-a" };
+      return { ok: true, pedidoId: "pedido-a", numero: 1, total: 3500, moneda: "ARS" };
     },
     conPrismaTenant: async (tenantId, operacion) => {
       tenantsPrisma.push(tenantId);
@@ -103,7 +118,7 @@ function crearDependenciasInicioPago(
 async function verificarInicioSinSesion(): Promise<void> {
   const estado = crearDependenciasInicioPago(null);
   const accion = crearAccionIniciarPago(estado.dependencias);
-  const resultado = await accion("transferencia", []);
+  const resultado = await accion("transferencia", [], undefined, 3500);
 
   assert.deepEqual(resultado, {
     ok: false,
@@ -120,11 +135,12 @@ async function verificarInicioDePagoTenantAware(): Promise<void> {
     productId: "producto-a",
     variantId: "variante-a",
     cantidad: 1,
-  }]);
+  }], datosEntregaRetiro, 3500);
 
   assert.deepEqual(resultado, {
     ok: true,
     pedidoId: "pedido-a",
+    numero: 1,
     paymentId: "pago-a",
     checkoutUrl: "https://checkout.example.com/a",
     instrucciones: null,
@@ -147,11 +163,12 @@ async function verificarProductoDeOtroTenantSeRechazaEnTenantActual(): Promise<v
     productId: "producto-b",
     variantId: "variante-b",
     cantidad: 1,
-  }]);
+  }], datosEntregaRetiro, 3500);
 
   assert.deepEqual(resultado, {
     ok: false,
-    error: "Uno de los productos ya no está disponible",
+    codigo: "PRODUCTO_NO_DISPONIBLE",
+    error: "Uno de los productos ya no está disponible.",
   });
   assert.deepEqual(estado.tenantsPedidos, ["metodos:tenant-a", "pedido:tenant-a"]);
   assert.deepEqual(estado.tenantsPrisma, []);
@@ -170,8 +187,8 @@ function crearDependenciasConfirmacion(
   const errores: string[] = [];
   const prismaFalso = {
     pedido: {
-      findFirst: async (args: { where: { id: string; tenantId: string } }) => {
-        tenantsConsultados.push(`${args.where.tenantId}:${args.where.id}`);
+      findFirst: async (args: { where: { id: string } }) => {
+        tenantsConsultados.push(args.where.id);
         if (!pedidoResuelto) return null;
         return { ...pedidoFalso, userId: usuarioPedido };
       },
@@ -191,13 +208,15 @@ function crearDependenciasConfirmacion(
   } as unknown as PaymentProvider;
   const dependencias: DependenciasConfirmarPago = {
     obtenerContextoTenant: async () => contexto,
-    conPrismaTenant: async (tenantId, operacion) => {
+    conPrisma: async (operacion) => {
+      const tenantId = contexto?.tenantId ?? "sin-tenant";
       tenantsPrisma.push(tenantId);
       return operacion(prismaFalso);
     },
     obtenerProveedor: () => proveedor,
-    aplicarWebhookPago: async (tenantId) => {
-      tenantsAplicacion.push(tenantId);
+    aplicarWebhookPago: async (pago) => {
+      tenantsAplicacion.push(contexto?.tenantId ?? "sin-tenant");
+      assert.equal(pago.pedidoId, "pedido-a");
     },
     registrarError: (_mensaje, detalle) => errores.push(detalle),
   };
@@ -235,7 +254,7 @@ async function verificarConfirmacionDeOtroUsuario(): Promise<void> {
 
   assert.deepEqual(resultado, { ok: false, error: "No autorizado" });
   assert.deepEqual(estado.tenantsPrisma, ["tenant-a"]);
-  assert.deepEqual(estado.tenantsConsultados, ["tenant-a:pedido-a"]);
+  assert.deepEqual(estado.tenantsConsultados, ["pedido-a"]);
   assert.deepEqual(estado.tenantsProveedor, []);
   assert.deepEqual(estado.tenantsAplicacion, []);
 }
@@ -251,7 +270,7 @@ async function verificarPedidoDeOtroTenantNoLlegaALaPasarela(): Promise<void> {
 
   assert.deepEqual(resultado, { ok: false, error: "Pedido no encontrado" });
   assert.deepEqual(estado.tenantsPrisma, ["tenant-a"]);
-  assert.deepEqual(estado.tenantsConsultados, ["tenant-a:pedido-b"]);
+  assert.deepEqual(estado.tenantsConsultados, ["pedido-b"]);
   assert.deepEqual(estado.tenantsProveedor, []);
   assert.deepEqual(estado.tenantsAplicacion, []);
 }
@@ -268,7 +287,7 @@ async function verificarConfirmacionDePagoTenantAware(): Promise<void> {
   if (!resultado.ok) return;
   assert.equal(resultado.pedido.id, "pedido-a");
   assert.deepEqual(estado.tenantsPrisma, ["tenant-a", "tenant-a"]);
-  assert.deepEqual(estado.tenantsConsultados, ["tenant-a:pedido-a", "tenant-a:pedido-a"]);
+  assert.deepEqual(estado.tenantsConsultados, ["pedido-a", "pedido-a"]);
   assert.deepEqual(estado.tenantsProveedor, ["tenant-a"]);
   assert.deepEqual(estado.tenantsAplicacion, ["tenant-a"]);
 }
