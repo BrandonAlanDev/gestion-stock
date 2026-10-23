@@ -40,6 +40,7 @@ import {
 import DrawersConfiguracion from "./DrawersConfiguracion";
 import GrupoConfiguracion from "./GrupoConfiguracion";
 import ItemConfiguracion from "./ItemConfiguracion";
+import { calcularOpcionesEntregaCheckout } from "@/lib/pedidos/opciones-entrega";
 import type { ConfigCompleta } from "./tipos-configuracion";
 import type { ClaveDrawer } from "./tipos-panel";
 import type { ResultadoMetodosPago, MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
@@ -124,6 +125,19 @@ export default function PanelConfiguracion({
 
   const tieneContacto = Boolean(config.phone || config.whatsapp || config.email);
   const tieneUbicacion = config.locationEnabled && Boolean(config.address);
+  const opcionesEntrega = calcularOpcionesEntregaCheckout(config);
+  const estadoUbicacion: { variante: "activo" | "inactivo" | "sin-configurar"; texto: string } =
+    opcionesEntrega.retiroTiendaDisponible
+      ? { variante: "activo", texto: tieneUbicacion ? "Visible · Retiro activo" : "Retiro activo" }
+      : config.retiroTiendaEnabled && !config.checkoutEnabled
+        ? { variante: "inactivo", texto: "Retiro sin checkout" }
+        : config.retiroTiendaEnabled
+          ? { variante: "sin-configurar", texto: "Retiro incompleto" }
+          : tieneUbicacion
+            ? { variante: "activo", texto: "Visible" }
+            : config.address
+              ? { variante: "inactivo", texto: "Oculta" }
+              : { variante: "sin-configurar", texto: "Sin dirección" };
   const seoCompleto = Boolean(config.metaTitle?.trim() && config.metaDescription?.trim());
   const tieneTextosLegales = Boolean(
     config.termsAndConditions?.trim() && config.privacyPolicy?.trim()
@@ -185,12 +199,8 @@ export default function PanelConfiguracion({
               icono={MapPin}
               titulo="Ubicación"
               descripcion="Ubicación pública y disponibilidad de retiro en tienda"
-              varianteBadge={
-                tieneUbicacion ? "activo" : config.address ? "inactivo" : "sin-configurar"
-              }
-              textoBadge={
-                tieneUbicacion ? "Visible" : config.address ? "Oculta" : "Sin dirección"
-              }
+              varianteBadge={estadoUbicacion.variante}
+              textoBadge={estadoUbicacion.texto}
               alClick={() => setDrawerAbierto("ubicacion")}
             />
             <ItemConfiguracion

@@ -8,7 +8,8 @@ export interface OpcionesEntregaCheckout {
 
 export interface ConfiguracionEntregaTienda {
   checkoutEnabled?: boolean | null;
-  locationEnabled?: boolean | null;
+  envioDomicilioEnabled?: boolean | null;
+  retiroTiendaEnabled?: boolean | null;
   address?: string | null;
   postalCode?: string | null;
   city?: string | null;
@@ -16,30 +17,41 @@ export interface ConfiguracionEntregaTienda {
   country?: string | null;
 }
 
+const CAMPOS_DIRECCION_RETIRO = [
+  ["address", "dirección"],
+  ["postalCode", "código postal"],
+  ["city", "ciudad"],
+  ["province", "provincia"],
+  ["country", "país"],
+] as const;
+
+function normalizarCampo(valor: string | null | undefined): string {
+  return typeof valor === "string" ? valor.trim() : "";
+}
+
+/** Devuelve los datos de dirección que faltan para ofrecer retiro en tienda. */
+export function obtenerDatosFaltantesRetiro(
+  configuracion: ConfiguracionEntregaTienda | null | undefined,
+): string[] {
+  return CAMPOS_DIRECCION_RETIRO
+    .filter(([campo]) => !normalizarCampo(configuracion?.[campo]))
+    .map(([, etiqueta]) => etiqueta);
+}
+
 /** Calcula las modalidades usando únicamente la configuración del comercio. */
 export function calcularOpcionesEntregaCheckout(
   configuracion: ConfiguracionEntregaTienda | null | undefined,
 ): OpcionesEntregaCheckout {
-  const domicilioDisponible = configuracion?.checkoutEnabled === true;
-  const [direccion, codigoPostal, ciudad, provincia, pais] = [
-    configuracion?.address,
-    configuracion?.postalCode,
-    configuracion?.city,
-    configuracion?.province,
-    configuracion?.country,
-  ].map((valor) => (typeof valor === "string" ? valor.trim() : ""));
-
-  const direccionCompleta = [
-    direccion,
-    codigoPostal,
-    ciudad,
-    provincia,
-    pais,
-  ].every(Boolean);
+  const checkoutHabilitado = configuracion?.checkoutEnabled === true;
+  const domicilioDisponible =
+    checkoutHabilitado && configuracion?.envioDomicilioEnabled === true;
   const retiroTiendaDisponible =
-    domicilioDisponible &&
-    configuracion?.locationEnabled === true &&
-    direccionCompleta;
+    checkoutHabilitado &&
+    configuracion?.retiroTiendaEnabled === true &&
+    obtenerDatosFaltantesRetiro(configuracion).length === 0;
+
+  const [direccion, codigoPostal, ciudad, provincia, pais] =
+    CAMPOS_DIRECCION_RETIRO.map(([campo]) => normalizarCampo(configuracion?.[campo]));
 
   return {
     domicilioDisponible,

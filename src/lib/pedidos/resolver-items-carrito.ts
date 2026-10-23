@@ -46,41 +46,47 @@ export async function resolverItemsCarrito(
     });
   }
 
-  const preparados: ItemPreparado[] = [];
-  for (const [variantId, item] of cantidadesPorVariante) {
+  for (const item of cantidadesPorVariante.values()) {
     if (!Number.isSafeInteger(item.cantidad)) {
       throw new Error("La cantidad de un ítem no es válida");
     }
+  }
 
-    const variante = await prisma.garmentVariant.findFirst({
-      where: {
-        id: variantId,
-        garmentId: item.productId,
-        garment: { active: true },
-      },
-      include: {
-        garment: {
-          select: {
-            name: true,
-            price: true,
-            maxPrice: true,
-            controlaStock: true,
-            images: {
-              orderBy: { order: "asc" },
-              take: 1,
-              select: { srcImage: true },
-            },
-          },
-        },
-        optionValues: {
-          include: {
-            optionValue: {
-              include: { option: { select: { name: true } } },
-            },
+  // Una sola consulta para todas las variantes; la pertenencia al producto se valida después.
+  const variantes = await prisma.garmentVariant.findMany({
+    where: {
+      id: { in: [...cantidadesPorVariante.keys()] },
+      garment: { active: true },
+    },
+    include: {
+      garment: {
+        select: {
+          name: true,
+          price: true,
+          maxPrice: true,
+          controlaStock: true,
+          images: {
+            orderBy: { order: "asc" },
+            take: 1,
+            select: { srcImage: true },
           },
         },
       },
-    });
+      optionValues: {
+        include: {
+          optionValue: {
+            include: { option: { select: { name: true } } },
+          },
+        },
+      },
+    },
+  });
+  const variantesPorId = new Map(variantes.map((variante) => [variante.id, variante]));
+
+  const preparados: ItemPreparado[] = [];
+  for (const [variantId, item] of cantidadesPorVariante) {
+    const encontrada = variantesPorId.get(variantId);
+    const variante = encontrada?.garmentId === item.productId ? encontrada : undefined;
 
     if (!variante) throw new Error("Uno de los productos ya no está disponible");
     if (variante.garment.controlaStock && item.cantidad > variante.stock) {

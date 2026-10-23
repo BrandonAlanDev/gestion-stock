@@ -4,6 +4,7 @@ export interface ConfigAjustes {
   ecommerceEnabled: boolean;
   cartEnabled: boolean;
   checkoutEnabled: boolean;
+  envioDomicilioEnabled: boolean;
   currency: string;
   language: string;
   maintenanceMode: boolean;

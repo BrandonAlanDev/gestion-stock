@@ -10,6 +10,8 @@ export const DEFAULT_VALUES = {
   ecommerceEnabled: false,
   cartEnabled: false,
   checkoutEnabled: false,
+  envioDomicilioEnabled: true,
+  retiroTiendaEnabled: false,
 
   locationEnabled: false,
 

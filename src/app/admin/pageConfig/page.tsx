@@ -53,6 +53,8 @@ export default async function PageConfigPage() {
         ecommerceEnabled: pageConfig.ecommerceEnabled ?? true,
         cartEnabled: pageConfig.cartEnabled ?? true,
         checkoutEnabled: pageConfig.checkoutEnabled ?? true,
+        envioDomicilioEnabled: pageConfig.envioDomicilioEnabled ?? true,
+        retiroTiendaEnabled: pageConfig.retiroTiendaEnabled ?? false,
         currency: pageConfig.currency ?? "ARS",
         language: pageConfig.language ?? "es",
         maintenanceMode: pageConfig.maintenanceMode ?? false,

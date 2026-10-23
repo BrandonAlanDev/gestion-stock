@@ -282,6 +282,8 @@ model PageConfig {
   ecommerceEnabled     Boolean                   @default(true)
   cartEnabled          Boolean                   @default(true)
   checkoutEnabled      Boolean                   @default(true)
+  envioDomicilioEnabled Boolean                  @default(true)
+  retiroTiendaEnabled  Boolean                   @default(false)
   phone                String?
   whatsapp             String?
   email                String?

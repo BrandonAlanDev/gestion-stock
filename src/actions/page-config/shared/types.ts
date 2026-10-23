@@ -21,6 +21,8 @@ export type PageConfigInput = {
   ecommerceEnabled?: boolean;
   cartEnabled?: boolean;
   checkoutEnabled?: boolean;
+  envioDomicilioEnabled?: boolean;
+  retiroTiendaEnabled?: boolean;
 
   phone?: string | null;
   whatsapp?: string | null;

@@ -25,6 +25,12 @@ export const RESET_DATA = {
   checkoutEnabled:
     DEFAULT_VALUES.checkoutEnabled,
 
+  envioDomicilioEnabled:
+    DEFAULT_VALUES.envioDomicilioEnabled,
+
+  retiroTiendaEnabled:
+    DEFAULT_VALUES.retiroTiendaEnabled,
+
   phone: null,
   whatsapp: null,
   email: null,

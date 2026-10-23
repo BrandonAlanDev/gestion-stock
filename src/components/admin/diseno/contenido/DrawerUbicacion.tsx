@@ -7,7 +7,13 @@ import type { ConfigContenido } from "./tipos-contenido";
 
 type ConfigUbicacion = Pick<
   ConfigContenido,
-  "locationEnabled" | "address" | "city" | "province" | "country"
+  | "locationEnabled"
+  | "retiroTiendaEnabled"
+  | "address"
+  | "postalCode"
+  | "city"
+  | "province"
+  | "country"
 >;
 
 interface Props {
@@ -25,18 +31,19 @@ export default function DrawerUbicacion({
   primaryColor,
   secondaryColor,
 }: Props) {
-  const configObjeto = config as unknown as ConfigUbicacion;
+  const configObjeto: ConfigUbicacion = config;
 
   return (
     <Sheet
       abierto={abierto}
       alCerrar={alCerrar}
-      titulo="Ubicación"
-      descripcion="Dirección que se muestra en tu tienda"
+      titulo="Ubicación y retiro"
+      descripcion="Dirección pública y lugar de retiro en el checkout"
       anchoClases="w-full sm:w-[520px]"
     >
       <LocationSection
         config={configObjeto}
+        checkoutEnabled={config.checkoutEnabled}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       />

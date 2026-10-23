@@ -33,6 +33,9 @@ export interface ConfigContenido {
   city: string | null;
   province: string | null;
   country: string | null;
+  postalCode: string | null;
+  retiroTiendaEnabled: boolean;
+  checkoutEnabled: boolean;
   primaryColor: string;
   secondaryColor: string;
 }

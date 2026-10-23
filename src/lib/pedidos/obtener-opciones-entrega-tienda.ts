@@ -10,7 +10,8 @@ export async function obtenerOpcionesEntregaTienda(tenantId: string) {
       where: { clave: "principal" },
       select: {
         checkoutEnabled: true,
-        locationEnabled: true,
+        envioDomicilioEnabled: true,
+        retiroTiendaEnabled: true,
         address: true,
         postalCode: true,
         city: true,

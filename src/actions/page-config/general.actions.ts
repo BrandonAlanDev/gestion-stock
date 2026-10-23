@@ -32,6 +32,8 @@ async function obtenerPageConfigCacheada(tenantId: string) {
         ecommerceEnabled: true,
         cartEnabled: true,
         checkoutEnabled: true,
+        envioDomicilioEnabled: true,
+        retiroTiendaEnabled: true,
         phone: true,
         whatsapp: true,
         email: true,

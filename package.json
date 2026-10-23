@@ -8,7 +8,8 @@
     "start": "next start",
     "verificar:core": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-adaptador-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-callbacks-auth-tenant.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-registro-admin-pendiente.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-dominio-prueba.ts && node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-proveedor-base-core.ts",
     "lint": "eslint src next.config.ts prisma.config.ts eslint.config.mjs postcss.config.mjs --quiet && npm run verificar:imports-prisma",
-    "verificar:imports-prisma": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-imports-prisma-global.ts"
+    "verificar:entrega": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-opciones-entrega.ts",
+    "verificar:imports-prisma":"node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-imports-prisma-global.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

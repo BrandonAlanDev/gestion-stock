@@ -106,6 +106,9 @@ export default async function ContenidoPage() {
     city: pageConfig?.city ?? null,
     province: pageConfig?.province ?? null,
     country: pageConfig?.country ?? null,
+    postalCode: pageConfig?.postalCode ?? null,
+    retiroTiendaEnabled: pageConfig?.retiroTiendaEnabled ?? false,
+    checkoutEnabled: pageConfig?.checkoutEnabled ?? true,
     primaryColor: pageConfig?.primaryColor ?? "#06b6d4",
     secondaryColor: pageConfig?.secondaryColor ?? "#ffffff",
   };

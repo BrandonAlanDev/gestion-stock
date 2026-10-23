@@ -61,6 +61,7 @@ export default function DrawersConfiguracion({
     ecommerceEnabled: config.ecommerceEnabled,
     cartEnabled: config.cartEnabled,
     checkoutEnabled: config.checkoutEnabled,
+    envioDomicilioEnabled: config.envioDomicilioEnabled,
     currency: config.currency,
     language: config.language,
     maintenanceMode: config.maintenanceMode,
@@ -105,12 +106,14 @@ export default function DrawersConfiguracion({
         <LocationSection
           config={{
             locationEnabled: config.locationEnabled,
+            retiroTiendaEnabled: config.retiroTiendaEnabled,
             address: config.address,
             postalCode: config.postalCode,
             city: config.city,
             province: config.province,
             country: config.country,
           }}
+          checkoutEnabled={config.checkoutEnabled}
           primaryColor={config.primaryColor ?? undefined}
           secondaryColor={config.secondaryColor ?? undefined}
         />

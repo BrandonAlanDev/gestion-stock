@@ -2,6 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 import { startTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { updateEcommerceConfig } from "@/actions/page-config/ecommerce.actions";
@@ -13,6 +14,7 @@ interface EstadoTienda {
   ecommerceEnabled: boolean;
   cartEnabled: boolean;
   checkoutEnabled: boolean;
+  envioDomicilioEnabled: boolean;
 }
 
 type CampoTienda = keyof EstadoTienda;
@@ -22,10 +24,12 @@ export default function SeccionTiendaOnline({
 }: {
   config: ConfigAjustes;
 }) {
+  const router = useRouter();
   const [estado, setEstado] = useState<EstadoTienda>({
     ecommerceEnabled: config.ecommerceEnabled,
     cartEnabled: config.cartEnabled,
     checkoutEnabled: config.checkoutEnabled,
+    envioDomicilioEnabled: config.envioDomicilioEnabled,
   });
 
   const cambiar = (campo: CampoTienda, valor: boolean) => {
@@ -41,6 +45,7 @@ export default function SeccionTiendaOnline({
       }
 
       toast.success("Cambios guardados");
+      router.refresh();
     });
   };
 
@@ -73,7 +78,13 @@ export default function SeccionTiendaOnline({
           activo={estado.checkoutEnabled}
           alCambiar={(valor) => cambiar("checkoutEnabled", valor)}
           etiqueta="Pago al finalizar"
-          descripcion="Checkout con envío del pedido"
+          descripcion="Habilita el checkout; las modalidades de entrega se configuran aparte"
+        />
+        <Switch
+          activo={estado.envioDomicilioEnabled}
+          alCambiar={(valor) => cambiar("envioDomicilioEnabled", valor)}
+          etiqueta="Envío a domicilio"
+          descripcion="Ofrece envío a domicilio en el checkout. El retiro se configura en Ubicación"
         />
       </div>
     </section>

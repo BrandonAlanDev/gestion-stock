@@ -7,9 +7,13 @@ import {
 
 import { useState, useTransition } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { toast } from "sonner";
 
 import { updateLocationConfig } from "@/actions/page-config/location.actions";
+
+import { obtenerDatosFaltantesRetiro } from "@/lib/pedidos/opciones-entrega";
 
 import Input from "@/components/admin/page-config/shared/Input";
 
@@ -18,24 +22,32 @@ import SwitchCard from "@/components/admin/page-config/shared/SwitchCard";
 interface Props {
   config?: {
     locationEnabled?: boolean | null;
+    retiroTiendaEnabled?: boolean | null;
     address?: string | null;
     postalCode?: string | null;
     city?: string | null;
     province?: string | null;
     country?: string | null;
   };
+  checkoutEnabled?: boolean;
   primaryColor?: string;
   secondaryColor?: string;
 }
 export default function LocationSection({
   config,
+  checkoutEnabled = true,
 }: Props) {
+  const router = useRouter();
   const [isPending, startTransition] =
     useTransition();
 
   const [form, setForm] = useState({
     locationEnabled:
       config?.locationEnabled ??
+      false,
+
+    retiroTiendaEnabled:
+      config?.retiroTiendaEnabled ??
       false,
 
     address:
@@ -79,8 +91,12 @@ export default function LocationSection({
       toast.success(
         "Ubicación actualizada"
       );
+      router.refresh();
     });
   };
+
+  const datosFaltantes =
+    obtenerDatosFaltantesRetiro(form);
 
   return (
 
@@ -99,7 +115,7 @@ export default function LocationSection({
 
       <div className="p-4 sm:p-8 space-y-6">
         <SwitchCard
-          title="Habilitar retiro en tienda"
+          title="Mostrar ubicación en la tienda"
           checked={
             form.locationEnabled
           }
@@ -111,9 +127,34 @@ export default function LocationSection({
           }
         />
 
+        <SwitchCard
+          title="Ofrecer retiro en tienda"
+          checked={
+            form.retiroTiendaEnabled
+          }
+          onChange={(v) =>
+            handleChange(
+              "retiroTiendaEnabled",
+              v
+            )
+          }
+        />
+
         <p className="-mt-3 text-sm text-[var(--admin-texto-suave)]">
-          Al activarlo, la dirección se publica en la tienda y se ofrece para retiro cuando todos sus datos estén completos.
+          El retiro se ofrece en el checkout cuando la dirección está completa, aunque la ubicación no se muestre en la tienda.
         </p>
+
+        {form.retiroTiendaEnabled && !checkoutEnabled && (
+          <p role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+            El checkout está desactivado en Tienda online, por lo que el retiro no se ofrece.
+          </p>
+        )}
+
+        {form.retiroTiendaEnabled && datosFaltantes.length > 0 && (
+          <p role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+            Para ofrecer retiro completá: {datosFaltantes.join(", ")}.
+          </p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input

@@ -16,7 +16,7 @@ const esquemaItems = z.array(z.object({
   productId: identificador,
   variantId: identificador,
   cantidad: z.number().int().positive().max(1000),
-})).min(1).max(100);
+})).min(1).max(50);
 
 function obtenerMensajeValidacion(error: unknown): string {
   if (!(error instanceof Error)) return "No se pudo validar el resumen del pedido.";
@@ -71,8 +71,8 @@ export async function obtenerResumenCheckout(entrada: unknown): Promise<
       const subtotal = items.reduce((total, item) => total + item.subtotal, 0);
       if (subtotal <= 0) throw new Error("El total del pedido es inválido");
 
-      const pageConfig = await prisma.pageConfig.findFirst({
-        where: {},
+      const pageConfig = await prisma.pageConfig.findUnique({
+        where: { clave: "principal" },
         select: { currency: true },
       });
 

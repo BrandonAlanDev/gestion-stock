@@ -40,6 +40,8 @@ export interface ConfigCompleta {
   ecommerceEnabled: boolean;
   cartEnabled: boolean;
   checkoutEnabled: boolean;
+  envioDomicilioEnabled: boolean;
+  retiroTiendaEnabled: boolean;
   currency: string;
   language: string;
   maintenanceMode: boolean;
