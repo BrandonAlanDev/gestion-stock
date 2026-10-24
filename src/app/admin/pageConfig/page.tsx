@@ -4,12 +4,16 @@ import { obtenerMetodosPago } from "@/actions/pagos/obtener-metodos-pago";
 import PanelConfiguracion from "@/components/admin/configuracion/PanelConfiguracion";
 import type { ConfigCompleta } from "@/components/admin/configuracion/tipos-configuracion";
 
+export const dynamic = "force-dynamic";
+
 export default async function PageConfigPage() {
-  const [resultado, estadoMercadoPago, resultadoMetodosPago] = await Promise.all([
+  const [resultado, resultadoMetodosPago] = await Promise.all([
     getPageConfig(),
-    obtenerEstadoConexionMP(),
     obtenerMetodosPago(),
   ]);
+  const estadoMercadoPago = resultadoMetodosPago.ok
+    ? resultadoMetodosPago.estadoMercadoPago
+    : await obtenerEstadoConexionMP();
   const pageConfig = resultado.ok ? resultado.pageConfig : null;
 
   const config: ConfigCompleta | null = pageConfig

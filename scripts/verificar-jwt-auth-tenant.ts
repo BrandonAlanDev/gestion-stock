@@ -51,6 +51,9 @@ function crearCallbacks(
       return tenant.dominio;
     },
     buscarUsuario,
+    async reclamarAdministradorGoogle() {
+      return false;
+    },
   });
 }
 

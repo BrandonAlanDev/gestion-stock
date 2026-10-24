@@ -114,7 +114,7 @@ export default function PanelConfiguracion({
     setResultadoMetodosPago((resultado) =>
       resultado.ok
         ? {
-            ok: true,
+            ...resultado,
             metodos: resultado.metodos.map((metodo) =>
               metodo.id === id ? { ...metodo, ...parcial } : metodo,
             ),

@@ -2,28 +2,24 @@
 
 import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { obtenerCuentaMP } from "@/lib/mercadopago/obtener-cuenta";
-import { obtenerNombreCuentaMP } from "@/lib/mercadopago/obtener-nombre-cuenta";
+import { obtenerEstadoCuentaMP } from "@/lib/mercadopago/obtener-estado-cuenta";
+import { registrarErrorPagoSeguro } from "@/lib/pagos/registro-error-seguro";
 import type { EstadoConexionMP } from "@/types/mercadopago";
 
 /** Devuelve el estado de conexión de Mercado Pago del comercio, sin exponer tokens. */
 export async function obtenerEstadoConexionMP(): Promise<EstadoConexionMP> {
+  let fase: "autenticacion" | "lectura_tenant" = "autenticacion";
   try {
     const contexto = await requiereAdmin();
-    const cuenta = await obtenerCuentaMP(contexto.tenantId);
-
-    if (!cuenta?.conectado) {
-      return { conectada: false, nombreCuenta: null, actualizadaEn: null };
-    }
-
-    const nombreCuenta = await obtenerNombreCuentaMP(contexto.tenantId);
-
+    fase = "lectura_tenant";
+    const estado = await obtenerEstadoCuentaMP(contexto.tenantId);
     return {
-      conectada: true,
-      nombreCuenta,
-      actualizadaEn: cuenta.updatedAt.toISOString(),
+      conectada: estado.conectado,
+      nombreCuenta: estado.nombreCuenta,
+      actualizadaEn: estado.actualizadoEn,
     };
-  } catch {
-    return { conectada: false, nombreCuenta: null, actualizadaEn: null };
+  } catch (error) {
+    registrarErrorPagoSeguro("Error consultando estado de Mercado Pago", error, undefined, fase);
+    throw error;
   }
 }

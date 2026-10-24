@@ -42,14 +42,19 @@ async function verificarSesionDeOtroTenant(): Promise<void> {
   assert.equal(consultas, 0, "Una sesión de B no debe consultar el silo A aunque coincida el ID de usuario");
 }
 
-async function verificarUsuarioPersistidoEnTenantIncorrecto(): Promise<void> {
+async function verificarUsuarioAusenteEnElSiloResuelto(): Promise<void> {
+  let tenantBuscado: string | null = null;
   const contexto = await resolverContextoSesionTenant(
     TENANT_A,
     { id: "usuario-compartido", tenantId: TENANT_A.id },
-    async () => ({ id: "usuario-compartido", tenantId: "tenant-b", role: "ADMIN" }),
+    async (tenantId) => {
+      tenantBuscado = tenantId;
+      return null;
+    },
   );
 
-  assert.equal(contexto, null, "La pertenencia se vuelve a comprobar en el resultado persistido");
+  assert.equal(tenantBuscado, TENANT_A.id);
+  assert.equal(contexto, null, "Una sesión sin usuario persistido en el silo resuelto no se autoriza");
 }
 
 async function verificarTenantNoActivo(): Promise<void> {
@@ -70,7 +75,7 @@ async function verificarTenantNoActivo(): Promise<void> {
 async function main(): Promise<void> {
   await verificarSesionEnTenantResuelto();
   await verificarSesionDeOtroTenant();
-  await verificarUsuarioPersistidoEnTenantIncorrecto();
+  await verificarUsuarioAusenteEnElSiloResuelto();
   await verificarTenantNoActivo();
   console.log("Sesión tenant: host, identidad, pertenencia y estado verificados.");
 }

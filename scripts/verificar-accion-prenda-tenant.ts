@@ -22,11 +22,16 @@ function crearDependencias(
   const tenantsConsultados: string[] = [];
   const escrituras: Array<{ tenantId: string; categoryId: string }> = [];
   const tagsInvalidados: string[] = [];
+  let tenantAutorizado: string | null = null;
   const dependencias: DependenciasCrearAccionPrenda = {
-    requiereAdmin,
+    requiereAdmin: async () => {
+      const contexto = await requiereAdmin();
+      tenantAutorizado = contexto.tenantId;
+      return contexto;
+    },
     validar: (datos) => garmentSchema.safeParse(datos),
-    conPrismaTenant: async (tenantId, operacion) => {
-      tenantsConsultados.push(tenantId);
+    conPrisma: async (operacion) => {
+      if (tenantAutorizado) tenantsConsultados.push(tenantAutorizado);
       return operacion(clienteFalso);
     },
     crearRegistroPrenda: async (_prisma, tenantId, datos) => {

@@ -33,7 +33,9 @@ export default function TarjetaTransferencia({
     setConfiguracionAbierta((abierto) => !abierto);
   };
 
-  const estadoConfiguracion = metodo.estadoConfiguracion === "ERROR_TEMPORAL"
+  const estadoConfiguracion = !metodo.activo || metodo.estadoConfiguracion === "DESACTIVADA"
+    ? "El método está desactivado. La configuración se conserva y no se consulta su disponibilidad."
+    : metodo.estadoConfiguracion === "ERROR_TEMPORAL"
     ? "No pudimos verificar temporalmente la configuración bancaria. La transferencia no aparecerá en el checkout hasta que se pueda comprobar."
     : metodo.estadoConfiguracion === "INCOMPLETA"
       ? "Faltan instrucciones bancarias. La transferencia no aparecerá en el checkout hasta completar la configuración."

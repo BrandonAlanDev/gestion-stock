@@ -6,8 +6,7 @@ import { eliminarCuentaMP } from "@/lib/mercadopago/eliminar-cuenta";
 import { guardarCuentaMP } from "@/lib/mercadopago/guardar-cuenta";
 import { intercambiarCodigoPorToken } from "@/lib/mercadopago/intercambiar-codigo";
 import { obtenerCredencialesMP } from "@/lib/mercadopago/obtener-credenciales";
-import { obtenerCuentaMP } from "@/lib/mercadopago/obtener-cuenta";
-import { obtenerNombreCuentaMP } from "@/lib/mercadopago/obtener-nombre-cuenta";
+import { obtenerEstadoCuentaMP } from "@/lib/mercadopago/obtener-estado-cuenta";
 import type {
   DatosCrearPago,
   DatosEstadoPago,
@@ -26,20 +25,7 @@ export const proveedorMercadoPago: PaymentProvider = {
   id: "mercadopago",
 
   async obtenerEstado(tenantId: string): Promise<EstadoProveedor> {
-    try {
-      const cuenta = await obtenerCuentaMP(tenantId);
-      if (!cuenta?.conectado) {
-        return { conectado: false, nombreCuenta: null, actualizadoEn: null };
-      }
-      const nombreCuenta = await obtenerNombreCuentaMP(tenantId);
-      return {
-        conectado: true,
-        nombreCuenta,
-        actualizadoEn: cuenta.updatedAt.toISOString(),
-      };
-    } catch {
-      return { conectado: false, nombreCuenta: null, actualizadoEn: null };
-    }
+    return obtenerEstadoCuentaMP(tenantId);
   },
 
   async desconectar(tenantId: string): Promise<void> {

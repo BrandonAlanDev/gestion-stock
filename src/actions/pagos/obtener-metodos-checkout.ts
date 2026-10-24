@@ -25,12 +25,12 @@ export async function obtenerMetodosCheckout(): Promise<ResultadoMetodosCheckout
 
     const resumen = await obtenerMetodosPagoDisponibles(contexto.tenantId);
     const disponibles = filtrarMetodosDisponibles(resumen);
-    const consultaTransferenciaFallida = resumen.some(
-      (metodo) => metodo.id === "transferencia" && metodo.estadoConfiguracion === "ERROR_TEMPORAL",
+    const consultaMetodoFallida = resumen.some(
+      (metodo) => metodo.activo && metodo.estadoConfiguracion === "ERROR_TEMPORAL",
     );
 
-    // El filtro excluye los métodos que no pudieron verificarse; el aviso explica el motivo sin exponer su configuración.
-    const aviso = consultaTransferenciaFallida
+    // El filtro excluye los métodos que no pudieron verificarse; el aviso no expone la configuración.
+    const aviso = consultaMetodoFallida
       ? "No pudimos verificar temporalmente una opción de pago. Podés usar las opciones visibles o intentar nuevamente en unos minutos."
       : undefined;
 
@@ -44,7 +44,7 @@ export async function obtenerMetodosCheckout(): Promise<ResultadoMetodosCheckout
       ...(aviso ? { aviso } : {}),
     };
   } catch (error) {
-    registrarErrorPagoSeguro("Error obteniendo métodos de pago para checkout", error);
+    registrarErrorPagoSeguro("Error obteniendo métodos de pago para checkout", error, undefined, "lectura_tenant");
     return { ok: false, error: "No se pudieron cargar los métodos de pago" };
   }
 }

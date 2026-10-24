@@ -24,13 +24,23 @@ export default function SeccionMetodosPago({
 
   const manejarCambioActivo = (id: MetodoPagoId, valor: boolean) => {
     iniciarTransicion(async () => {
-      const resultado = await activarMetodo(id, valor);
-      if (resultado.success) {
-        alActualizarMetodo(id, { activo: valor });
+      const resultadoAccion = await activarMetodo(id, valor);
+      if (resultadoAccion.success) {
+        const metodoActual = resultado.ok
+          ? resultado.metodos.find((metodo) => metodo.id === id)
+          : undefined;
+        alActualizarMetodo(id, {
+          activo: valor,
+          estadoConfiguracion: !valor
+            ? "DESACTIVADA"
+            : !metodoActual?.requiereConexion && !metodoActual?.requiereConfiguracion
+              ? "NO_REQUERIDA"
+              : metodoActual?.conectado ? "COMPLETA" : "INCOMPLETA",
+        });
         toast.success(valor ? "Método activado" : "Método desactivado");
       } else {
         toast.error("No se pudo actualizar el método", {
-          description: resultado.error,
+          description: resultadoAccion.error,
         });
       }
     });

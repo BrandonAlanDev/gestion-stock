@@ -21,6 +21,7 @@ async function obtenerConfigTransferencia(tenantId: string): Promise<{
       where: {
         metodo: METODO_TRANSFERENCIA,
       },
+      select: { config: true },
     }),
   );
 
@@ -36,6 +37,16 @@ async function obtenerConfigTransferencia(tenantId: string): Promise<{
   };
 }
 
+/** Evalúa la configuración bancaria ya leída, sin consultar nuevamente al tenant. */
+export function obtenerEstadoTransferenciaDesdeConfig(config: unknown): EstadoProveedor {
+  const datos = typeof config === "object" && config !== null && !Array.isArray(config)
+    ? config as Record<string, unknown>
+    : null;
+  const instrucciones = datos?.instrucciones;
+  const configurado = typeof instrucciones === "string" && instrucciones.trim().length > 0;
+  return { conectado: configurado, nombreCuenta: null, actualizadoEn: null };
+}
+
 /**
  * Implementación de PaymentProvider para transferencia bancaria.
  * No contacta ninguna pasarela externa: registra el pago como PENDIENTE y
@@ -47,8 +58,7 @@ export const proveedorTransferencia: PaymentProvider = {
 
   async obtenerEstado(tenantId: string): Promise<EstadoProveedor> {
     const configuracion = await obtenerConfigTransferencia(tenantId);
-    const configurado = Boolean(configuracion?.instrucciones);
-    return { conectado: configurado, nombreCuenta: null, actualizadoEn: null };
+    return obtenerEstadoTransferenciaDesdeConfig(configuracion);
   },
 
   async desconectar(): Promise<void> {
