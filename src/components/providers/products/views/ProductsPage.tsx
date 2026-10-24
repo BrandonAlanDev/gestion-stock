@@ -237,8 +237,8 @@ const ProductsPage = ({
           <div className="flex-1">
             {processedProducts.length > 0 ? (
               <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-                {processedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {processedProducts.map((product, indice) => (
+                  <ProductCard key={product.id} product={product} priority={indice < 3} />
                 ))}
               </div>
             ) : (

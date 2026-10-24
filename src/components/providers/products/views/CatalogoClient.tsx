@@ -7,44 +7,60 @@ import type {
 } from "@/types/productos/catalogo-publico";
 import { useCatalogGarments } from "@/hooks/useCatalogGarments";
 import { useCatalogCategories } from "@/hooks/useCatalogCategories";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect } from "react";
 import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
+import { guardarPaginaCatalogo } from "@/lib/productos/cache-cliente";
 
 export default function CatalogoClient({
+  tenantId,
+  initialCategoria,
+  initialSubcategoria,
   initialGarments,
   initialCategories,
 }: {
+  tenantId: string;
+  initialCategoria?: string;
+  initialSubcategoria?: string;
   initialGarments?: {
     success: boolean;
     data: ProductoCatalogo[];
     total: number;
     page: number;
     totalPages: number;
+    obtenidoEn: number;
   };
   initialCategories?: CategoriaCatalogo[];
 }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const limit = 20;
 
-  const currentPage = Number(searchParams.get("page")) || 1;
+  const currentPage = Math.min(100, Math.max(1, Math.trunc(Number(searchParams.get("page"))) || 1));
   const categoria = searchParams.get("categoria") || undefined;
   const subcategoria = searchParams.get("subcategoria") || undefined;
 
-  const { data: garmentsData, isFetching } = useCatalogGarments(
+  const { data: garmentsData, dataUpdatedAt, isFetching, isPlaceholderData } = useCatalogGarments(
+    tenantId,
     currentPage,
     limit,
     categoria,
     undefined,
     subcategoria,
-    initialGarments
+    currentPage === initialGarments?.page && categoria === initialCategoria && subcategoria === initialSubcategoria
+      ? initialGarments
+      : undefined
   );
-  const { data: categoriesData } = useCatalogCategories(initialCategories);
+  const { data: categoriesData } = useCatalogCategories(tenantId, initialCategories);
 
   const garments = garmentsData?.data || [];
   const categories = categoriesData || [];
   const totalPages = garmentsData?.totalPages || 1;
+
+  useEffect(() => {
+    if (garmentsData?.success && dataUpdatedAt > 0 && !isPlaceholderData && garmentsData.page === currentPage) {
+      guardarPaginaCatalogo(tenantId, currentPage, categoria, subcategoria, garmentsData.data, garmentsData.totalPages, dataUpdatedAt);
+    }
+  }, [tenantId, currentPage, categoria, subcategoria, garmentsData, dataUpdatedAt, isPlaceholderData]);
 
   // Actualizar URL sin recargar la página (para que el hook se actualice)
   const updateParams = useCallback(
@@ -54,9 +70,10 @@ export default function CatalogoClient({
         if (!value || value === "Todos") params.delete(key);
         else params.set(key, value);
       });
-      router.replace(`/productos?${params.toString()}`, { scroll: false });
+      const query = params.toString();
+      window.history.replaceState(null, "", query ? `/productos?${query}` : "/productos");
     },
-    [router, searchParams]
+    [searchParams]
   );
 
   const handlePageChange = (page: number) =>

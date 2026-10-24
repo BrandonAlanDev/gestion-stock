@@ -42,3 +42,14 @@ export const SELECCION_PRODUCTO_PUBLICO = {
     orderBy: { position: "asc" },
   },
 } satisfies Prisma.GarmentSelect;
+
+export const SELECCION_TARJETA_PRODUCTO_PUBLICO = {
+  id: true,
+  name: true,
+  price: true,
+  createdAt: true,
+  images: {
+    select: { srcImage: true },
+    orderBy: { order: "asc" },
+  },
+} satisfies Prisma.GarmentSelect;

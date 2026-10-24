@@ -2,7 +2,8 @@
 
 import { obtenerCategoriasCacheadas } from "@/lib/cache/obtener-categorias-cacheadas";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
-import { obtenerPrendas } from "./obtener-prendas";
+import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
+import { serializarDatos } from "@/lib/utilidades/serializar-datos";
 
 export async function obtenerPrendasPorNombres(
   pagina: number,
@@ -27,5 +28,17 @@ export async function obtenerPrendasPorNombres(
         ?.subCategories.find((subcategoriaActual) => subcategoriaActual.id === subcategoriaDecodificada || subcategoriaActual.name.trim().toLowerCase() === subcategoriaDecodificada)?.id;
     }
   }
-  return obtenerPrendas(pagina, limite, idCategoria, busqueda, idSubcategoria);
+  try {
+    const resultado = await obtenerPrendasPaginadas(idTenant, pagina, limite, idCategoria, busqueda, idSubcategoria);
+    return {
+      success: true,
+      data: serializarDatos(resultado.garments),
+      total: resultado.total,
+      page: resultado.page,
+      totalPages: Math.ceil(resultado.total / resultado.limit),
+    };
+  } catch (error) {
+    console.error("Error al cargar el catálogo:", error);
+    return { error: "Error al cargar productos" };
+  }
 }

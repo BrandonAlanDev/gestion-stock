@@ -4,10 +4,10 @@ import { getCategories } from "@/actions/categorias/obtener-categorias";
 
 type ResultadoCategorias = Awaited<ReturnType<typeof getCategories>>;
 
-export function useCatalogCategories(initialData?: unknown) {
+export function useCatalogCategories(tenantId: string, initialData?: unknown) {
 
   return useQuery<ResultadoCategorias>({
-    queryKey: ["catalogCategories"],
+    queryKey: ["catalogCategories", tenantId],
     queryFn: async () => {
       const data = await getCategories();
       if (!data) throw new Error("Error al cargar categorías");

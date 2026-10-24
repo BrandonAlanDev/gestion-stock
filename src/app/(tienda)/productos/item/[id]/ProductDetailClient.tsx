@@ -1,26 +1,19 @@
 "use client";
 
-import { useProductDetail } from "@/hooks/useProductDetail";
 import ProductoView from "@/components/providers/products/views/ProductoView";
-import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
-import { notFound } from "next/navigation";
-import type { obtenerPrendaPorId } from "@/actions/prendas/obtener-prenda-por-id";
+import type { ProductoDetalleSerializado } from "@/types/productos/detalle-producto";
+import { useEffect } from "react";
+import { guardarDetalleProducto } from "@/lib/productos/cache-cliente";
 
 interface Props {
-  id: string;
-  initialProduct: NonNullable<Awaited<ReturnType<typeof obtenerPrendaPorId>>>;
+  tenantId: string;
+  initialProduct: ProductoDetalleSerializado;
 }
 
-export default function ProductDetailClient({ id, initialProduct }: Props) {
-  const { data: product, isLoading, isError } = useProductDetail(id, initialProduct);
+export default function ProductDetailClient({ tenantId, initialProduct }: Props) {
+  useEffect(() => {
+    guardarDetalleProducto(tenantId, initialProduct);
+  }, [tenantId, initialProduct]);
 
-  if (isLoading && !product) {
-    return <SkeletonTienda tipo="producto" />;
-  }
-
-  if (isError || !product) {
-    notFound();
-  }
-
-  return <ProductoView product={product} />;
+  return <ProductoView product={initialProduct} />;
 }

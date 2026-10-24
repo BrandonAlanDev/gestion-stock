@@ -1,6 +1,6 @@
 "use server";
 
-import { obtenerProductosCacheados } from "@/lib/cache/obtener-productos-cacheados";
+import { obtenerPrendasPaginadasCompletas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 
@@ -13,7 +13,7 @@ export async function obtenerPrendas(
 ) {
   try {
     const { id: idTenant } = await requiereTenantActivo();
-    const resultado = await obtenerProductosCacheados(idTenant, pagina, limite, idCategoria, busqueda, idSubcategoria);
+    const resultado = await obtenerPrendasPaginadasCompletas(idTenant, pagina, limite, idCategoria, busqueda, idSubcategoria);
     const { garments, total } = resultado;
     return {
       success: true,

@@ -9,6 +9,7 @@ import type { ProductProps } from "@/components/providers/products/types";
 import SelectorProducto from "@/components/tienda/producto/SelectorProducto";
 import { renderMarkdown } from "@/lib/utilidades/markdown";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
+import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
 export default function ProductoView({ product }: ProductProps) {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function ProductoView({ product }: ProductProps) {
                       boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none",
                     }}
                   >
-                    <Image src={img.srcImage} alt="" fill sizes="64px" unoptimized={!imagenAdmiteOptimizacion(img.srcImage)} className="object-cover" />
+                    <Image src={obtenerUrlImagenOptimizada(img.srcImage, 200) || img.srcImage} alt="" fill sizes="64px" unoptimized={!imagenAdmiteOptimizacion(img.srcImage)} className="object-cover" />
                   </button>
                 ))}
               </div>
@@ -68,7 +69,8 @@ export default function ProductoView({ product }: ProductProps) {
                 key={selectedImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                src={selectedImage}
+                src={obtenerUrlImagenOptimizada(selectedImage, 1200) || selectedImage}
+                loading="eager"
                 alt={product.name}
                 className="max-h-[680px] max-w-full select-none object-contain"
               />

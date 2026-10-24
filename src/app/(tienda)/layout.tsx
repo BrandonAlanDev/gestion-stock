@@ -7,6 +7,7 @@ import PantallaMantenimiento from "@/components/mantenimiento/PantallaMantenimie
 import { SitioSuspendido } from "@/components/tenants/sitio-suspendido";
 import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
 import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
+import { ProveedorTenantPublico } from "@/contextos/tienda/contexto-tenant-publico";
 
 export default async function LayoutTienda({ children }: { children: ReactNode }) {
   const tenant = await obtenerTenantPublico();
@@ -31,11 +32,13 @@ export default async function LayoutTienda({ children }: { children: ReactNode }
   }
 
   return (
-    <LayoutComponent>
-      <AppGate>
-        <RouteLoader />
-        {children}
-      </AppGate>
-    </LayoutComponent>
+    <ProveedorTenantPublico tenantId={tenant.id}>
+      <LayoutComponent>
+        <AppGate>
+          <RouteLoader />
+          {children}
+        </AppGate>
+      </LayoutComponent>
+    </ProveedorTenantPublico>
   );
 }

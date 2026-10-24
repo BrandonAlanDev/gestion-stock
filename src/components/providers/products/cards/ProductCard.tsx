@@ -11,9 +11,10 @@ import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
 interface Props {
   product: Omit<ProductoCatalogo, "createdAt"> & { createdAt?: ProductoCatalogo["createdAt"] };
+  priority?: boolean;
 }
 
-const ProductCard = ({ product }: Props) => {
+const ProductCard = ({ product, priority = false }: Props) => {
   const { pageConfig } = usePageConfig();
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -50,9 +51,6 @@ const ProductCard = ({ product }: Props) => {
     };
   }, [isHovering, images]);
 
-  const totalStock =
-    product.variants?.reduce((acc, v) => acc + v.stock, 0) || 0;
-
   const isNew = product.createdAt
     ? new Date(product.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 14)
     : false;
@@ -84,14 +82,6 @@ const ProductCard = ({ product }: Props) => {
               Nuevo
             </span>
           )}
-          {totalStock <= 0 && (
-            <span
-              className="rounded-md px-2.5 py-1 text-xs font-semibold"
-              style={{ backgroundColor: "var(--color-secundario)", color: "var(--texto-sobre-secundario)" }}
-            >
-              Consultar stock
-            </span>
-          )}
         </div>
 
         <div
@@ -103,7 +93,8 @@ const ProductCard = ({ product }: Props) => {
             width={500}
             height={700}
             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-            loading="lazy"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
             unoptimized={!imagenAdmiteOptimizacion(imagen)}
             className={`h-full w-full object-contain p-4 transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
               }`}

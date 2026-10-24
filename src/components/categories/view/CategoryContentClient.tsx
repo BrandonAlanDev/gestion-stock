@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/providers/products/cards/ProductCard";
 import { Package, Layers, ChevronDown } from "lucide-react";
-import type { Garment } from "@/components/providers/products/grid/ProductGrid";
+import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
 interface SubCategory {
   id: string;
@@ -13,7 +13,7 @@ interface SubCategory {
 
 interface CategoryContentClientProps {
   subCategories: SubCategory[];
-  garments: Garment[];
+  garments: ProductoCatalogo[];
   selectedSubId: string; // "all" o el id de la subcategoría activa
   basePath: string; // ej: "/productos/ropa"
 }
@@ -78,7 +78,7 @@ export default function CategoryContentClient({
         <main className="min-w-0 flex-1">
           {garments.length > 0 ? (
             <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-              {garments.map((garment) => <ProductCard key={garment.id} product={garment} />)}
+              {garments.map((garment, indice) => <ProductCard key={garment.id} product={garment} priority={indice < 3} />)}
             </div>
           ) : (
             <div className="rounded-xl border border-current/10 bg-[var(--color-secundario)] py-20 text-center">
