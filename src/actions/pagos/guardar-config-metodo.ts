@@ -1,55 +1,91 @@
 "use server";
 
 import "server-only";
+import { z } from "zod";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { conPrismaTenant } from "@/lib/prisma";
-import type { MetodoPagoId } from "@/lib/pagos/tipos";
+import { registrarErrorPagoSeguro } from "@/lib/pagos/registro-error-seguro";
+import { combinarConfigMetodoPago } from "@/lib/pagos/configuracion-metodo";
 
-export type DatosConfigMetodo = {
-  metodo: MetodoPagoId;
-  instrucciones?: string | null;
-};
+const esquemaConfiguracion = z.object({
+  metodo: z.enum(["efectivo", "transferencia", "mercadopago"]),
+  instrucciones: z.string().trim().max(5000).nullable().optional(),
+  vencimiento: z.object({
+    habilitado: z.boolean(),
+    horas: z.number().int().min(1).max(720),
+  }).optional(),
+}).strict().refine(
+  (datos) => datos.instrucciones !== undefined || datos.vencimiento !== undefined,
+  "No se recibió ninguna configuración para guardar",
+);
+
+export type DatosConfigMetodo = z.infer<typeof esquemaConfiguracion>;
 
 export type ResultadoConfigMetodo = { success: boolean; error?: string };
 
+function esConflictoUnico(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error &&
+    error.code === "P2002";
+}
+
 /**
- * Guarda la configuración propia de un método de pago (por ahora, las
- * instrucciones de la transferencia bancaria). El campo config es un JSON que
- * cada proveedor interpreta a su manera.
+ * Mezcla la configuración de cada método con el JSON existente y usa updatedAt
+ * como control optimista para no perder claves ante ediciones concurrentes.
  */
 export async function guardarConfigMetodo(
-  datos: DatosConfigMetodo,
+  entrada: unknown,
 ): Promise<ResultadoConfigMetodo> {
   try {
-    const contexto = await requiereAdmin();
-    if (datos.metodo !== "transferencia") {
-      return { success: false, error: "Este método no admite esta configuración" };
+    const validacion = esquemaConfiguracion.safeParse(entrada);
+    if (!validacion.success) {
+      return { success: false, error: "La configuración recibida no es válida" };
+    }
+    const datos = validacion.data;
+    if (datos.metodo === "mercadopago") {
+      return { success: false, error: "Mercado Pago no admite esta configuración" };
+    }
+    if (datos.metodo === "efectivo" && datos.instrucciones !== undefined) {
+      return { success: false, error: "El efectivo no admite instrucciones bancarias" };
     }
 
-    const instrucciones =
-      typeof datos.instrucciones === "string" ? datos.instrucciones.trim() : null;
+    const contexto = await requiereAdmin();
 
-    await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
-      where: {
-        metodo: datos.metodo,
-      },
-      create: {
-        metodo: datos.metodo,
-        config: { instrucciones },
-        activo: false,
-      },
-      update: {
-        config: { instrucciones },
-        updatedAt: new Date(),
-      },
-    }));
+    for (let intento = 0; intento < 5; intento += 1) {
+      try {
+        const guardado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+          prisma.$transaction(async (tx) => {
+            const actual = await tx.metodoPago.findUnique({
+              where: { metodo: datos.metodo },
+              select: { id: true, activo: true, config: true, updatedAt: true },
+            });
+            const config = combinarConfigMetodoPago(actual?.config, datos);
 
-    return { success: true };
+            if (!actual) {
+              await tx.metodoPago.create({
+                data: { metodo: datos.metodo, activo: false, config },
+              });
+              return true;
+            }
+
+            const siguienteActualizacion = new Date(
+              Math.max(Date.now(), actual.updatedAt.getTime() + 1),
+            );
+            const actualizado = await tx.metodoPago.updateMany({
+              where: { id: actual.id, updatedAt: actual.updatedAt },
+              data: { config, updatedAt: siguienteActualizacion },
+            });
+            return actualizado.count === 1;
+          }),
+        );
+        if (guardado) return { success: true };
+      } catch (error) {
+        if (!esConflictoUnico(error)) throw error;
+      }
+    }
+
+    return { success: false, error: "La configuración cambió en otra sesión. Volvé a intentarlo." };
   } catch (error) {
-    console.error(
-      "Error guardando configuración del método:",
-      error instanceof Error ? error.message : String(error),
-    );
+    registrarErrorPagoSeguro("Error guardando configuración del método de pago", error, "transferencia");
     return { success: false, error: "No se pudo guardar la configuración" };
   }
 }

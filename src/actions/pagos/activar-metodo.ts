@@ -5,6 +5,7 @@ import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { conPrismaTenant } from "@/lib/prisma";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { METODOS_PAGO_CONOCIDOS } from "@/lib/pagos/constantes";
+import { crearConfigInicialMetodoPago } from "@/lib/pagos/configuracion-metodo";
 
 export type ResultadoActivacion = { success: boolean; error?: string };
 
@@ -22,6 +23,8 @@ export async function activarMetodo(
       return { success: false, error: "Método de pago inválido" };
     }
 
+    const configInicial = crearConfigInicialMetodoPago(metodo);
+
     await conPrismaTenant(contexto.tenantId, (prisma) => prisma.metodoPago.upsert({
       where: {
         metodo,
@@ -29,6 +32,7 @@ export async function activarMetodo(
       create: {
         metodo,
         activo,
+        ...(configInicial ? { config: configInicial } : {}),
       },
       update: {
         activo,

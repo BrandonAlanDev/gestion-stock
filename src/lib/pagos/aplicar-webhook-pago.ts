@@ -11,10 +11,12 @@ import {
 
 type ClienteTx = Prisma.TransactionClient;
 
+type EstadoPagoWebhook = EstadoPagoId | "REEMBOLSADO";
+type TipoEstadoWebhook = "APROBADO" | "EN_ACREDITACION" | "RECHAZADO" | "CANCELADO" | "REEMBOLSADO";
+
 type MapaEstado = {
-  estadoPago: EstadoPagoId;
-  cancelar: boolean;
-  acreditar: boolean;
+  tipo: TipoEstadoWebhook;
+  estadoPago: EstadoPagoWebhook;
 };
 
 const ERROR_REVERTIR_PAGO_SIN_PEDIDO = "PAYMENT_ORDER_TRANSITION_FAILED";
@@ -33,16 +35,17 @@ export interface DependenciasAplicadorWebhookPago {
 function mapearEstado(estadoExterno: string): MapaEstado | null {
   switch (estadoExterno) {
     case "approved":
-      return { estadoPago: "APROBADO", cancelar: false, acreditar: true };
+      return { tipo: "APROBADO", estadoPago: "APROBADO" };
     case "pending":
     case "in_process":
-      return { estadoPago: "EN_ACREDITACION", cancelar: false, acreditar: false };
+      return { tipo: "EN_ACREDITACION", estadoPago: "EN_ACREDITACION" };
     case "rejected":
-      return { estadoPago: "RECHAZADO", cancelar: false, acreditar: false };
+      return { tipo: "RECHAZADO", estadoPago: "RECHAZADO" };
     case "cancelled":
+      return { tipo: "CANCELADO", estadoPago: "CANCELADO" };
     case "refunded":
     case "charged_back":
-      return { estadoPago: "CANCELADO", cancelar: true, acreditar: false };
+      return { tipo: "REEMBOLSADO", estadoPago: "REEMBOLSADO" };
     default:
       return null;
   }
@@ -125,7 +128,6 @@ export function crearAplicadorWebhookPago(
           });
           if (!pedido || pedido.metodoPago !== "mercadopago" ||
               !pedido.mpPreferenceId || pedido.mpPreferenceId !== pago.preferenceId) return;
-          if (pedido.estado === "CANCELADO" && !mapa.acreditar) return;
 
           const montoEsperado = Math.round(Number(pedido.total) * 100);
           const montoRecibido = pago.montoPago;
@@ -139,6 +141,68 @@ export function crearAplicadorWebhookPago(
             return;
           }
 
+          if (mapa.tipo === "REEMBOLSADO") {
+            const payment = await tx.payment.findFirst({
+              where: {
+                pedidoId,
+                proveedor: "mercadopago",
+                externalId: pago.externalId,
+              },
+            });
+            if (!payment || payment.estado !== "APROBADO") return;
+
+            const actualizado = await tx.payment.updateMany({
+              where: {
+                id: payment.id,
+                pedidoId,
+                proveedor: "mercadopago",
+                externalId: pago.externalId,
+                estado: "APROBADO",
+              },
+              data: { estado: "REEMBOLSADO", monto: montoRecibido },
+            });
+            if (actualizado.count !== 1) return;
+
+            const pagoAceptado =
+              pedido.mpPaymentId === pago.externalId && pedido.estadoPago === "APROBADO";
+            const pagoAprobadoTarde =
+              pedido.estado === "CANCELADO" &&
+              pedido.mpPaymentId === null &&
+              pedido.estadoPago === "CANCELADO";
+
+            if (pagoAceptado || pagoAprobadoTarde) {
+              const reembolsado = await tx.pedido.updateMany({
+                where: pagoAceptado
+                  ? {
+                      id: pedidoId,
+                      mpPaymentId: pago.externalId,
+                      estadoPago: "APROBADO",
+                    }
+                  : {
+                      id: pedidoId,
+                      estado: "CANCELADO",
+                      mpPaymentId: null,
+                      estadoPago: "CANCELADO",
+                    },
+                data: { estadoPago: "REEMBOLSADO" },
+              });
+              if (reembolsado.count !== 1) {
+                throw new Error(ERROR_REVERTIR_PAGO_SIN_PEDIDO);
+              }
+            }
+
+            await tx.pedidoEvento.create({ data: {
+              pedidoId,
+              tipo: "REEMBOLSADO",
+              descripcion: pago.estadoExterno === "charged_back"
+                ? "Pago desconocido por contracargo de Mercado Pago"
+                : "Pago reembolsado por Mercado Pago",
+              estadoAnterior: "APROBADO",
+              estadoNuevo: "REEMBOLSADO",
+            } });
+            return;
+          }
+
           const payment = await buscarOCrearPayment(
             tx,
             pedidoId,
@@ -148,7 +212,7 @@ export function crearAplicadorWebhookPago(
           );
           if (!payment) return;
 
-          if (mapa.acreditar) {
+          if (mapa.tipo === "APROBADO") {
             if (pedido.estado === "CANCELADO") {
               const pagoTardio = await tx.payment.updateMany({
                 where: {
@@ -156,7 +220,7 @@ export function crearAplicadorWebhookPago(
                   pedidoId,
                   proveedor: "mercadopago",
                   externalId: pago.externalId,
-                  estado: { not: "APROBADO" },
+                  estado: { notIn: ["CANCELADO", "APROBADO", "REEMBOLSADO"] },
                 },
                 data: { estado: "APROBADO", monto: montoRecibido },
               });
@@ -165,25 +229,59 @@ export function crearAplicadorWebhookPago(
                   "Pago aprobado después de cancelar el pedido; requiere revisión de reembolso",
                   pedidoId,
                 );
+                await tx.pedidoEvento.create({ data: {
+                  pedidoId,
+                  tipo: "PAGO_APROBADO",
+                  descripcion: "Pago aprobado después de cancelar el pedido; requiere revisión",
+                  estadoAnterior: pedido.estadoPago,
+                  estadoNuevo: "APROBADO",
+                } });
               }
               return;
             }
 
-            if (pedido.estado === "CONFIRMADO" && pedido.mpPaymentId === pago.externalId) {
+            if (pedido.mpPaymentId === pago.externalId && pedido.estadoPago === "APROBADO") {
+              // Un reintento de la notificación no vuelve a tocar el pedido ni el stock.
               await tx.payment.updateMany({
                 where: {
                   id: payment.id,
                   pedidoId,
                   proveedor: "mercadopago",
                   externalId: pago.externalId,
-                  estado: { not: "CANCELADO" },
+                  estado: { notIn: ["CANCELADO", "REEMBOLSADO"] },
                 },
                 data: { estado: "APROBADO", monto: montoRecibido },
               });
               return;
             }
 
-            if (pedido.estado !== "PENDIENTE") return;
+            if (pedido.estado !== "PENDIENTE") {
+              // Guarda el segundo pago aprobado para revisión, sin reemplazar al aceptado.
+              const aprobadoAlternativo = await tx.payment.updateMany({
+                where: {
+                  id: payment.id,
+                  pedidoId,
+                  proveedor: "mercadopago",
+                  externalId: pago.externalId,
+                  estado: { notIn: ["CANCELADO", "APROBADO", "REEMBOLSADO"] },
+                },
+                data: { estado: "APROBADO", monto: montoRecibido },
+              });
+              if (aprobadoAlternativo.count === 1) {
+                console.error(
+                  "Pago aprobado para un pedido ya confirmado por otro pago; requiere revisión",
+                  pedidoId,
+                );
+                await tx.pedidoEvento.create({ data: {
+                  pedidoId,
+                  tipo: "PAGO_APROBADO",
+                  descripcion: "Pago adicional aprobado; requiere revisión",
+                  estadoAnterior: pedido.estadoPago,
+                  estadoNuevo: "APROBADO",
+                } });
+              }
+              return;
+            }
 
             const actualizado = await tx.payment.updateMany({
               where: {
@@ -191,14 +289,19 @@ export function crearAplicadorWebhookPago(
                 pedidoId,
                 proveedor: "mercadopago",
                 externalId: pago.externalId,
-                estado: { notIn: ["CANCELADO", "APROBADO"] },
+                estado: { notIn: ["CANCELADO", "APROBADO", "REEMBOLSADO"] },
               },
               data: { estado: "APROBADO", monto: montoRecibido },
             });
             if (actualizado.count !== 1) return;
 
             const confirmado = await tx.pedido.updateMany({
-              where: { id: pedidoId, estado: "PENDIENTE" },
+              where: {
+                id: pedidoId,
+                estado: "PENDIENTE",
+                estadoPago: { notIn: ["APROBADO", "CANCELADO", "REEMBOLSADO"] },
+                mpPaymentId: pedido.mpPaymentId,
+              },
               data: {
                 estado: "CONFIRMADO",
                 estadoPago: "APROBADO",
@@ -224,15 +327,84 @@ export function crearAplicadorWebhookPago(
             return;
           }
 
+          if (mapa.tipo === "CANCELADO") {
+            const pagoAceptado = pedido.mpPaymentId === pago.externalId;
+            const cancelarPedidoPendiente = pedido.estado === "PENDIENTE";
+            const actualizado = await tx.payment.updateMany({
+              where: {
+                id: payment.id,
+                pedidoId,
+                proveedor: "mercadopago",
+                externalId: pago.externalId,
+                estado: { notIn: ["CANCELADO", "REEMBOLSADO"] },
+              },
+              data: { estado: "CANCELADO", monto: montoRecibido },
+            });
+            if (actualizado.count !== 1) return;
+
+            if (!cancelarPedidoPendiente && !pagoAceptado) return;
+
+            if (cancelarPedidoPendiente) {
+              const cancelado = await tx.pedido.updateMany({
+                where: {
+                  id: pedidoId,
+                  estado: "PENDIENTE",
+                  estadoPago: { notIn: ["APROBADO", "CANCELADO", "REEMBOLSADO"] },
+                  mpPaymentId: pedido.mpPaymentId,
+                },
+                data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
+              });
+              if (cancelado.count !== 1) {
+                throw new Error(ERROR_REVERTIR_PAGO_SIN_PEDIDO);
+              }
+              if (pedido.stockReservado) {
+                const liberada = await dependencias.liberarReservaStockPedido(
+                  pedidoId,
+                  tx,
+                );
+                if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
+              }
+              await tx.pedidoEvento.create({ data: {
+                pedidoId,
+                tipo: "CANCELADO",
+                descripcion: "Pago cancelado por Mercado Pago",
+                estadoAnterior: pedido.estadoPago,
+                estadoNuevo: "CANCELADO",
+              } });
+              return;
+            }
+
+            if (pedido.estadoPago !== "APROBADO") return;
+            const cancelado = await tx.pedido.updateMany({
+              where: {
+                id: pedidoId,
+                mpPaymentId: pago.externalId,
+                estadoPago: "APROBADO",
+              },
+              data: { estadoPago: "CANCELADO" },
+            });
+            if (cancelado.count !== 1) {
+              throw new Error(ERROR_REVERTIR_PAGO_SIN_PEDIDO);
+            }
+            await tx.pedidoEvento.create({ data: {
+              pedidoId,
+              tipo: "CANCELADO",
+              descripcion: "Pago aceptado cancelado por Mercado Pago",
+              estadoAnterior: "APROBADO",
+              estadoNuevo: "CANCELADO",
+            } });
+            return;
+          }
+
           const actualizado = await tx.payment.updateMany({
             where: {
               id: payment.id,
               pedidoId,
               proveedor: "mercadopago",
               externalId: pago.externalId,
-              estado: mapa.cancelar
-                ? { not: "CANCELADO" }
-                : { notIn: ["CANCELADO", "APROBADO"] },
+              estado: mapa.tipo === "EN_ACREDITACION"
+                ? { notIn: ["CANCELADO", "APROBADO", "REEMBOLSADO", "RECHAZADO"] }
+                : { notIn: ["CANCELADO", "APROBADO", "REEMBOLSADO"] },
             },
             data: {
               externalId: pago.externalId,
@@ -242,27 +414,13 @@ export function crearAplicadorWebhookPago(
           });
           if (actualizado.count !== 1) return;
 
-          if (mapa.cancelar) {
-            const cancelado = await tx.pedido.updateMany({
-              where: { id: pedidoId, estado: pedido.estado },
-              data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
-            });
-            if (cancelado.count === 1 && pedido.stockReservado) {
-              const liberada = await dependencias.liberarReservaStockPedido(
-                pedidoId,
-                tx,
-              );
-              if (!liberada) throw new Error("No se pudo liberar la reserva del pedido");
-            }
-            if (cancelado.count === 1) await tx.pedidoEvento.create({ data: {
-              pedidoId, tipo: "CANCELADO", descripcion: "Pago cancelado por Mercado Pago",
-              estadoAnterior: pedido.estadoPago, estadoNuevo: "CANCELADO",
-            } });
-            return;
-          }
-
           const cambioEstado = await tx.pedido.updateMany({
-            where: { id: pedidoId, estado: "PENDIENTE" },
+            where: {
+              id: pedidoId,
+              estado: "PENDIENTE",
+              estadoPago: { notIn: ["APROBADO", "CANCELADO", "REEMBOLSADO"] },
+              mpPaymentId: pedido.mpPaymentId,
+            },
             data: { estadoPago: mapa.estadoPago },
           });
           if (cambioEstado.count === 1 && pedido.estadoPago !== mapa.estadoPago) {

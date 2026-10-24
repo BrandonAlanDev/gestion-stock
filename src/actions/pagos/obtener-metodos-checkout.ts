@@ -4,9 +4,14 @@ import "server-only";
 import { obtenerContextoTenant } from "@/lib/tenants/obtener-contexto-tenant";
 import { obtenerMetodosPagoDisponibles } from "@/lib/pagos/obtener-metodos-disponibles";
 import { filtrarMetodosDisponibles } from "@/lib/pagos/filtrar-metodos-disponibles";
+import { registrarErrorPagoSeguro } from "@/lib/pagos/registro-error-seguro";
 
 export type ResultadoMetodosCheckout =
-  | { ok: true; metodos: Array<{ id: string; nombre: string; descripcion: string }> }
+  | {
+      ok: true;
+      metodos: Array<{ id: string; nombre: string; descripcion: string }>;
+      aviso?: string;
+    }
   | { ok: false; error: string };
 
 /**
@@ -18,9 +23,16 @@ export async function obtenerMetodosCheckout(): Promise<ResultadoMetodosCheckout
     const contexto = await obtenerContextoTenant();
     if (!contexto) return { ok: false, error: "Tienda no disponible" };
 
-    const disponibles = filtrarMetodosDisponibles(
-      await obtenerMetodosPagoDisponibles(contexto.tenantId),
+    const resumen = await obtenerMetodosPagoDisponibles(contexto.tenantId);
+    const disponibles = filtrarMetodosDisponibles(resumen);
+    const consultaTransferenciaFallida = resumen.some(
+      (metodo) => metodo.id === "transferencia" && metodo.estadoConfiguracion === "ERROR_TEMPORAL",
     );
+
+    // El filtro excluye los métodos que no pudieron verificarse; el aviso explica el motivo sin exponer su configuración.
+    const aviso = consultaTransferenciaFallida
+      ? "No pudimos verificar temporalmente una opción de pago. Podés usar las opciones visibles o intentar nuevamente en unos minutos."
+      : undefined;
 
     return {
       ok: true,
@@ -29,12 +41,10 @@ export async function obtenerMetodosCheckout(): Promise<ResultadoMetodosCheckout
         nombre: metodo.nombre,
         descripcion: metodo.descripcion,
       })),
+      ...(aviso ? { aviso } : {}),
     };
   } catch (error) {
-    console.error(
-      "Error obteniendo métodos de pago:",
-      error instanceof Error ? error.message : String(error),
-    );
+    registrarErrorPagoSeguro("Error obteniendo métodos de pago para checkout", error);
     return { ok: false, error: "No se pudieron cargar los métodos de pago" };
   }
 }

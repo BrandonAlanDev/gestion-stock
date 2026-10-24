@@ -4,6 +4,8 @@ import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 import { sincronizarOpciones } from "@/lib/services/prendas/sincronizar-opciones";
 import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-variante";
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
+import { actualizarVarianteConControlStock } from "@/lib/inventario/actualizar-stock-variante";
+import { verificarVariantesEliminables } from "@/lib/inventario/variantes-transaccion";
 
 export async function actualizarRegistroPrendaConDetalles(
   prisma: PrismaClient,
@@ -56,12 +58,12 @@ export async function actualizarRegistroPrendaConDetalles(
       }
       const idsAEliminar = variantesActuales.filter((v) => !idsEntrantes.includes(v.id)).map((v) => v.id);
       if (idsAEliminar.length > 0) {
+        await verificarVariantesEliminables(tx, idsAEliminar);
         await tx.garmentVariant.deleteMany({ where: { id: { in: idsAEliminar } } });
       }
 
       for (const variante of datos.variants) {
         const data = {
-          stock: variante.stock,
           sku: variante.sku || null,
           priceOverride: variante.priceOverride,
           sizeId: variante.sizeId || null,
@@ -69,7 +71,17 @@ export async function actualizarRegistroPrendaConDetalles(
           attributes: variante.attributes === null ? Prisma.JsonNull : variante.attributes,
         };
         if (variante.id) {
-          await tx.garmentVariant.updateMany({ where: { id: variante.id, garmentId: id }, data });
+          if (variante.stockOriginal === undefined) {
+            throw new Error("No se recibió el stock original de la variante.");
+          }
+          await actualizarVarianteConControlStock(tx, {
+            variantId: variante.id,
+            garmentId: id,
+            stockOriginal: variante.stockOriginal,
+            stockNuevo: variante.stock,
+            precio: Number(variante.priceOverride ?? datos.price),
+            datos: data,
+          });
           await tx.garmentVariantOptionValue.deleteMany({ where: { variantId: variante.id } });
           await crearVinculosVariante(tx, variante.id, resolver, variante.opcionValores);
         } else {
@@ -84,11 +96,26 @@ export async function actualizarRegistroPrendaConDetalles(
               attributes: variante.attributes === null ? Prisma.JsonNull : variante.attributes,
             },
           });
+          if (variante.stock > 0) {
+            await tx.movement.create({
+              data: {
+                variantId: creadaVariante.id,
+                type: "IN",
+                quantity: variante.stock,
+                priceAtTime: Number(variante.priceOverride ?? datos.price),
+                note: "Carga inicial desde edición del producto",
+              },
+            });
+          }
           await crearVinculosVariante(tx, creadaVariante.id, resolver, variante.opcionValores);
         }
       }
     },
-    { timeout: 60000, maxWait: 60000 }
+    {
+      timeout: 60000,
+      maxWait: 60000,
+      isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+    }
   );
 
   await prisma.garmentImage.deleteMany({ where: { garmentId: id } });

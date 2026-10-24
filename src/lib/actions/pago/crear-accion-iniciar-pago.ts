@@ -21,6 +21,7 @@ export type ResultadoIniciarPago =
       paymentId: string;
       checkoutUrl: string | null;
       instrucciones: string | null;
+      reservaExpiraEn: string | null;
       esSandbox: boolean;
     }
   | {
@@ -168,13 +169,6 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         }),
       );
 
-      await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
-        prisma.pedido.updateMany({
-          where: { id: pedido.id, estado: "PENDIENTE" },
-          data: { metodoPago: metodo },
-        }),
-      );
-
       const proveedor = dependencias.obtenerProveedor(metodo);
       const resultado = await proveedor.crearPago({
         tenantId: contexto.tenantId,
@@ -196,7 +190,12 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
       await dependencias.conPrismaTenant(contexto.tenantId, (prisma) =>
         prisma.payment.updateMany({
           where: { id: payment.id, pedidoId: pedido.id },
-          data: { estado: resultado.estado },
+          data: {
+            estado: resultado.estado,
+            ...(metodo === "transferencia" && resultado.instrucciones
+              ? { metadata: { instrucciones: resultado.instrucciones } }
+              : {}),
+          },
         }),
       );
 
@@ -207,6 +206,7 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
         paymentId: payment.id,
         checkoutUrl: resultado.checkoutUrl,
         instrucciones: resultado.instrucciones,
+        reservaExpiraEn: pedido.reservaExpiraEn?.toISOString() ?? null,
         esSandbox: resultado.esSandbox,
       };
     } catch (error) {

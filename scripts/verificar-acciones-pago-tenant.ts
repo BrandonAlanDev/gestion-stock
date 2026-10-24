@@ -84,6 +84,7 @@ function crearDependenciasInicioPago(
         requiereConexion: false,
         requiereConfiguracion: false,
         conectado: false,
+        estadoConfiguracion: "INCOMPLETA",
       }];
     },
     obtenerOpcionesEntrega: async () => ({
@@ -144,6 +145,7 @@ async function verificarInicioDePagoTenantAware(): Promise<void> {
     paymentId: "pago-a",
     checkoutUrl: "https://checkout.example.com/a",
     instrucciones: null,
+    reservaExpiraEn: pedidoFalso.reservaExpiraEn.toISOString(),
     esSandbox: true,
   });
   assert(estado.tenantsPrisma.length > 0);

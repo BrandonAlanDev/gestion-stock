@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { aprobarPagoManual, cambiarEstadoEnvio, cambiarEstadoPedido, guardarSeguimiento } from "@/actions/pedidos/gestionar-pedidos";
+import { aprobarPagoManual, cambiarEstadoEnvio, cambiarEstadoPedido, guardarSeguimiento, rechazarTransferencia } from "@/actions/pedidos/gestionar-pedidos";
 
 type Props = {
   pedidoId: string;
@@ -11,6 +11,7 @@ type Props = {
   estadoEnvio: string;
   metodoPago: string | null;
   metodoEntrega: string;
+  reservaExpiraEn?: string | null;
   seguimiento?: { transportistaId: string | null; trackingNumero: string | null; trackingUrl: string | null; fechaEstimada: string | null } | null;
   transportistas: { id: string; nombre: string }[];
 };
@@ -19,7 +20,7 @@ const estados = ["CONFIRMADO", "EN_PREPARACION", "LISTO", "ENVIADO", "ENTREGADO"
 const estadosEnvio = ["PENDIENTE", "PREPARANDO", "DESPACHADO", "ENTREGADO"];
 const etiquetas: Record<string, string> = { EN_PREPARACION: "En preparación", LISTO: "Listo", ENVIADO: "Enviado", ENTREGADO: "Entregado", PREPARANDO: "Preparando", DESPACHADO: "Despachado" };
 
-export default function AccionesPedido({ pedidoId, estado, estadoPago, estadoEnvio, metodoPago, metodoEntrega, seguimiento, transportistas }: Props) {
+export default function AccionesPedido({ pedidoId, estado, estadoPago, estadoEnvio, metodoPago, metodoEntrega, reservaExpiraEn, seguimiento, transportistas }: Props) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function AccionesPedido({ pedidoId, estado, estadoPago, estadoEnv
   const ordenEnvio = metodoEntrega === "DOMICILIO" ? estadosEnvio : estadosEnvio.filter((valor) => valor !== "DESPACHADO");
   const siguiente = ordenPedido[ordenPedido.indexOf(estado) + 1];
   const siguienteEnvio = ordenEnvio[ordenEnvio.indexOf(estadoEnvio) + 1];
+  const vencido = estadoPago === "PENDIENTE" && Boolean(reservaExpiraEn && new Date(reservaExpiraEn).getTime() <= Date.now());
 
   function ejecutar(operacion: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -46,8 +48,9 @@ export default function AccionesPedido({ pedidoId, estado, estadoPago, estadoEnv
       <h2 className="text-lg font-semibold">Gestionar pedido</h2>
       {error && <p role="alert" className="rounded-lg bg-[var(--admin-peligro-suave)] p-3 text-sm text-[var(--admin-peligro)]">{error}</p>}
       <div className="flex flex-wrap gap-2">
-        {estado === "PENDIENTE" && metodoPago === "transferencia" && <button disabled={pendiente} onClick={() => ejecutar(() => aprobarPagoManual(pedidoId))} className="rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm text-[var(--admin-primario-texto)] disabled:opacity-50">Aprobar transferencia</button>}
-        {estado === "PENDIENTE" && metodoPago === "efectivo" && <button disabled={pendiente} onClick={() => ejecutar(() => aprobarPagoManual(pedidoId))} className="rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm text-[var(--admin-primario-texto)] disabled:opacity-50">Confirmar efectivo recibido</button>}
+        {estado === "PENDIENTE" && metodoPago === "transferencia" && ["PENDIENTE", "EN_ACREDITACION"].includes(estadoPago) && !vencido && <button disabled={pendiente} onClick={() => ejecutar(() => aprobarPagoManual(pedidoId))} className="rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm text-[var(--admin-primario-texto)] disabled:opacity-50">Confirmar transferencia</button>}
+        {estado === "PENDIENTE" && metodoPago === "transferencia" && estadoPago === "EN_ACREDITACION" && <button disabled={pendiente} onClick={() => ejecutar(() => rechazarTransferencia(pedidoId))} className="rounded-lg border border-[var(--admin-peligro)] px-4 py-2 text-sm text-[var(--admin-peligro)] disabled:opacity-50">Rechazar transferencia</button>}
+        {estado === "PENDIENTE" && metodoPago === "efectivo" && !vencido && <button disabled={pendiente} onClick={() => ejecutar(() => aprobarPagoManual(pedidoId))} className="rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm text-[var(--admin-primario-texto)] disabled:opacity-50">Confirmar efectivo recibido</button>}
         {estado === "PENDIENTE" && estadoPago !== "APROBADO" && <button disabled={pendiente} onClick={() => ejecutar(() => cambiarEstadoPedido({ pedidoId, estado: "CANCELADO" }))} className="rounded-lg border border-[var(--admin-peligro)] px-4 py-2 text-sm text-[var(--admin-peligro)] disabled:opacity-50">Cancelar pedido</button>}
         {estadoPago === "APROBADO" && siguiente && (metodoEntrega !== "DOMICILIO" || !["ENVIADO", "ENTREGADO"].includes(siguiente) || estadoEnvio === "DESPACHADO") && <button disabled={pendiente} onClick={() => ejecutar(() => cambiarEstadoPedido({ pedidoId, estado: siguiente }))} className="rounded-lg bg-[var(--admin-primario)] px-4 py-2 text-sm text-[var(--admin-primario-texto)] disabled:opacity-50">Pasar a {etiquetas[siguiente]}</button>}
         {estadoPago === "APROBADO" && siguienteEnvio && (siguienteEnvio === "PREPARANDO" || (siguienteEnvio === "DESPACHADO" && ["LISTO", "ENVIADO"].includes(estado)) || (siguienteEnvio === "ENTREGADO" && estado === (metodoEntrega === "DOMICILIO" ? "ENVIADO" : "LISTO"))) && <button disabled={pendiente} onClick={() => ejecutar(() => cambiarEstadoEnvio({ pedidoId, estadoEnvio: siguienteEnvio }))} className="rounded-lg border border-[var(--admin-borde)] px-4 py-2 text-sm disabled:opacity-50">Envío: {etiquetas[siguienteEnvio]}</button>}

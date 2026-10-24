@@ -8,13 +8,22 @@ interface PropiedadesPanelInstruccionesPago {
   pedidoId: string | null;
   numeroPedido?: number | null;
   moneda: string;
+  reservaExpiraEn: string | null;
 }
 
 export default function PanelInstruccionesPago({
   instrucciones,
   pedidoId,
   numeroPedido,
+  reservaExpiraEn,
 }: PropiedadesPanelInstruccionesPago) {
+  const fechaLimite = reservaExpiraEn
+    ? new Date(reservaExpiraEn).toLocaleString("es-AR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/Argentina/Buenos_Aires",
+      })
+    : null;
   return (
     <div
       className="rounded-xl border p-4 space-y-3"
@@ -28,6 +37,11 @@ export default function PanelInstruccionesPago({
       <p className="text-sm opacity-70">
         Tu pedido queda pendiente hasta que el comercio confirme el pago.
       </p>
+      {fechaLimite && (
+        <p className="text-sm font-medium">
+          Fecha límite para completar el pago: {fechaLimite}
+        </p>
+      )}
       {pedidoId && (
         <p className="text-sm font-medium">
           Pedido: <span className="font-mono">#{numeroPedido ?? pedidoId}</span>

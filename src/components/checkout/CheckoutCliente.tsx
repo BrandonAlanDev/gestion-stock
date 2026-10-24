@@ -44,10 +44,12 @@ export default function CheckoutCliente() {
 
   const [metodos, setMetodos] = useState<MetodoPagoDisponible[]>([]);
   const [cargandoMetodos, setCargandoMetodos] = useState(true);
+  const [avisoMetodos, setAvisoMetodos] = useState<string | null>(null);
   const [metodoSeleccionado, setMetodoSeleccionado] = useState<string | null>(null);
   const [pedidoId, setPedidoId] = useState<string | null>(null);
   const [numeroPedido, setNumeroPedido] = useState<number | null>(null);
   const [instrucciones, setInstrucciones] = useState<string | null>(null);
+  const [reservaExpiraEn, setReservaExpiraEn] = useState<string | null>(null);
   const [esSandbox, setEsSandbox] = useState(false);
   const [opcionesEntrega, setOpcionesEntrega] = useState<OpcionesEntregaCheckout | null>(null);
   const [cargandoEntrega, setCargandoEntrega] = useState(true);
@@ -146,9 +148,15 @@ export default function CheckoutCliente() {
 
       if (resultado.ok) {
         setMetodos(resultado.metodos);
+        setAvisoMetodos(resultado.aviso ?? null);
       } else {
+        setAvisoMetodos("No pudimos cargar las opciones de pago. Actualizá la página o intentá nuevamente.");
         toast.error(resultado.error);
       }
+      setCargandoMetodos(false);
+    }).catch(() => {
+      if (!activo) return;
+      setAvisoMetodos("No pudimos cargar las opciones de pago. Actualizá la página o intentá nuevamente.");
       setCargandoMetodos(false);
     });
 
@@ -345,6 +353,7 @@ export default function CheckoutCliente() {
         setPedidoId(resultado.pedidoId);
         setNumeroPedido(resultado.numero ?? null);
         setInstrucciones(resultado.instrucciones);
+        setReservaExpiraEn(resultado.reservaExpiraEn);
         setEsSandbox(resultado.esSandbox);
         toast.success(
           metodoSeleccionado === "efectivo"
@@ -470,10 +479,11 @@ export default function CheckoutCliente() {
             <SkeletonTarjetas cantidad={2} admin={false} tipo="pagos" />
           ) : metodosParaEntrega.length === 0 ? (
             <p className="text-sm opacity-70">
-              No hay métodos de pago disponibles en este momento.
+              {avisoMetodos ?? "No hay métodos de pago disponibles en este momento."}
             </p>
           ) : (
             <div className="flex flex-col gap-3">
+              {avisoMetodos && <p role="status" className="text-sm opacity-70">{avisoMetodos}</p>}
               {metodosParaEntrega.map((metodo) => (
                 <SelectorMetodoPago
                   key={metodo.id}
@@ -492,6 +502,7 @@ export default function CheckoutCliente() {
                 pedidoId={pedidoId}
                 numeroPedido={numeroPedido}
                 moneda={moneda}
+                reservaExpiraEn={reservaExpiraEn}
               />
               {esSandbox && (
                 <p className="text-xs opacity-60">Estás operando en modo de prueba.</p>

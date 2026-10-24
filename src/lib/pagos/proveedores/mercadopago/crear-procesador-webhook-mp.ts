@@ -62,6 +62,9 @@ export function crearProcesadorWebhookMP(dependencias: DependenciasProcesadorWeb
     const pago = await dependencias.obtenerEstadoPago(tenantId, {
       externalId: paymentId,
     });
+    if (pago.externalId !== paymentId) {
+      throw new Error("El pago consultado no coincide con la notificación");
+    }
     return {
       tipo: "pago",
       pago: {

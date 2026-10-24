@@ -38,6 +38,7 @@ interface PrismaFalso {
   cliente: PrismaClient;
   obtenerPedido(): PedidoFalso | null;
   obtenerPagos(): PagoFalso[];
+  obtenerEventos(): Record<string, unknown>[];
   obtenerTransacciones(): number;
   obtenerReversiones(): number;
 }
@@ -70,12 +71,18 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
     ...opciones.pedido,
   };
   let pagos = (opciones.pagos ?? []).map((pago) => ({ ...pago }));
+  let eventos: Record<string, unknown>[] = [];
   let transacciones = 0;
   let reversiones = 0;
   let secuenciaPago = pagos.length;
 
   const clienteTx = {
-    pedidoEvento: { async create() { return { id: "evento-falso" }; } },
+    pedidoEvento: {
+      async create(argumentos: unknown) {
+        eventos.push(comoRegistro(comoRegistro(argumentos).data));
+        return { id: `evento-${eventos.length}` };
+      },
+    },
     pedido: {
       async findFirst() {
         return pedido ? { ...pedido } : null;
@@ -86,6 +93,8 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
         const where = comoRegistro(raiz.where);
         if (where.id !== pedido.id) return { count: 0 };
         if (where.estado && !coincideEstado(pedido.estado, where.estado)) return { count: 0 };
+        if (where.estadoPago && !coincideEstado(pedido.estadoPago, where.estadoPago)) return { count: 0 };
+        if (where.mpPaymentId !== undefined && pedido.mpPaymentId !== where.mpPaymentId) return { count: 0 };
         if (opciones.actualizarPedido === false) return { count: 0 };
         Object.assign(pedido, comoRegistro(raiz.data));
         return { count: 1 };
@@ -103,12 +112,18 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
       },
       async create(argumentos: unknown) {
         const data = comoRegistro(comoRegistro(argumentos).data);
+        const externalId = typeof data.externalId === "string" ? data.externalId : null;
+        if (externalId && pagos.some((pago) =>
+          pago.proveedor === data.proveedor && pago.externalId === externalId,
+        )) {
+          throw Object.assign(new Error("Pago duplicado"), { code: "P2002" });
+        }
         secuenciaPago += 1;
         const pago: PagoFalso = {
           id: `payment-${secuenciaPago}`,
           pedidoId: String(data.pedidoId),
           proveedor: String(data.proveedor),
-          externalId: typeof data.externalId === "string" ? data.externalId : null,
+          externalId,
           estado: String(data.estado),
           monto: Number(data.monto),
           moneda: String(data.moneda),
@@ -140,12 +155,14 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
     async $transaction<T>(operacion: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
       const pedidoAnterior = pedido ? { ...pedido } : null;
       const pagosAnteriores = pagos.map((pago) => ({ ...pago }));
+      const eventosAnteriores = eventos.map((evento) => ({ ...evento }));
       transacciones += 1;
       try {
         return await operacion(clienteTx);
       } catch (error) {
         pedido = pedidoAnterior;
         pagos = pagosAnteriores;
+        eventos = eventosAnteriores;
         reversiones += 1;
         throw error;
       }
@@ -156,14 +173,15 @@ function crearPrismaFalso(opciones: OpcionesPrismaFalso = {}): PrismaFalso {
     cliente,
     obtenerPedido: () => pedido ? { ...pedido } : null,
     obtenerPagos: () => pagos.map((pago) => ({ ...pago })),
+    obtenerEventos: () => eventos.map((evento) => ({ ...evento })),
     obtenerTransacciones: () => transacciones,
     obtenerReversiones: () => reversiones,
   };
 }
 
-function crearPago(estadoExterno = "approved"): PagoWebhookNormalizado {
+function crearPago(estadoExterno = "approved", externalId = "mp-123"): PagoWebhookNormalizado {
   return {
-    externalId: "mp-123",
+    externalId,
     pedidoId: "pedido-a",
     estadoExterno,
     montoPago: 2500,
@@ -215,11 +233,13 @@ async function verificarAprobacionIdempotenteYEventosFueraDeOrden(): Promise<voi
   assert.equal(prisma.obtenerTransacciones(), 1);
   assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
   assert.equal(prisma.obtenerPagos()[0]?.estado, "APROBADO");
+  assert.equal(prisma.obtenerEventos().length, 1);
 
   await aplicador.aplicar(crearPago());
   assert.equal(prisma.obtenerTransacciones(), 2);
   assert.equal(prisma.obtenerPagos().length, 1, "El reintento no debe crear un segundo pago");
   assert.equal(aplicador.pedidosConDescuento.length, 1, "El reintento no debe descontar stock dos veces");
+  assert.equal(prisma.obtenerEventos().length, 1, "El reintento no debe duplicar el evento");
 
   await aplicador.aplicar(crearPago("pending"));
   assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
@@ -293,6 +313,116 @@ async function verificarPagoAprobadoTrasVencimientoQuedaVisible(): Promise<void>
   assert.deepEqual(aplicador.pedidosConReservaConfirmada, []);
 }
 
+async function verificarRechazoAnteriorYRechazoDeOtroIntento(): Promise<void> {
+  const prisma = crearPrismaFalso();
+  const aplicador = crearAplicador(prisma);
+
+  await aplicador.aplicar(crearPago("rejected"));
+  assert.equal(prisma.obtenerPedido()?.estadoPago, "RECHAZADO");
+  assert.equal(prisma.obtenerPagos()[0]?.estado, "RECHAZADO");
+
+  await aplicador.aplicar(crearPago("approved"));
+  assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
+  assert.equal(prisma.obtenerPedido()?.estadoPago, "APROBADO");
+  assert.equal(prisma.obtenerPedido()?.mpPaymentId, "mp-123");
+  assert.deepEqual(aplicador.pedidosConDescuento, ["pedido-a"]);
+
+  await aplicador.aplicar(crearPago("rejected", "mp-otro-intento"));
+  assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
+  assert.equal(prisma.obtenerPedido()?.estadoPago, "APROBADO");
+  assert.equal(prisma.obtenerPedido()?.mpPaymentId, "mp-123");
+  assert.equal(prisma.obtenerPagos().find((pago) => pago.externalId === "mp-otro-intento")?.estado, "RECHAZADO");
+  assert.deepEqual(aplicador.reservasLiberadas, []);
+}
+
+async function verificarCancelacionDeOtroIntentoNoCancelaPedidoAprobado(): Promise<void> {
+  const prisma = crearPrismaFalso({
+    pedido: { estado: "CONFIRMADO", estadoPago: "APROBADO", mpPaymentId: "mp-123" },
+    pagos: [{
+      id: "payment-aceptado",
+      pedidoId: "pedido-a",
+      proveedor: "mercadopago",
+      externalId: "mp-123",
+      estado: "APROBADO",
+      monto: 2500,
+      moneda: "ARS",
+    }],
+  });
+  const aplicador = crearAplicador(prisma);
+
+  await aplicador.aplicar(crearPago("cancelled", "mp-otro-intento"));
+
+  assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
+  assert.equal(prisma.obtenerPedido()?.estadoPago, "APROBADO");
+  assert.equal(prisma.obtenerPedido()?.mpPaymentId, "mp-123");
+  assert.equal(prisma.obtenerPagos().find((pago) => pago.externalId === "mp-123")?.estado, "APROBADO");
+  assert.equal(prisma.obtenerPagos().find((pago) => pago.externalId === "mp-otro-intento")?.estado, "CANCELADO");
+  assert.deepEqual(aplicador.reservasLiberadas, []);
+}
+
+async function verificarReembolsoYContracargoIdempotentes(): Promise<void> {
+  for (const estadoExterno of ["refunded", "charged_back"]) {
+    const prisma = crearPrismaFalso({ pedido: { stockReservado: true } });
+    const aplicador = crearAplicador(prisma);
+
+    await aplicador.aplicar(crearPago("approved"));
+    const eventosLuegoDeAprobar = prisma.obtenerEventos().length;
+    await aplicador.aplicar(crearPago(estadoExterno));
+    assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
+    assert.equal(prisma.obtenerPedido()?.estadoPago, "REEMBOLSADO");
+    assert.equal(prisma.obtenerPagos()[0]?.estado, "REEMBOLSADO");
+    assert.deepEqual(aplicador.reservasLiberadas, [], "Un reembolso no debe devolver stock ya vendido");
+
+    await aplicador.aplicar(crearPago(estadoExterno));
+    assert.equal(prisma.obtenerEventos().length, eventosLuegoDeAprobar + 1);
+    assert.equal(prisma.obtenerPedido()?.estado, "CONFIRMADO");
+  }
+}
+
+async function verificarReembolsoNoRetrocedePedidoEntregado(): Promise<void> {
+  const prisma = crearPrismaFalso({
+    pedido: { estado: "ENTREGADO", estadoPago: "APROBADO", mpPaymentId: "mp-123" },
+    pagos: [{
+      id: "payment-entregado",
+      pedidoId: "pedido-a",
+      proveedor: "mercadopago",
+      externalId: "mp-123",
+      estado: "APROBADO",
+      monto: 2500,
+      moneda: "ARS",
+    }],
+  });
+  const aplicador = crearAplicador(prisma);
+
+  await aplicador.aplicar(crearPago("refunded"));
+
+  assert.equal(prisma.obtenerPedido()?.estado, "ENTREGADO");
+  assert.equal(prisma.obtenerPedido()?.estadoPago, "REEMBOLSADO");
+  assert.equal(prisma.obtenerPagos()[0]?.estado, "REEMBOLSADO");
+  assert.deepEqual(aplicador.reservasLiberadas, []);
+  assert.deepEqual(aplicador.pedidosConDescuento, []);
+}
+
+async function verificarCancelacionTardiaYConcurrencia(): Promise<void> {
+  const cancelacion = crearPrismaFalso({ pedido: { stockReservado: true } });
+  const aplicadorCancelacion = crearAplicador(cancelacion);
+  await aplicadorCancelacion.aplicar(crearPago("cancelled"));
+  await aplicadorCancelacion.aplicar(crearPago("cancelled"));
+  assert.equal(cancelacion.obtenerPedido()?.estado, "CANCELADO");
+  assert.deepEqual(aplicadorCancelacion.reservasLiberadas, ["pedido-a"]);
+
+  const concurrente = crearPrismaFalso();
+  const aplicadorConcurrente = crearAplicador(concurrente);
+  await Promise.all([
+    aplicadorConcurrente.aplicar(crearPago("approved")),
+    aplicadorConcurrente.aplicar(crearPago("approved")),
+  ]);
+  assert.equal(concurrente.obtenerPedido()?.estado, "CONFIRMADO");
+  assert.equal(concurrente.obtenerPagos().length, 1);
+  assert.deepEqual(aplicadorConcurrente.pedidosConDescuento, ["pedido-a"]);
+  assert.equal(concurrente.obtenerEventos().length, 1);
+}
+
 async function verificarReversionesTransaccionales(): Promise<void> {
   const conflicto = crearPrismaFalso({ actualizarPedido: false });
   const aplicadorConflicto = crearAplicador(conflicto);
@@ -319,8 +449,13 @@ async function main(): Promise<void> {
   await verificarPedidoReservadoNoDescuentaDosVeces();
   await verificarCancelacionLiberaReservaUnaVez();
   await verificarPagoAprobadoTrasVencimientoQuedaVisible();
+  await verificarRechazoAnteriorYRechazoDeOtroIntento();
+  await verificarCancelacionDeOtroIntentoNoCancelaPedidoAprobado();
+  await verificarReembolsoYContracargoIdempotentes();
+  await verificarReembolsoNoRetrocedePedidoEntregado();
+  await verificarCancelacionTardiaYConcurrencia();
   await verificarReversionesTransaccionales();
-  console.log("Aplicación de pagos: monto, moneda, idempotencia y fallos transaccionales verificados con doble en memoria.");
+  console.log("Aplicación de webhooks: correlación, transiciones, reembolso, reservas e idempotencia concurrente verificados con doble en memoria.");
 }
 
 void main().catch((error: unknown) => {

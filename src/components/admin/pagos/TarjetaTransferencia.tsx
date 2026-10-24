@@ -6,12 +6,14 @@ import { Landmark, Pencil } from "lucide-react";
 import Switch from "@/components/ui/switch";
 import Badge from "@/components/ui/badge";
 import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
+import ConfiguracionVencimiento from "./ConfiguracionVencimiento";
 
 interface TarjetaTransferenciaProps {
   metodo: MetodoPagoAdmin;
   activo: boolean;
   alCambiarActivo: (valor: boolean) => void;
   alGuardarConfig: (instrucciones: string) => void;
+  alGuardarVencimiento: (valor: MetodoPagoAdmin["vencimiento"]) => Promise<boolean>;
 }
 
 export default function TarjetaTransferencia({
@@ -19,6 +21,7 @@ export default function TarjetaTransferencia({
   activo,
   alCambiarActivo,
   alGuardarConfig,
+  alGuardarVencimiento,
 }: TarjetaTransferenciaProps) {
   const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
   const [texto, setTexto] = useState(metodo.instrucciones ?? "");
@@ -29,6 +32,12 @@ export default function TarjetaTransferencia({
     }
     setConfiguracionAbierta((abierto) => !abierto);
   };
+
+  const estadoConfiguracion = metodo.estadoConfiguracion === "ERROR_TEMPORAL"
+    ? "No pudimos verificar temporalmente la configuración bancaria. La transferencia no aparecerá en el checkout hasta que se pueda comprobar."
+    : metodo.estadoConfiguracion === "INCOMPLETA"
+      ? "Faltan instrucciones bancarias. La transferencia no aparecerá en el checkout hasta completar la configuración."
+      : "Configuración bancaria lista. El método aparecerá en el checkout cuando esté activado.";
 
   return (
     <section className="rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-5">
@@ -56,6 +65,13 @@ export default function TarjetaTransferencia({
         </div>
         <Switch activo={activo} alCambiar={alCambiarActivo} mostrarEstado />
       </div>
+
+      <p
+        role={metodo.estadoConfiguracion === "ERROR_TEMPORAL" ? "status" : undefined}
+        className="mt-3 text-xs text-[var(--admin-texto-suave)]"
+      >
+        {estadoConfiguracion}
+      </p>
 
       <div className="mt-4 flex flex-col gap-3 border-t border-[var(--admin-borde)] pt-4">
         <button
@@ -94,6 +110,13 @@ export default function TarjetaTransferencia({
           </div>
         )}
       </div>
+      <ConfiguracionVencimiento
+        valor={metodo.vencimiento}
+        alGuardar={alGuardarVencimiento}
+      />
+      <p className="mt-3 text-xs text-[var(--admin-texto-suave)]">
+        Cuando el cliente informa la transferencia, la reserva queda en revisión sin vencimiento automático hasta que administración confirme o rechace el pago.
+      </p>
     </section>
   );
 }

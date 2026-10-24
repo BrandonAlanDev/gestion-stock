@@ -17,6 +17,7 @@ export interface OpcionFormulario {
 
 export interface VarianteFormulario {
   id?: string;
+  stockOriginal?: number;
   opcionValores: ParOpcionValor[];
   stock: number;
   sku: string;
@@ -38,6 +39,7 @@ export interface ProductoEdicion {
   variants?: Array<{
     id?: string;
     stock?: number;
+    stockOriginal?: number;
     sku?: string | null;
     priceOverride?: number | string | null;
     opcionValores?: ParOpcionValor[];
@@ -104,6 +106,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
     }));
     const variantesCargadas: VarianteFormulario[] = (producto.variants ?? []).map((v) => ({
       id: v.id,
+      stockOriginal: v.stockOriginal ?? v.stock ?? 0,
       opcionValores: v.opcionValores ?? [],
       stock: v.stock ?? 0,
       sku: v.sku ?? "",
@@ -176,6 +179,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
       return [
         {
           id: varianteBase?.id,
+          stockOriginal: varianteBase?.stockOriginal,
           opcionValores: [],
           stock: stockTotal,
           sku,
@@ -190,6 +194,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
       const previa = clavesPrevias.get(clave);
       return {
         id: previa?.id,
+        stockOriginal: previa?.stockOriginal,
         opcionValores: comb,
         stock: previa?.stock ?? 0,
         sku: previa?.sku ?? "",
@@ -352,6 +357,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
       opciones: opcionesValidas,
       variants: variantesCoherentes.map((v) => ({
         id: v.id,
+        stockOriginal: v.stockOriginal,
         opcionValores: v.opcionValores,
         stock: Number(v.stock) || 0,
         sku: v.sku,

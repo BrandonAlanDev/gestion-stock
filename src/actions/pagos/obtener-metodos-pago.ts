@@ -3,8 +3,11 @@
 import "server-only";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { obtenerMetodosPagoDisponibles } from "@/lib/pagos/obtener-metodos-disponibles";
+import type { EstadoConfiguracionMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
+import { registrarErrorPagoSeguro } from "@/lib/pagos/registro-error-seguro";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { conPrismaTenant } from "@/lib/prisma";
+import { leerPoliticaVencimientoReserva } from "@/lib/pedidos/politica-reserva-stock";
 
 export interface MetodoPagoAdmin {
   id: MetodoPagoId;
@@ -13,7 +16,9 @@ export interface MetodoPagoAdmin {
   activo: boolean;
   requiereConexion: boolean;
   conectado: boolean;
+  estadoConfiguracion: EstadoConfiguracionMetodoPago;
   instrucciones: string | null;
+  vencimiento: { habilitado: boolean; horas: number };
 }
 
 export type ResultadoMetodosPago =
@@ -49,19 +54,18 @@ export async function obtenerMetodosPago(): Promise<ResultadoMetodosPago> {
         activo: metodo.activo,
         requiereConexion: metodo.requiereConexion,
         conectado: metodo.conectado,
+        estadoConfiguracion: metodo.estadoConfiguracion,
         instrucciones:
           typeof instrucciones === "string" && instrucciones.trim()
             ? instrucciones.trim()
             : null,
+        vencimiento: leerPoliticaVencimientoReserva(registro?.config),
       };
     });
 
     return { ok: true, metodos };
   } catch (error) {
-    console.error(
-      "Error obteniendo métodos de pago:",
-      error instanceof Error ? error.message : String(error),
-    );
+    registrarErrorPagoSeguro("Error obteniendo métodos de pago", error);
     return { ok: false, error: "No se pudieron cargar los métodos de pago" };
   }
 }

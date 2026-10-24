@@ -43,6 +43,7 @@ export interface DatosGuardarProducto {
     id?: string;
     opcionValores: ParOpcionValor[];
     stock: number;
+    stockOriginal?: number;
     sku: string | null;
     priceOverride: number | null;
     sizeId?: string | null;

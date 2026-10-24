@@ -41,6 +41,7 @@ export async function obtenerPrendaParaEdicion(id: string) {
     variants: producto.variants.map((variante) => ({
       id: variante.id,
       stock: variante.stock,
+      stockOriginal: variante.stock,
       sku: variante.sku,
       priceOverride: variante.priceOverride == null ? null : Number(variante.priceOverride),
       opcionValores: variante.optionValues.map((vinculo) => ({

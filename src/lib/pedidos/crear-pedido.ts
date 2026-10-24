@@ -8,8 +8,10 @@ import { obtenerVencimientoReserva } from "./politica-reserva-stock";
 import { resolverItemsCarrito } from "./resolver-items-carrito";
 import { construirResumenCheckout } from "./construir-resumen-checkout";
 import { coincidenSubtotalesCheckout } from "./comparar-subtotales-checkout";
+import { bloquearVariantes } from "@/lib/inventario/variantes-transaccion";
 import type { ItemParaCrearPedido } from "./resolver-items-carrito";
 import type { ResumenCheckout } from "./tipos-resumen-checkout";
+import { ErrorItemCarrito } from "./resolver-items-carrito";
 
 export type { ItemParaCrearPedido } from "./resolver-items-carrito";
 
@@ -73,11 +75,31 @@ export async function crearPedidoDesdeCarrito(
     });
 
     const pedido = await prisma.$transaction(async (tx) => {
+      const idsBloqueados = await bloquearVariantes(
+        tx,
+        itemsPreparados.map((item) => item.variantId),
+      );
+      if (idsBloqueados.length !== new Set(itemsPreparados.map((item) => item.variantId)).size) {
+        throw new ErrorItemCarrito(
+          "PRODUCTO_NO_DISPONIBLE",
+          "Una variante del carrito ya no está disponible. Revisá el carrito para corregirlo.",
+        );
+      }
+
       const numeracion = await tx.numeroPedido.create({ data: {} });
+      const configuracionMetodo = await tx.metodoPago.findUnique({
+        where: { metodo: metodoPago },
+        select: { activo: true, config: true },
+      });
+      if (!configuracionMetodo?.activo) {
+        throw new Error("El método de pago ya no está habilitado para este comercio");
+      }
+      const creadoEn = new Date();
       const creado = await tx.pedido.create({
         data: {
           numero: numeracion.id,
           userId,
+          metodoPago,
           total,
           subtotal: total,
           moneda,
@@ -87,7 +109,12 @@ export async function crearPedidoDesdeCarrito(
           emailCliente: user?.email ?? null,
           metodoEntrega: datosEntrega?.metodoEntrega ?? "RETIRO_TIENDA",
           stockReservado: true,
-          reservaExpiraEn: obtenerVencimientoReserva(metodoPago, new Date()),
+          createdAt: creadoEn,
+          reservaExpiraEn: obtenerVencimientoReserva(
+            metodoPago,
+            creadoEn,
+            configuracionMetodo.config,
+          ),
           items: {
             create: itemsPreparados.map((item) => ({
               garmentId: item.garmentId,

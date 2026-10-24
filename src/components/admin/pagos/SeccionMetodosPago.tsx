@@ -57,8 +57,11 @@ export default function SeccionMetodosPago({
         instrucciones,
       });
       if (resultado.success) {
+        const configuracionCompleta = Boolean(instrucciones.trim());
         alActualizarMetodo("transferencia", {
           instrucciones: instrucciones.trim() || null,
+          conectado: configuracionCompleta,
+          estadoConfiguracion: configuracionCompleta ? "COMPLETA" : "INCOMPLETA",
         });
         toast.success("Instrucciones guardadas");
       } else {
@@ -67,6 +70,20 @@ export default function SeccionMetodosPago({
         });
       }
     });
+  };
+
+  const manejarGuardarVencimiento = async (
+    id: MetodoPagoId,
+    vencimiento: MetodoPagoAdmin["vencimiento"],
+  ): Promise<boolean> => {
+    const resultado = await guardarConfigMetodo({ metodo: id, vencimiento });
+    if (!resultado.success) {
+      toast.error("No se pudo guardar el vencimiento", { description: resultado.error });
+      return false;
+    }
+    alActualizarMetodo(id, { vencimiento });
+    toast.success("Vencimiento guardado para pedidos nuevos");
+    return true;
   };
 
   if (!resultado.ok) {
@@ -104,6 +121,7 @@ export default function SeccionMetodosPago({
               activo={metodo.activo}
               alCambiarActivo={(valor) => manejarCambioActivo("transferencia", valor)}
               alGuardarConfig={manejarGuardarConfig}
+              alGuardarVencimiento={(valor) => manejarGuardarVencimiento("transferencia", valor)}
             />
           ) : (
             <TarjetaEfectivo
@@ -111,6 +129,7 @@ export default function SeccionMetodosPago({
               metodo={metodo}
               activo={metodo.activo}
               alCambiarActivo={(valor) => manejarCambioActivo("efectivo", valor)}
+              alGuardarVencimiento={(valor) => manejarGuardarVencimiento("efectivo", valor)}
             />
           ),
         )}

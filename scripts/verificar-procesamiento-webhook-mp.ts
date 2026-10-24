@@ -40,12 +40,13 @@ async function main(): Promise<void> {
 
   try {
     const llamadasProveedor: string[] = [];
+    let externalIdDevuelto = PAYMENT_ID;
     const procesar = crearProcesadorWebhookMP({
       validarFirma: firmaWebhookMPValida,
-      async obtenerEstadoPago(_tenantId, datos) {
-        llamadasProveedor.push(datos.externalId);
+      async obtenerEstadoPago(tenantId, datos) {
+        llamadasProveedor.push(`${tenantId}:${datos.externalId}`);
         return {
-          externalId: datos.externalId,
+          externalId: externalIdDevuelto,
           referencia: "pedido-a",
           estadoExterno: "approved",
           montoPago: 2500,
@@ -74,7 +75,21 @@ async function main(): Promise<void> {
         preferenceId: "pref-a",
       },
     });
-    assert.deepEqual(llamadasProveedor, [PAYMENT_ID]);
+    assert.deepEqual(llamadasProveedor, [`tenant-a:${PAYMENT_ID}`]);
+
+    externalIdDevuelto = "mp-id-distinto";
+    await assert.rejects(
+      procesar(
+        crearRequest({ type: "payment", data: { id: PAYMENT_ID } }, {
+          dataId: PAYMENT_ID,
+          firma: firmaValida.firma,
+        }),
+        "tenant-a",
+      ),
+      /no coincide con la notificación/,
+      "La consulta oficial debe devolver el mismo ID firmado del pago",
+    );
+    externalIdDevuelto = PAYMENT_ID;
 
     const llamadasAntesFirmaInvalida = llamadasProveedor.length;
     const ultimoDigito = firmaValida.firma.at(-1);

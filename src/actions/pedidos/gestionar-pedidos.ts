@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { conPrisma, conPrismaTenant } from "@/lib/prisma";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-import { confirmarReservaStockPedido, liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
-import { descontarStockPedido } from "@/lib/pedidos/descontar-stock-pedido";
+import { liberarReservaStockPedido } from "@/lib/pedidos/gestionar-reserva-stock";
+import {
+  confirmarPagoManualEnTransaccion,
+  rechazarTransferenciaEnTransaccion,
+} from "@/lib/pedidos/transiciones-pago-manual";
 
 const id = z.string().trim().min(1).max(191);
 const esquemaEstado = z.object({ pedidoId: id, estado: z.enum(["EN_PREPARACION", "LISTO", "ENVIADO", "ENTREGADO", "CANCELADO"]) });
@@ -35,36 +38,36 @@ export async function aprobarPagoManual(pedidoIdRecibido: unknown): Promise<Resu
   if (!parsed.success) return { ok: false, error: "Pedido inválido" };
   try {
     const contexto = await requiereAdmin();
-    const aprobado = await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedido.findUnique({ where: { id: parsed.data }, select: {
-        estado: true, estadoPago: true, metodoPago: true, stockReservado: true,
-      } });
-      if (!pedido || pedido.estado !== "PENDIENTE" || pedido.estadoPago === "APROBADO") return false;
-      if (pedido.metodoPago !== "efectivo" && pedido.metodoPago !== "transferencia") return false;
-      const metodoPago = pedido.metodoPago;
-      const cambio = await tx.pedido.updateMany({
-        where: { id: parsed.data, estado: "PENDIENTE", estadoPago: { not: "APROBADO" }, metodoPago },
-        data: { estado: "CONFIRMADO", estadoPago: "APROBADO", stockReservado: false },
-      });
-      if (cambio.count !== 1) return false;
-      if (pedido.stockReservado) await confirmarReservaStockPedido(parsed.data, tx);
-      else await descontarStockPedido(parsed.data, tx);
-      await tx.payment.updateMany({ where: { pedidoId: parsed.data, proveedor: metodoPago }, data: { estado: "APROBADO" } });
-      await tx.pedidoEvento.create({ data: {
-        pedidoId: parsed.data,
-        tipo: "PAGO_APROBADO",
-        descripcion: metodoPago === "efectivo"
-          ? "Pago en efectivo confirmado por administración"
-          : "Pago por transferencia aprobado por administración",
-      } });
-      return true;
-    }));
-    if (!aprobado) return { ok: false, error: "Solo se puede confirmar un pago manual pendiente" };
+    const aprobado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.$transaction((tx) => confirmarPagoManualEnTransaccion(
+        tx, parsed.data, contexto.usuarioId, () => new Date(),
+      )),
+    );
+    if (!aprobado) return { ok: false, error: "El pago no está pendiente o el pedido venció; no se puede confirmar" };
     invalidar(parsed.data);
     return { ok: true };
   } catch (error) {
     console.error("Error aprobando pago manual:", error);
     return { ok: false, error: "No se pudo aprobar el pago" };
+  }
+}
+
+export async function rechazarTransferencia(pedidoIdRecibido: unknown): Promise<Resultado> {
+  const parsed = id.safeParse(pedidoIdRecibido);
+  if (!parsed.success) return { ok: false, error: "Pedido inválido" };
+  try {
+    const contexto = await requiereAdmin();
+    const rechazado = await conPrismaTenant(contexto.tenantId, (prisma) =>
+      prisma.$transaction((tx) => rechazarTransferenciaEnTransaccion(
+        tx, parsed.data, contexto.usuarioId,
+      )),
+    );
+    if (!rechazado) return { ok: false, error: "La transferencia ya fue resuelta o el pedido no admite rechazo" };
+    invalidar(parsed.data);
+    return { ok: true };
+  } catch (error) {
+    console.error("Error rechazando transferencia:", error);
+    return { ok: false, error: "No se pudo rechazar la transferencia" };
   }
 }
 
@@ -74,7 +77,7 @@ export async function cambiarEstadoPedido(datos: unknown): Promise<Resultado> {
   try {
     const contexto = await requiereAdmin();
     const { pedidoId, estado } = parsed.data;
-    const actualizado = await conPrisma((prisma) => prisma.$transaction(async (tx) => {
+    const actualizado = await conPrismaTenant(contexto.tenantId, (prisma) => prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.findUnique({ where: { id: pedidoId }, select: { estado: true, estadoPago: true, estadoEnvio: true, stockReservado: true, metodoEntrega: true } });
       if (!pedido) return false;
       if (estado === "CANCELADO") {

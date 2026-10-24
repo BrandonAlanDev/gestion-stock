@@ -7,6 +7,8 @@ import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
 import { publicIdPerteneceTenant } from "@/lib/services/imagenes-cloudinary/public-id-pertenece-tenant";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { actualizarRegistroPrendaConDetalles } from "@/lib/services/prendas/actualizar-registro-prenda";
+import { ConflictoStockVarianteError } from "@/lib/inventario/actualizar-stock-variante";
+import { ErrorVarianteNoEliminable } from "@/lib/inventario/variantes-transaccion";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { conPrisma } from "@/lib/prisma";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
@@ -48,6 +50,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
     return {
       id: variante.id,
       stock: variante.stock,
+      stockOriginal: variante.stockOriginal,
       sku: variante.sku ?? null,
       sizeId: original.sizeId === undefined ? anterior?.sizeId ?? null : variante.sizeId ?? null,
       colorId: original.colorId === undefined ? anterior?.colorId ?? null : variante.colorId ?? null,
@@ -141,6 +144,10 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
     }
     await eliminarImagenes(idsPublicosSubidos, tenantId);
     if ((error as { code?: string })?.code === "P2002") return { error: "El SKU ya existe." };
+    if (error instanceof ConflictoStockVarianteError) {
+      return { error: "El stock cambió mientras editabas el producto. Recargá la página y volvé a intentar." };
+    }
+    if (error instanceof ErrorVarianteNoEliminable) return { error: error.message };
     return { error: "Error al actualizar el producto." };
   }
 }

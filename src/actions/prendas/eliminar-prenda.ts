@@ -3,6 +3,7 @@
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { eliminarRegistroPrenda } from "@/lib/services/prendas/eliminar-registro-prenda";
+import { ErrorVarianteNoEliminable } from "@/lib/inventario/variantes-transaccion";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { conPrisma } from "@/lib/prisma";
 import { revalidateTag } from "next/cache";
@@ -24,6 +25,7 @@ export async function eliminarPrenda(id: string) {
     return { success: true };
   } catch (error: unknown) {
     console.error("ERROR_AL_ELIMINAR_PRENDA:", error);
+    if (error instanceof ErrorVarianteNoEliminable) return { error: error.message };
     if ((error as { code?: string })?.code === "P2003") return { error: "No se puede eliminar: existen registros vinculados." };
     return { error: "Ocurrió un error inesperado al intentar eliminar el producto." };
   }

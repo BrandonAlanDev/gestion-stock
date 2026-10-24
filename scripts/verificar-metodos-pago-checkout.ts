@@ -25,6 +25,7 @@ function crearMetodo(
     requiereConexion: false,
     requiereConfiguracion: false,
     conectado: false,
+    estadoConfiguracion: "NO_REQUERIDA",
     ...opciones,
   };
 }

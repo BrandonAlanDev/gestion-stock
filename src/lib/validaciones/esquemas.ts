@@ -50,13 +50,14 @@ export const garmentSchema = z
       .optional(),
     variants: z.array(
       z.object({
-        id: z.string().optional(),
+        id: z.string().min(1).optional(),
         opcionValores: z
           .array(z.object({ opcion: z.string(), valor: z.string() }))
           .default([]),
         priceOverride: z.coerce.number().positive().optional().nullable(),
         sku: z.string().optional().nullable(),
         stock: z.coerce.number().int().nonnegative(),
+        stockOriginal: z.coerce.number().int().nonnegative().optional(),
         sizeId: z.string().optional().nullable(),
         colorId: z.string().optional().nullable(),
         attributes: z.json().optional().nullable(),
@@ -101,6 +102,14 @@ export const garmentSchema = z
     const nombresOpcionesValidas = new Set(nombresOpciones);
 
     datos.variants.forEach((variante, i) => {
+      if (variante.id && variante.stockOriginal === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["variants", i, "stockOriginal"],
+          message: "Recargá el producto para verificar el stock antes de guardarlo",
+        });
+      }
+
       const pares = [...(variante.opcionValores ?? [])]
         .map((par) => `${par.opcion.trim().toLowerCase()}::${par.valor.trim().toLowerCase()}`)
         .sort();

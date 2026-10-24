@@ -1,6 +1,7 @@
 import "server-only";
 
 import { conPrismaTenant } from "@/lib/prisma";
+import { registrarErrorPagoSeguro } from "@/lib/pagos/registro-error-seguro";
 import type {
   DatosCrearPago,
   DatosEstadoPago,
@@ -65,11 +66,24 @@ export const proveedorTransferencia: PaymentProvider = {
   },
 
   async crearPago(datos: DatosCrearPago): Promise<ResultadoCrearPago> {
-    const configuracion = await obtenerConfigTransferencia(datos.tenantId);
+    let configuracion: Awaited<ReturnType<typeof obtenerConfigTransferencia>>;
+    try {
+      configuracion = await obtenerConfigTransferencia(datos.tenantId);
+    } catch (error) {
+      registrarErrorPagoSeguro(
+        "Fallo temporal consultando configuración de transferencia",
+        error,
+        "transferencia",
+      );
+      throw new Error("No pudimos verificar la configuración de transferencia. Intentá nuevamente.");
+    }
+    if (!configuracion?.instrucciones) {
+      throw new Error("La transferencia no está configurada. Elegí otro método de pago o intentá más tarde.");
+    }
     return {
       externalId: null,
       checkoutUrl: null,
-      instrucciones: configuracion?.instrucciones ?? null,
+      instrucciones: configuracion.instrucciones,
       esSandbox: false,
       estado: "PENDIENTE",
     };

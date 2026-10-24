@@ -25,10 +25,17 @@ export function crearExpiradorPedidosPendientes(
       const candidatos = await prisma.pedido.findMany({
         where: {
           estado: "PENDIENTE",
+          estadoPago: { not: "APROBADO" },
           stockReservado: true,
           reservaExpiraEn: { lte: ahora },
+          AND: [{
+            OR: [
+              { metodoPago: { not: "transferencia" } },
+              { estadoPago: { not: "EN_ACREDITACION" } },
+            ],
+          }],
         },
-        select: { id: true },
+        select: { id: true, estadoPago: true },
         orderBy: { reservaExpiraEn: "asc" },
         take: 100,
       });
@@ -40,8 +47,15 @@ export function crearExpiradorPedidosPendientes(
             where: {
               id: candidato.id,
               estado: "PENDIENTE",
+              estadoPago: { not: "APROBADO" },
               stockReservado: true,
               reservaExpiraEn: { lte: ahora },
+              AND: [{
+                OR: [
+                  { metodoPago: { not: "transferencia" } },
+                  { estadoPago: { not: "EN_ACREDITACION" } },
+                ],
+              }],
             },
             data: { estado: "CANCELADO", estadoPago: "CANCELADO" },
           });
@@ -53,6 +67,16 @@ export function crearExpiradorPedidosPendientes(
               estado: { not: "APROBADO" },
             },
             data: { estado: "CANCELADO" },
+          });
+          await tx.pedidoEvento.create({
+            data: {
+              pedidoId: candidato.id,
+              tipo: "CANCELADO",
+              descripcion: "Pedido cancelado por vencimiento de la reserva de stock",
+              estadoAnterior: candidato.estadoPago,
+              estadoNuevo: "CANCELADO",
+              metadata: { origen: "cron-expiracion" },
+            },
           });
 
           const liberada = await dependencias.liberarReservaStockPedido(

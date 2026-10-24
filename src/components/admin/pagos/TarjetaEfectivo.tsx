@@ -4,15 +4,18 @@ import { Banknote } from "lucide-react";
 import Switch from "@/components/ui/switch";
 import Badge from "@/components/ui/badge";
 import type { MetodoPagoAdmin } from "@/actions/pagos/obtener-metodos-pago";
+import ConfiguracionVencimiento from "./ConfiguracionVencimiento";
 
 export default function TarjetaEfectivo({
   metodo,
   activo,
   alCambiarActivo,
+  alGuardarVencimiento,
 }: {
   metodo: MetodoPagoAdmin;
   activo: boolean;
   alCambiarActivo: (valor: boolean) => void;
+  alGuardarVencimiento: (valor: MetodoPagoAdmin["vencimiento"]) => Promise<boolean>;
 }) {
   return (
     <section className="rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo)] p-5">
@@ -40,6 +43,10 @@ export default function TarjetaEfectivo({
         </div>
         <Switch activo={activo} alCambiar={alCambiarActivo} mostrarEstado />
       </div>
+      <ConfiguracionVencimiento
+        valor={metodo.vencimiento}
+        alGuardar={alGuardarVencimiento}
+      />
     </section>
   );
 }
