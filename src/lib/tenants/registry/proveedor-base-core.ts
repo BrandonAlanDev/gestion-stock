@@ -19,7 +19,6 @@ const filaSchema = z.object({
   nombre: z.string().min(1),
   slug: z.string().min(1),
   estado: z.enum(["PROVISIONING", "ACTIVO", "SUSPENDIDO", "INACTIVO", "ERROR"]),
-  versionCache: enteroSql,
   versionCredenciales: enteroSql,
   referenciaBase: z.string().nullable(),
   dominio: z.string().nullable(),
@@ -89,12 +88,11 @@ export class ProveedorBaseCore implements TenantRegistryProvider {
     return this.buscar();
   }
 
-  async verificarAcceso(tenantId: string): Promise<number> {
+  async verificarAcceso(tenantId: string): Promise<void> {
     const entrada = await this.resolverPorId(tenantId);
     if (!entrada || entrada.tenant.estado !== "ACTIVO") {
       throw new Error("La organización no está disponible");
     }
-    return entrada.versionCache ?? 0;
   }
 
   async resolverCredenciales(
@@ -159,7 +157,7 @@ export class ProveedorBaseCore implements TenantRegistryProvider {
     const [tenants, clientes] = await Promise.all([
       this.consultar(`
         SELECT 'tenant' AS tipo, t.id AS idInterno, COALESCE(t.identidad_producto, t.id) AS id,
-          t.nombre, t.slug, t.estado, t.version_cache AS versionCache,
+          t.nombre, t.slug, t.estado,
           t.version_credenciales AS versionCredenciales,
           CASE WHEN t.estado = 'ACTIVO' AND i.activa = 1 AND i.verificada_en IS NOT NULL
             AND i.version_credencial = t.version_credenciales THEN i.referencia_credencial
@@ -172,7 +170,7 @@ export class ProveedorBaseCore implements TenantRegistryProvider {
       `, parametros),
       this.consultar(`
         SELECT 'cliente' AS tipo, b.id AS idInterno, b.identidad_producto AS id,
-          o.nombre, o.slug, 'ACTIVO' AS estado, b.version_cache AS versionCache,
+          o.nombre, o.slug, 'ACTIVO' AS estado,
           1 AS versionCredenciales, b.id AS referenciaBase, d.hostname AS dominio
         FROM bases_datos_clientes b
         JOIN productos_saas p ON p.id = b.producto_id AND p.slug = ? AND p.activo = 1
@@ -196,7 +194,6 @@ export class ProveedorBaseCore implements TenantRegistryProvider {
       dominios: dominios.sort(),
       referenciaBase: fila.referenciaBase ?? "",
       versionCredenciales: String(fila.versionCredenciales),
-      versionCache: fila.versionCache,
     }));
   }
 

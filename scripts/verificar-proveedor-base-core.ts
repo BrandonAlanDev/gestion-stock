@@ -29,6 +29,7 @@ const pool = {
       return { affectedRows: 1 };
     }
     assert.equal(parametros[0], "gestion-stock");
+    assert.equal(sql.includes("version_cache"), false);
     if (sql.includes("SELECT 'tenant' AS tipo") && sql.includes("AS cifrado")) {
       if (parametros[1] === "cliente-1" && parametros[7] === "base-1") {
         return [{ tipo: "cliente", idInterno: "base-1", referencia: "base-1",
@@ -42,7 +43,7 @@ const pool = {
       const filtro = parametros[1];
       if (filtro && filtro !== "uno.ejemplo.com" && filtro !== "tenant-1") return [];
       return [{ tipo: "tenant", idInterno: "core-1", id: "tenant-1",
-        nombre: "Uno", slug: "uno", estado, versionCache: 3,
+        nombre: "Uno", slug: "uno", estado,
         versionCredenciales: 2, referenciaBase: estado === "ACTIVO" ? "ref-1" : null,
         dominio: "uno.ejemplo.com" }];
     }
@@ -50,7 +51,7 @@ const pool = {
       const filtro = parametros[1];
       if (filtro && filtro !== "dos.ejemplo.com" && filtro !== "cliente-1") return [];
       return [{ tipo: "cliente", idInterno: "base-1", id: "cliente-1",
-        nombre: "Dos", slug: "dos", estado: "ACTIVO", versionCache: 1,
+        nombre: "Dos", slug: "dos", estado: "ACTIVO",
         versionCredenciales: BigInt(1), referenciaBase: "base-1", dominio: "dos.ejemplo.com" }];
     }
     return [];
@@ -66,7 +67,7 @@ async function verificar(): Promise<void> {
   assert.equal((await proveedor.resolverPorHostname("dos.ejemplo.com"))?.tenant.id, "cliente-1");
   assert.equal(await proveedor.resolverPorHostname("desconocido.ejemplo.com"), null);
   assert.equal((await proveedor.listarTenants()).length, 2);
-  assert.equal(await proveedor.verificarAcceso("tenant-1"), 3);
+  assert.equal(await proveedor.verificarAcceso("tenant-1"), undefined);
   assert.deepEqual(await proveedor.resolverCredenciales("ref-1", "2", "tenant-1"), {
     host: "db.ejemplo.com", puerto: 3306, usuario: "usuario", contrasena: "clave",
     base: "cliente", ssl: true,
