@@ -40,7 +40,7 @@ export default function PaginaCategoriaClient({
   );
   const currentCategory = categoriesData?.find((item) => item.id === category.id) ?? category;
   const subcategory = currentCategory.subCategories.find((item) => item.id === subcategoryParam)?.id;
-  const { data: garmentsData, dataUpdatedAt, isFetching, isPlaceholderData } = useCatalogGarments(
+  const { data: garmentsData, dataUpdatedAt, isFetching } = useCatalogGarments(
     tenantId,
     currentPage,
     limit,
@@ -59,13 +59,13 @@ export default function PaginaCategoriaClient({
   }, [tenantId, categories, categoriesObtenidoEn]);
 
   useEffect(() => {
-    if (garmentsData?.success && dataUpdatedAt > 0 && !isPlaceholderData && garmentsData.page === currentPage) {
+    if (garmentsData?.success && dataUpdatedAt > 0 && garmentsData.page === currentPage) {
       guardarPaginaCatalogo(
         tenantId, currentPage, limit, category.name, subcategory,
         garmentsData.data, garmentsData.total, garmentsData.obtenidoEn ?? dataUpdatedAt
       );
     }
-  }, [tenantId, currentPage, limit, category.name, subcategory, garmentsData, dataUpdatedAt, isPlaceholderData]);
+  }, [tenantId, currentPage, limit, category.name, subcategory, garmentsData, dataUpdatedAt]);
 
   const updateParams = useCallback((nuevos: Record<string, string | undefined>) => {
     const parametros = new URLSearchParams(searchParams.toString());

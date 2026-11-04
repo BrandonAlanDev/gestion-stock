@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -62,11 +61,7 @@ const ProductCard = ({ product, priority = false }: Props) => {
   const imagen = obtenerUrlImagenOptimizada(images[currentImage], 1200) || "/images/placeholder.svg";
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className="group relative min-w-0"
@@ -106,7 +101,7 @@ const ProductCard = ({ product, priority = false }: Props) => {
           <span className="inline-block pt-1 text-sm font-medium text-[var(--color-primario)]">Ver producto <span aria-hidden="true">→</span></span>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 };
 

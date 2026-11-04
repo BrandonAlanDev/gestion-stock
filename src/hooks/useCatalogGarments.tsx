@@ -67,6 +67,11 @@ export function useCatalogGarments(
   initialData?: ResultadoCatalogo,
   categoriasActualizadasEn?: number
 ) {
+  const datosLocales = !initialData && !search
+    ? leerResultadoLocal(tenantId, page, limit, categoria, subcategoria, categories)
+    : null;
+  const datosIniciales = initialData ?? datosLocales ?? undefined;
+
   return useQuery<ResultadoCatalogo>({
     queryKey: ["catalogProducts", { tenantId, page, limit, categoria, search, subcategoria, categoriasActualizadasEn }],
     queryFn: async () => {
@@ -100,13 +105,9 @@ export function useCatalogGarments(
       return { success: true, data: pagina, total: resultado.total,
         page: resultado.page, totalPages: resultado.totalPages, obtenidoEn };
     },
-    initialData,
-    initialDataUpdatedAt: initialData?.obtenidoEn,
+    initialData: datosIniciales,
+    initialDataUpdatedAt: datosIniciales?.obtenidoEn,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    placeholderData: () => {
-      if (search) return undefined;
-      return leerResultadoLocal(tenantId, page, limit, categoria, subcategoria, categories) ?? undefined;
-    },
   });
 }

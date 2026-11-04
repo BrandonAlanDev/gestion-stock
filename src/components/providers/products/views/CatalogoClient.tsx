@@ -43,7 +43,7 @@ export default function CatalogoClient({
   const { data: categoriesData, dataUpdatedAt: categoriasActualizadasEn } = useCatalogCategories(
     tenantId, initialCategories, initialCategoriesObtenidoEn
   );
-  const { data: garmentsData, dataUpdatedAt, isFetching, isPlaceholderData } = useCatalogGarments(
+  const { data: garmentsData, dataUpdatedAt, isFetching } = useCatalogGarments(
     tenantId,
     currentPage,
     limit,
@@ -68,13 +68,13 @@ export default function CatalogoClient({
   }, [tenantId, initialCategories, initialCategoriesObtenidoEn]);
 
   useEffect(() => {
-    if (garmentsData?.success && dataUpdatedAt > 0 && !isPlaceholderData && garmentsData.page === currentPage) {
+    if (garmentsData?.success && dataUpdatedAt > 0 && garmentsData.page === currentPage) {
       guardarPaginaCatalogo(
         tenantId, currentPage, limit, categoria, subcategoria,
         garmentsData.data, garmentsData.total, garmentsData.obtenidoEn ?? dataUpdatedAt
       );
     }
-  }, [tenantId, currentPage, categoria, subcategoria, garmentsData, dataUpdatedAt, isPlaceholderData]);
+  }, [tenantId, currentPage, categoria, subcategoria, garmentsData, dataUpdatedAt]);
 
   // Actualizar URL sin recargar la página (para que el hook se actualice)
   const updateParams = useCallback(
