@@ -1,5 +1,5 @@
 import CatalogoClient from "@/components/providers/products/views/CatalogoClient";
-import { obtenerCategoriasCacheadas } from "@/lib/cache/obtener-categorias-cacheadas";
+import { obtenerCategoriasCatalogo } from "@/lib/services/categorias/obtener-categorias-catalogo";
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
@@ -16,7 +16,8 @@ export default async function CatalogoPage({
   const categoria = sp?.categoria || undefined;
   const subcategoria = sp?.subcategoria || undefined;
 
-  const categories = await obtenerCategoriasCacheadas(tenant.id);
+  const categories = await obtenerCategoriasCatalogo(tenant.id);
+  const categoriesObtenidoEn = Date.now();
 
   let categoryId: string | undefined;
   if (categoria) {
@@ -63,6 +64,7 @@ export default async function CatalogoPage({
       initialSubcategoria={subcategoria}
       initialGarments={initialGarments}
       initialCategories={initialCategories}
+      initialCategoriesObtenidoEn={categoriesObtenidoEn}
     />
   );
 }

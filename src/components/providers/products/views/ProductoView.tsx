@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import type { ProductProps } from "@/components/providers/products/types";
 import SelectorProducto from "@/components/tienda/producto/SelectorProducto";
 import { renderMarkdown } from "@/lib/utilidades/markdown";
-import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import { obtenerUrlImagenOptimizada } from "@/lib/utilidades/imagen-cloudinary";
 
 export default function ProductoView({ product }: ProductProps) {
@@ -58,7 +57,7 @@ export default function ProductoView({ product }: ProductProps) {
                       boxShadow: selectedImage === img.srcImage ? "0 0 0 1px var(--color-primario)" : "none",
                     }}
                   >
-                    <Image src={obtenerUrlImagenOptimizada(img.srcImage, 200) || img.srcImage} alt="" fill sizes="64px" unoptimized={!imagenAdmiteOptimizacion(img.srcImage)} className="object-cover" />
+                    <Image src={obtenerUrlImagenOptimizada(img.srcImage, 200) || img.srcImage} alt="" fill sizes="64px" unoptimized className="object-cover" />
                   </button>
                 ))}
               </div>

@@ -17,7 +17,6 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
     seleccion,
     controlaStock,
     disponibilidad,
-    stockTotal,
     precioMostrado,
     precioAnterior,
     alternarValor,
@@ -66,10 +65,10 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
             </h3>
             <div className="flex flex-wrap gap-2.5">
               {grupo.values.map((valor) => {
-                const sinStock = controlaStock && disponibilidadGrupo?.[valor.id] === false;
+                const sinCombinacion = disponibilidadGrupo?.[valor.id] === false;
                 const seleccionado = valorSeleccionado === valor.value;
                 const estilo =
-                  sinStock
+                  sinCombinacion
                     ? "border-[var(--color-secundario)] text-[var(--texto-sobre-fondo)] opacity-40 cursor-not-allowed"
                     : seleccionado
                       ? "border-[var(--color-primario)] text-[var(--color-primario)]"
@@ -78,13 +77,11 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
                   <button
                     key={valor.id}
                     onClick={() => alternarValor(grupo.name, valor.value)}
-                    disabled={sinStock}
+                    disabled={sinCombinacion}
                     className={`min-h-11 rounded-lg border px-4 py-2 text-sm font-medium transition ${estilo}`}
                   >
                     {valor.value}
-                    {sinStock && (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wide opacity-70">Sin stock</span>
-                    )}
+                    {sinCombinacion && <span className="ml-1.5 text-[10px] uppercase tracking-wide opacity-70">No disponible</span>}
                   </button>
                 );
               })}
@@ -93,16 +90,10 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
         );
       })}
 
-      {conVariantes && (
-        <div className="text-xs text-[var(--texto-sobre-fondo)] opacity-60">
-          {disponibilidad.varianteSeleccionada
-            ? disponibilidad.stockDisponible > 0
-              ? `${disponibilidad.stockDisponible} unidades disponibles`
-              : "Sin stock en esta combinación"
-            : stockTotal > 0
-              ? `${stockTotal} unidades disponibles`
-              : "Sin stock disponible"}
-        </div>
+      {conVariantes && controlaStock && (
+        <p className="text-xs text-[var(--texto-sobre-fondo)] opacity-60">
+          La disponibilidad se confirma al agregar al carrito.
+        </p>
       )}
 
       <div className="space-y-3 border-y border-current/15 py-4 text-sm text-[var(--texto-sobre-fondo)] opacity-70">

@@ -15,11 +15,9 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
   const [agregando, setAgregando] = useState(false);
 
   const disponibilidad = useMemo<ResultadoDisponibilidad>(
-    () => calcularDisponibilidad(modelo, seleccion, controlaStock),
-    [modelo, seleccion, controlaStock]
+    () => calcularDisponibilidad(modelo, seleccion, false),
+    [modelo, seleccion]
   );
-
-  const stockTotal = disponibilidad.stockTotal;
 
   const precioMostrado = disponibilidad.varianteSeleccionada?.priceOverride ?? Number(producto.price ?? 0);
   const precioAnterior = producto.maxPrice != null ? Number(producto.maxPrice) : null;
@@ -71,7 +69,7 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
         image: producto.images?.[0]?.srcImage,
         variantId: variante.id,
         varianteInfo: { ...seleccion },
-        stock: variante.stock,
+        stock: respuesta.stock,
       });
       return { ok: true };
     } finally {
@@ -84,7 +82,6 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
     seleccion,
     controlaStock,
     disponibilidad,
-    stockTotal,
     precioMostrado,
     precioAnterior,
     alternarValor,

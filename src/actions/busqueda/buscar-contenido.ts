@@ -2,6 +2,7 @@
 
 import { conPrisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { obtenerIndiceProductosPublicos } from "@/lib/services/prendas/obtener-indice-productos-publicos";
 import type { ResultadoBusqueda } from "@/types/busqueda/resultado-busqueda";
 
 const LIMITE_POR_TIPO = 8;
@@ -12,7 +13,7 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
   const texto = typeof consulta === "string" ? consulta.trim().slice(0, LONGITUD_MAXIMA_CONSULTA) : "";
   if (texto.length < 2) return [];
 
-  await requiereTenantActivo();
+  const tenant = await requiereTenantActivo();
   try {
     const [prendas, categorias, subcategorias, paginas] = await conPrisma((prisma) => Promise.all([
       prisma.garment.findMany({
@@ -50,12 +51,13 @@ export async function buscarContenido(consulta: string): Promise<ResultadoBusque
       }),
     ]));
 
+    const indice = await obtenerIndiceProductosPublicos(tenant.id);
     const grupos: ResultadoBusqueda[][] = [
       prendas.map((prenda) => ({
         id: prenda.id,
         type: "product",
         title: prenda.name,
-        url: `/productos/item/${prenda.id}`,
+        url: `/productos/${indice.porId[prenda.id]?.slug ?? prenda.id}`,
         imageUrl: prenda.images[0]?.srcImage ?? null,
       })),
       categorias.map((categoria) => ({

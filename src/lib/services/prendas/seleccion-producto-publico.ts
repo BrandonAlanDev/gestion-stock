@@ -43,11 +43,22 @@ export const SELECCION_PRODUCTO_PUBLICO = {
   },
 } satisfies Prisma.GarmentSelect;
 
+export const SELECCION_DETALLE_PRODUCTO_PUBLICO = {
+  ...SELECCION_PRODUCTO_PUBLICO,
+  variants: {
+    ...SELECCION_PRODUCTO_PUBLICO.variants,
+    select: { ...SELECCION_PRODUCTO_PUBLICO.variants.select, stock: false },
+  },
+} satisfies Prisma.GarmentSelect;
+
 export const SELECCION_TARJETA_PRODUCTO_PUBLICO = {
   id: true,
   name: true,
+  categoryId: true,
+  subCategoryId: true,
   price: true,
   createdAt: true,
+  updatedAt: true,
   images: {
     select: { srcImage: true },
     orderBy: { order: "asc" },

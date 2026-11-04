@@ -18,7 +18,7 @@ export default function VistaPreviaCatalogo() {
   const [vista, setVista] = useState<VistaCatalogo | null>(null);
 
   useEffect(() => {
-    setVista(tenantId ? leerPaginaCatalogo(tenantId, pagina, categoria, subcategoria) : null);
+    setVista(tenantId ? leerPaginaCatalogo(tenantId, pagina, 20, categoria, subcategoria) : null);
   }, [tenantId, pagina, categoria, subcategoria]);
 
   if (!vista) return <SkeletonTienda />;

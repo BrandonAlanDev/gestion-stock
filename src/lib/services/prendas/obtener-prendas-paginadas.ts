@@ -1,6 +1,7 @@
 import { Prisma } from "@/../generated/prisma/client";
 import { conPrismaTenant } from "@/lib/prisma";
 import { SELECCION_PRODUCTO_PUBLICO, SELECCION_TARJETA_PRODUCTO_PUBLICO } from "./seleccion-producto-publico";
+import { obtenerIndiceProductosPublicos } from "./obtener-indice-productos-publicos";
 
 async function consultarPrendasPaginadas<T extends Prisma.GarmentSelect>(
   select: T,
@@ -38,11 +39,21 @@ async function consultarPrendasPaginadas<T extends Prisma.GarmentSelect>(
   });
 }
 
-export function obtenerPrendasPaginadas(
+export async function obtenerPrendasPaginadas(
   tenantId: string, page: number, limit: number,
   categoryId?: string, search?: string, subCategoryId?: string
 ) {
-  return consultarPrendasPaginadas(SELECCION_TARJETA_PRODUCTO_PUBLICO, tenantId, page, limit, categoryId, search, subCategoryId);
+  const [resultado, indice] = await Promise.all([
+    consultarPrendasPaginadas(SELECCION_TARJETA_PRODUCTO_PUBLICO, tenantId, page, limit, categoryId, search, subCategoryId),
+    obtenerIndiceProductosPublicos(tenantId),
+  ]);
+  return {
+    ...resultado,
+    garments: resultado.garments.map((producto) => ({
+      ...producto,
+      slug: indice.porId[producto.id]?.slug ?? producto.id,
+    })),
+  };
 }
 
 export function obtenerPrendasPaginadasCompletas(

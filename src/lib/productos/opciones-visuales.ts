@@ -15,7 +15,7 @@ interface ProductoConOpciones {
   opciones?: Array<{ name: string; values?: Array<{ id?: string; value: string }> }> | null;
   variants?: Array<{
     id: string;
-    stock: number;
+    stock?: number;
     sku?: string | null;
     priceOverride?: number | string | { toString(): string } | null;
     optionValues?: Array<{ optionValue: { value: string; option: { name: string } } }>;
@@ -43,7 +43,7 @@ export function construirModeloVisual(producto: ProductoConOpciones): ModeloVisu
     }
     return {
       id: variante.id,
-      stock: variante.stock,
+      stock: variante.stock ?? 0,
       sku: variante.sku ?? null,
       priceOverride: variante.priceOverride != null ? Number(variante.priceOverride) : null,
       combinacion,

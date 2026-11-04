@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import ProductCard from "@/components/providers/products/cards/ProductCard";
+import { SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
 import { Package, Layers, ChevronDown } from "lucide-react";
 import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
@@ -15,14 +15,16 @@ interface CategoryContentClientProps {
   subCategories: SubCategory[];
   garments: ProductoCatalogo[];
   selectedSubId: string; // "all" o el id de la subcategoría activa
-  basePath: string; // ej: "/productos/ropa"
+  onFilterChange: (subcategoria?: string) => void;
+  loading?: boolean;
 }
 
 export default function CategoryContentClient({
   subCategories,
   garments,
   selectedSubId,
-  basePath,
+  onFilterChange,
+  loading = false,
 }: CategoryContentClientProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtroActual = subCategories.find((sub) => sub.id === selectedSubId)?.name;
@@ -42,32 +44,34 @@ export default function CategoryContentClient({
             </h2>
             <div className="space-y-1">
               {/* Todos los productos */}
-              <Link
-                href={basePath}
-                className={`block w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              <button
+                type="button"
+                onClick={() => { onFilterChange(); setFiltersOpen(false); }}
+                className={`block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                   selectedSubId === "all"
                     ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)]"
                     : "text-[var(--texto-sobre-secundario)] opacity-70 hover:bg-[var(--color-fondo-sitio)]/10 hover:opacity-100"
                 }`}
               >
                 Todos los productos
-              </Link>
+              </button>
 
               {/* Subcategorías */}
               {subCategories.map((sub) => {
                 const isActive = selectedSubId === sub.id;
                 return (
-                  <Link
+                  <button
                     key={sub.id}
-                    href={`${basePath}?subcategory=${sub.id}`}
-                    className={`block w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    type="button"
+                    onClick={() => { onFilterChange(sub.id); setFiltersOpen(false); }}
+                    className={`block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)]"
                         : "text-[var(--texto-sobre-secundario)] opacity-70 hover:bg-[var(--color-fondo-sitio)]/10 hover:opacity-100"
                     }`}
                   >
                     {sub.name}
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -76,7 +80,9 @@ export default function CategoryContentClient({
 
         {/* PRODUCTOS */}
         <main className="min-w-0 flex-1">
-          {garments.length > 0 ? (
+          {loading ? (
+            <SkeletonTarjetas cantidad={6} admin={false} />
+          ) : garments.length > 0 ? (
             <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
               {garments.map((garment, indice) => <ProductCard key={garment.id} product={garment} priority={indice < 3} />)}
             </div>

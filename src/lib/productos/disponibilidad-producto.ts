@@ -32,16 +32,11 @@ export function calcularDisponibilidad(
   for (const grupo of modelo.grupos) {
     disponiblePorGrupo[grupo.name] = {};
     for (const valor of grupo.values) {
-      if (!controlaStock) {
-        disponiblePorGrupo[grupo.name][valor.value] = true;
-        continue;
-      }
-
       const candidato = { ...seleccion, [grupo.name]: valor.value };
       const existeConStock = modelo.variantes.some(
         (variante) =>
-          variante.stock > 0 &&
-          Object.keys(candidato).every((clave) => variante.combinacion[clave] === candidato[clave])
+          (!controlaStock || variante.stock > 0) &&
+          Object.entries(candidato).every(([clave, elegido]) => !elegido || variante.combinacion[clave] === elegido)
       );
       disponiblePorGrupo[grupo.name][valor.value] = existeConStock;
     }

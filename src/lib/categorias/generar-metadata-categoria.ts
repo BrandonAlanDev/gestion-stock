@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ categoria
     obtenerTenantPublico(),
     obtenerConfiguracionPaginaSolicitud(),
   ]);
-  const nombre = decodeURIComponent(categoria);
+  const nombre = categoria;
   const nombreTienda = pageConfig?.storeName ?? tenant?.nombre ?? "Tienda";
   return {
     title: `${nombre.charAt(0).toUpperCase() + nombre.slice(1)} — ${nombreTienda}`,

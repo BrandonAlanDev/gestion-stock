@@ -1,20 +1,23 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { getCategories } from "@/actions/categorias/obtener-categorias";
+import { obtenerCategoriasCatalogoPublicas } from "@/actions/categorias/obtener-categorias-catalogo";
+import { guardarCategoriasCatalogo, leerCategoriasCatalogo } from "@/lib/productos/cache-cliente";
+import type { CategoriaCatalogo } from "@/types/productos/catalogo-publico";
 
-type ResultadoCategorias = Awaited<ReturnType<typeof getCategories>>;
+export function useCatalogCategories(tenantId: string, initialData?: CategoriaCatalogo[], obtenidoEn?: number) {
 
-export function useCatalogCategories(tenantId: string, initialData?: unknown) {
-
-  return useQuery<ResultadoCategorias>({
+  return useQuery<CategoriaCatalogo[]>({
     queryKey: ["catalogCategories", tenantId],
     queryFn: async () => {
-      const data = await getCategories();
-      if (!data) throw new Error("Error al cargar categorías");
+      const local = leerCategoriasCatalogo(tenantId);
+      if (local) return local.datos;
+      const data = await obtenerCategoriasCatalogoPublicas();
+      guardarCategoriasCatalogo(tenantId, data);
       return data;
     },
-    initialData: initialData as ResultadoCategorias | undefined,
-    staleTime: 60 * 1000,
+    initialData,
+    initialDataUpdatedAt: obtenidoEn,
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 }

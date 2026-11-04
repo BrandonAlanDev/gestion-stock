@@ -71,7 +71,7 @@ const ProductCard = ({ product, priority = false }: Props) => {
       onMouseLeave={() => setIsHovering(false)}
       className="group relative min-w-0"
     >
-      <Link href={`/productos/item/${product.id}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primario)]">
+      <Link href={`/productos/${product.slug}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primario)]">
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isNew && (

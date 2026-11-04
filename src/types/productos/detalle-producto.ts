@@ -6,7 +6,6 @@ export interface ImagenProductoDetalle {
 
 export interface VarianteProductoDetalle {
   id: string;
-  stock: number;
   sku?: string | null;
   attributes?: Record<string, unknown> | null;
   priceOverride?: number | null;

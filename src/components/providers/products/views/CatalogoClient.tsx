@@ -9,8 +9,7 @@ import { useCatalogGarments } from "@/hooks/useCatalogGarments";
 import { useCatalogCategories } from "@/hooks/useCatalogCategories";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
-import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
-import { guardarPaginaCatalogo } from "@/lib/productos/cache-cliente";
+import { guardarCategoriasCatalogo, guardarPaginaCatalogo } from "@/lib/productos/cache-cliente";
 
 export default function CatalogoClient({
   tenantId,
@@ -18,6 +17,7 @@ export default function CatalogoClient({
   initialSubcategoria,
   initialGarments,
   initialCategories,
+  initialCategoriesObtenidoEn,
 }: {
   tenantId: string;
   initialCategoria?: string;
@@ -31,6 +31,7 @@ export default function CatalogoClient({
     obtenidoEn: number;
   };
   initialCategories?: CategoriaCatalogo[];
+  initialCategoriesObtenidoEn?: number;
 }) {
   const searchParams = useSearchParams();
   const limit = 20;
@@ -39,6 +40,9 @@ export default function CatalogoClient({
   const categoria = searchParams.get("categoria") || undefined;
   const subcategoria = searchParams.get("subcategoria") || undefined;
 
+  const { data: categoriesData, dataUpdatedAt: categoriasActualizadasEn } = useCatalogCategories(
+    tenantId, initialCategories, initialCategoriesObtenidoEn
+  );
   const { data: garmentsData, dataUpdatedAt, isFetching, isPlaceholderData } = useCatalogGarments(
     tenantId,
     currentPage,
@@ -46,19 +50,29 @@ export default function CatalogoClient({
     categoria,
     undefined,
     subcategoria,
+    categoriesData,
     currentPage === initialGarments?.page && categoria === initialCategoria && subcategoria === initialSubcategoria
       ? initialGarments
-      : undefined
+      : undefined,
+    categoriasActualizadasEn
   );
-  const { data: categoriesData } = useCatalogCategories(tenantId, initialCategories);
 
   const garments = garmentsData?.data || [];
   const categories = categoriesData || [];
   const totalPages = garmentsData?.totalPages || 1;
 
   useEffect(() => {
+    if (initialCategories && initialCategoriesObtenidoEn) {
+      guardarCategoriasCatalogo(tenantId, initialCategories, initialCategoriesObtenidoEn);
+    }
+  }, [tenantId, initialCategories, initialCategoriesObtenidoEn]);
+
+  useEffect(() => {
     if (garmentsData?.success && dataUpdatedAt > 0 && !isPlaceholderData && garmentsData.page === currentPage) {
-      guardarPaginaCatalogo(tenantId, currentPage, categoria, subcategoria, garmentsData.data, garmentsData.totalPages, dataUpdatedAt);
+      guardarPaginaCatalogo(
+        tenantId, currentPage, limit, categoria, subcategoria,
+        garmentsData.data, garmentsData.total, garmentsData.obtenidoEn ?? dataUpdatedAt
+      );
     }
   }, [tenantId, currentPage, categoria, subcategoria, garmentsData, dataUpdatedAt, isPlaceholderData]);
 
@@ -86,10 +100,6 @@ export default function CatalogoClient({
       page: undefined,
     });
 
-  if (isFetching && garments.length === 0) {
-    return <SkeletonTienda />;
-  }
-
   return (
     <div className="relative">
       <ProductsPage
@@ -97,6 +107,7 @@ export default function CatalogoClient({
         categories={categories}
         currentPage={currentPage}
         totalPages={totalPages}
+        loading={isFetching && !garmentsData}
         onPageChange={handlePageChange}
         onFilterChange={handleFilterChange}
       />

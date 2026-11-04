@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Filter, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Pagination from "@/components/ui/pagination";
+import { SkeletonTarjetas } from "@/components/ui/skeleton-vistas";
 import ProductCard from "../cards/ProductCard";
 import type { CategoriaCatalogo, ProductoCatalogo } from "@/types/productos/catalogo-publico";
 
@@ -13,6 +14,7 @@ interface Props {
   categories: CategoriaCatalogo[];
   currentPage: number;
   totalPages: number;
+  loading?: boolean;
   onPageChange?: (page: number) => void;
   onFilterChange?: (catName?: string, subName?: string) => void;
 }
@@ -22,6 +24,7 @@ const ProductsPage = ({
   categories = [],
   currentPage,
   totalPages,
+  loading = false,
   onPageChange,
   onFilterChange,
 }: Props) => {
@@ -30,52 +33,20 @@ const ProductsPage = ({
   const categoriaParam = searchParams.get("categoria");
   const subcategoriaParam = searchParams.get("subcategoria");
 
-  const [selectedCat, setSelectedCat] = useState("Todos");
-  const [selectedSub, setSelectedSub] = useState("Todos");
+  const categoriaSeleccionada = categories.find((cat) =>
+    cat.name.trim().toLocaleLowerCase("es-AR") === categoriaParam?.trim().toLocaleLowerCase("es-AR")
+  );
+  const selectedCat = categoriaSeleccionada?.name ?? "Todos";
+  const selectedSub = categoriaSeleccionada?.subCategories.find((sub) =>
+    sub.name.trim().toLocaleLowerCase("es-AR") === subcategoriaParam?.trim().toLocaleLowerCase("es-AR")
+  )?.name.toLocaleLowerCase("es-AR") ?? "Todos";
   const [sortConfig, setSortConfig] = useState({ key: "date", order: "desc" });
-  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  const [openCategoryId, setOpenCategoryId] = useState<string | null>(categoriaSeleccionada?.id ?? null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-    if (!categoriaParam) {
-      setSelectedCat("Todos");
-      setOpenCategoryId(null);
-      return;
-    }
-    const decoded = decodeURIComponent(categoriaParam).trim().toLowerCase();
-    const found = categories.find(
-      (cat) => cat.name.trim().toLowerCase() === decoded
-    );
-    if (found) {
-      setSelectedCat(found.name);
-      setOpenCategoryId(found.id);
-    } else {
-      setSelectedCat("Todos");
-    }
-  }, [categoriaParam, categories]);
-
-  useEffect(() => {
-    if (!subcategoriaParam) {
-      setSelectedSub("Todos");
-      return;
-    }
-    const decoded = decodeURIComponent(subcategoriaParam).trim().toLowerCase();
-    const cat = categories.find(
-      (c) => c.name.trim().toLowerCase() === decodeURIComponent(categoriaParam || "").trim().toLowerCase()
-    );
-    if (cat) {
-      const subExists = cat.subCategories?.some(
-        (sub) => sub.name.trim().toLowerCase() === decoded
-      );
-      if (subExists) {
-        setSelectedSub(decoded);
-      } else {
-        setSelectedSub("Todos");
-      }
-    } else {
-      setSelectedSub("Todos");
-    }
-  }, [subcategoriaParam, categories, categoriaParam]);
+    setOpenCategoryId(categoriaSeleccionada?.id ?? null);
+  }, [categoriaSeleccionada?.id]);
 
   const processedProducts = useMemo(() => {
     return [...garments].sort((a, b) => {
@@ -207,7 +178,7 @@ const ProductsPage = ({
                               }`}
                             style={{ color: isCurrentCatSelected && selectedSub === "Todos" ? "var(--color-primario)" : undefined }}
                           >
-                            Todo {cat.name}
+                            Todos
                           </button>
                           {cat.subCategories.map((sub) => {
                             const isSubActive = isCurrentCatSelected && selectedSub === sub.name.toLowerCase();
@@ -235,7 +206,9 @@ const ProductsPage = ({
           </aside>
 
           <div className="flex-1">
-            {processedProducts.length > 0 ? (
+            {loading ? (
+              <SkeletonTarjetas cantidad={6} admin={false} />
+            ) : processedProducts.length > 0 ? (
               <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
                 {processedProducts.map((product, indice) => (
                   <ProductCard key={product.id} product={product} priority={indice < 3} />

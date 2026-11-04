@@ -1,5 +1,5 @@
-import VistaPreviaProducto from "@/components/providers/products/views/VistaPreviaProducto";
+import { SkeletonTienda } from "@/components/ui/skeleton-vistas";
 
 export default function LoadingProducto() {
-  return <VistaPreviaProducto />;
+  return <SkeletonTienda tipo="producto" />;
 }
