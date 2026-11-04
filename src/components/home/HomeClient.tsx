@@ -10,6 +10,9 @@ import AllCarousels from "@/components/carousel/AllCarousels";
 import FeaturedSection from "@/components/home/FeaturedSection";
 import LocationCard from "@/components/ui/LocationCard";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
+import type { CategoriaCatalogo } from "@/types/productos/catalogo-publico";
+import type { DatosGrid } from "@/lib/grillas/mapear-grid-a-tarjeta";
+import { normalizarEnlaceCategoriaPublico } from "@/lib/categorias/normalizar-enlace-categoria";
 
 interface CarouselSlide {
   id: string;
@@ -19,7 +22,7 @@ interface CarouselSlide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: { hideText?: boolean };
+  config?: { hideText?: boolean; linkType?: string };
 }
 
 interface CarouselData {
@@ -45,12 +48,13 @@ interface HomegridRender {
   columns?: number | null;
   active?: boolean;
   featuredLayout?: string | null;
-  grids?: Array<Record<string, unknown>>;
+  grids?: DatosGrid[];
   [k: string]: unknown;
 }
 
 interface HomeClientProps {
   carouselsIniciales?: CarouselData[];
+  categorias: CategoriaCatalogo[];
   pageConfig: {
     address?: string | null;
     city?: string | null;
@@ -73,21 +77,28 @@ function parseSectionOrder(raw: unknown): string[] {
   return [];
 }
 
-function renderCarousel(carousel: CarouselData, storeName?: string) {
-  const isShowcase = carousel.settings?.heroStyle === "SHOWCASE";
-  switch (carousel.type) {
+function renderCarousel(carousel: CarouselData, storeName: string | undefined, categorias: CategoriaCatalogo[]) {
+  const carrusel = {
+    ...carousel,
+    slides: carousel.slides.map((slide) => {
+      const url = normalizarEnlaceCategoriaPublico(slide.url, slide.config?.linkType, categorias);
+      return url === undefined ? slide : { ...slide, url: url ?? "" };
+    }),
+  };
+  const isShowcase = carrusel.settings?.heroStyle === "SHOWCASE";
+  switch (carrusel.type) {
     case "HERO":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <HeroLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof HeroLayout>["carousel"]} />;
+        ? <ShowcaseLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <HeroLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof HeroLayout>["carousel"]} />;
     case "BANNER":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <BannerLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof BannerLayout>["carousel"]} />;
+        ? <ShowcaseLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <BannerLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof BannerLayout>["carousel"]} />;
     case "CARDS":
       return isShowcase
-        ? <ShowcaseLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
-        : <CardsLayout key={carousel.id} carousel={carousel as unknown as ComponentProps<typeof CardsLayout>["carousel"]} storeName={storeName} />;
+        ? <ShowcaseLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof ShowcaseLayout>["carousel"]} />
+        : <CardsLayout key={carrusel.id} carousel={carrusel as unknown as ComponentProps<typeof CardsLayout>["carousel"]} storeName={storeName} />;
     default:
       return null;
   }
@@ -95,7 +106,7 @@ function renderCarousel(carousel: CarouselData, storeName?: string) {
 
 const PREFIJO_DESTACADA = "featured_";
 
-export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClientProps) {
+export default function HomeClient({ pageConfig, carouselsIniciales, categorias }: HomeClientProps) {
   const { pageConfig: contextConfig } = usePageConfig();
   const config = (pageConfig || contextConfig) as Record<string, unknown>;
 
@@ -141,13 +152,13 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
       const id = section.slice("carousel_".length);
       const carousel = carouselMap.get(id);
       if (!carousel) return null;
-      return renderCarousel(carousel, config?.storeName as string);
+      return renderCarousel(carousel, config?.storeName as string, categorias);
     }
 
     if (section.startsWith(PREFIJO_DESTACADA)) {
       const hg = homegridPorId.get(section.slice(PREFIJO_DESTACADA.length));
       if (!hg || hg.active === false) return null;
-      return <FeaturedSection key={section} homegrid={hg} />;
+      return <FeaturedSection key={section} homegrid={hg} categorias={categorias} />;
     }
 
     switch (section) {
@@ -157,7 +168,7 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
             {fetchedCarousels
               ?.filter((c) => c.type === "HERO" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, categorias))}
           </section>
         );
       case "banner":
@@ -166,18 +177,18 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
             {fetchedCarousels
               ?.filter((c) => c.type === "BANNER" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, categorias))}
           </section>
         );
       case "featured":
-        return <FeaturedSection key="featured" homegrid={config?.homegrid as HomegridRender | undefined} />;
+        return <FeaturedSection key="featured" homegrid={config?.homegrid as HomegridRender | undefined} categorias={categorias} />;
       case "cards":
         return (
           <section key="cards" className="carousel-container">
             {fetchedCarousels
               ?.filter((c) => c.type === "CARDS" && c.active)
               .sort((a, b) => a.order - b.order)
-              .map((c) => renderCarousel(c, config?.storeName as string))}
+              .map((c) => renderCarousel(c, config?.storeName as string, categorias))}
           </section>
         );
       case "location":
@@ -209,9 +220,9 @@ export default function HomeClient({ pageConfig, carouselsIniciales }: HomeClien
         sectionOrder.map((section) => renderSection(section))
       ) : (
         <>
-          <AllCarousels storeName={config?.storeName as string} initialCarousels={carouselsIniciales as ComponentProps<typeof AllCarousels>["initialCarousels"]} />
+          <AllCarousels storeName={config?.storeName as string} initialCarousels={carouselsIniciales as ComponentProps<typeof AllCarousels>["initialCarousels"]} categorias={categorias} />
 
-          <FeaturedSection homegrid={config?.homegrid as HomegridRender | undefined} />
+          <FeaturedSection homegrid={config?.homegrid as HomegridRender | undefined} categorias={categorias} />
 
           {showLocation && (
             <section

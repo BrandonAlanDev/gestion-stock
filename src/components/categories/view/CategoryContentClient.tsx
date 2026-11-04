@@ -9,6 +9,7 @@ import type { ProductoCatalogo } from "@/types/productos/catalogo-publico";
 interface SubCategory {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface CategoryContentClientProps {
@@ -63,7 +64,7 @@ export default function CategoryContentClient({
                   <button
                     key={sub.id}
                     type="button"
-                    onClick={() => { onFilterChange(sub.id); setFiltersOpen(false); }}
+                    onClick={() => { onFilterChange(sub.slug); setFiltersOpen(false); }}
                     className={`block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-[var(--color-primario)] text-[var(--texto-sobre-primario)]"

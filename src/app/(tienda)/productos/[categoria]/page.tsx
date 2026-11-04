@@ -6,6 +6,7 @@ import { obtenerDetalleProductoCacheado } from "@/lib/services/prendas/obtener-d
 import { obtenerIndiceProductosPublicos } from "@/lib/services/prendas/obtener-indice-productos-publicos";
 import { resolverIdProductoPorSegmento } from "@/lib/productos/slugs-producto";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { normalizarSlugCategoria } from "@/lib/categorias/slugs-categoria";
 
 interface Props {
   params: Promise<{ categoria: string }>;
@@ -13,7 +14,11 @@ interface Props {
 }
 
 function buscarCategoria(segmento: string, categorias: string[]) {
-  return categorias.find((nombre) => nombre.toLocaleLowerCase("es-AR") === segmento.toLocaleLowerCase("es-AR"));
+  const segmentoNormalizado = segmento.toLocaleLowerCase("es-AR");
+  return categorias.find((nombre) =>
+    nombre.toLocaleLowerCase("es-AR") === segmentoNormalizado ||
+    normalizarSlugCategoria(nombre) === segmentoNormalizado
+  );
 }
 
 export async function generateMetadata({ params }: Props) {

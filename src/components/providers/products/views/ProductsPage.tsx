@@ -34,10 +34,14 @@ const ProductsPage = ({
   const subcategoriaParam = searchParams.get("subcategoria");
 
   const categoriaSeleccionada = categories.find((cat) =>
+    cat.slug === categoriaParam?.trim().toLocaleLowerCase("es-AR") ||
+    cat.id === categoriaParam ||
     cat.name.trim().toLocaleLowerCase("es-AR") === categoriaParam?.trim().toLocaleLowerCase("es-AR")
   );
   const selectedCat = categoriaSeleccionada?.name ?? "Todos";
   const selectedSub = categoriaSeleccionada?.subCategories.find((sub) =>
+    sub.slug === subcategoriaParam?.trim().toLocaleLowerCase("es-AR") ||
+    sub.id === subcategoriaParam ||
     sub.name.trim().toLocaleLowerCase("es-AR") === subcategoriaParam?.trim().toLocaleLowerCase("es-AR")
   )?.name.toLocaleLowerCase("es-AR") ?? "Todos";
   const [sortConfig, setSortConfig] = useState({ key: "date", order: "desc" });
@@ -171,7 +175,7 @@ const ProductsPage = ({
                           className="overflow-hidden pl-4 border-l border-[var(--color-secundario)] ml-3 space-y-1"
                         >
                           <button
-                            onClick={() => handleTodoSubClick(cat.name)}
+                            onClick={() => handleTodoSubClick(cat.slug)}
                             className={`block min-h-9 w-full px-3 py-2 text-left text-sm transition-colors ${isCurrentCatSelected && selectedSub === "Todos"
                               ? "font-semibold"
                               : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"
@@ -185,7 +189,7 @@ const ProductsPage = ({
                             return (
                               <button
                                 key={sub.id}
-                                onClick={() => handleSubCategoryClick(cat.name, sub.name)}
+                                onClick={() => handleSubCategoryClick(cat.slug, sub.slug)}
                                 className={`block min-h-9 w-full px-3 py-2 text-left text-sm transition-colors ${isSubActive
                                   ? "font-bold"
                                   : "text-[var(--texto-sobre-fondo)] opacity-60 hover:opacity-100"

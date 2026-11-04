@@ -4,6 +4,7 @@ import { conPrismaTenant } from "@/lib/prisma";
 import { SELECCION_TARJETA_PRODUCTO_PUBLICO } from "@/lib/services/prendas/seleccion-producto-publico";
 import { obtenerIndiceProductosPublicos } from "@/lib/services/prendas/obtener-indice-productos-publicos";
 import { obtenerCategoriasCatalogo } from "@/lib/services/categorias/obtener-categorias-catalogo";
+import { resolverElementoPorReferencia } from "@/lib/categorias/slugs-categoria";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { serializarDatos } from "@/lib/utilidades/serializar-datos";
 import { idsTarjetasFaltantes, type VersionTarjetaCatalogo } from "@/lib/productos/versiones-catalogo";
@@ -31,17 +32,13 @@ export async function obtenerPaginaCatalogoFaltante(
 
   const tenant = await requiereTenantActivo();
   const categorias = await obtenerCategoriasCatalogo(tenant.id);
-  const nombreCategoria = categoria?.trim().toLocaleLowerCase("es-AR");
-  const categoriaEncontrada = nombreCategoria
-    ? categorias.find((item) => item.id === nombreCategoria || item.name.trim().toLocaleLowerCase("es-AR") === nombreCategoria)
-    : undefined;
-  if (nombreCategoria && !categoriaEncontrada) return { error: "Categoría inexistente" };
+  const categoriaEncontrada = resolverElementoPorReferencia(categorias, categoria);
+  if (categoria && !categoriaEncontrada) return { error: "Categoría inexistente" };
 
-  const nombreSubcategoria = subcategoria?.trim().toLocaleLowerCase("es-AR");
-  const subcategoriaEncontrada = nombreSubcategoria
-    ? categoriaEncontrada?.subCategories.find((item) => item.id === nombreSubcategoria || item.name.trim().toLocaleLowerCase("es-AR") === nombreSubcategoria)
+  const subcategoriaEncontrada = categoriaEncontrada
+    ? resolverElementoPorReferencia(categoriaEncontrada.subCategories, subcategoria)
     : undefined;
-  if (nombreSubcategoria && !subcategoriaEncontrada) return { error: "Subcategoría inexistente" };
+  if (subcategoria && !subcategoriaEncontrada) return { error: "Subcategoría inexistente" };
 
   const indice = await obtenerIndiceProductosPublicos(tenant.id);
   const where = {

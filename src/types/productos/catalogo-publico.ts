@@ -14,6 +14,7 @@ export interface ProductoCatalogo {
 export interface CategoriaCatalogo {
   id: string;
   name: string;
+  slug: string;
   totalProductos: number;
-  subCategories: Array<{ id: string; name: string; totalProductos: number }>;
+  subCategories: Array<{ id: string; name: string; slug: string; totalProductos: number }>;
 }

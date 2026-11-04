@@ -5,6 +5,7 @@ import PaginaCategoriaClient from "@/components/categories/view/PaginaCategoriaC
 import { obtenerCategoriasCatalogo } from "@/lib/services/categorias/obtener-categorias-catalogo";
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 import { serializarDatos } from "@/lib/utilidades/serializar-datos";
+import { resolverElementoPorReferencia } from "@/lib/categorias/slugs-categoria";
 
 export default async function PaginaCategoria({
   categoria,
@@ -21,7 +22,8 @@ export default async function PaginaCategoria({
   const categorias = await obtenerCategoriasCatalogo(tenantId);
   const category = categorias.find((item) => item.name.toLocaleLowerCase("es-AR") === categoria.toLocaleLowerCase("es-AR"));
   if (!category) notFound();
-  const subCategoryId = category.subCategories.find((item) => item.id === sp?.subcategory)?.id;
+  const subCategory = resolverElementoPorReferencia(category.subCategories, sp?.subcategory);
+  const subCategoryId = subCategory?.id;
 
   const { garments, total } = await obtenerPrendasPaginadas(
     tenantId, currentPage, limit, category.id, undefined, subCategoryId
@@ -58,8 +60,8 @@ export default async function PaginaCategoria({
         }}
         initialPage={currentPage}
         initialLimit={limit}
-        initialSubcategory={subCategoryId}
-        basePath={`/productos/${encodeURIComponent(categoria)}`}
+        initialSubcategory={subCategory?.slug}
+        basePath={`/productos/${encodeURIComponent(category.slug)}`}
       />
     </div>
   );

@@ -6,6 +6,8 @@ import BannerLayout from "./layouts/banner/BannerLayout";
 import CardsLayout from "./layouts/cards/CardsLayout";
 import ShowcaseLayout from "./layouts/hero/ShowcaseLayout";
 import type { CarouselSettings } from "@/types/carousel";
+import type { CategoriaCatalogo } from "@/types/productos/catalogo-publico";
+import { normalizarEnlaceCategoriaPublico } from "@/lib/categorias/normalizar-enlace-categoria";
 
 interface CarouselSlide {
   id: string;
@@ -15,7 +17,7 @@ interface CarouselSlide {
   description?: string;
   ctaText?: string;
   url?: string;
-  config?: Record<string, unknown> & { hideText?: boolean };
+  config?: Record<string, unknown> & { hideText?: boolean; linkType?: string };
 }
 
 interface Carousel {
@@ -28,7 +30,7 @@ interface Carousel {
   slides: CarouselSlide[];
 }
 
-export default function AllCarousels({ storeName, initialCarousels }: { storeName?: string; initialCarousels?: Carousel[] }) {
+export default function AllCarousels({ storeName, initialCarousels, categorias }: { storeName?: string; initialCarousels?: Carousel[]; categorias: CategoriaCatalogo[] }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["carousels", "all"],
     queryFn: async () => {
@@ -52,7 +54,14 @@ export default function AllCarousels({ storeName, initialCarousels }: { storeNam
 
   const carousels = (data || [])
     .filter((c) => c.active)
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) => a.order - b.order)
+    .map((carousel) => ({
+      ...carousel,
+      slides: carousel.slides.map((slide) => {
+        const url = normalizarEnlaceCategoriaPublico(slide.url, slide.config?.linkType, categorias);
+        return url === undefined ? slide : { ...slide, url: url ?? "" };
+      }),
+    }));
 
   if (carousels.length === 0) {
     return null;

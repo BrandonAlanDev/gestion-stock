@@ -8,6 +8,7 @@ import { useCatalogCategories } from "@/hooks/useCatalogCategories";
 import { useCatalogGarments, type ResultadoCatalogo } from "@/hooks/useCatalogGarments";
 import { guardarCategoriasCatalogo, guardarPaginaCatalogo } from "@/lib/productos/cache-cliente";
 import type { CategoriaCatalogo } from "@/types/productos/catalogo-publico";
+import { resolverElementoPorReferencia } from "@/lib/categorias/slugs-categoria";
 
 export default function PaginaCategoriaClient({
   tenantId,
@@ -39,7 +40,8 @@ export default function PaginaCategoriaClient({
     tenantId, categories, categoriesObtenidoEn
   );
   const currentCategory = categoriesData?.find((item) => item.id === category.id) ?? category;
-  const subcategory = currentCategory.subCategories.find((item) => item.id === subcategoryParam)?.id;
+  const subcategorySeleccionada = resolverElementoPorReferencia(currentCategory.subCategories, subcategoryParam);
+  const subcategory = subcategorySeleccionada?.id;
   const { data: garmentsData, dataUpdatedAt, isFetching } = useCatalogGarments(
     tenantId,
     currentPage,
@@ -48,7 +50,7 @@ export default function PaginaCategoriaClient({
     undefined,
     subcategory,
     [currentCategory],
-    currentPage === initialPage && limit === initialLimit && subcategory === initialSubcategory
+    currentPage === initialPage && limit === initialLimit && subcategorySeleccionada?.slug === initialSubcategory
       ? initialGarments
       : undefined,
     categoriasActualizadasEn
@@ -80,7 +82,7 @@ export default function PaginaCategoriaClient({
     }
   }, [searchParams, basePath]);
 
-  const handleFilterChange = (subId?: string) => updateParams({ subcategory: subId, page: undefined });
+  const handleFilterChange = (subSlug?: string) => updateParams({ subcategory: subSlug, page: undefined });
   const handlePageChange = (page: number) => updateParams({ page: page > 1 ? String(page) : undefined });
 
   return (

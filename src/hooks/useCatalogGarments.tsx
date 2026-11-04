@@ -32,11 +32,11 @@ function leerResultadoLocal(
 
   const categoriaBuscada = categoria?.trim().toLocaleLowerCase("es-AR");
   const categoriaActual = categoriaBuscada
-    ? categories?.find((item) => item.id === categoriaBuscada || item.name.trim().toLocaleLowerCase("es-AR") === categoriaBuscada)
+    ? categories?.find((item) => item.id === categoriaBuscada || item.slug === categoriaBuscada || item.name.trim().toLocaleLowerCase("es-AR") === categoriaBuscada)
     : undefined;
   const subcategoriaBuscada = subcategoria?.trim().toLocaleLowerCase("es-AR");
   const subcategoriaActual = subcategoriaBuscada
-    ? categoriaActual?.subCategories.find((item) => item.id === subcategoriaBuscada || item.name.trim().toLocaleLowerCase("es-AR") === subcategoriaBuscada)
+    ? categoriaActual?.subCategories.find((item) => item.id === subcategoriaBuscada || item.slug === subcategoriaBuscada || item.name.trim().toLocaleLowerCase("es-AR") === subcategoriaBuscada)
     : undefined;
   const totalEsperado = subcategoriaActual?.totalProductos ?? categoriaActual?.totalProductos;
 

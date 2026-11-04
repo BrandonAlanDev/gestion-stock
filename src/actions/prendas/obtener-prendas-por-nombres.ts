@@ -1,9 +1,10 @@
 "use server";
 
-import { obtenerCategoriasCacheadas } from "@/lib/cache/obtener-categorias-cacheadas";
+import { obtenerCategoriasCatalogo } from "@/lib/services/categorias/obtener-categorias-catalogo";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 import { serializarDatos } from "@/lib/utilidades/serializar-datos";
+import { resolverElementoPorReferencia } from "@/lib/categorias/slugs-categoria";
 
 export async function obtenerPrendasPorNombres(
   pagina: number,
@@ -16,16 +17,11 @@ export async function obtenerPrendasPorNombres(
   let idCategoria: string | undefined;
   let idSubcategoria: string | undefined;
   if (categoria || subcategoria) {
-    const categorias = await obtenerCategoriasCacheadas(idTenant);
-    if (categoria) {
-      const categoriaDecodificada = decodeURIComponent(categoria).trim().toLowerCase();
-      idCategoria = categorias.find((categoriaActual) => categoriaActual.id === categoriaDecodificada || categoriaActual.name.trim().toLowerCase() === categoriaDecodificada)?.id;
-    }
+    const categorias = await obtenerCategoriasCatalogo(idTenant);
+    idCategoria = resolverElementoPorReferencia(categorias, categoria)?.id;
     if (subcategoria && idCategoria) {
-      const subcategoriaDecodificada = decodeURIComponent(subcategoria).trim().toLowerCase();
-      idSubcategoria = categorias
-        .find((categoriaActual) => categoriaActual.id === idCategoria)
-        ?.subCategories.find((subcategoriaActual) => subcategoriaActual.id === subcategoriaDecodificada || subcategoriaActual.name.trim().toLowerCase() === subcategoriaDecodificada)?.id;
+      const categoriaActual = categorias.find((categoriaActual) => categoriaActual.id === idCategoria);
+      idSubcategoria = resolverElementoPorReferencia(categoriaActual?.subCategories ?? [], subcategoria)?.id;
     }
   }
   try {

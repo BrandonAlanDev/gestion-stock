@@ -6,13 +6,14 @@ import LayoutCollage from "./LayoutCollage";
 import LayoutMinimal from "./LayoutMinimal";
 import mapearGridATarjeta from "@/lib/grillas/mapear-grid-a-tarjeta";
 
-export default function FeaturedSection({ homegrid }) {
+/** @param {{ homegrid?: { featuredLayout?: string | null, title?: string | null, grids?: import("@/lib/grillas/mapear-grid-a-tarjeta").DatosGrid[] } | null, categorias?: import("@/types/productos/catalogo-publico").CategoriaCatalogo[] }} props */
+export default function FeaturedSection({ homegrid, categorias = [] }) {
   const { pageConfig } = usePageConfig();
   const config = pageConfig?.pageConfig ?? pageConfig;
   const datos = homegrid ?? config?.homegrid;
 
   const layout = datos?.featuredLayout?.toLowerCase() || "grid";
-  const categories = (datos?.grids || []).map(mapearGridATarjeta);
+  const categories = (datos?.grids || []).map((grid) => mapearGridATarjeta(grid, categorias));
 
   if (categories.length === 0) return null;
 

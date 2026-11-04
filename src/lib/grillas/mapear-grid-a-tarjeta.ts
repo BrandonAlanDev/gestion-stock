@@ -1,4 +1,6 @@
 import { normalizarEnlaceNavegable } from "@/lib/enlaces/normalizar-enlace-navegable";
+import type { CategoriaCatalogo } from "@/types/productos/catalogo-publico";
+import { resolverSlugCategoria } from "@/lib/categorias/slugs-categoria";
 
 export interface DatosGrid {
   id: string;
@@ -31,11 +33,14 @@ export interface TarjetaDestacada {
   image: string;
 }
 
-export default function mapearGridATarjeta(grid: DatosGrid): TarjetaDestacada {
+export default function mapearGridATarjeta(grid: DatosGrid, categorias: CategoriaCatalogo[] = []): TarjetaDestacada {
   let href = "#";
   switch (grid.linkType) {
     case "CATEGORY":
-      href = grid.linkValue ? `/productos?categoria=${encodeURIComponent(grid.linkValue)}` : "#";
+      {
+        const slug = resolverSlugCategoria(grid.linkValue, categorias);
+        href = slug ? `/productos?categoria=${encodeURIComponent(slug)}` : "#";
+      }
       break;
     case "PRODUCT":
       href = grid.linkValue ? `/productos/item/${encodeURIComponent(grid.linkValue)}` : "#";

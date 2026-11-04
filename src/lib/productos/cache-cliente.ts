@@ -185,9 +185,11 @@ export function leerCategoriasCatalogo(tenantId: string) {
   if (!estaVigente(entrada) || !Array.isArray(entrada.datos) ||
     !entrada.datos.every((categoria) =>
       categoria && typeof categoria.id === "string" && typeof categoria.name === "string" &&
+      typeof categoria.slug === "string" &&
       Number.isInteger(categoria.totalProductos) && categoria.totalProductos >= 0 &&
       Array.isArray(categoria.subCategories) && categoria.subCategories.every((subcategoria) =>
         subcategoria && typeof subcategoria.id === "string" && typeof subcategoria.name === "string" &&
+        typeof subcategoria.slug === "string" &&
         Number.isInteger(subcategoria.totalProductos) && subcategoria.totalProductos >= 0
       )
     )) return null;

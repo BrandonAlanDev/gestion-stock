@@ -3,6 +3,7 @@ import { obtenerCategoriasCatalogo } from "@/lib/services/categorias/obtener-cat
 import { obtenerPrendasPaginadas } from "@/lib/services/prendas/obtener-prendas-paginadas";
 import { serializarDatos as serializeData } from "@/lib/utilidades/serializar-datos";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
+import { resolverElementoPorReferencia } from "@/lib/categorias/slugs-categoria";
 
 export default async function CatalogoPage({
   searchParams,
@@ -21,20 +22,13 @@ export default async function CatalogoPage({
 
   let categoryId: string | undefined;
   if (categoria) {
-    const decoded = decodeURIComponent(categoria).trim().toLowerCase();
-    categoryId = categories.find(
-      (c) => c.id === decoded || c.name.trim().toLowerCase() === decoded
-    )?.id;
+    categoryId = resolverElementoPorReferencia(categories, categoria)?.id;
   }
 
   let subCategoryId: string | undefined;
   if (subcategoria && categoryId) {
-    const decoded = decodeURIComponent(subcategoria).trim().toLowerCase();
-    subCategoryId = categories
-      .find((c) => c.id === categoryId)
-      ?.subCategories.find(
-        (s) => s.id === decoded || s.name.trim().toLowerCase() === decoded
-      )?.id;
+    const categoriaSeleccionada = categories.find((c) => c.id === categoryId);
+    subCategoryId = resolverElementoPorReferencia(categoriaSeleccionada?.subCategories ?? [], subcategoria)?.id;
   }
 
   const { garments, total } = await obtenerPrendasPaginadas(
