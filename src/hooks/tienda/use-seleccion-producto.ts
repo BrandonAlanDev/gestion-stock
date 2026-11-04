@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { construirModeloVisual, type ModeloVisual } from "@/lib/productos/opciones-visuales";
 import { calcularDisponibilidad, type ResultadoDisponibilidad } from "@/lib/productos/disponibilidad-producto";
-import { agregarAlCarrito } from "@/actions/carrito/agregar-al-carrito";
 import { useCart } from "@/contextos/carrito/use-carrito";
 import type { ProductoDetalleSerializado } from "@/types/productos/detalle-producto";
 
@@ -21,7 +20,20 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
   const precioMostrado = disponibilidad.varianteSeleccionada?.priceOverride ?? Number(producto.price ?? 0);
   const precioAnterior = producto.maxPrice != null ? Number(producto.maxPrice) : null;
 
-  const { cartItems, addToCart, confirmarAdicion, revertirAdicion } = useCart();
+  const { cartItems, cartLoaded, addToCart, confirmarAdicion } = useCart();
+  const varianteSeleccionada = disponibilidad.varianteSeleccionada;
+  const cantidadEnCarrito = cartItems.reduce(
+    (total, item) => total + (
+      String(item.id) === String(producto.id) && item.variantId === varianteSeleccionada?.id
+        ? item.qty
+        : 0
+    ),
+    0,
+  );
+  const maximoVariante = controlaStock && varianteSeleccionada
+    ? varianteSeleccionada.stock
+    : null;
+  const maximoAlcanzado = maximoVariante !== null && cantidadEnCarrito >= maximoVariante;
 
   useEffect(() => {
     setSeleccion((prev) => {
@@ -41,30 +53,19 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
     [seleccion]
   );
 
-  const manejarAgregar = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+  const manejarAgregar = useCallback((): void => {
     const variante = disponibilidad.varianteSeleccionada;
+    if (!cartLoaded) return;
 
     if (!variante || !disponibilidad.comboValido) {
       if (!controlaStock && modelo.grupos.length === 0) {
         const token = addToCart({ id: producto.id, name: producto.name, price: precioMostrado, image: producto.images?.[0]?.srcImage });
         confirmarAdicion(token);
-        return { ok: true };
       }
-      return { ok: false, error: "Elegí una combinación de talle y color con stock disponible." };
+      return;
     }
 
-    const cantidadEnCarrito = cartItems.reduce(
-      (total, item) => total + (
-        String(item.id) === String(producto.id)
-        && item.variantId === variante.id
-          ? item.qty
-          : 0
-      ),
-      0,
-    );
-    const itemExistente = cartItems.find(
-      (item) => String(item.id) === String(producto.id) && item.variantId === variante.id,
-    );
+    if (maximoVariante !== null && cantidadEnCarrito >= maximoVariante) return;
 
     const token = addToCart({
       id: producto.id,
@@ -73,37 +74,21 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
       image: producto.images?.[0]?.srcImage,
       variantId: variante.id,
       varianteInfo: { ...seleccion },
-      stock: controlaStock ? itemExistente?.stock : undefined,
+      stock: maximoVariante ?? undefined,
     });
-
-    try {
-      const respuesta = await agregarAlCarrito({
-        productId: producto.id,
-        variantId: variante.id,
-        cantidad: cantidadEnCarrito + 1,
-      });
-      if (!respuesta.ok) {
-        revertirAdicion(token);
-        return { ok: false, error: respuesta.error };
-      }
-
-      confirmarAdicion(token, respuesta.controlaStock ? respuesta.stock : undefined);
-      return { ok: true };
-    } catch {
-      revertirAdicion(token);
-      return { ok: false, error: "No se pudo validar la disponibilidad. Intentá de nuevo." };
-    }
+    confirmarAdicion(token, maximoVariante ?? undefined);
   }, [
     disponibilidad,
     controlaStock,
+    cartLoaded,
+    maximoVariante,
     modelo,
     producto,
     precioMostrado,
     seleccion,
-    cartItems,
+    cantidadEnCarrito,
     addToCart,
     confirmarAdicion,
-    revertirAdicion,
   ]);
 
   return {
@@ -113,6 +98,9 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
     disponibilidad,
     precioMostrado,
     precioAnterior,
+    cartLoaded,
+    maximoVariante,
+    maximoAlcanzado,
     alternarValor,
     manejarAgregar,
   };

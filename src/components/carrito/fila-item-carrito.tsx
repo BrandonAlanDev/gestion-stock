@@ -43,8 +43,9 @@ export default function FilaItemCarrito({
             <span className="text-xs font-bold">{item.qty}</span>
             <button
               onClick={() => updateQty(item.uid, 1)}
-              disabled={adicionPendiente}
-              className="p-1 rounded bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
+              disabled={adicionPendiente || (item.stock != null && item.qty >= item.stock)}
+              aria-label={`Agregar una unidad de ${item.name}`}
+              className="p-1 rounded bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Plus size={10} />
             </button>

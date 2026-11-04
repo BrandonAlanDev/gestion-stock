@@ -3,6 +3,7 @@ export interface ProductoParaCarrito {
   name: string;
   price: number;
   image?: string;
+  stock?: number;
   [propiedad: string]: unknown;
 }
 
@@ -11,12 +12,12 @@ export interface ItemCarrito extends ProductoParaCarrito {
   qty: number;
   variantId?: string;
   varianteInfo?: Record<string, string>;
-  stock?: number;
   adicionesPendientes?: { token: string; cantidad: number }[];
 }
 
 export interface ValorContextoCarrito {
   cartItems: ItemCarrito[];
+  cartLoaded: boolean;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;

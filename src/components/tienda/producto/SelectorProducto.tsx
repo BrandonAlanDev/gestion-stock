@@ -15,16 +15,17 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
   const {
     modelo,
     seleccion,
-    controlaStock,
     disponibilidad,
     precioMostrado,
     precioAnterior,
+    cartLoaded,
+    maximoAlcanzado,
     alternarValor,
     manejarAgregar,
   } = useSeleccionProducto(product);
 
-  const conVariantes = modelo.grupos.length > 0 || modelo.variantes.length > 0;
   const hayPrecioAnterior = precioAnterior != null && precioAnterior > precioMostrado;
+  const mensajeDisponibilidad = maximoAlcanzado ? "No quedan unidades disponibles" : null;
   const moneda = typeof pageConfig?.currency === "string" && /^[A-Z]{3}$/.test(pageConfig.currency) ? pageConfig.currency : "ARS";
   const formatearPrecio = (precio: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: moneda, maximumFractionDigits: 2 }).format(precio);
 
@@ -90,12 +91,6 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
         );
       })}
 
-      {conVariantes && controlaStock && (
-        <p className="text-xs text-[var(--texto-sobre-fondo)] opacity-60">
-          La disponibilidad se confirma al agregar al carrito.
-        </p>
-      )}
-
       <div className="space-y-3 border-y border-current/15 py-4 text-sm text-[var(--texto-sobre-fondo)] opacity-70">
         <div className="flex items-center gap-2">
           <Truck className="w-3.5 h-3.5" style={{ color: "var(--color-primario)" }} />
@@ -106,7 +101,8 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
       <ProductAction
         product={product}
         seleccion={seleccion}
-        deshabilitado={!disponibilidad.comboValido}
+        deshabilitado={!disponibilidad.comboValido || (pageConfig?.cartEnabled === true && (!cartLoaded || maximoAlcanzado))}
+        mensajeDisponibilidad={pageConfig?.cartEnabled ? mensajeDisponibilidad : null}
         onAgregar={manejarAgregar}
       />
     </div>

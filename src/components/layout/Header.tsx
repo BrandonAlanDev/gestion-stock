@@ -23,7 +23,7 @@ export default function Header({
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const pageConfig = usePageConfig();
-  const { isCartOpen, openCart, closeCart } = useCart();
+  const { cartItems, cartLoaded, isCartOpen, openCart, closeCart } = useCart();
 
   const rawLogo = pageConfig?.pageConfig?.logo;
   const rawStoreName = pageConfig?.pageConfig?.storeName;
@@ -32,11 +32,40 @@ export default function Header({
     ? rawStoreName
     : "Gestion OK";
   const cartEnabled = pageConfig?.pageConfig?.cartEnabled === true;
+  const cantidadItemsCarrito = cartItems.reduce((total, item) => total + item.qty, 0);
   const isAdmin = session?.user?.role === "ADMIN";
   const colorTexto = "var(--texto-sobre-fondo)";
   const colorBorde = "color-mix(in srgb, var(--texto-sobre-fondo) 12%, transparent)";
   const colorHover = "color-mix(in srgb, var(--texto-sobre-fondo) 8%, transparent)";
   const headerRef = useRef<HTMLElement>(null);
+  const iconoCarritoRef = useRef<SVGSVGElement>(null);
+  const cantidadAnteriorCarritoRef = useRef<number | null>(null);
+  const animacionCarritoRef = useRef<Animation | null>(null);
+
+  useEffect(() => {
+    if (!cartLoaded) return;
+
+    const cantidadAnterior = cantidadAnteriorCarritoRef.current;
+    if (cantidadAnterior !== null && cantidadItemsCarrito > cantidadAnterior) {
+      const respetaMovimientoReducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const icono = iconoCarritoRef.current;
+
+      if (!respetaMovimientoReducido && icono) {
+        animacionCarritoRef.current?.cancel();
+        animacionCarritoRef.current = icono.animate(
+          [
+            { transform: "translateY(0)" },
+            { transform: "translateY(-4px)", offset: 0.45 },
+            { transform: "translateY(1px)", offset: 0.78 },
+            { transform: "translateY(0)" },
+          ],
+          { duration: 320, easing: "ease-out" },
+        );
+      }
+    }
+
+    cantidadAnteriorCarritoRef.current = cantidadItemsCarrito;
+  }, [cartLoaded, cantidadItemsCarrito]);
 
   useEffect(() => {
     if (!isSidebarOpen) return;
@@ -106,10 +135,22 @@ export default function Header({
                 if (isCartOpen) closeCart();
                 else openCart();
               }}
-              aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
-              className="flex size-10 items-center justify-center rounded-lg hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
+              aria-label={isCartOpen
+                ? "Cerrar carrito"
+                : cantidadItemsCarrito > 0
+                  ? `Abrir carrito, ${cantidadItemsCarrito} ${cantidadItemsCarrito === 1 ? "producto" : "productos"}`
+                  : "Abrir carrito"}
+              className="relative flex size-10 items-center justify-center rounded-lg hover:bg-[color-mix(in_srgb,var(--texto-sobre-fondo)_8%,transparent)]"
             >
-              <ShoppingBag size={20} />
+              <ShoppingBag ref={iconoCarritoRef} size={20} />
+              {cantidadItemsCarrito > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full border-2 border-[var(--superficie-fondo)] bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white"
+                >
+                  {cantidadItemsCarrito > 99 ? "99+" : cantidadItemsCarrito}
+                </span>
+              )}
             </button>
           )}
 

@@ -4,12 +4,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
-import { agregarAlCarrito } from "@/actions/carrito/agregar-al-carrito";
 import { ContextoCarrito } from "@/contextos/carrito/contexto-carrito";
 import type {
   ItemCarrito,
@@ -74,7 +71,6 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
   const [cartItems, setCartItems] = useState<ItemCarrito[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [claveCargada, setClaveCargada] = useState<string | null>(null);
-  const incrementosEnCurso = useRef(new Set<string>());
 
   useEffect(() => {
     try {
@@ -132,6 +128,9 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
         const existente = anteriores.find(
           (item) => claveIdentidadCarrito(item) === clave,
         );
+        if (producto.stock != null && (existente?.qty ?? 0) + cantidadAgregar > producto.stock) {
+          return anteriores;
+        }
 
         if (!existente) return [...anteriores, nuevoItem];
 
@@ -186,68 +185,25 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
     const ajuste = Math.trunc(delta);
     if (ajuste === 0) return;
 
-    if (ajuste < 0) {
-      setCartItems((anteriores) => anteriores.map((item) =>
-        item.uid === uid && (item.adicionesPendientes?.length ?? 0) === 0
-          ? { ...item, qty: Math.max(1, item.qty + ajuste) }
-          : item
-      ));
-      return;
-    }
-
-    const item = cartItems.find((actual) => actual.uid === uid);
-    if (!item || (item.adicionesPendientes?.length ?? 0) > 0 || incrementosEnCurso.current.has(uid)) return;
-
-    const cantidad = item.qty + ajuste;
-    if (!item.variantId) {
-      setCartItems((anteriores) => anteriores.map((actual) =>
-        actual.uid === uid && (actual.adicionesPendientes?.length ?? 0) === 0
-          ? {
-              ...actual,
-              qty: Math.max(1, actual.stock != null ? Math.min(actual.stock, cantidad) : cantidad),
-            }
-          : actual
-      ));
-      return;
-    }
-
-    incrementosEnCurso.current.add(uid);
-    void agregarAlCarrito({
-      productId: String(item.id),
-      variantId: item.variantId,
-      cantidad,
-    }).then((resultado) => {
-      if (!resultado.ok) {
-        toast.error(resultado.error);
-        return;
-      }
-
-      setCartItems((anteriores) => anteriores.map((actual) =>
-        actual.uid === uid && (actual.adicionesPendientes?.length ?? 0) === 0
-          ? {
-              ...actual,
-              qty: cantidad,
-              stock: resultado.controlaStock ? resultado.stock : undefined,
-            }
-          : actual
-      ));
-    }).catch(() => {
-      toast.error("No se pudo validar la disponibilidad. Intentá de nuevo.");
-    }).finally(() => {
-      incrementosEnCurso.current.delete(uid);
-    });
-  }, [cartItems]);
+    setCartItems((anteriores) => anteriores.flatMap((item) => {
+      if (item.uid !== uid || (item.adicionesPendientes?.length ?? 0) > 0) return [item];
+      const cantidad = item.qty + ajuste;
+      if (cantidad <= 0) return [];
+      if (item.stock != null && cantidad > item.stock) return [item];
+      return [{ ...item, qty: cantidad }];
+    }));
+  }, []);
 
   const removeItem = useCallback((uid: string) => {
     setCartItems((anteriores) =>
       anteriores.filter((item) => item.uid !== uid)
     );
-    toast.info("Producto eliminado del carrito");
   }, []);
 
   const valor = useMemo(
     () => ({
       cartItems,
+      cartLoaded: claveCargada === claveCarrito,
       isCartOpen,
       openCart,
       closeCart,
@@ -262,6 +218,8 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       cartItems,
       closeCart,
       confirmarAdicion,
+      claveCargada,
+      claveCarrito,
       isCartOpen,
       openCart,
       removeItem,
