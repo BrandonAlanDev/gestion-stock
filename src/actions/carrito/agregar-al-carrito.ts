@@ -5,7 +5,7 @@ import { conPrisma } from "@/lib/prisma";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 
 export type ResultadoAgregarCarrito =
-  | { ok: true; stock: number }
+  | { ok: true; stock: number; controlaStock: boolean }
   | { ok: false; error: string };
 
 const esquemaAgregarCarrito = z.object({
@@ -52,5 +52,9 @@ export async function agregarAlCarrito(datos: {
     }
   }
 
-  return { ok: true, stock: variant.stock };
+  return {
+    ok: true,
+    stock: variant.stock,
+    controlaStock: variant.garment.controlaStock,
+  };
 }

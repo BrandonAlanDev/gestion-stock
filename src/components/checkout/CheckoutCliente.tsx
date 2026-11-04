@@ -10,17 +10,18 @@ import { useCart } from "@/contextos/carrito/use-carrito";
 import { usePageConfig } from "@/components/providers/PageConfigProvider";
 import { obtenerMetodosCheckout } from "@/actions/pagos/obtener-metodos-checkout";
 import { obtenerOpcionesEntregaCheckout } from "@/actions/pedidos/obtener-opciones-entrega-checkout";
-import { obtenerResumenCheckout } from "@/actions/pedidos/obtener-resumen-checkout";
 import { iniciarPago } from "@/actions/pago/iniciar-pago";
 import { obtenerDatosCheckout } from "@/actions/perfil/gestionar-perfil";
 import type { MetodoPagoId } from "@/lib/pagos/tipos";
 import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import {
+  calcularOpcionesEntregaCheckout,
   conservarMetodoEntregaDisponible,
   estaDisponibleMetodoEntrega,
   type MetodoEntregaCheckout,
   type OpcionesEntregaCheckout,
 } from "@/lib/pedidos/opciones-entrega";
+import type { ItemResumenCheckout, ResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 import SelectorMetodoPago from "@/components/checkout/SelectorMetodoPago";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import PanelInstruccionesPago from "@/components/checkout/PanelInstruccionesPago";
@@ -33,8 +34,6 @@ export interface MetodoPagoDisponible {
 }
 
 type DireccionCheckout = NonNullable<Awaited<ReturnType<typeof obtenerDatosCheckout>>>["direcciones"][number];
-type ResultadoResumenCheckout = Awaited<ReturnType<typeof obtenerResumenCheckout>>;
-type ResumenCheckoutValidadoResultado = Extract<ResultadoResumenCheckout, { ok: true }>;
 
 export default function CheckoutCliente() {
   const { cartItems, openCart } = useCart();
@@ -51,19 +50,38 @@ export default function CheckoutCliente() {
   const [instrucciones, setInstrucciones] = useState<string | null>(null);
   const [reservaExpiraEn, setReservaExpiraEn] = useState<string | null>(null);
   const [esSandbox, setEsSandbox] = useState(false);
-  const [opcionesEntrega, setOpcionesEntrega] = useState<OpcionesEntregaCheckout | null>(null);
-  const [cargandoEntrega, setCargandoEntrega] = useState(true);
+  const opcionesEntregaIniciales = useMemo(
+    () => calcularOpcionesEntregaCheckout(pageConfig),
+    [pageConfig],
+  );
+  const [opcionesEntregaActualizadas, setOpcionesEntregaActualizadas] =
+    useState<OpcionesEntregaCheckout | null>(null);
+  const opcionesEntrega = opcionesEntregaActualizadas ?? opcionesEntregaIniciales;
   const [errorCargaEntrega, setErrorCargaEntrega] = useState<string | null>(null);
   const [avisoEntrega, setAvisoEntrega] = useState<string | null>(null);
-  const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaCheckout | null>(null);
+  const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaCheckout | null>(() =>
+    opcionesEntregaIniciales.domicilioDisponible
+      ? "DOMICILIO"
+      : opcionesEntregaIniciales.retiroTiendaDisponible
+        ? "RETIRO_TIENDA"
+        : null,
+  );
   const [entrega, setEntrega] = useState<Record<string, string>>({});
   const [direcciones, setDirecciones] = useState<DireccionCheckout[]>([]);
   const [direccionSeleccionada, setDireccionSeleccionada] = useState("");
   const [pendiente, iniciarTransicion] = useTransition();
-  const [resumenValidado, setResumenValidado] = useState<ResumenCheckoutValidadoResultado | null>(null);
-  const [cargandoResumen, setCargandoResumen] = useState(true);
-  const [errorResumen, setErrorResumen] = useState<string | null>(null);
-  const [avisoPrecio, setAvisoPrecio] = useState<string | null>(null);
+  const [resumenServidor, setResumenServidor] = useState<{
+    clave: string;
+    resumen: ResumenCheckout;
+  } | null>(null);
+  const [errorResumenServidor, setErrorResumenServidor] = useState<{
+    clave: string;
+    error: string;
+  } | null>(null);
+  const [avisoPrecio, setAvisoPrecio] = useState<{
+    clave: string;
+    mensaje: string;
+  } | null>(null);
 
   const moneda =
     typeof pageConfig?.currency === "string" && pageConfig.currency
@@ -83,52 +101,53 @@ export default function CheckoutCliente() {
     () => JSON.stringify(itemsParaResumen),
     [itemsParaResumen],
   );
-  const [claveResumenValidado, setClaveResumenValidado] = useState<string | null>(null);
+  const resumenLocal = useMemo<ResumenCheckout>(() => {
+    const items: ItemResumenCheckout[] = cartItems.map((item, indice) => ({
+      clave: `${item.uid}-${indice}`,
+      productId: String(item.id),
+      variantId: String(item.variantId ?? ""),
+      nombre: item.name,
+      variante: item.varianteInfo ? Object.values(item.varianteInfo).join(" · ") : null,
+      imagen: item.image ?? null,
+      cantidad: item.qty,
+      precioUnitario: item.price,
+      precioAnterior: null,
+      subtotal: item.price * item.qty,
+    }));
+    return {
+      items,
+      subtotal: items.reduce((total, item) => total + item.subtotal, 0),
+      moneda,
+    };
+  }, [cartItems, moneda]);
+  const resumenMostrado = resumenServidor?.clave === claveItemsParaResumen
+    ? resumenServidor.resumen
+    : resumenLocal;
+  const errorResumen = cartItems.some((item) => !item.variantId)
+    ? "Hay un producto sin una variante válida. Revisá el carrito antes de continuar."
+    : cartItems.some((item) =>
+      !Number.isFinite(item.price) || item.price < 0 ||
+      !Number.isInteger(item.qty) || item.qty < 1,
+    ) || !Number.isFinite(resumenMostrado.subtotal)
+      ? "El carrito tiene datos inválidos. Revisalo antes de continuar."
+      : errorResumenServidor?.clave === claveItemsParaResumen
+        ? errorResumenServidor.error
+        : null;
+  const avisoPrecioVisible = avisoPrecio?.clave === claveItemsParaResumen
+    ? avisoPrecio.mensaje
+    : null;
 
   useEffect(() => {
-    let activo = true;
-
-    setResumenValidado(null);
-    setClaveResumenValidado(null);
-    setErrorResumen(null);
+    setResumenServidor(null);
+    setErrorResumenServidor(null);
     setAvisoPrecio(null);
-    if (cartItems.length === 0) {
-      setCargandoResumen(false);
-      return () => { activo = false; };
-    }
-
-    if (cartItems.some((item) => !item.variantId)) {
-      setErrorResumen("Hay un producto sin una variante válida. Revisá el carrito antes de continuar.");
-      setCargandoResumen(false);
-      return () => { activo = false; };
-    }
-
-    setCargandoResumen(true);
-    obtenerResumenCheckout(itemsParaResumen)
-      .then((resultado) => {
-        if (!activo) return;
-        if (resultado.ok) {
-          setResumenValidado(resultado);
-          setClaveResumenValidado(claveItemsParaResumen);
-        } else {
-          setErrorResumen(resultado.error);
-        }
-      })
-      .catch(() => {
-        if (activo) setErrorResumen("No se pudo validar el resumen del pedido. Intentá nuevamente.");
-      })
-      .finally(() => {
-        if (activo) setCargandoResumen(false);
-      });
-
-    return () => { activo = false; };
-  }, [cartItems, claveItemsParaResumen, itemsParaResumen]);
+  }, [claveItemsParaResumen]);
 
   const modalidadesEntrega = [
-    ...(opcionesEntrega?.domicilioDisponible
+    ...(opcionesEntrega.domicilioDisponible
       ? [["DOMICILIO", "Envío a domicilio"] as const]
       : []),
-    ...(opcionesEntrega?.retiroTiendaDisponible
+    ...(opcionesEntrega.retiroTiendaDisponible
       ? [["RETIRO_TIENDA", "Retiro en tienda"] as const]
       : []),
   ];
@@ -171,42 +190,6 @@ export default function CheckoutCliente() {
   }, [metodoSeleccionado, metodosParaEntrega]);
 
   useEffect(() => {
-    let activo = true;
-
-    obtenerOpcionesEntregaCheckout()
-      .then((resultado) => {
-        if (!activo) return;
-        if (resultado.ok) {
-          setOpcionesEntrega(resultado.opciones);
-          setErrorCargaEntrega(null);
-          setMetodoEntrega(
-            resultado.opciones.domicilioDisponible
-              ? "DOMICILIO"
-              : resultado.opciones.retiroTiendaDisponible
-                ? "RETIRO_TIENDA"
-                : null,
-          );
-        } else {
-          setOpcionesEntrega(null);
-          setMetodoEntrega(null);
-          setErrorCargaEntrega(resultado.error);
-        }
-        setCargandoEntrega(false);
-      })
-      .catch(() => {
-        if (!activo) return;
-        setOpcionesEntrega(null);
-        setMetodoEntrega(null);
-        setErrorCargaEntrega("No se pudieron validar las modalidades de entrega.");
-        setCargandoEntrega(false);
-      });
-
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  useEffect(() => {
     if (status !== "authenticated") return;
     let activo = true;
     obtenerDatosCheckout().then((datos) => {
@@ -243,12 +226,13 @@ export default function CheckoutCliente() {
       return;
     }
 
-    if (
-      !resumenValidado ||
-      errorResumen ||
-      claveResumenValidado !== claveItemsParaResumen
-    ) {
-      toast.error("Esperá a que se valide el resumen actualizado antes de continuar.");
+    if (errorResumen) {
+      toast.error(errorResumen);
+      return;
+    }
+
+    if (!Number.isFinite(resumenMostrado.subtotal) || resumenMostrado.subtotal < 0) {
+      toast.error("El carrito tiene un precio inválido. Revisalo antes de continuar.");
       return;
     }
 
@@ -258,7 +242,6 @@ export default function CheckoutCliente() {
     }
 
     if (
-      !opcionesEntrega ||
       !metodoEntrega ||
       !estaDisponibleMetodoEntrega(opcionesEntrega, metodoEntrega)
     ) {
@@ -286,16 +269,17 @@ export default function CheckoutCliente() {
         metodoSeleccionado as MetodoPagoId,
         itemsParaResumen,
         datosEntrega,
-        resumenValidado.subtotal,
+        resumenMostrado.subtotal,
       );
 
       if (!resultado.ok) {
         if (resultado.codigo === "PRECIOS_CAMBIARON" && resultado.resumen) {
-          setResumenValidado({ ok: true, ...resultado.resumen });
-          setClaveResumenValidado(claveItemsParaResumen);
-          setAvisoPrecio(
-            "Los precios cambiaron mientras completabas la compra. Revisá el nuevo total y volvé a confirmar para continuar.",
-          );
+          setResumenServidor({ clave: claveItemsParaResumen, resumen: resultado.resumen });
+          setErrorResumenServidor(null);
+          setAvisoPrecio({
+            clave: claveItemsParaResumen,
+            mensaje: "Los precios cambiaron mientras completabas la compra. Revisá el nuevo total y volvé a confirmar para continuar.",
+          });
           toast.info("Actualizamos los precios. Revisá el nuevo total antes de confirmar.");
           return;
         }
@@ -304,9 +288,7 @@ export default function CheckoutCliente() {
           resultado.codigo === "PRODUCTO_NO_DISPONIBLE" ||
           resultado.codigo === "STOCK_INSUFICIENTE"
         ) {
-          setResumenValidado(null);
-          setClaveResumenValidado(null);
-          setErrorResumen(resultado.error);
+          setErrorResumenServidor({ clave: claveItemsParaResumen, error: resultado.error });
           toast.error(resultado.error);
           return;
         }
@@ -317,26 +299,23 @@ export default function CheckoutCliente() {
           resultado.codigo === "SIN_MODALIDADES_ENTREGA"
         ) {
           setAvisoEntrega("La configuración de entrega cambió. Verificá la opción seleccionada o elegí una modalidad disponible.");
-          setCargandoEntrega(true);
           try {
             const opcionesActualizadas = await obtenerOpcionesEntregaCheckout();
             if (opcionesActualizadas.ok) {
-              setOpcionesEntrega(opcionesActualizadas.opciones);
+              setOpcionesEntregaActualizadas(opcionesActualizadas.opciones);
               setErrorCargaEntrega(null);
               setMetodoEntrega((actual) =>
                 conservarMetodoEntregaDisponible(opcionesActualizadas.opciones, actual),
               );
             } else {
-              setOpcionesEntrega(null);
+              setOpcionesEntregaActualizadas(null);
               setMetodoEntrega(null);
               setErrorCargaEntrega(opcionesActualizadas.error);
             }
           } catch {
-            setOpcionesEntrega(null);
+            setOpcionesEntregaActualizadas(null);
             setMetodoEntrega(null);
             setErrorCargaEntrega("No se pudieron validar las modalidades de entrega.");
-          } finally {
-            setCargandoEntrega(false);
           }
         }
         return;
@@ -390,16 +369,12 @@ export default function CheckoutCliente() {
       className="max-w-6xl mx-auto px-4 py-8"
       style={{ backgroundColor: "var(--color-fondo-sitio)", color: "var(--texto-sobre-fondo)" }}
     >
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
-        <div className="flex flex-col gap-6">
-          <section className="rounded-xl border p-5" style={{ borderColor: "var(--color-primario)" }}>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-6">
+          <section className="w-full min-w-0 rounded-xl border p-5" style={{ borderColor: "var(--color-primario)" }}>
             <h2 className="text-lg font-semibold">Datos de entrega</h2>
             <p className="mt-1 text-sm opacity-70">Indicá cómo querés recibir tu pedido.</p>
-            {cargandoEntrega ? (
-              <p className="mt-4 text-sm opacity-70" role="status">
-                Verificando las modalidades de entrega…
-              </p>
-            ) : errorCargaEntrega ? (
+            {errorCargaEntrega ? (
               <p className="mt-4 text-sm text-red-500" role="alert">
                 {errorCargaEntrega}
               </p>
@@ -431,39 +406,42 @@ export default function CheckoutCliente() {
                 {avisoEntrega}
               </p>
             )}
-            {opcionesEntrega?.retiroTiendaDisponible && opcionesEntrega.direccionRetiro && (
+            {opcionesEntrega.retiroTiendaDisponible && opcionesEntrega.direccionRetiro && (
               <p className="mt-3 text-sm opacity-80">
                 Dirección de retiro: <span className="font-medium">{opcionesEntrega.direccionRetiro}</span>
               </p>
             )}
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {metodoEntrega === "DOMICILIO" && direcciones.length > 0 && <label className="text-sm sm:col-span-2">Dirección guardada
+            <div className="mt-4 grid w-full min-w-0 gap-3 sm:grid-cols-2">
+              {metodoEntrega === "DOMICILIO" && direcciones.length > 0 && <label className="min-w-0 text-sm">Dirección guardada (opcional)
                 <select value={direccionSeleccionada} onChange={(evento) => {
                   const elegida = direcciones.find((direccion) => direccion.id === evento.target.value);
                   setDireccionSeleccionada(evento.target.value);
                   if (elegida) setEntrega((actual) => ({ ...actual, destinatario: elegida.destinatario ?? `${actual.nombre ?? ""} ${actual.apellido ?? ""}`.trim(), telefono: elegida.telefono ?? actual.telefono, calle: elegida.calle, numero: elegida.numero, piso: elegida.piso ?? "", departamento: elegida.departamento ?? "", codigoPostal: elegida.codigoPostal, localidad: elegida.localidad, provincia: elegida.provincia, referencias: elegida.referencias ?? "" }));
-                }} className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2">
+                }} className="mt-1 w-full min-w-0 rounded-lg border bg-transparent px-3 py-2">
                   <option value="">Ingresar otra dirección</option>{direcciones.map((direccion) => <option key={direccion.id} value={direccion.id}>{direccion.alias ?? `${direccion.calle} ${direccion.numero}`}</option>)}
                 </select>
               </label>}
               {([ ["nombre", "Nombre"], ["apellido", "Apellido"], ["telefono", "Teléfono"] ] as const).map(([campo, etiqueta]) => (
-                <label key={campo} className="text-sm">{etiqueta} *
+                <label key={campo} className="min-w-0 text-sm">{etiqueta}
                   <input value={entrega[campo] ?? ""} onChange={(evento) => setEntrega((actual) => ({ ...actual, [campo]: evento.target.value }))}
                     autoComplete={campo === "telefono" ? "tel" : campo === "nombre" ? "given-name" : "family-name"}
-                    className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2" required />
+                    className="mt-1 w-full min-w-0 rounded-lg border bg-transparent px-3 py-2" required />
                 </label>
               ))}
               {metodoEntrega === "DOMICILIO" && (
                 <>
-                  {([ ["destinatario", "Destinatario"], ["calle", "Calle"], ["numero", "Número"], ["piso", "Piso"], ["departamento", "Departamento"], ["codigoPostal", "Código postal"], ["localidad", "Localidad"], ["provincia", "Provincia"] ] as const).map(([campo, etiqueta]) => (
-                    <label key={campo} className="text-sm">{etiqueta}{["piso", "departamento"].includes(campo) ? "" : " *"}
-                      <input value={entrega[campo] ?? ""} onChange={(evento) => setEntrega((actual) => ({ ...actual, [campo]: evento.target.value }))}
-                        className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2" required={!(["piso", "departamento"].includes(campo))} />
-                    </label>
-                  ))}
-                  <label className="text-sm sm:col-span-2">Referencias
+                  {([ ["destinatario", "Destinatario"], ["calle", "Calle"], ["numero", "Número"], ["piso", "Piso"], ["departamento", "Departamento"], ["codigoPostal", "Código postal"], ["localidad", "Localidad"], ["provincia", "Provincia"] ] as const).map(([campo, etiqueta]) => {
+                    const esOpcional = campo === "piso" || campo === "departamento";
+                    return (
+                      <label key={campo} className="min-w-0 text-sm">{etiqueta}{esOpcional ? " (opcional)" : ""}
+                        <input value={entrega[campo] ?? ""} onChange={(evento) => setEntrega((actual) => ({ ...actual, [campo]: evento.target.value }))}
+                          className="mt-1 w-full min-w-0 rounded-lg border bg-transparent px-3 py-2" required={!esOpcional} />
+                      </label>
+                    );
+                  })}
+                  <label className="min-w-0 text-sm">Referencias (opcional)
                     <textarea value={entrega.referencias ?? ""} onChange={(evento) => setEntrega((actual) => ({ ...actual, referencias: evento.target.value }))}
-                      className="mt-1 w-full rounded-lg border bg-transparent px-3 py-2" rows={2} />
+                      className="mt-1 w-full min-w-0 rounded-lg border bg-transparent px-3 py-2" rows={2} />
                   </label>
                 </>
               )}
@@ -475,7 +453,7 @@ export default function CheckoutCliente() {
             <p className="mt-1 opacity-70">Seleccioná cómo querés pagar.</p>
           </div>
 
-          {cargandoMetodos || cargandoEntrega ? (
+          {cargandoMetodos ? (
             <SkeletonTarjetas cantidad={2} admin={false} tipo="pagos" />
           ) : metodosParaEntrega.length === 0 ? (
             <p className="text-sm opacity-70">
@@ -513,24 +491,19 @@ export default function CheckoutCliente() {
 
         <aside className="lg:sticky lg:top-20">
           <ResumenPedido
-            items={resumenValidado?.items ?? []}
-            subtotal={resumenValidado?.subtotal ?? null}
-            moneda={resumenValidado?.moneda ?? moneda}
+            items={resumenMostrado.items}
+            subtotal={resumenMostrado.subtotal}
+            moneda={resumenMostrado.moneda}
             modalidadEntrega={metodoEntrega}
-            cargando={cargandoResumen}
             error={errorResumen}
-            avisoPrecio={avisoPrecio}
+            avisoPrecio={avisoPrecioVisible}
             alRevisarCarrito={openCart}
           >
             <button
               onClick={manejarContinuarCompra}
               disabled={
                 pendiente ||
-                cargandoResumen ||
                 Boolean(errorResumen) ||
-                !resumenValidado ||
-                claveResumenValidado !== claveItemsParaResumen ||
-                cargandoEntrega ||
                 Boolean(errorCargaEntrega) ||
                 modalidadesEntrega.length === 0 ||
                 !metodoEntrega ||

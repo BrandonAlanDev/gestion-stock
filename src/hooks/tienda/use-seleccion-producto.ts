@@ -12,7 +12,6 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
   const controlaStock = producto.controlaStock ?? true;
 
   const [seleccion, setSeleccion] = useState<Record<string, string>>({});
-  const [agregando, setAgregando] = useState(false);
 
   const disponibilidad = useMemo<ResultadoDisponibilidad>(
     () => calcularDisponibilidad(modelo, seleccion, false),
@@ -22,7 +21,7 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
   const precioMostrado = disponibilidad.varianteSeleccionada?.priceOverride ?? Number(producto.price ?? 0);
   const precioAnterior = producto.maxPrice != null ? Number(producto.maxPrice) : null;
 
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, confirmarAdicion, revertirAdicion } = useCart();
 
   useEffect(() => {
     setSeleccion((prev) => {
@@ -47,35 +46,65 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
 
     if (!variante || !disponibilidad.comboValido) {
       if (!controlaStock && modelo.grupos.length === 0) {
-        addToCart({ id: producto.id, name: producto.name, price: precioMostrado, image: producto.images?.[0]?.srcImage });
+        const token = addToCart({ id: producto.id, name: producto.name, price: precioMostrado, image: producto.images?.[0]?.srcImage });
+        confirmarAdicion(token);
         return { ok: true };
       }
       return { ok: false, error: "Elegí una combinación de talle y color con stock disponible." };
     }
 
-    setAgregando(true);
+    const cantidadEnCarrito = cartItems.reduce(
+      (total, item) => total + (
+        String(item.id) === String(producto.id)
+        && item.variantId === variante.id
+          ? item.qty
+          : 0
+      ),
+      0,
+    );
+    const itemExistente = cartItems.find(
+      (item) => String(item.id) === String(producto.id) && item.variantId === variante.id,
+    );
+
+    const token = addToCart({
+      id: producto.id,
+      name: producto.name,
+      price: precioMostrado,
+      image: producto.images?.[0]?.srcImage,
+      variantId: variante.id,
+      varianteInfo: { ...seleccion },
+      stock: controlaStock ? itemExistente?.stock : undefined,
+    });
+
     try {
       const respuesta = await agregarAlCarrito({
         productId: producto.id,
         variantId: variante.id,
-        cantidad: 1,
+        cantidad: cantidadEnCarrito + 1,
       });
-      if (!respuesta.ok) return { ok: false, error: respuesta.error };
+      if (!respuesta.ok) {
+        revertirAdicion(token);
+        return { ok: false, error: respuesta.error };
+      }
 
-      addToCart({
-        id: producto.id,
-        name: producto.name,
-        price: precioMostrado,
-        image: producto.images?.[0]?.srcImage,
-        variantId: variante.id,
-        varianteInfo: { ...seleccion },
-        stock: respuesta.stock,
-      });
+      confirmarAdicion(token, respuesta.controlaStock ? respuesta.stock : undefined);
       return { ok: true };
-    } finally {
-      setAgregando(false);
+    } catch {
+      revertirAdicion(token);
+      return { ok: false, error: "No se pudo validar la disponibilidad. Intentá de nuevo." };
     }
-  }, [disponibilidad, controlaStock, modelo, producto, precioMostrado, seleccion, addToCart]);
+  }, [
+    disponibilidad,
+    controlaStock,
+    modelo,
+    producto,
+    precioMostrado,
+    seleccion,
+    cartItems,
+    addToCart,
+    confirmarAdicion,
+    revertirAdicion,
+  ]);
 
   return {
     modelo,
@@ -85,7 +114,6 @@ export function useSeleccionProducto(producto: ProductoDetalleSerializado) {
     precioMostrado,
     precioAnterior,
     alternarValor,
-    agregando,
     manejarAgregar,
   };
 }

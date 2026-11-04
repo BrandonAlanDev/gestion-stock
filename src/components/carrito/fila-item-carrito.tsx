@@ -13,6 +13,7 @@ export default function FilaItemCarrito({
   item,
 }: PropiedadesFilaItemCarrito) {
   const { updateQty, removeItem } = useCart();
+  const adicionPendiente = (item.adicionesPendientes?.length ?? 0) > 0;
 
   return (
     <div className="p-3 border rounded-xl flex gap-4 bg-[color-mix(in_srgb,var(--color-secundario)_50%,transparent)]">
@@ -34,6 +35,7 @@ export default function FilaItemCarrito({
           <div className="flex items-center gap-2">
             <button
               onClick={() => updateQty(item.uid, -1)}
+              disabled={adicionPendiente}
               className="p-1 rounded bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
             >
               <Minus size={10} />
@@ -41,6 +43,7 @@ export default function FilaItemCarrito({
             <span className="text-xs font-bold">{item.qty}</span>
             <button
               onClick={() => updateQty(item.uid, 1)}
+              disabled={adicionPendiente}
               className="p-1 rounded bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)]"
             >
               <Plus size={10} />

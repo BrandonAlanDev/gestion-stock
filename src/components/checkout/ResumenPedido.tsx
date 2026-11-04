@@ -7,10 +7,9 @@ import type { ItemResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 
 interface PropiedadesResumenPedido {
   items: ItemResumenCheckout[];
-  subtotal: number | null;
+  subtotal: number;
   moneda: string;
   modalidadEntrega: "DOMICILIO" | "RETIRO_TIENDA" | null;
-  cargando: boolean;
   error: string | null;
   avisoPrecio: string | null;
   alRevisarCarrito: () => void;
@@ -22,7 +21,6 @@ export default function ResumenPedido({
   subtotal,
   moneda,
   modalidadEntrega,
-  cargando,
   error,
   avisoPrecio,
   alRevisarCarrito,
@@ -34,6 +32,9 @@ export default function ResumenPedido({
     currency: monedaSegura,
     maximumFractionDigits: 2,
   }).format(precio);
+  const subtotalFormateado = Number.isFinite(subtotal)
+    ? formatearPrecio(subtotal)
+    : "—";
   const cantidadArticulos = items.reduce((total, item) => total + item.cantidad, 0);
 
   return (
@@ -55,10 +56,8 @@ export default function ResumenPedido({
           </h2>
           <p className="mt-1 text-sm opacity-65" aria-live="polite">
             {error
-              ? "No se pudo validar el carrito"
-              : cargando
-                ? "Actualizando precios…"
-                : `${cantidadArticulos} ${cantidadArticulos === 1 ? "artículo" : "artículos"}`}
+              ? "Revisá los productos del carrito"
+              : `${cantidadArticulos} ${cantidadArticulos === 1 ? "artículo" : "artículos"}`}
           </p>
         </div>
         <span
@@ -112,8 +111,6 @@ export default function ResumenPedido({
               Revisar carrito
             </button>
           </div>
-        ) : cargando && items.length === 0 ? (
-          <p className="py-5 text-sm opacity-65" role="status">Validando los productos del carrito…</p>
         ) : items.length === 0 ? (
           <p className="py-5 text-sm opacity-65">No hay productos para mostrar.</p>
         ) : (
@@ -184,7 +181,7 @@ export default function ResumenPedido({
           <div className="flex items-center justify-between gap-3">
             <span className="opacity-70">Subtotal</span>
             <span className="whitespace-nowrap tabular-nums">
-              {subtotal === null ? "—" : formatearPrecio(subtotal)}
+              {subtotalFormateado}
             </span>
           </div>
           {modalidadEntrega === "DOMICILIO" && (
@@ -199,15 +196,13 @@ export default function ResumenPedido({
           >
             <span className="font-semibold">Total del pedido</span>
             <span className="whitespace-nowrap text-xl font-bold tracking-tight tabular-nums" style={{ color: "var(--color-primario)" }}>
-              {subtotal === null ? "—" : formatearPrecio(subtotal)}
+              {subtotalFormateado}
             </span>
           </div>
           <p className="text-xs leading-relaxed opacity-60">
             {modalidadEntrega === "DOMICILIO"
-              ? "El costo de envío se coordina con la tienda y no está incluido en este total."
-              : modalidadEntrega === "RETIRO_TIENDA"
-                ? "El total se calcula con los precios vigentes de la tienda."
-                : "Los precios se verifican nuevamente al confirmar el pedido."}
+              ? "El costo de envío se coordina con la tienda y no está incluido en este total. Los precios de los productos se verifican al confirmar."
+              : "Los precios guardados en el carrito se verifican al confirmar el pedido."}
           </p>
         </div>
       </div>

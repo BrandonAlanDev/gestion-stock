@@ -12,6 +12,7 @@ export interface ItemCarrito extends ProductoParaCarrito {
   variantId?: string;
   varianteInfo?: Record<string, string>;
   stock?: number;
+  adicionesPendientes?: { token: string; cantidad: number }[];
 }
 
 export interface ValorContextoCarrito {
@@ -19,7 +20,9 @@ export interface ValorContextoCarrito {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (producto: ProductoParaCarrito, cantidad?: number) => void;
+  addToCart: (producto: ProductoParaCarrito, cantidad?: number) => string;
+  confirmarAdicion: (token: string, stock?: number) => void;
+  revertirAdicion: (token: string) => void;
   updateQty: (uid: string, delta: number) => void;
   removeItem: (uid: string) => void;
 }
