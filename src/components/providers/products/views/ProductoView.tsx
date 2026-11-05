@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
 import type { ProductProps } from "@/components/providers/products/types";
 import SelectorProducto from "@/components/tienda/producto/SelectorProducto";
 import { renderMarkdown } from "@/lib/utilidades/markdown";
@@ -15,14 +14,31 @@ export default function ProductoView({ product }: ProductProps) {
   const productImages = useMemo(() => product.images ?? [], [product.images]);
 
   const [selectedImage, setSelectedImage] = useState(productImages[0]?.srcImage || "/images/placeholder.svg");
+  const solicitudImagen = useRef(0);
 
   useEffect(() => {
+    solicitudImagen.current += 1;
     if (productImages[0]?.srcImage) {
       setSelectedImage(productImages[0].srcImage);
     } else {
       setSelectedImage("/images/placeholder.svg");
     }
+    return () => { solicitudImagen.current += 1; };
   }, [productImages]);
+
+  async function seleccionarImagen(srcImage: string) {
+    const solicitud = ++solicitudImagen.current;
+    if (srcImage === selectedImage) return;
+
+    const imagen = new window.Image();
+    imagen.src = obtenerUrlImagenOptimizada(srcImage, 1200) || srcImage;
+    try {
+      await imagen.decode();
+      if (solicitud === solicitudImagen.current) setSelectedImage(srcImage);
+    } catch {
+      // Se conserva la imagen visible si la nueva no se puede cargar.
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-fondo-sitio)] pb-20 pt-24 text-[var(--texto-sobre-fondo)] selection:bg-[var(--color-secundario)] sm:pt-28">
@@ -47,7 +63,7 @@ export default function ProductoView({ product }: ProductProps) {
                 {productImages.map((img) => (
                   <button
                     key={img.id}
-                    onClick={() => setSelectedImage(img.srcImage)}
+                    onClick={() => void seleccionarImagen(img.srcImage)}
                     className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-md border bg-[var(--superficie-imagen)] transition-all ${selectedImage === img.srcImage
                       ? "opacity-100 ring-1"
                       : "border-transparent opacity-50 hover:opacity-100"
@@ -64,14 +80,14 @@ export default function ProductoView({ product }: ProductProps) {
             )}
 
             <div className="flex aspect-[4/5] w-full items-center justify-center rounded-xl bg-[var(--superficie-imagen)] p-4 sm:p-8">
-              <motion.img
-                key={selectedImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+              <Image
                 src={obtenerUrlImagenOptimizada(selectedImage, 1200) || selectedImage}
                 loading="eager"
                 alt={product.name}
-                className="max-h-[680px] max-w-full select-none object-contain"
+                width={1200}
+                height={1200}
+                unoptimized
+                className="h-auto max-h-[680px] w-auto max-w-full select-none object-contain"
               />
             </div>
           </div>
