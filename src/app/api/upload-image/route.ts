@@ -1,44 +1,39 @@
 import { NextResponse } from "next/server";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { obtenerCarpetaIdentidad } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-identidad";
+import { TAMANIO_MAXIMO_IMAGEN_BYTES, validarArchivoImagen } from "@/lib/services/imagenes-cloudinary/validar-archivo-imagen";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
-
-const TIPOS_DE_IMAGEN_PERMITIDOS = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
-const TAMANIO_MAXIMO_IMAGEN_BYTES = 5 * 1024 * 1024;
-
-function coincideConFirmaDeImagen(tipo: string, bytes: Uint8Array): boolean {
-  if (tipo === "image/jpeg") {
-    return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  }
-
-  if (tipo === "image/png") {
-    return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-  }
-
-  if (tipo === "image/gif") {
-    const cabecera = String.fromCharCode(...bytes.slice(0, 6));
-    return cabecera === "GIF87a" || cabecera === "GIF89a";
-  }
-
-  if (tipo === "image/webp") {
-    const cabeceraRiff = String.fromCharCode(...bytes.slice(0, 4));
-    const tipoWebp = String.fromCharCode(...bytes.slice(8, 12));
-    return cabeceraRiff === "RIFF" && tipoWebp === "WEBP";
-  }
-
-  return false;
-}
 
 export async function POST(req: Request) {
   try {
-    const { tenantId } = await requiereAdmin();
+    const { tenantId, tenantNombre } = await requiereAdmin();
 
-    const formData = await req.formData();
+    const limiteSolicitud = TAMANIO_MAXIMO_IMAGEN_BYTES + 64 * 1024;
+    const longitud = Number(req.headers.get("content-length") ?? 0);
+    if (longitud > limiteSolicitud) {
+      return NextResponse.json({ error: "La imagen no puede superar los 5 MB" }, { status: 413 });
+    }
+    let cantidadRecibida = 0;
+    const cuerpo = req.body?.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+      transform(bloque, controlador) {
+        cantidadRecibida += bloque.byteLength;
+        if (cantidadRecibida > limiteSolicitud) controlador.error(new Error("Solicitud demasiado grande"));
+        else controlador.enqueue(bloque);
+      },
+    }));
+    if (!cuerpo) return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
+    let formData: FormData;
+    try {
+      formData = await new Response(cuerpo, {
+        headers: { "Content-Type": req.headers.get("content-type") ?? "" },
+      }).formData();
+    } catch (error) {
+      const excedido = error instanceof Error && error.message === "Solicitud demasiado grande";
+      return NextResponse.json(
+        { error: excedido ? "La imagen no puede superar los 5 MB" : "No se pudo leer la imagen" },
+        { status: excedido ? 413 : 400 },
+      );
+    }
 
     const archivo = formData.get("file");
 
@@ -56,27 +51,18 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!TIPOS_DE_IMAGEN_PERMITIDOS.has(archivo.type)) {
+    try {
+      await validarArchivoImagen(archivo);
+    } catch (error) {
       return NextResponse.json(
-        { error: "Formato de imagen no permitido" },
-        { status: 415 }
+        { error: error instanceof Error ? error.message : "Imagen no válida" },
+        { status: 415 },
       );
     }
-
-    const bytes = await archivo.arrayBuffer();
-    if (!coincideConFirmaDeImagen(archivo.type, new Uint8Array(bytes))) {
-      return NextResponse.json(
-        { error: "El contenido del archivo no coincide con una imagen válida" },
-        { status: 415 }
-      );
-    }
-
-    const base64 = Buffer.from(bytes).toString("base64");
-    const dataUri = `data:${archivo.type};base64,${base64}`;
 
     const resultado = await subirImagen(
-      dataUri,
-      obtenerCarpetaIdentidad(tenantId),
+      archivo,
+      obtenerCarpetaIdentidad(tenantId, tenantNombre),
       tenantId
     );
 

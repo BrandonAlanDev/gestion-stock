@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateBrandingConfig } from "@/actions/page-config/branding.actions";
 import ImageUploader from "@/components/admin/page-config/shared/ImageUploader";
+import { prepararImagenesFormulario } from "@/lib/utilidades/preparar-imagenes-formulario";
 import type { ConfigApariencia } from "./tipos-apariencia";
 
 interface FormIdentidad {
@@ -41,13 +42,34 @@ export default function SeccionIdentidad({
   const guardar = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     startTransition(async () => {
-      const res = await updateBrandingConfig(form);
-      if (!res.ok) {
-        toast.error(res.error ?? "Error al guardar");
-        return;
+      try {
+        const imagenes = await prepararImagenesFormulario([form.logo, form.favicon]);
+        const [logo, favicon] = imagenes.getAll("imagenes");
+        const archivos = new FormData();
+        const datos = { ...form };
+        if (logo instanceof File) {
+          archivos.set("logo", logo);
+          datos.logo = "";
+        }
+        if (favicon instanceof File) {
+          archivos.set("favicon", favicon);
+          datos.favicon = "";
+        }
+        const res = await updateBrandingConfig(datos, archivos);
+        if (!res.ok) {
+          toast.error(res.error ?? "Error al guardar");
+          return;
+        }
+        setForm((actual) => ({
+          ...actual,
+          logo: res.pageConfig?.logo ?? actual.logo,
+          favicon: res.pageConfig?.favicon ?? actual.favicon,
+        }));
+        toast.success("Cambios guardados");
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Error al guardar");
       }
-      toast.success("Cambios guardados");
-      router.refresh();
     });
   };
 

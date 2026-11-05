@@ -8,6 +8,7 @@ import { SitioSuspendido } from "@/components/tenants/sitio-suspendido";
 import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
 import { obtenerTenantPublico } from "@/lib/tenants/obtener-tenant-publico";
 import { ProveedorTenantPublico } from "@/contextos/tienda/contexto-tenant-publico";
+import PrevenirArrastrePublico from "@/components/providers/PrevenirArrastrePublico";
 
 export default async function LayoutTienda({ children }: { children: ReactNode }) {
   const tenant = await obtenerTenantPublico();
@@ -17,28 +18,36 @@ export default async function LayoutTienda({ children }: { children: ReactNode }
   }
 
   if (tenant.estado === "SUSPENDIDO") {
-    return <SitioSuspendido nombre={tenant.nombre} />;
+    return (
+      <PrevenirArrastrePublico>
+        <SitioSuspendido nombre={tenant.nombre} />
+      </PrevenirArrastrePublico>
+    );
   }
 
   const { pageConfig } = await obtenerConfiguracionPaginaSolicitud();
 
   if (pageConfig?.maintenanceMode) {
     return (
-      <PantallaMantenimiento
-        storeName={pageConfig.storeName ?? tenant.nombre}
-        logo={pageConfig.logo ?? null}
-      />
+      <PrevenirArrastrePublico>
+        <PantallaMantenimiento
+          storeName={pageConfig.storeName ?? tenant.nombre}
+          logo={pageConfig.logo ?? null}
+        />
+      </PrevenirArrastrePublico>
     );
   }
 
   return (
-    <ProveedorTenantPublico tenantId={tenant.id}>
-      <LayoutComponent>
-        <AppGate>
-          <RouteLoader />
-          {children}
-        </AppGate>
-      </LayoutComponent>
-    </ProveedorTenantPublico>
+    <PrevenirArrastrePublico>
+      <ProveedorTenantPublico tenantId={tenant.id}>
+        <LayoutComponent>
+          <AppGate>
+            <RouteLoader />
+            {children}
+          </AppGate>
+        </LayoutComponent>
+      </ProveedorTenantPublico>
+    </PrevenirArrastrePublico>
   );
 }

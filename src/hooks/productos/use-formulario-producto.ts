@@ -7,6 +7,7 @@ import { actualizarPrenda } from "@/actions/prendas/actualizar-prenda";
 import type { PendingImage } from "@/components/providers/products/forms/ImageUploader";
 import type { ParOpcionValor } from "@/types/productos/opciones-producto";
 import { claveOpcionValor } from "@/lib/productos/normalizar-opciones";
+import { prepararImagenesFormulario } from "@/lib/utilidades/preparar-imagenes-formulario";
 
 export const MAX_OPCIONES = 3;
 
@@ -277,10 +278,17 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
 
   const agregarImagenes = useCallback((nuevas: PendingImage[]) => {
     editadoRef.current = true;
-    setFormData((prev) => ({ ...prev, images: [...prev.images, ...nuevas] }));
+    setFormData((prev) => {
+      if (prev.images.length + nuevas.length > 5) {
+        toast.error("Máximo 5 imágenes por producto.");
+        return prev;
+      }
+      return { ...prev, images: [...prev.images, ...nuevas] };
+    });
   }, []);
 
   const eliminarImagen = useCallback((indice: number) => {
+    editadoRef.current = true;
     setFormData((prev) => {
       const imagen = prev.images[indice];
       if (imagen.preview && !imagen.url && imagen.preview.startsWith("blob:")) {
@@ -291,7 +299,9 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
   }, []);
 
   const reordenarImagenes = useCallback((origen: number, destino: number) => {
+    editadoRef.current = true;
     setFormData((prev) => {
+      if (origen < 0 || destino < 0 || origen >= prev.images.length || destino >= prev.images.length) return prev;
       const copia = [...prev.images];
       const [movida] = copia.splice(origen, 1);
       copia.splice(destino, 0, movida);
@@ -300,6 +310,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
   }, []);
 
   const editarImagen = useCallback((indice: number, preview: string) => {
+    editadoRef.current = true;
     setFormData((prev) => {
       const images = [...prev.images];
       images[indice] = { ...images[indice], preview, file: undefined };
@@ -307,35 +318,13 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
     });
   }, []);
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleSubmit = useCallback(async (comoBorrador: boolean) => {
-    const imagenesFinales: string[] = [];
-    for (const img of formData.images) {
-      try {
-        if (img.file) {
-          const base64 = await fileToBase64(img.file);
-          imagenesFinales.push(base64);
-        } else if (img.preview && img.preview.startsWith("data:")) {
-          imagenesFinales.push(img.preview);
-        } else if (img.url) {
-          imagenesFinales.push(img.url);
-        }
-      } catch (error) {
-        console.error("Error al procesar imagen individual:", error);
-        toast.error("Error al procesar una imagen. Se omitirá.");
-      }
-    }
-    if (imagenesFinales.length === 0 && formData.images.length > 0) {
-      throw new Error("No se pudo subir ninguna imagen. Revisá los archivos e intentá de nuevo.");
-    }
+    const origenes = formData.images.map((imagen) => {
+      const origen = imagen.preview?.startsWith("data:") ? imagen.preview : imagen.file ?? imagen.url;
+      if (!origen) throw new Error("Una imagen del producto no es válida.");
+      return origen;
+    });
+    const imagenes = await prepararImagenesFormulario(origenes);
 
     const activo = comoBorrador ? false : formData.activo !== false;
     const opcionesValidas = formData.opciones
@@ -363,13 +352,12 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
         sku: v.sku,
         priceOverride: v.priceOverride ? Number(v.priceOverride) : null,
       })),
-      images: imagenesFinales,
     };
 
     if (esEdicion && producto?.id) {
-      return actualizarPrenda(producto.id, payload);
+      return actualizarPrenda(producto.id, payload, imagenes);
     }
-    return crearPrenda(payload);
+    return crearPrenda(payload, imagenes);
   }, [formData, esEdicion, producto, recalcularVariantes]);
 
   const resetear = useCallback(() => setFormData(VALORES_VACIOS), []);
@@ -395,6 +383,7 @@ export function useFormularioProducto({ producto, categorias }: UseFormularioPro
     agregarImagenes,
     eliminarImagen,
     reordenarImagenes,
+    moverImagenAPortada: (indice: number) => reordenarImagenes(indice, 0),
     editarImagen,
     handleSubmit,
     resetear,

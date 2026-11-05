@@ -23,12 +23,18 @@ export interface SlideProcesado {
 export async function procesarSlide(
   slide: SlideDelWizard,
   tenantId: string,
-  carouselId: string
+  tenantNombre: string,
+  carouselId: string,
+  tituloCarrusel: string | null | undefined,
 ): Promise<SlideProcesado> {
-  let imageUrl = slide.image;
+  let imageUrl = typeof slide.image === "string" ? slide.image : "";
   let publicId: string | null | undefined;
-  if (imageUrl.startsWith("data:image")) {
-    const subida = await subirImagen(imageUrl, obtenerCarpetaCarrusel(tenantId, carouselId), tenantId);
+  if (slide.image instanceof File) {
+    const subida = await subirImagen(
+      slide.image,
+      obtenerCarpetaCarrusel(tenantId, tenantNombre, carouselId, tituloCarrusel),
+      tenantId,
+    );
     imageUrl = subida.url;
     publicId = subida.publicId;
   } else {

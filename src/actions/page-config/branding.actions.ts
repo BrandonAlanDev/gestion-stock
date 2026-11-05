@@ -3,6 +3,8 @@
 import { revalidateTag, unstable_cache } from "next/cache";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
+import { obtenerCarpetaIdentidad } from "@/lib/services/imagenes-cloudinary/obtener-carpeta-identidad";
+import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { conPrisma, conPrismaTenant } from "@/lib/prisma";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
@@ -25,9 +27,33 @@ type BrandingInput = {
   density?: string;
 };
 
-export async function updateBrandingConfig(data: BrandingInput) {
+export async function updateBrandingConfig(data: BrandingInput, imagenesFormulario?: FormData) {
+  const publicIdsSubidos: string[] = [];
+  let tenantId: string | null = null;
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
+    tenantId = contexto.tenantId;
+
+    if (data.logo?.startsWith("data:") || data.favicon?.startsWith("data:")) {
+      throw new Error("Las imágenes deben enviarse como archivos.");
+    }
+    let logoNuevo = data.logo;
+    let faviconNuevo = data.favicon;
+    for (const campo of ["logo", "favicon"] as const) {
+      const entradas = imagenesFormulario?.getAll(campo) ?? [];
+      if (entradas.length > 1) throw new Error("La cantidad de imágenes no es válida.");
+      const archivo = entradas[0];
+      if (archivo === undefined) continue;
+      if (!(archivo instanceof File)) throw new Error("La imagen de identidad no es válida.");
+      const subida = await subirImagen(
+        archivo,
+        obtenerCarpetaIdentidad(contexto.tenantId, contexto.tenantNombre),
+        contexto.tenantId,
+      );
+      publicIdsSubidos.push(subida.publicId);
+      if (campo === "logo") logoNuevo = subida.url;
+      else faviconNuevo = subida.url;
+    }
 
     const logoAnterior = pageConfig?.logo ?? null;
     const faviconAnterior = pageConfig?.favicon ?? null;
@@ -46,9 +72,9 @@ export async function updateBrandingConfig(data: BrandingInput) {
 
       bgColor: data.bgColor ?? pageConfig?.bgColor ?? "#09090b",
 
-      logo: data.logo === undefined ? pageConfig?.logo ?? null : data.logo?.trim() || null,
+      logo: logoNuevo === undefined ? pageConfig?.logo ?? null : logoNuevo?.trim() || null,
 
-      favicon: data.favicon === undefined ? pageConfig?.favicon ?? null : data.favicon?.trim() || null,
+      favicon: faviconNuevo === undefined ? pageConfig?.favicon ?? null : faviconNuevo?.trim() || null,
 
       fontPrimary: data.fontPrimary ?? pageConfig?.fontPrimary ?? "Outfit",
 
@@ -75,13 +101,14 @@ export async function updateBrandingConfig(data: BrandingInput) {
     );
 
     const publicIdsAEliminar: Array<string | null | undefined> = [];
+    const urlsVigentes = new Set([payload.logo, payload.favicon]);
 
-    if (payload.logo !== logoAnterior) {
+    if (payload.logo !== logoAnterior && !urlsVigentes.has(logoAnterior)) {
       const publicIdLogo = obtenerPublicIdDesdeUrl(logoAnterior ?? "");
       if (publicIdLogo) publicIdsAEliminar.push(publicIdLogo);
     }
 
-    if (payload.favicon !== faviconAnterior) {
+    if (payload.favicon !== faviconAnterior && !urlsVigentes.has(faviconAnterior)) {
       const publicIdFavicon = obtenerPublicIdDesdeUrl(faviconAnterior ?? "");
       if (publicIdFavicon) publicIdsAEliminar.push(publicIdFavicon);
     }
@@ -97,10 +124,20 @@ export async function updateBrandingConfig(data: BrandingInput) {
     };
   } catch (error) {
     console.error("[CLOUDINARY][PAGE-CONFIG][BRANDING]", error);
+    if (tenantId && publicIdsSubidos.length > 0) await eliminarImagenes(publicIdsSubidos, tenantId);
 
     return {
       ok: false,
-      error: "Error al actualizar branding",
+      error: error instanceof Error && [
+        "Las imágenes deben enviarse como archivos.",
+        "La cantidad de imágenes no es válida.",
+        "La imagen de identidad no es válida.",
+        "Formato no válido. Usá JPG, PNG, WebP o GIF.",
+        "Cada imagen puede pesar hasta 5 MB.",
+        "El contenido del archivo no coincide con una imagen válida.",
+      ].includes(error.message)
+        ? error.message
+        : "Error al actualizar branding",
     };
   }
 }

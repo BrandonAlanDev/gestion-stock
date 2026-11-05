@@ -1,4 +1,5 @@
 import NotFoundClient from "@/components/not-found/NotFoundClient";
+import PrevenirArrastrePublico from "@/components/providers/PrevenirArrastrePublico";
 import { obtenerConfiguracionPaginaSolicitud } from "@/lib/configuracion-pagina/obtener-configuracion-pagina-solicitud";
 
 export default async function PaginaNoEncontrada() {
@@ -17,9 +18,8 @@ export default async function PaginaNoEncontrada() {
       : null;
 
   return (
-    <NotFoundClient
-      storeName={storeName}
-      logo={logo}
-    />
+    <PrevenirArrastrePublico>
+      <NotFoundClient storeName={storeName} logo={logo} />
+    </PrevenirArrastrePublico>
   );
 }

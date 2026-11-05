@@ -6,7 +6,9 @@ import {
 } from "../src/lib/actions/prendas/crear-accion-prenda";
 import { garmentSchema } from "../src/lib/validaciones/esquemas";
 
-const clienteFalso = {} as PrismaClient;
+const clienteFalso = {
+  category: { findUniqueOrThrow: async () => ({ name: "Categoría A" }) },
+} as unknown as PrismaClient;
 const entrada = {
   name: "Remera de prueba",
   price: 1500,
@@ -42,7 +44,7 @@ function crearDependencias(
       return { id: "prenda-nueva" };
     },
     eliminarRegistroPrenda: async () => ({ count: 1 }),
-    obtenerCarpetaPrenda: (tenantId, categoryId, garmentId) =>
+    obtenerCarpetaPrenda: (tenantId, _tenantNombre, categoryId, _categoryName, garmentId) =>
       `tiendas/${tenantId}/categorias/${categoryId}/prendas/${garmentId}`,
     obtenerPublicIdDesdeUrl: () => null,
     eliminarImagenes: async () => [],
@@ -65,7 +67,7 @@ async function verificarAccesoNoAutorizado() {
 }
 
 async function verificarResolucionYSilo() {
-  const estado = crearDependencias(async () => ({ tenantId: "tenant-a" }), false);
+  const estado = crearDependencias(async () => ({ tenantId: "tenant-a", tenantNombre: "Tienda A" }), false);
   const accion = crearAccionPrenda(estado.dependencias);
   const resultado = await accion(entrada);
 
@@ -78,7 +80,7 @@ async function verificarResolucionYSilo() {
 }
 
 async function verificarCreacionEnTenantAutorizado() {
-  const estado = crearDependencias(async () => ({ tenantId: "tenant-a" }), true);
+  const estado = crearDependencias(async () => ({ tenantId: "tenant-a", tenantNombre: "Tienda A" }), true);
   const accion = crearAccionPrenda(estado.dependencias);
   const resultado = await accion({ ...entrada, categoryId: "categoria-a" });
 

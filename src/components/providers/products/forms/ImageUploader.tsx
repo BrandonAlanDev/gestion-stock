@@ -20,6 +20,7 @@ interface ImageUploaderProps {
   onAddImages: (newImages: PendingImage[]) => void;
   onRemoveImage: (index: number) => void;
   onReorder?: (sourceIndex: number, targetIndex: number) => void;
+  onSetCover: (index: number) => void;
   alEditarImagen?: (indice: number, nuevaImagen: string) => void;
 }
 
@@ -30,6 +31,7 @@ export default function ImageUploader({
   onAddImages,
   onRemoveImage,
   onReorder,
+  onSetCover,
   alEditarImagen,
 }: ImageUploaderProps) {
   // Estado local para el orden visual durante el arrastre
@@ -57,8 +59,8 @@ export default function ImageUploader({
       toast.error("Seleccioná una sola imagen por vez.");
       return;
     }
-    if (images.length + archivos.length > 4) {
-      toast.error("Máximo 4 imágenes.");
+    if (images.length + archivos.length > 5) {
+      toast.error("Máximo 5 imágenes por producto.");
       return;
     }
     const archivo = archivos[0];
@@ -174,14 +176,13 @@ export default function ImageUploader({
     <div className="space-y-4">
       <div className="flex justify-between border-b border-[var(--admin-borde)] pb-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--admin-texto-suave)]">
-          Imágenes (Máx. 4)
+          Imágenes (Máx. 5)
         </span>
       </div>
       <input
         ref={inputRef}
         type="file"
-        multiple
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp"
         onChange={handleFileChange}
         disabled={uploading}
         className="w-full cursor-pointer rounded-xl border border-[var(--admin-borde)] bg-[var(--admin-fondo-suave)] p-3 text-sm text-[var(--admin-texto)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--admin-primario)] file:px-3 file:py-1 file:text-sm file:font-medium file:text-[var(--admin-primario-texto)]"
@@ -194,57 +195,70 @@ export default function ImageUploader({
       )}
       <div className="flex flex-wrap gap-4">
         {orderedImages.map((img, idx) => {
-          const src = img.url || img.preview || "";
+          const src = img.preview || img.url || "";
           const isDragging = draggedIndex === idx;
           const esNueva = !!img.preview?.startsWith("data:");
 
           return (
-            <div
-              key={img.preview || img.url || idx}
-              draggable={!!onReorder}
-              onDragStart={(e) => handleDragStart(e, idx)}
-              onDragEnter={(e) => handleDragEnter(e, idx)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, idx)}
-              onDragEnd={handleDragEnd}
-              className={`relative h-24 w-24 overflow-hidden rounded-xl border transition-all duration-200 ${
-                isDragging ? "z-10 scale-95 opacity-40" : "cursor-grab active:cursor-grabbing"
-              }`}
-              style={{
-                borderColor: isDragging ? "var(--admin-primario)" : "var(--admin-borde)",
-                zIndex: isDragging ? 10 : 1,
-              }}
-            >
-              <Image
-                src={src}
-                alt={`Preview ${idx}`}
-                fill
-                className="object-cover"
-                onError={() => toast.error(`No se pudo cargar la imagen ${idx + 1}`)}
-              />
-              {esNueva && alEditarImagen && (
+            <div key={img.preview || img.url || idx} className="flex w-28 flex-col gap-1">
+              <div
+                draggable={!!onReorder}
+                onDragStart={(e) => handleDragStart(e, idx)}
+                onDragEnter={(e) => handleDragEnter(e, idx)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                className={`group relative h-24 w-28 overflow-hidden rounded-xl border transition-all duration-200 ${
+                  isDragging ? "z-10 scale-95 opacity-40" : "cursor-grab active:cursor-grabbing"
+                }`}
+                style={{
+                  borderColor: isDragging ? "var(--admin-primario)" : "var(--admin-borde)",
+                  zIndex: isDragging ? 10 : 1,
+                }}
+              >
+                <Image
+                  src={src}
+                  alt={`Imagen ${idx + 1}`}
+                  fill
+                  className="object-cover"
+                  onError={() => toast.error(`No se pudo cargar la imagen ${idx + 1}`)}
+                />
+                {esNueva && alEditarImagen && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      reabrirEditor(idx);
+                    }}
+                    className="absolute bottom-1 left-1/2 flex -translate-x-1/2 cursor-pointer items-center gap-1 rounded-full bg-[var(--admin-primario)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--admin-primario-texto)] opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  >
+                    <Crop size={10} />
+                    Editar
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    reabrirEditor(idx);
+                    handleRemove(idx);
                   }}
-                  className="absolute bottom-1 left-1/2 flex -translate-x-1/2 cursor-pointer items-center gap-1 rounded-full bg-[var(--admin-primario)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--admin-primario-texto)] opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-label={`Quitar imagen ${idx + 1}`}
+                  className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <Crop size={10} />
-                  Editar
+                  <X size={12} />
+                </button>
+              </div>
+              {idx === 0 ? (
+                <span className="text-center text-[10px] font-bold uppercase text-[var(--admin-primario)]">Portada</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onSetCover(idx)}
+                  className="cursor-pointer text-center text-[10px] font-semibold text-[var(--admin-texto)] underline hover:text-[var(--admin-primario)]"
+                >
+                  Usar de portada
                 </button>
               )}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(idx);
-                }}
-                className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <X size={12} />
-              </button>
             </div>
           );
         })}

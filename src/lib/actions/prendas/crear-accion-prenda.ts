@@ -3,6 +3,7 @@ import type { garmentSchema } from "@/lib/validaciones/esquemas";
 import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 import type { ContextoTenantSesion } from "@/types/tenants";
 import type { z } from "zod";
+import { leerImagenesFormulario } from "@/lib/services/imagenes-cloudinary/leer-imagenes-formulario";
 
 type DatosValidadosPrenda = z.output<typeof garmentSchema>;
 
@@ -17,7 +18,7 @@ interface ErrorValidacionPrenda {
 }
 
 export interface DependenciasCrearAccionPrenda {
-  requiereAdmin: () => Promise<Pick<ContextoTenantSesion, "tenantId">>;
+  requiereAdmin: () => Promise<Pick<ContextoTenantSesion, "tenantId" | "tenantNombre">>;
   validar: (datos: unknown) => ResultadoValidacionPrenda | ErrorValidacionPrenda;
   conPrisma: <T>(
     operacion: (prisma: PrismaClient) => Promise<T>,
@@ -32,14 +33,21 @@ export interface DependenciasCrearAccionPrenda {
     tenantId: string,
     id: string,
   ) => Promise<unknown>;
-  obtenerCarpetaPrenda: (tenantId: string, categoryId: string, garmentId: string) => string;
+  obtenerCarpetaPrenda: (
+    tenantId: string,
+    tenantNombre: string,
+    categoryId: string,
+    categoryName: string,
+    garmentId: string,
+    garmentName: string,
+  ) => string;
   obtenerPublicIdDesdeUrl: (url: string) => string | null;
   eliminarImagenes: (
     publicIds: Array<string | null | undefined>,
     tenantId: string,
   ) => Promise<unknown>;
   subirImagen: (
-    origen: string,
+    origen: File | string,
     carpeta: string,
     tenantId: string,
     prefijoNombre?: string,
@@ -51,9 +59,18 @@ export interface DependenciasCrearAccionPrenda {
 
 /** Crea el flujo de la acción con su autoridad y almacenamiento explícitos. */
 export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
-  return async function ejecutar(datos: unknown) {
-    const { tenantId } = await dependencias.requiereAdmin();
-    const resultadoValidacion = dependencias.validar(datos);
+  return async function ejecutar(datos: unknown, imagenesFormulario?: FormData) {
+    const { tenantId, tenantNombre } = await dependencias.requiereAdmin();
+    let entrada = datos;
+    if (imagenesFormulario) {
+      try {
+        if (typeof datos !== "object" || datos === null) throw new Error("Datos de producto no válidos.");
+        entrada = { ...datos, images: await leerImagenesFormulario(imagenesFormulario, undefined, 5) };
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : "No se pudieron leer las imágenes." };
+      }
+    }
+    const resultadoValidacion = dependencias.validar(entrada);
     if (!resultadoValidacion.success) {
       return { error: resultadoValidacion.error.format() };
     }
@@ -106,17 +123,23 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
       );
       idPrenda = prenda.id;
 
-      const carpeta = dependencias.obtenerCarpetaPrenda(tenantId, categoryId, prenda.id);
+      let carpeta: string | null = null;
       const imagenesFinales: Array<{ url: string; publicId: string | null }> = [];
-      let contadorImagenes = 0;
       for (const imagen of images ?? []) {
-        if (imagen.startsWith("data:image")) {
-          contadorImagenes += 1;
+        if (imagen instanceof File) {
+          if (!carpeta) {
+            const categoria = await dependencias.conPrisma((prisma) =>
+              prisma.category.findUniqueOrThrow({ where: { id: categoryId }, select: { name: true } }),
+            );
+            carpeta = dependencias.obtenerCarpetaPrenda(
+              tenantId, tenantNombre, categoryId, categoria.name, prenda.id, name,
+            );
+          }
           const subida = await dependencias.subirImagen(
             imagen,
             carpeta,
             tenantId,
-            `imagen-${contadorImagenes}`,
+            "imagen",
           );
           idsPublicosSubidos.push(subida.publicId);
           imagenesFinales.push({ url: subida.url, publicId: subida.publicId });
@@ -140,9 +163,6 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
       return { success: true, data: dependencias.serializarDatos(prenda) };
     } catch (error: unknown) {
       dependencias.registrarError("Error en crearPrenda:", error);
-      if ((error as { code?: string })?.code === "P2002") {
-        return { error: "El SKU ingresado ya pertenece a otra variante." };
-      }
       await dependencias.eliminarImagenes(idsPublicosSubidos, tenantId);
       const idPrendaAEliminar = idPrenda;
       if (idPrendaAEliminar) {
@@ -153,6 +173,9 @@ export function crearAccionPrenda(dependencias: DependenciasCrearAccionPrenda) {
         } catch {
           console.error("No se pudo eliminar el producto tras un error de imágenes.");
         }
+      }
+      if ((error as { code?: string })?.code === "P2002") {
+        return { error: "El SKU ingresado ya pertenece a otra variante." };
       }
       return { error: "No se pudo crear el producto. Revisá los datos e intentá nuevamente." };
     }

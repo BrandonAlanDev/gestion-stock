@@ -1,7 +1,7 @@
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 
 export async function subirImagenes(
-  origenes: string[],
+  origenes: Array<File | string>,
   carpeta: string,
   tenantId: string,
   prefijoBase = "imagen"

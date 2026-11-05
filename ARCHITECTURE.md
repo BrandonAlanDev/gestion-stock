@@ -30,6 +30,7 @@ El listado público consulta solo los campos necesarios para las tarjetas, sin v
 ## Integraciones
 
 - Cloudinary almacena imágenes de productos y configuración.
+- Las vistas de administración envían las imágenes como archivos; el servidor comprueba tamaño, formato y firma antes de subirlas. Las carpetas nuevas de Cloudinary usan el nombre normalizado del cliente, la categoría y el producto, carrusel o sección; cada entidad lleva un sufijo estable derivado de su ID para separar nombres repetidos y reconocer imágenes tras un cambio de nombre. Los `public_id` con las raíces anteriores siguen siendo válidos para mover o eliminar imágenes existentes. Cada producto admite hasta cinco imágenes y la primera según `order` es la portada de los listados y la tienda.
 - Mercado Pago maneja Checkout Pro y OAuth; el callback conserva estado firmado, PKCE y controles de origen. El webhook valida dominio y cliente, firma, monto, moneda y pedido antes de aplicar el pago.
 - El cron de expiración usa `CRON_SECRET`, enumera clientes activos desde Core y libera reservas vencidas en cada base.
 

@@ -42,11 +42,15 @@ export const garmentSchema = z
       .default([]),
     images: z
       .array(
-        z.string().refine(
-          (v) => v.startsWith("data:image") || v.startsWith("http"),
-          { message: "Cada imagen debe ser un archivo nuevo o una URL válida" }
-        )
+        z.union([
+          z.instanceof(File),
+          z.string().refine(
+            (valor) => /^https?:\/\//.test(valor),
+            { message: "Cada imagen debe ser un archivo nuevo o una URL válida" },
+          ),
+        ])
       )
+      .max(5, "Máximo 5 imágenes por producto")
       .optional(),
     variants: z.array(
       z.object({
@@ -229,7 +233,10 @@ export const carouselReorderSchema = z.object({
 // Wizard schemas (para validación en el modal unificado)
 export const carouselWizardSlideSchema = z.object({
   id: z.string().optional(), // temp-* durante wizard
-  image: z.string().min(1, "Imagen requerida"),
+  image: z.union([
+    z.instanceof(File),
+    z.string().min(1, "Imagen requerida").refine((valor) => !valor.startsWith("data:"), "Enviá la imagen como archivo"),
+  ]),
   title: z.string().max(100).optional(),
   subtitle: z.string().max(150).optional(),
   description: z.string().max(500).optional(),

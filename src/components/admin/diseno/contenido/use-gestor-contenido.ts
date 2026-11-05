@@ -31,6 +31,7 @@ import {
   eliminarSeccionDestacada,
 } from "@/actions/page-config/secciones-destacadas.actions";
 import type { Carousel, CarouselWizardData } from "@/types/carousel";
+import { prepararImagenesFormulario } from "@/lib/utilidades/preparar-imagenes-formulario";
 
 import { normalizarSecciones } from "./normalizarSecciones";
 import type { ConfigContenido } from "./tipos-contenido";
@@ -225,8 +226,13 @@ export default function useGestorContenido(config: ConfigContenido) {
 
   const guardarWizard = async (wizardData: CarouselWizardData) => {
     try {
+      const imagenes = await prepararImagenesFormulario(wizardData.slides.map((slide) => slide.image));
+      const datos = {
+        ...wizardData,
+        slides: wizardData.slides.map((slide) => ({ ...slide, image: "" })),
+      };
       if (wizardData.id) {
-        const res = await updateCarousel(wizardData);
+        const res = await updateCarousel(datos, imagenes);
         if (res.success && res.data) {
           const actualizado = res.data as Carousel;
           setCarousels((prev) =>
@@ -238,7 +244,7 @@ export default function useGestorContenido(config: ConfigContenido) {
           return;
         }
       } else {
-        const res = await createCarousel(wizardData);
+        const res = await createCarousel(datos, imagenes);
         if (!res.success) {
           toast.error(res.error);
           return;
@@ -248,8 +254,8 @@ export default function useGestorContenido(config: ConfigContenido) {
       setWizardAbierto(false);
       setCarouselEditando(null);
       await recargarCarousels();
-    } catch {
-      toast.error("Error al guardar el carrusel");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al guardar el carrusel");
     }
   };
 

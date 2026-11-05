@@ -10,6 +10,7 @@
     "lint": "eslint src next.config.ts prisma.config.ts eslint.config.mjs postcss.config.mjs --quiet && npm run verificar:imports-prisma",
     "verificar:integridad-inventario": "node --conditions=react-server -r tsconfig-paths/register ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-integridad-inventario.ts",
     "verificar:entrega": "node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-opciones-entrega.ts",
+    "verificar:imagenes": "node --conditions=react-server -r tsconfig-paths/register ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-subida-imagenes.ts",
     "verificar:imports-prisma":"node --conditions=react-server ./node_modules/ts-node/dist/bin.js --project tsconfig.scripts.json scripts/verificar-imports-prisma-global.ts"
   },
   "dependencies": {

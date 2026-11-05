@@ -8,10 +8,11 @@ interface Props {
   onAddImages: (imagenes: PendingImage[]) => void;
   onRemoveImage: (indice: number) => void;
   onReorder: (origen: number, destino: number) => void;
+  onSetCover: (indice: number) => void;
   onEdit: (indice: number, preview: string) => void;
 }
 
-export default function ProductoImagenes({ images, onAddImages, onRemoveImage, onReorder, onEdit }: Props) {
+export default function ProductoImagenes({ images, onAddImages, onRemoveImage, onReorder, onSetCover, onEdit }: Props) {
   return (
     <section className="space-y-4">
       <h3 className="text-sm font-semibold text-[var(--admin-texto)]">Imágenes</h3>
@@ -20,6 +21,7 @@ export default function ProductoImagenes({ images, onAddImages, onRemoveImage, o
         onAddImages={onAddImages}
         onRemoveImage={onRemoveImage}
         onReorder={onReorder}
+        onSetCover={onSetCover}
         alEditarImagen={onEdit}
       />
     </section>

@@ -13,6 +13,7 @@ import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
 import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-imagenes";
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { conPrisma } from "@/lib/prisma";
+import { leerImagenesFormulario } from "@/lib/services/imagenes-cloudinary/leer-imagenes-formulario";
 
 interface SeccionDestacadaGrid {
   title: string;
@@ -85,13 +86,17 @@ export async function actualizarSeccionDestacada(
   homegridId: string,
   grids: SeccionDestacadaGrid[],
   title: string,
-  featuredLayout?: string
+  featuredLayout?: string,
+  imagenesFormulario?: FormData,
 ): Promise<{ ok: boolean; error?: string; homegridId?: string }> {
   const publicIdsSubidos: string[] = [];
   let tenantId: string | null = null;
   try {
     const { contexto } = await requerirPageConfigAdministrador();
     tenantId = contexto.tenantId;
+    const imagenes = imagenesFormulario
+      ? await leerImagenesFormulario(imagenesFormulario, grids.length)
+      : grids.map((grid) => grid.image);
 
     const okPaginas = grids.every(
       (g) => g.linkType !== "PAGE" || /^\/(?!\/)/.test(g.linkValue?.trim() || "")
@@ -116,21 +121,24 @@ export async function actualizarSeccionDestacada(
 
     let gridsProcesados: SeccionDestacadaGrid[] | null = null;
     try {
-      gridsProcesados = await Promise.all(
-        grids.map(async (g, indice) => {
-          if (g.image.startsWith("data:image")) {
-            const subida = await subirImagen(
-              g.image,
-              obtenerCarpetaGrids(contexto.tenantId, homegridId),
-              contexto.tenantId,
-              `imagen-${Date.now()}-${indice + 1}`
-            );
-            publicIdsSubidos.push(subida.publicId);
-            return { ...g, image: subida.url };
-          }
-          return g;
-        })
-      );
+      gridsProcesados = [];
+      for (const [indice, grid] of grids.entries()) {
+        const imagen = imagenes[indice];
+        if (imagen instanceof File) {
+          const subida = await subirImagen(
+            imagen,
+            obtenerCarpetaGrids(contexto.tenantId, contexto.tenantNombre, homegridId, title),
+            contexto.tenantId,
+            `imagen-${Date.now()}-${indice + 1}`
+          );
+          publicIdsSubidos.push(subida.publicId);
+          gridsProcesados.push({ ...grid, image: subida.url });
+        } else if (typeof imagen === "string" && imagen && !imagen.startsWith("data:")) {
+          gridsProcesados.push({ ...grid, image: imagen });
+        } else {
+          throw new Error("La imagen de la sección no es válida.");
+        }
+      }
     } catch (error) {
       console.error("[CLOUDINARY][SECCION-DESTACADA][ACTUALIZAR][SUBIDA]", error);
       await eliminarImagenes(publicIdsSubidos, contexto.tenantId);

@@ -13,6 +13,7 @@ import { getCategoriesPicker } from "@/actions/home-config/getCategoriesPicker";
 import { getProductsPicker } from "@/actions/home-config/getProductsPicker";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
 import { actualizarSeccionDestacada } from "@/actions/page-config/secciones-destacadas.actions";
+import { prepararImagenesFormulario } from "@/lib/utilidades/preparar-imagenes-formulario";
 
 export interface GridLocal extends DatosTarjeta {
   id: string;
@@ -224,11 +225,13 @@ export default function HomeSectionsDesign({
           buttonTextColor: g.buttonTextColor || undefined,
         }));
 
+        const imagenes = await prepararImagenesFormulario(gridsForServer.map((grid) => grid.image));
         const res = await actualizarSeccionDestacada(
           homegrid?.id ?? "",
-          gridsForServer,
+          gridsForServer.map((grid) => ({ ...grid, image: "" })),
           sectionTitle,
-          layout
+          layout,
+          imagenes,
         );
 
         if (!res.ok) {
@@ -240,8 +243,8 @@ export default function HomeSectionsDesign({
           alGuardar?.();
           router.refresh();
         }
-      } catch {
-        toast.error("Error inesperado al guardar");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Error inesperado al guardar");
       }
     });
   };

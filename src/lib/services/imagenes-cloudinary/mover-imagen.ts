@@ -12,7 +12,8 @@ export async function moverImagen(
   if (!publicIdPerteneceTenant(publicIdViejo, tenantId)) {
     throw new Error("La imagen no pertenece a la tienda activa");
   }
-  if (!carpetaCloudinaryPerteneceTenant(carpetaNueva, tenantId)) {
+  if (!carpetaCloudinaryPerteneceTenant(carpetaNueva, tenantId) &&
+      !publicIdPerteneceTenant(`${carpetaNueva}/imagen`, tenantId)) {
     throw new Error("La carpeta de destino no pertenece a la tienda activa");
   }
 
@@ -20,7 +21,7 @@ export async function moverImagen(
   const publicIdNuevo = `${carpetaNueva}/${nombre}`;
   const resultado = await cloudinary.uploader.rename(publicIdViejo, publicIdNuevo, {
     type: "upload",
-    overwrite: true,
+    overwrite: false,
   });
   console.log(`[CLOUDINARY][MOVIMIENTO] ${publicIdViejo} -> ${publicIdNuevo}`);
   return { url: resultado.secure_url, publicId: resultado.public_id };

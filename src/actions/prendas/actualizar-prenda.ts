@@ -6,6 +6,7 @@ import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-im
 import { moverImagen } from "@/lib/services/imagenes-cloudinary/mover-imagen";
 import { publicIdPerteneceTenant } from "@/lib/services/imagenes-cloudinary/public-id-pertenece-tenant";
 import { subirImagen } from "@/lib/services/imagenes-cloudinary/subir-imagen";
+import { leerImagenesFormulario } from "@/lib/services/imagenes-cloudinary/leer-imagenes-formulario";
 import { actualizarRegistroPrendaConDetalles } from "@/lib/services/prendas/actualizar-registro-prenda";
 import { ConflictoStockVarianteError } from "@/lib/inventario/actualizar-stock-variante";
 import { ErrorVarianteNoEliminable } from "@/lib/inventario/variantes-transaccion";
@@ -16,9 +17,15 @@ import { garmentSchema as esquemaPrenda } from "@/lib/validaciones/esquemas";
 import { revalidateTag } from "next/cache";
 import type { z } from "zod";
 
-export async function actualizarPrenda(id: string, datos: z.input<typeof esquemaPrenda>) {
-  const { tenantId } = await requiereAdmin();
-  const resultadoValidacion = esquemaPrenda.safeParse(datos);
+export async function actualizarPrenda(id: string, datos: Omit<z.input<typeof esquemaPrenda>, "images">, imagenes: FormData) {
+  const { tenantId, tenantNombre } = await requiereAdmin();
+  let imagenesRecibidas: Array<string | File>;
+  try {
+    imagenesRecibidas = await leerImagenesFormulario(imagenes, undefined, 5);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudieron leer las imágenes." };
+  }
+  const resultadoValidacion = esquemaPrenda.safeParse({ ...datos, images: imagenesRecibidas });
   if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
@@ -67,20 +74,23 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
     };
   });
 
-  const cambioCategoria = categoryId !== prendaExistente.categoryId;
-  const carpetaNueva = obtenerCarpetaPrenda(tenantId, categoryId, id);
+  const categoriaNueva = await conPrisma((prisma) =>
+    prisma.category.findUnique({ where: { id: categoryId }, select: { name: true } }),
+  );
+  if (!categoriaNueva) return { error: "La categoría no existe." };
+  const cambioUbicacion = categoryId !== prendaExistente.categoryId || name !== prendaExistente.name;
+  const carpetaNueva = obtenerCarpetaPrenda(
+    tenantId, tenantNombre, categoryId, categoriaNueva.name, id, name,
+  );
   const paresMovidos: Array<{ viejo: string; nuevo: string }> = [];
   const idsPublicosSubidos: string[] = [];
   const imagenesFinales: Array<{ url: string; publicId?: string | null; order: number }> = [];
   const urlsFinales = new Set<string>();
-  let contadorImagenes = 0;
-  const sufijoUnico = Date.now();
 
   try {
     for (const imagen of images ?? prendaExistente.images.map((actual) => actual.srcImage)) {
-      if (imagen.startsWith("data:image")) {
-        contadorImagenes += 1;
-        const subida = await subirImagen(imagen, carpetaNueva, tenantId, `imagen-${sufijoUnico}-${contadorImagenes}`);
+      if (imagen instanceof File) {
+        const subida = await subirImagen(imagen, carpetaNueva, tenantId, "imagen");
         idsPublicosSubidos.push(subida.publicId);
         imagenesFinales.push({ url: subida.url, publicId: subida.publicId, order: imagenesFinales.length });
         urlsFinales.add(subida.url);
@@ -88,7 +98,9 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
         const imagenExistente = prendaExistente.images.find((imagenActual) => imagenActual.srcImage === imagen);
         if (imagenExistente) {
           const idPublicoExistente = imagenExistente.publicId ?? obtenerPublicIdDesdeUrl(imagenExistente.srcImage);
-          if (cambioCategoria && idPublicoExistente && publicIdPerteneceTenant(idPublicoExistente, tenantId)) {
+          const carpetaExistente = idPublicoExistente?.slice(0, idPublicoExistente.lastIndexOf("/"));
+          if (cambioUbicacion && idPublicoExistente && carpetaExistente && carpetaExistente !== carpetaNueva &&
+              publicIdPerteneceTenant(idPublicoExistente, tenantId)) {
             const imagenMovida = await moverImagen(idPublicoExistente, carpetaNueva, tenantId);
             paresMovidos.push({ viejo: idPublicoExistente, nuevo: imagenMovida.publicId });
             imagenesFinales.push({ url: imagenMovida.url, publicId: imagenMovida.publicId, order: imagenesFinales.length });
@@ -137,7 +149,7 @@ export async function actualizarPrenda(id: string, datos: z.input<typeof esquema
     console.error("Error al actualizarPrenda:", error);
     for (const par of paresMovidos) {
       try {
-        await moverImagen(par.nuevo, obtenerCarpetaPrenda(tenantId, prendaExistente.categoryId, id), tenantId);
+        await moverImagen(par.nuevo, par.viejo.slice(0, par.viejo.lastIndexOf("/")), tenantId);
       } catch {
         console.error("No se pudo revertir el movimiento de la imagen.");
       }

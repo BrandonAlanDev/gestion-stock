@@ -7,6 +7,7 @@ import { eliminarImagenes } from "@/lib/services/imagenes-cloudinary/eliminar-im
 import { obtenerPublicIdDesdeUrl } from "@/lib/services/imagenes-cloudinary/obtener-public-id-desde-url";
 import { requerirPageConfigAdministrador } from "@/actions/page-config/shared/requerir-page-config-administrador";
 import { conPrisma } from "@/lib/prisma";
+import { leerImagenesFormulario } from "@/lib/services/imagenes-cloudinary/leer-imagenes-formulario";
 
 interface GridItem {
   id?: string;
@@ -33,13 +34,17 @@ interface GridItem {
 export async function updateHomeGrids(
   homegridId: string | undefined | null,
   grids: GridItem[],
-  title?: string
+  title?: string,
+  imagenesFormulario?: FormData,
 ) {
   const publicIdsSubidos: string[] = [];
   let tenantId: string | null = null;
   try {
     const { contexto, pageConfig } = await requerirPageConfigAdministrador();
     tenantId = contexto.tenantId;
+    const imagenes = imagenesFormulario
+      ? await leerImagenesFormulario(imagenesFormulario, grids.length)
+      : grids.map((grid) => grid.image);
     const destinosPaginaValidos = grids.every((grid) =>
       grid.linkType !== "PAGE" || /^\/(?!\/)/.test(grid.linkValue?.trim() || "")
     );
@@ -48,6 +53,7 @@ export async function updateHomeGrids(
     }
 
     let targetHomegridId = homegridId;
+    let tituloCarpeta = title || "";
 
     if (!targetHomegridId) {
       const nuevoHomegrid = await conPrisma((prisma) =>
@@ -74,9 +80,10 @@ export async function updateHomeGrids(
       await conPrisma(async (prisma) => {
         const homegrid = await prisma.homegrid.findFirst({
           where: { id: homegridIdActual },
-          select: { id: true },
+          select: { id: true, title: true },
         });
         if (!homegrid) throw new Error("La sección no pertenece a la tienda activa");
+        tituloCarpeta = title || homegrid.title;
         if (title) {
           await prisma.homegrid.update({
             where: { id: homegrid.id },
@@ -94,21 +101,24 @@ export async function updateHomeGrids(
 
     let gridsProcesados: GridItem[] | null = null;
     try {
-      gridsProcesados = await Promise.all(
-        grids.map(async (g, indice) => {
-          if (g.image.startsWith("data:image")) {
-            const subida = await subirImagen(
-              g.image,
-              obtenerCarpetaGrids(contexto.tenantId, targetHomegridId),
-              contexto.tenantId,
-              `imagen-${Date.now()}-${indice + 1}`
-            );
-            publicIdsSubidos.push(subida.publicId);
-            return { ...g, image: subida.url };
-          }
-          return g;
-        })
-      );
+      gridsProcesados = [];
+      for (const [indice, grid] of grids.entries()) {
+        const imagen = imagenes[indice];
+        if (imagen instanceof File) {
+          const subida = await subirImagen(
+            imagen,
+            obtenerCarpetaGrids(contexto.tenantId, contexto.tenantNombre, targetHomegridId, tituloCarpeta),
+            contexto.tenantId,
+            `imagen-${Date.now()}-${indice + 1}`
+          );
+          publicIdsSubidos.push(subida.publicId);
+          gridsProcesados.push({ ...grid, image: subida.url });
+        } else if (typeof imagen === "string" && imagen && !imagen.startsWith("data:")) {
+          gridsProcesados.push({ ...grid, image: imagen });
+        } else {
+          throw new Error("La imagen de la sección no es válida.");
+        }
+      }
     } catch (error) {
       console.error("[CLOUDINARY][PAGE-CONFIG][HOME-GRIDS][SUBIDA]", error);
       await eliminarImagenes(publicIdsSubidos, contexto.tenantId);

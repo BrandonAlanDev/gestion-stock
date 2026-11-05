@@ -26,6 +26,7 @@ import type { CarouselSettings, SlideConfig } from "@/types/carousel";
 import { requiereAdmin } from "@/lib/tenants/requiere-admin";
 import { requiereTenantActivo } from "@/lib/tenants/requiere-tenant-activo";
 import { getOrCreatePageConfig } from "@/actions/page-config/shared/get-page-config";
+import { leerImagenesFormulario } from "@/lib/services/imagenes-cloudinary/leer-imagenes-formulario";
 
 type SlidePersistido = Omit<Awaited<ReturnType<typeof procesarSlide>>, "url"> & {
   url?: string;
@@ -53,10 +54,22 @@ function migrateSettings(data: unknown): unknown {
   return data;
 }
 
-export async function createCarousel(data: unknown) {
+async function incorporarImagenesWizard(data: unknown, imagenesFormulario?: FormData): Promise<unknown> {
+  if (!imagenesFormulario || typeof data !== "object" || data === null || !("slides" in data) || !Array.isArray(data.slides)) {
+    return data;
+  }
+  const imagenes = await leerImagenesFormulario(imagenesFormulario, data.slides.length);
+  return {
+    ...data,
+    slides: data.slides.map((slide: unknown, indice: number) =>
+      typeof slide === "object" && slide !== null ? { ...slide, image: imagenes[indice] } : slide),
+  };
+}
+
+export async function createCarousel(data: unknown, imagenesFormulario?: FormData) {
   try {
-    const { tenantId } = await requiereAdmin();
-    const parsed = carouselWizardSchema.safeParse(migrateSettings(data));
+    const { tenantId, tenantNombre } = await requiereAdmin();
+    const parsed = carouselWizardSchema.safeParse(migrateSettings(await incorporarImagenesWizard(data, imagenesFormulario)));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
 
     const limits = await obtenerLimitesCarrusel();
@@ -81,9 +94,9 @@ export async function createCarousel(data: unknown) {
     try {
       const slidesProcesados: SlidePersistido[] = [];
       for (let index = 0; index < parsed.data.slides.length; index++) {
-        const procesado = await procesarSlide(parsed.data.slides[index], tenantId, carousel.id);
+        const procesado = await procesarSlide(parsed.data.slides[index], tenantId, tenantNombre, carousel.id, carousel.title);
         if (
-          parsed.data.slides[index].image.startsWith("data:image") &&
+          parsed.data.slides[index].image instanceof File &&
           procesado.publicId
         ) {
           subidas.push(procesado.publicId);
@@ -124,11 +137,11 @@ export async function createCarousel(data: unknown) {
   }
 }
 
-export async function updateCarousel(data: unknown) {
+export async function updateCarousel(data: unknown, imagenesFormulario?: FormData) {
   try {
-    const { tenantId } = await requiereAdmin();
+    const { tenantId, tenantNombre } = await requiereAdmin();
 
-    const parsed = carouselWizardSchema.safeParse(migrateSettings(data));
+    const parsed = carouselWizardSchema.safeParse(migrateSettings(await incorporarImagenesWizard(data, imagenesFormulario)));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
 
     const { id, ...wizardData } = parsed.data;
@@ -144,21 +157,20 @@ export async function updateCarousel(data: unknown) {
 
     const subidasNuevas: string[] = [];
     const finalSlides = [];
-    for (let index = 0; index < wizardData.slides.length; index++) {
-      const slideDelWizard = wizardData.slides[index];
-      const procesado = await procesarSlide(slideDelWizard, tenantId, id);
-      if (slideDelWizard.image.startsWith("data:image") && procesado.publicId) {
-        subidasNuevas.push(procesado.publicId);
-      }
-      finalSlides.push({
-        ...procesado,
-        order: index,
-        publicId: publicIdPorImagen.get(procesado.image) ?? procesado.publicId,
-      });
-    }
-
     let carousel;
     try {
+      for (let index = 0; index < wizardData.slides.length; index++) {
+        const slideDelWizard = wizardData.slides[index];
+        const procesado = await procesarSlide(slideDelWizard, tenantId, tenantNombre, id, wizardData.title);
+        if (slideDelWizard.image instanceof File && procesado.publicId) {
+          subidasNuevas.push(procesado.publicId);
+        }
+        finalSlides.push({
+          ...procesado,
+          order: index,
+          publicId: publicIdPorImagen.get(procesado.image) ?? procesado.publicId,
+        });
+      }
       carousel = await actualizarCarrusel(tenantId, {
         id,
         type: wizardData.type,
@@ -285,7 +297,7 @@ export async function updateCarouselActive(id: string, active: boolean) {
 
 export async function duplicateCarousel(id: string) {
   try {
-    const { tenantId } = await requiereAdmin();
+    const { tenantId, tenantNombre } = await requiereAdmin();
 
     const original = await obtenerCarruselPorId(tenantId, id);
     if (!original) return { error: "Carrusel no encontrado" };
@@ -317,7 +329,11 @@ export async function duplicateCarousel(id: string) {
         let image = slideOriginal.image ?? "";
         let publicId: string | null | undefined;
         if (slideOriginal.publicId || obtenerPublicIdDesdeUrl(image)) {
-          const subida = await subirImagen(image, obtenerCarpetaCarrusel(tenantId, copia.id), tenantId);
+          const subida = await subirImagen(
+            image,
+            obtenerCarpetaCarrusel(tenantId, tenantNombre, copia.id, copia.title),
+            tenantId,
+          );
           image = subida.url;
           publicId = subida.publicId;
           subidas.push(subida.publicId);

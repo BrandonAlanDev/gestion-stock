@@ -94,8 +94,8 @@ export default function FormularioProducto({ categorias, productoSemilla, onSucc
       onSuccess?.();
       if (!hook.esEdicion) hook.resetear();
       cerrar();
-    } catch {
-      toast.error("Ocurrió un error");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ocurrió un error");
     } finally {
       setCargando(false);
     }
@@ -185,6 +185,7 @@ export default function FormularioProducto({ categorias, productoSemilla, onSucc
                   onAddImages={hook.agregarImagenes}
                   onRemoveImage={hook.eliminarImagen}
                   onReorder={hook.reordenarImagenes}
+                  onSetCover={hook.moverImagenAPortada}
                   onEdit={hook.editarImagen}
                 />
                 <ProductoPrecio

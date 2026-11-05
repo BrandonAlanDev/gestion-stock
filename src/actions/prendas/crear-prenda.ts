@@ -29,6 +29,6 @@ const ejecutarCrearPrenda = crearAccionPrenda({
   registrarError: (mensaje, error) => console.error(mensaje, error),
 });
 
-export async function crearPrenda(datos: z.input<typeof garmentSchema>) {
-  return ejecutarCrearPrenda(datos);
+export async function crearPrenda(datos: Omit<z.input<typeof garmentSchema>, "images">, imagenes: FormData) {
+  return ejecutarCrearPrenda(datos, imagenes);
 }
