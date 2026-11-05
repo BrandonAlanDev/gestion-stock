@@ -64,24 +64,21 @@ const ProductCard = ({ product, priority = false }: Props) => {
     <div
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      className="group relative min-w-0"
+      className="group min-w-0"
     >
-      <Link href={`/productos/${product.slug}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primario)]">
-        {/* Badges */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+      <Link
+        href={`/productos/${product.slug}`}
+        className="flex h-full flex-col overflow-hidden rounded-sm border border-current/10 bg-[var(--color-secundario)] text-[var(--texto-sobre-secundario)] transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primario)]"
+      >
+        <div className="relative aspect-square overflow-hidden bg-[var(--superficie-imagen)]">
           {isNew && (
             <span
-              className="rounded-md px-2.5 py-1 text-xs font-semibold"
+              className="absolute left-3 top-3 z-10 rounded-md px-2.5 py-1 text-xs font-semibold"
               style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
             >
               Nuevo
             </span>
           )}
-        </div>
-
-        <div
-          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-black/5 bg-[var(--superficie-imagen)]"
-        >
           <Image
             src={imagen}
             alt={product.name}
@@ -91,14 +88,14 @@ const ProductCard = ({ product, priority = false }: Props) => {
             priority={priority}
             loading={priority ? undefined : "lazy"}
             unoptimized={!imagenAdmiteOptimizacion(imagen)}
-            className={`h-full w-full object-contain p-4 transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
+            className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${fade ? "opacity-100" : "opacity-0"
               }`}
           />
         </div>
-        <div className="space-y-1 px-0.5 pt-3">
-          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--texto-sobre-fondo)]">{product.name}</h3>
-          {precioFormateado && <p className="text-sm font-medium text-[var(--texto-sobre-fondo)]">{precioFormateado}</p>}
-          <span className="inline-block pt-1 text-sm font-medium text-[var(--color-primario)]">Ver producto <span aria-hidden="true">→</span></span>
+        <div className="flex flex-1 flex-col gap-1 p-4">
+          <h3 className="line-clamp-2 text-base font-semibold leading-snug">{product.name}</h3>
+          {precioFormateado && <p className="text-sm font-medium">{precioFormateado}</p>}
+          <span className="inline-block pt-2 text-sm font-medium text-[var(--color-primario)]">Ver producto <span aria-hidden="true">→</span></span>
         </div>
       </Link>
     </div>
