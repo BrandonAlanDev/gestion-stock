@@ -30,9 +30,9 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
   const formatearPrecio = (precio: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: moneda, maximumFractionDigits: 2 }).format(precio);
 
   return (
-    <div className="flex flex-col space-y-7 lg:sticky lg:top-28">
+    <div className="flex flex-col gap-6 lg:sticky lg:top-28">
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         <p className="text-sm font-medium" style={{ color: "var(--color-primario)" }}>
           {product.category?.name}
           {product.subCategory?.name && ` / ${product.subCategory.name}`}
@@ -43,16 +43,14 @@ export default function SelectorProducto({ product }: PropiedadesSelectorProduct
         </h1>
       </div>
 
-      <div className="border-b border-current/15 pb-6">
-        <span>
-          {hayPrecioAnterior && (
-            <span className="mr-2 text-lg text-[var(--texto-sobre-fondo)] opacity-40 line-through">
-              {formatearPrecio(precioAnterior)}
-            </span>
-          )}
-          <span className="text-2xl font-bold text-[var(--texto-sobre-fondo)]">
-            {formatearPrecio(precioMostrado)}
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-current/15 pb-5">
+        {hayPrecioAnterior && (
+          <span className="text-lg text-[var(--texto-sobre-fondo)] opacity-40 line-through">
+            {formatearPrecio(precioAnterior)}
           </span>
+        )}
+        <span className="text-2xl font-bold text-[var(--texto-sobre-fondo)]">
+          {formatearPrecio(precioMostrado)}
         </span>
       </div>
 

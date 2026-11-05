@@ -79,15 +79,15 @@ export default function ProductoView({ product }: ProductProps) {
               </div>
             )}
 
-            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-xl bg-[var(--superficie-imagen)] p-4 sm:p-8">
+            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[var(--superficie-imagen)]">
               <Image
                 src={obtenerUrlImagenOptimizada(selectedImage, 1200) || selectedImage}
                 loading="eager"
                 alt={product.name}
-                width={1200}
-                height={1200}
+                fill
+                sizes="(min-width: 1024px) 640px, 100vw"
                 unoptimized
-                className="h-auto max-h-[680px] w-auto max-w-full select-none object-contain"
+                className="select-none object-contain object-top"
               />
             </div>
           </div>

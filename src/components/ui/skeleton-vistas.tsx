@@ -117,7 +117,7 @@ export function SkeletonTienda({ tipo = "catalogo" }: { tipo?: TipoSkeletonTiend
         <EstadoCarga>
           {tipo === "producto" && (
             <div><Bloque className="mb-8 h-4 w-40" /><div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
-              <div className="flex flex-col-reverse gap-3 md:flex-row"><div className="flex gap-3 md:flex-col">{Array.from({ length: 3 }, (_, indice) => <Bloque key={indice} className="h-20 w-16 shrink-0" />)}</div><Bloque className="aspect-[4/5] w-full rounded-xl" /></div>
+              <div className="flex flex-col-reverse gap-3 md:flex-row"><div className="flex gap-3 md:flex-col">{Array.from({ length: 3 }, (_, indice) => <Bloque key={indice} className="h-20 w-16 shrink-0" />)}</div><Bloque className="aspect-square w-full rounded-xl" /></div>
               <div className="space-y-5">
                 <Bloque className="h-5 w-28" />
                 <Bloque className="h-10 w-4/5" />
