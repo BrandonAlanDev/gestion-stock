@@ -22,6 +22,7 @@ interface DatosActualizacionStock {
 export async function actualizarVarianteConControlStock(
   tx: Transaccion,
   entrada: DatosActualizacionStock,
+  registrarMovimiento = true,
 ): Promise<void> {
   const delta = entrada.stockNuevo - entrada.stockOriginal;
   const actualizado = await tx.garmentVariant.updateMany({
@@ -40,7 +41,7 @@ export async function actualizarVarianteConControlStock(
     if (delta !== 0) throw new ConflictoStockVarianteError();
     throw new Error("La variante ya no pertenece al producto.");
   }
-  if (delta === 0) return;
+  if (delta === 0 || !registrarMovimiento) return;
 
   await tx.movement.create({
     data: {

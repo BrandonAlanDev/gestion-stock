@@ -6,6 +6,7 @@ import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-var
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
 import { actualizarVarianteConControlStock } from "@/lib/inventario/actualizar-stock-variante";
 import { verificarVariantesEliminables } from "@/lib/inventario/variantes-transaccion";
+import { registrarAperturaStock } from "@/lib/inventario/registrar-apertura-stock";
 
 export async function actualizarRegistroPrendaConDetalles(
   prisma: PrismaClient,
@@ -13,7 +14,10 @@ export async function actualizarRegistroPrendaConDetalles(
   id: string,
   datos: DatosGuardarProducto
 ) {
-  const producto = await prisma.garment.findFirst({ where: { id }, select: { id: true, cost: true } });
+  const producto = await prisma.garment.findFirst({
+    where: { id },
+    select: { id: true, cost: true, controlaStock: true },
+  });
   if (!producto) throw new Error("Producto no encontrado");
   const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId }, select: { id: true } });
   if (!categoria) throw new Error("Categoría no encontrada");
@@ -28,11 +32,12 @@ export async function actualizarRegistroPrendaConDetalles(
   await validarReferenciasVariantes(prisma, tenantId, datos.variants);
 
   const cost = typeof datos.cost === "number" && !Number.isNaN(datos.cost) ? datos.cost : producto.cost;
+  const activaControlStock = !producto.controlaStock && datos.controlaStock;
 
   await prisma.$transaction(
     async (tx) => {
-      await tx.garment.updateMany({
-        where: { id },
+      const productoActualizado = await tx.garment.updateMany({
+        where: { id, controlaStock: producto.controlaStock },
         data: {
           name: datos.name,
           price: datos.price,
@@ -47,6 +52,9 @@ export async function actualizarRegistroPrendaConDetalles(
           etiquetas: datos.etiquetas.length ? (datos.etiquetas as Prisma.InputJsonValue) : Prisma.DbNull,
         },
       });
+      if (productoActualizado.count !== 1) {
+        throw new Error("El producto cambió mientras lo editabas. Recargá la página y volvé a intentar.");
+      }
 
       const resolver = await sincronizarOpciones(tx, tenantId, id, datos.opciones);
 
@@ -57,6 +65,7 @@ export async function actualizarRegistroPrendaConDetalles(
         throw new Error("La variante no pertenece al producto");
       }
       const idsAEliminar = variantesActuales.filter((v) => !idsEntrantes.includes(v.id)).map((v) => v.id);
+      const variantesApertura: Array<{ variantId: string; cantidad: number; precio: number }> = [];
       if (idsAEliminar.length > 0) {
         await verificarVariantesEliminables(tx, idsAEliminar);
         await tx.garmentVariant.deleteMany({ where: { id: { in: idsAEliminar } } });
@@ -81,7 +90,14 @@ export async function actualizarRegistroPrendaConDetalles(
             stockNuevo: variante.stock,
             precio: Number(variante.priceOverride ?? datos.price),
             datos: data,
-          });
+          }, !activaControlStock);
+          if (activaControlStock && variante.stock > 0) {
+            variantesApertura.push({
+              variantId: variante.id,
+              cantidad: variante.stock,
+              precio: Number(variante.priceOverride ?? datos.price),
+            });
+          }
           await tx.garmentVariantOptionValue.deleteMany({ where: { variantId: variante.id } });
           await crearVinculosVariante(tx, variante.id, resolver, variante.opcionValores);
         } else {
@@ -110,6 +126,11 @@ export async function actualizarRegistroPrendaConDetalles(
           await crearVinculosVariante(tx, creadaVariante.id, resolver, variante.opcionValores);
         }
       }
+      await registrarAperturaStock(
+        tx,
+        variantesApertura,
+        "Stock inicial al activar el control de stock",
+      );
     },
     {
       timeout: 60000,

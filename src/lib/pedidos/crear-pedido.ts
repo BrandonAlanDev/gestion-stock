@@ -12,6 +12,7 @@ import { bloquearVariantes } from "@/lib/inventario/variantes-transaccion";
 import type { ItemParaCrearPedido } from "./resolver-items-carrito";
 import type { ResumenCheckout } from "./tipos-resumen-checkout";
 import { ErrorItemCarrito } from "./resolver-items-carrito";
+import { medirTiempoInventario } from "@/lib/inventario/medir-tiempo-inventario";
 
 export type { ItemParaCrearPedido } from "./resolver-items-carrito";
 
@@ -74,78 +75,99 @@ export async function crearPedidoDesdeCarrito(
       select: { name: true, email: true },
     });
 
-    const pedido = await prisma.$transaction(async (tx) => {
-      const idsBloqueados = await bloquearVariantes(
-        tx,
-        itemsPreparados.map((item) => item.variantId),
-      );
-      if (idsBloqueados.length !== new Set(itemsPreparados.map((item) => item.variantId)).size) {
-        throw new ErrorItemCarrito(
-          "PRODUCTO_NO_DISPONIBLE",
-          "Una variante del carrito ya no está disponible. Revisá el carrito para corregirlo.",
+    const pedido = await medirTiempoInventario("checkout.transaccion", itemsPreparados.length, () =>
+      prisma.$transaction(async (tx) => {
+        const idsBloqueados = await medirTiempoInventario("checkout.bloquear_variantes", itemsPreparados.length, () =>
+          bloquearVariantes(tx, itemsPreparados.map((item) => item.variantId)),
         );
-      }
+        if (idsBloqueados.length !== new Set(itemsPreparados.map((item) => item.variantId)).size) {
+          throw new ErrorItemCarrito(
+            "PRODUCTO_NO_DISPONIBLE",
+            "Una variante del carrito ya no está disponible. Revisá el carrito para corregirlo.",
+          );
+        }
 
-      const numeracion = await tx.numeroPedido.create({ data: {} });
-      const configuracionMetodo = await tx.metodoPago.findUnique({
-        where: { metodo: metodoPago },
-        select: { activo: true, config: true },
-      });
-      if (!configuracionMetodo?.activo) {
-        throw new Error("El método de pago ya no está habilitado para este comercio");
-      }
-      const creadoEn = new Date();
-      const creado = await tx.pedido.create({
-        data: {
-          numero: numeracion.id,
-          userId,
-          metodoPago,
-          total,
-          subtotal: total,
-          moneda,
-          nombreCliente: datosEntrega?.nombre ?? user?.name ?? null,
-          apellidoCliente: datosEntrega?.apellido ?? null,
-          telefonoCliente: datosEntrega?.telefono ?? null,
-          emailCliente: user?.email ?? null,
-          metodoEntrega: datosEntrega?.metodoEntrega ?? "RETIRO_TIENDA",
-          stockReservado: true,
-          createdAt: creadoEn,
-          reservaExpiraEn: obtenerVencimientoReserva(
-            metodoPago,
-            creadoEn,
-            configuracionMetodo.config,
-          ),
-          items: {
-            create: itemsPreparados.map((item) => ({
-              garmentId: item.garmentId,
-              variantId: item.variantId,
-              nombre: item.nombre,
-              varianteNombre: item.varianteNombre,
-              imagen: item.imagen,
-              precioUnitario: item.precioUnitario,
-              cantidad: item.cantidad,
-              subtotal: item.subtotal,
-            })),
-          },
-          envio: datosEntrega?.metodoEntrega === "DOMICILIO" ? { create: {
-            metodoEntrega: "DOMICILIO",
-            destinatario: datosEntrega.destinatario,
-            telefono: datosEntrega.telefono,
-            calle: datosEntrega.calle,
-            numero: datosEntrega.numero,
-            piso: datosEntrega.piso || null,
-            departamento: datosEntrega.departamento || null,
-            codigoPostal: datosEntrega.codigoPostal,
-            localidad: datosEntrega.localidad,
-            provincia: datosEntrega.provincia,
-            referencias: datosEntrega.referencias || null,
-          } } : undefined,
-          eventos: { create: { tipo: "CREACION", descripcion: "Pedido creado" } },
-        },
-      });
-      await reservarStockPedido(creado.id, tx);
-      return creado;
-    });
+        const numeracion = await medirTiempoInventario("checkout.numero_pedido", itemsPreparados.length, () =>
+          tx.numeroPedido.create({ data: {} }),
+        );
+        const configuracionMetodo = await medirTiempoInventario("checkout.consultar_metodo_pago", itemsPreparados.length, () =>
+          tx.metodoPago.findUnique({
+            where: { metodo: metodoPago },
+            select: { activo: true, config: true },
+          }),
+        );
+        if (!configuracionMetodo?.activo) {
+          throw new Error("El método de pago ya no está habilitado para este comercio");
+        }
+        const creadoEn = new Date();
+        const creado = await medirTiempoInventario("checkout.crear_pedido", itemsPreparados.length, () =>
+          tx.pedido.create({
+            data: {
+              numero: numeracion.id,
+              userId,
+              metodoPago,
+              total,
+              subtotal: total,
+              moneda,
+              nombreCliente: datosEntrega?.nombre ?? user?.name ?? null,
+              apellidoCliente: datosEntrega?.apellido ?? null,
+              telefonoCliente: datosEntrega?.telefono ?? null,
+              emailCliente: user?.email ?? null,
+              metodoEntrega: datosEntrega?.metodoEntrega ?? "RETIRO_TIENDA",
+              stockReservado: true,
+              createdAt: creadoEn,
+              reservaExpiraEn: obtenerVencimientoReserva(
+                metodoPago,
+                creadoEn,
+                configuracionMetodo.config,
+              ),
+              items: {
+                create: itemsPreparados.map((item) => ({
+                  garmentId: item.garmentId,
+                  variantId: item.variantId,
+                  nombre: item.nombre,
+                  varianteNombre: item.varianteNombre,
+                  imagen: item.imagen,
+                  precioUnitario: item.precioUnitario,
+                  cantidad: item.cantidad,
+                  subtotal: item.subtotal,
+                })),
+              },
+              envio: datosEntrega?.metodoEntrega === "DOMICILIO" ? { create: {
+                metodoEntrega: "DOMICILIO",
+                destinatario: datosEntrega.destinatario,
+                telefono: datosEntrega.telefono,
+                calle: datosEntrega.calle,
+                numero: datosEntrega.numero,
+                piso: datosEntrega.piso || null,
+                departamento: datosEntrega.departamento || null,
+                codigoPostal: datosEntrega.codigoPostal,
+                localidad: datosEntrega.localidad,
+                provincia: datosEntrega.provincia,
+                referencias: datosEntrega.referencias || null,
+              } } : undefined,
+              eventos: { create: { tipo: "CREACION", descripcion: "Pedido creado" } },
+            },
+          }),
+        );
+        await reservarStockPedido(
+          creado.id,
+          itemsPreparados.map((item) => ({
+            variantId: item.variantId,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+          })),
+          tx,
+        );
+        return creado;
+      }, {
+        // El error reportó 5.361 s en una transacción con el límite Prisma predeterminado de 5 s.
+        // Las escrituras repetidas se agrupan; 10 s deja margen a la latencia TiDB sin incluir red externa.
+        timeout: 10_000,
+        maxWait: 2_000,
+      }),
+    );
 
     return { ok: true as const, pedidoId: pedido.id, numero: pedido.numero ?? 0, total, moneda };
   });

@@ -4,6 +4,7 @@ import type { DatosGuardarProducto } from "@/types/productos/opciones-producto";
 import { sincronizarOpciones } from "@/lib/services/prendas/sincronizar-opciones";
 import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-variante";
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
+import { registrarAperturaStock } from "@/lib/inventario/registrar-apertura-stock";
 
 export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string, datos: DatosGuardarProducto) {
   const categoria = await prisma.category.findFirst({ where: { id: datos.categoryId }, select: { id: true } });
@@ -36,6 +37,7 @@ export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string
         },
       });
       const resolver = await sincronizarOpciones(tx, tenantId, creado.id, datos.opciones);
+      const variantesApertura: Array<{ variantId: string; cantidad: number; precio: number }> = [];
       for (const variante of datos.variants) {
         const creadaVariante = await tx.garmentVariant.create({
           data: {
@@ -48,8 +50,16 @@ export async function crearRegistroPrenda(prisma: PrismaClient, tenantId: string
             attributes: variante.attributes === null ? Prisma.JsonNull : variante.attributes,
           },
         });
+        if (datos.controlaStock && variante.stock > 0) {
+          variantesApertura.push({
+            variantId: creadaVariante.id,
+            cantidad: variante.stock,
+            precio: Number(variante.priceOverride ?? datos.price),
+          });
+        }
         await crearVinculosVariante(tx, creadaVariante.id, resolver, variante.opcionValores);
       }
+      await registrarAperturaStock(tx, variantesApertura, "Stock inicial al crear producto");
       return creado.id;
     },
     { timeout: 60000, maxWait: 60000 }
