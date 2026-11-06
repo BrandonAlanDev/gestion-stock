@@ -3,7 +3,10 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { imagenAdmiteOptimizacion } from "@/lib/utilidades/imagen-admite-optimizacion";
-import type { ItemResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
+import type {
+  ItemResumenCheckout,
+  ProductoSinStockCheckout,
+} from "@/lib/pedidos/tipos-resumen-checkout";
 
 interface PropiedadesResumenPedido {
   items: ItemResumenCheckout[];
@@ -11,6 +14,7 @@ interface PropiedadesResumenPedido {
   moneda: string;
   modalidadEntrega: "DOMICILIO" | "RETIRO_TIENDA" | null;
   error: string | null;
+  productoSinStock?: ProductoSinStockCheckout | null;
   avisoPrecio: string | null;
   alRevisarCarrito: () => void;
   children: ReactNode;
@@ -22,6 +26,7 @@ export default function ResumenPedido({
   moneda,
   modalidadEntrega,
   error,
+  productoSinStock = null,
   avisoPrecio,
   alRevisarCarrito,
   children,
@@ -36,6 +41,7 @@ export default function ResumenPedido({
     ? formatearPrecio(subtotal)
     : "—";
   const cantidadArticulos = items.reduce((total, item) => total + item.cantidad, 0);
+  const imagenProductoSinStock = productoSinStock?.imagen || "/images/placeholder.svg";
 
   return (
     <section
@@ -99,6 +105,35 @@ export default function ResumenPedido({
             >
               {error}
             </p>
+            {productoSinStock && (
+              <div
+                className="flex items-center gap-3 rounded-xl border p-3"
+                style={{ borderColor: "color-mix(in srgb, hsl(var(--destructive)) 25%, transparent)" }}
+              >
+                <div
+                  className="relative size-16 shrink-0 overflow-hidden rounded-lg"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--texto-sobre-fondo) 5%, var(--superficie-fondo))" }}
+                >
+                  <Image
+                    src={imagenProductoSinStock}
+                    alt={productoSinStock.nombre}
+                    fill
+                    sizes="64px"
+                    unoptimized={!imagenAdmiteOptimizacion(imagenProductoSinStock)}
+                    className="object-contain p-1"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm font-semibold">{productoSinStock.nombre}</p>
+                  {productoSinStock.variante && (
+                    <p className="mt-0.5 truncate text-xs opacity-65">{productoSinStock.variante}</p>
+                  )}
+                  <p className="mt-1 text-xs font-semibold" style={{ color: "hsl(var(--destructive))" }}>
+                    Sin stock disponible
+                  </p>
+                </div>
+              </div>
+            )}
             <button
               type="button"
               onClick={alRevisarCarrito}

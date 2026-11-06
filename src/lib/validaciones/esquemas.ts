@@ -61,7 +61,8 @@ export const garmentSchema = z
         priceOverride: z.coerce.number().positive().optional().nullable(),
         sku: z.string().optional().nullable(),
         stock: z.coerce.number().int().nonnegative(),
-        stockOriginal: z.coerce.number().int().nonnegative().optional(),
+        // Puede reflejar un valor histórico inconsistente; el stock nuevo sigue siendo no negativo.
+        stockOriginal: z.coerce.number().int().optional(),
         sizeId: z.string().optional().nullable(),
         colorId: z.string().optional().nullable(),
         attributes: z.json().optional().nullable(),

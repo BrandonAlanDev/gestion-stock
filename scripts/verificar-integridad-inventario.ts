@@ -7,6 +7,8 @@ import {
   ErrorVarianteNoEliminable,
   verificarVariantesEliminables,
 } from "../src/lib/inventario/variantes-transaccion";
+import { garmentSchema } from "../src/lib/validaciones/esquemas";
+import { mensajeStockNoDisponible } from "../src/lib/inventario/stock-condicional";
 import { eliminarRegistroPrenda } from "../src/lib/services/prendas/eliminar-registro-prenda";
 import {
   liberarReservaStockPedido,
@@ -26,6 +28,20 @@ function comoTransaccion(valor: Record<string, unknown>): Prisma.TransactionClie
   return valor as unknown as Prisma.TransactionClient;
 }
 
+function textoConsulta(consulta: unknown): string {
+  if (Array.isArray(consulta)) return consulta.join(" ");
+  if (!consulta || typeof consulta !== "object") return "";
+  const valor = consulta as { strings?: unknown; sql?: unknown };
+  if (Array.isArray(valor.strings)) return valor.strings.join(" ");
+  return typeof valor.sql === "string" ? valor.sql : "";
+}
+
+function valoresConsulta(consulta: unknown): unknown[] {
+  if (!consulta || typeof consulta !== "object") return [];
+  const valores = (consulta as { values?: unknown }).values;
+  return Array.isArray(valores) ? valores : [];
+}
+
 function crearTransaccionStock(stockInicial: number, controlaStockInicial = true) {
   const movimientos: Array<{ type: string; quantity: number; note: string }> = [];
   const variantes = new Map<string, { stock: number; controlaStock: boolean }>([
@@ -36,6 +52,22 @@ function crearTransaccionStock(stockInicial: number, controlaStockInicial = true
   let fallarCreacionMovimientos = false;
 
   const tx = comoTransaccion({
+    async $queryRaw(consulta: unknown) {
+      const sql = textoConsulta(consulta);
+      if (sql.includes("tidb_txn_mode")) return [{ modo: "pessimistic" }];
+      if (sql.includes("INNER JOIN Garment")) {
+        return valoresConsulta(consulta)
+          .filter((id): id is string => typeof id === "string")
+          .flatMap((id) => {
+            const variante = variantes.get(id);
+            return variante ? [{ variantId: id, controlaStock: variante.controlaStock }] : [];
+          });
+      }
+      return valoresConsulta(consulta)
+        .filter((id): id is string => typeof id === "string")
+        .filter((id) => variantes.has(id))
+        .map((id) => ({ id }));
+    },
     pedidoItem: {
       async findMany(argumentos: unknown) {
         const where = (argumentos as { where: { pedidoId: string; stockReservado?: boolean } }).where;
@@ -77,11 +109,16 @@ function crearTransaccionStock(stockInicial: number, controlaStockInicial = true
         });
       },
       async updateMany(argumentos: unknown) {
-        const raiz = argumentos as { where: { id: string; stock?: number | { gte?: number } }; data: { stock?: { increment?: number; decrement?: number } } };
+        const raiz = argumentos as {
+          where: { id: string; stock?: number | { equals?: number; gte?: number } };
+          data: { stock?: { increment?: number; decrement?: number } };
+        };
         const variante = variantes.get(raiz.where.id);
         if (!variante) return { count: 0 };
         if (typeof raiz.where.stock === "number" && variante.stock !== raiz.where.stock) return { count: 0 };
-        if (typeof raiz.where.stock === "object" && variante.stock < (raiz.where.stock.gte ?? 0)) return { count: 0 };
+        if (typeof raiz.where.stock === "object" && raiz.where.stock !== null &&
+          ((raiz.where.stock.equals !== undefined && variante.stock !== raiz.where.stock.equals) ||
+            (raiz.where.stock.gte !== undefined && variante.stock < raiz.where.stock.gte))) return { count: 0 };
         if (raiz.data.stock?.decrement !== undefined) variante.stock -= raiz.data.stock.decrement;
         if (raiz.data.stock?.increment !== undefined) variante.stock += raiz.data.stock.increment;
         return { count: 1 };
@@ -166,9 +203,19 @@ function crearTransaccionActualizacion(stockInicial: number) {
     tx: comoTransaccion({
       garmentVariant: {
         async updateMany(argumentos: unknown) {
-          const raiz = argumentos as { where: { id: string; garmentId: string; stock?: number }; data: { stock?: { increment: number } } };
+          const raiz = argumentos as {
+            where: {
+              id: string;
+              garmentId: string;
+              stock?: number | { equals?: number; gte?: number };
+            };
+            data: { stock?: { increment: number } };
+          };
           if (raiz.where.id !== ID_VARIANTE || raiz.where.garmentId !== ID_PRENDA ||
-            (raiz.where.stock !== undefined && raiz.where.stock !== stock)) return { count: 0 };
+            (typeof raiz.where.stock === "number" && raiz.where.stock !== stock) ||
+            (typeof raiz.where.stock === "object" && raiz.where.stock !== null &&
+              ((raiz.where.stock.equals !== undefined && raiz.where.stock.equals !== stock) ||
+                (raiz.where.stock.gte !== undefined && stock < raiz.where.stock.gte)))) return { count: 0 };
           if (raiz.data.stock) stock += raiz.data.stock.increment;
           return { count: 1 };
         },
@@ -206,6 +253,47 @@ async function verificarEdicionesConcurrentes(): Promise<void> {
   assert.ok(ediciones.some((resultado) => resultado.status === "rejected" && resultado.reason instanceof Error));
   assert.ok([8, 9].includes(estado.stock()), "La segunda edición no debe sobrescribir la primera");
   assert.equal(estado.movimientos.length, 1);
+}
+
+async function verificarCorreccionStockHistoricoNegativo(): Promise<void> {
+  assert.equal(
+    mensajeStockNoDisponible("Zapatillas 8US"),
+    "Ya no hay stock disponible de “Zapatillas 8US”. Actualizá el carrito para continuar.",
+  );
+  assert.equal(
+    mensajeStockNoDisponible(),
+    "Ya no hay stock disponible del producto. Actualizá el carrito para continuar.",
+  );
+
+  const datos = {
+    name: "Producto de prueba",
+    price: 100,
+    categoryId: "categoria-a",
+    controlaStock: true,
+    opciones: [],
+    images: [],
+    variants: [{ id: ID_VARIANTE, stockOriginal: -1, stock: 3 }],
+  };
+  const validacion = garmentSchema.safeParse(datos);
+  assert.equal(validacion.success, true, "el snapshot histórico puede ser negativo si el stock nuevo es válido");
+
+  const stockNuevoNegativo = garmentSchema.safeParse({
+    ...datos,
+    variants: [{ id: ID_VARIANTE, stockOriginal: -1, stock: -1 }],
+  });
+  assert.equal(stockNuevoNegativo.success, false, "el formulario no debe aceptar stock nuevo negativo");
+
+  const ajuste = crearTransaccionActualizacion(-1);
+  await actualizarVarianteConControlStock(ajuste.tx, {
+    variantId: ID_VARIANTE,
+    garmentId: ID_PRENDA,
+    stockOriginal: -1,
+    stockNuevo: 3,
+    precio: 1200,
+    datos: { sku: "CAM-1" },
+  });
+  assert.equal(ajuste.stock(), 3, "una corrección explícita debe reemplazar el valor negativo legado");
+  assert.deepEqual(ajuste.movimientos, [{ type: "IN", quantity: 4 }]);
 }
 
 async function verificarCompraDuranteEdicionYCancelacion(): Promise<void> {
@@ -252,6 +340,24 @@ async function verificarAjustesYStockNoNegativo(): Promise<void> {
   assert.equal(resultados.filter(({ status }) => status === "rejected").length, 1);
   assert.equal(estado.stock(), 0, "Dos reservas simultáneas no deben llevar el stock a negativo");
   assert.equal(estado.movimientos.length, 1, "Solo debe registrarse el egreso confirmado");
+
+  const duplicada = crearTransaccionStock(2);
+  duplicada.agregarPedido("pedido-reserva-unica", 1);
+  await reservarStockPedido(
+    "pedido-reserva-unica",
+    [reserva(ID_VARIANTE, "Camisa", 1)],
+    duplicada.tx,
+  );
+  await assert.rejects(
+    reservarStockPedido(
+      "pedido-reserva-unica",
+      [reserva(ID_VARIANTE, "Camisa", 1)],
+      duplicada.tx,
+    ),
+    /reserva del pedido ya existe/i,
+  );
+  assert.equal(duplicada.stock(), 1, "una segunda reserva no debe descontar nuevamente");
+  assert.equal(duplicada.movimientos.length, 1, "una segunda reserva no debe duplicar movimientos");
 
   const ajuste = crearTransaccionActualizacion(4);
   await actualizarVarianteConControlStock(ajuste.tx, {
@@ -318,7 +424,7 @@ async function verificarStockInsuficienteYFalloAtomico(): Promise<void> {
     "pedido-insuficiente",
     [reserva(ID_VARIANTE, "Camisa", 2)],
     insuficiente.tx,
-  ), /Stock insuficiente/);
+  ), /Ya no hay stock disponible/);
   assert.equal(insuficiente.stock(), 1);
   assert.equal(insuficiente.movimientos.length, 0);
 
@@ -371,7 +477,10 @@ function crearTransaccionReferencias(
   ];
   let eliminaciones = 0;
   const tx = {
-    async $queryRaw() {
+    async $queryRaw(consulta: unknown) {
+      if (textoConsulta(consulta).includes("tidb_txn_mode")) {
+        return [{ modo: "pessimistic" }];
+      }
       return respuestas.shift() ?? [];
     },
     movement: {
@@ -426,7 +535,10 @@ async function verificarProteccionContraEliminacion(): Promise<void> {
   assert.equal(sinReferencias.eliminaciones(), 1, "Un producto sin stock ni referencias puede eliminarse");
 
   const idsBloqueados = await bloquearVariantes(comoTransaccion({
-    async $queryRaw() {
+    async $queryRaw(consulta: unknown) {
+      if (textoConsulta(consulta).includes("tidb_txn_mode")) {
+        return [{ modo: "pessimistic" }];
+      }
       return [{ id: ID_VARIANTE }];
     },
   }), ["variante-b", ID_VARIANTE, ID_VARIANTE]);
@@ -440,6 +552,7 @@ async function verificarProteccionContraEliminacion(): Promise<void> {
 
 async function main(): Promise<void> {
   await verificarEdicionesConcurrentes();
+  await verificarCorreccionStockHistoricoNegativo();
   await verificarCompraDuranteEdicionYCancelacion();
   await verificarAjustesYStockNoNegativo();
   await verificarProductoSinSeguimiento();

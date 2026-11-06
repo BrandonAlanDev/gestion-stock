@@ -18,7 +18,7 @@ export default function FilaItemCarrito({
   return (
     <div className="p-3 border rounded-xl flex gap-4 bg-[color-mix(in_srgb,var(--color-secundario)_50%,transparent)]">
       <Image
-        src={item.image || "/placeholder.png"}
+        src={item.image || "/images/placeholder.svg"}
         alt={item.name}
         width={60}
         height={60}
@@ -43,7 +43,7 @@ export default function FilaItemCarrito({
             <span className="text-xs font-bold">{item.qty}</span>
             <button
               onClick={() => updateQty(item.uid, 1)}
-              disabled={adicionPendiente || (item.stock != null && item.qty >= item.stock)}
+              disabled={adicionPendiente || item.sinStock || (item.stock != null && item.qty >= item.stock)}
               aria-label={`Agregar una unidad de ${item.name}`}
               className="p-1 rounded bg-[color-mix(in_srgb,var(--color-fondo-sitio)_5%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -57,6 +57,18 @@ export default function FilaItemCarrito({
             <Trash2 size={14} />
           </button>
         </div>
+        {item.sinStock && (
+          <p
+            role="status"
+            className="mt-2 rounded-md px-2 py-1 text-[11px] font-medium"
+            style={{
+              color: "hsl(var(--destructive))",
+              backgroundColor: "color-mix(in srgb, hsl(var(--destructive)) 8%, transparent)",
+            }}
+          >
+            Sin stock disponible. Quitá el producto o reducí la cantidad.
+          </p>
+        )}
       </div>
     </div>
   );

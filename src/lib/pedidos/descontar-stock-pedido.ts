@@ -1,7 +1,15 @@
 import "server-only";
 
 import type { Prisma } from "@/../generated/prisma/client";
+import {
+  bloquearVariantes,
+  obtenerControlStockVariantesBloqueadas,
+} from "@/lib/inventario/variantes-transaccion";
 import { medirTiempoInventario } from "@/lib/inventario/medir-tiempo-inventario";
+import {
+  descontarStockCondicional,
+  ErrorStockInsuficiente,
+} from "@/lib/inventario/stock-condicional";
 
 type ClienteTx = Prisma.TransactionClient;
 
@@ -21,38 +29,29 @@ export async function descontarStockPedido(
 
   if (!items.length) return;
 
-  const variantes = await cliente.garmentVariant.findMany({
-    where: { id: { in: items.map((item) => item.variantId) } },
-    select: {
-      id: true,
-      stock: true,
-      garment: { select: { controlaStock: true } },
-    },
-  });
+  const idsVariantes = [...new Set(items.map((item) => item.variantId))];
+  const bloqueadas = await bloquearVariantes(cliente, idsVariantes);
+  if (bloqueadas.length !== idsVariantes.length) {
+    throw new Error("Una variante del pedido ya no está disponible");
+  }
 
-  const porId = new Map(variantes.map((variante) => [variante.id, variante]));
+  const controlStock = await obtenerControlStockVariantesBloqueadas(cliente, idsVariantes);
   const descontables = items.filter((item) => {
-    const variante = porId.get(item.variantId);
-    if (!variante) throw new Error(`La variante del producto "${item.nombre}" ya no existe`);
-    if (!variante.garment.controlaStock) return false;
-    if (variante.stock < item.cantidad) {
-      throw new Error(`Stock insuficiente para el producto "${item.nombre}"`);
-    }
-    return true;
+    const controla = controlStock.get(item.variantId);
+    if (controla === undefined) throw new Error(`La variante del producto "${item.nombre}" ya no existe`);
+    return controla;
   });
 
   await medirTiempoInventario("venta.actualizar_stock", descontables.length, async () => {
     for (const item of descontables) {
-      const actualizado = await cliente.garmentVariant.updateMany({
-        where: {
-          id: item.variantId,
-          stock: { gte: item.cantidad },
-        },
-        data: { stock: { decrement: item.cantidad } },
-      });
-
-      if (actualizado.count !== 1) {
-        throw new Error(`Stock insuficiente para el producto "${item.nombre}"`);
+      const descontado = await descontarStockCondicional(cliente, item.variantId, item.cantidad);
+      if (!descontado) {
+        throw new ErrorStockInsuficiente(item.nombre, {
+          variantId: item.variantId,
+          nombre: item.nombre,
+          variante: item.varianteNombre,
+          imagen: item.imagen,
+        });
       }
     }
   });

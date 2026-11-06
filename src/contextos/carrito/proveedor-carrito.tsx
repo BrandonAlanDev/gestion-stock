@@ -189,9 +189,18 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       if (item.uid !== uid || (item.adicionesPendientes?.length ?? 0) > 0) return [item];
       const cantidad = item.qty + ajuste;
       if (cantidad <= 0) return [];
+      if (item.sinStock && ajuste > 0) return [item];
       if (item.stock != null && cantidad > item.stock) return [item];
-      return [{ ...item, qty: cantidad }];
+      return [{ ...item, qty: cantidad, sinStock: false }];
     }));
+  }, []);
+
+  const marcarSinStock = useCallback((variantId: string) => {
+    setCartItems((anteriores) => anteriores.map((item) =>
+      item.variantId !== undefined && String(item.variantId) === String(variantId)
+        ? { ...item, sinStock: true }
+        : item,
+    ));
   }, []);
 
   const removeItem = useCallback((uid: string) => {
@@ -211,6 +220,7 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       confirmarAdicion,
       revertirAdicion,
       updateQty,
+      marcarSinStock,
       removeItem,
     }),
     [
@@ -221,6 +231,7 @@ export function CartProvider({ children }: PropiedadesCartProvider) {
       claveCargada,
       claveCarrito,
       isCartOpen,
+      marcarSinStock,
       openCart,
       removeItem,
       revertirAdicion,

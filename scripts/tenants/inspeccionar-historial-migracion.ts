@@ -22,6 +22,88 @@ export interface ResultadoPreflightMigracion {
   objetosPersistentes: number;
 }
 
+const MIGRACION_STOCK_NO_NEGATIVO = "20261106010000_stock_no_negativo";
+
+function versionEsAlMenos(version: string, requerida: readonly number[]): boolean {
+  const actual = version.match(/\d+\.\d+\.\d+/)?.[0]
+    .split(".")
+    .map(Number);
+  if (!actual) return false;
+  for (let indice = 0; indice < requerida.length; indice += 1) {
+    const diferencia = (actual[indice] ?? 0) - requerida[indice]!;
+    if (diferencia !== 0) return diferencia > 0;
+  }
+  return true;
+}
+
+async function verificarPrecondicionesCheckStock(
+  cliente: PrismaClient,
+  base: string,
+): Promise<void> {
+  const [version] = await cliente.$queryRaw<Array<{ version: string }>>`
+    SELECT VERSION() AS version
+  `;
+  if (!version?.version) throw new Error("No se pudo identificar el motor de base de datos.");
+
+  const [tablaVariantes] = await cliente.$queryRaw<FilaConteo[]>`
+    SELECT COUNT(*) AS cantidad
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'GarmentVariant'
+  `;
+  if (Number(tablaVariantes?.cantidad ?? 0) !== 1) {
+    throw new Error(`No se encontró GarmentVariant en ${base}; se cancela el preflight de ${MIGRACION_STOCK_NO_NEGATIVO}.`);
+  }
+  const [stockNegativo] = await cliente.$queryRaw<FilaConteo[]>`
+    SELECT COUNT(*) AS cantidad
+    FROM GarmentVariant
+    WHERE stock < 0
+  `;
+  const cantidadNegativa = Number(stockNegativo?.cantidad ?? 0);
+  if (cantidadNegativa > 0) {
+    throw new Error(
+      `No se aplicó ${MIGRACION_STOCK_NO_NEGATIVO}: ${cantidadNegativa} variantes tienen stock negativo. No se modificaron esos datos; deben investigarse y corregirse con una operación autorizada antes de reintentar.`,
+    );
+  }
+
+  const versionMotor = version.version;
+  const versionTidb = versionMotor.match(/TiDB-v(\d+)\.(\d+)\.(\d+)/i);
+  if (versionMotor.toLowerCase().includes("tidb")) {
+    if (!versionTidb || !versionEsAlMenos(`${versionTidb[1]}.${versionTidb[2]}.${versionTidb[3]}`, [7, 2, 0])) {
+      throw new Error(`${MIGRACION_STOCK_NO_NEGATIVO} requiere TiDB 7.2.0 o superior; destino: ${base}.`);
+    }
+    const [checkConstraint] = await cliente.$queryRaw<Array<{ habilitado: number | bigint | string }>>`
+      SELECT @@GLOBAL.tidb_enable_check_constraint AS habilitado
+    `;
+    const habilitado = String(checkConstraint?.habilitado ?? "").toLowerCase();
+    if (!(["1", "on", "true"].includes(habilitado))) {
+      throw new Error(
+        `No se aplicó ${MIGRACION_STOCK_NO_NEGATIVO}: TiDB debe tener tidb_enable_check_constraint=ON.`,
+      );
+    }
+    return;
+  }
+
+  if (/mariadb/i.test(versionMotor)) {
+    const versionMariaDB = versionMotor.match(/(\d+\.\d+\.\d+)-MariaDB/i)?.[1] ?? versionMotor;
+    if (!versionEsAlMenos(versionMariaDB, [10, 2, 0])) {
+      throw new Error(`${MIGRACION_STOCK_NO_NEGATIVO} requiere MariaDB 10.2.0 o superior; destino: ${base}.`);
+    }
+    const variables = await cliente.$queryRaw<Array<{ Variable_name: string; Value: string }>>`
+      SHOW GLOBAL VARIABLES LIKE 'check_constraint_checks'
+    `;
+    if (variables[0]?.Value.toLowerCase() === "off") {
+      throw new Error(`No se aplicó ${MIGRACION_STOCK_NO_NEGATIVO}: MariaDB debe tener check_constraint_checks=ON.`);
+    }
+    return;
+  }
+
+  if (/mysql/i.test(versionMotor) && versionEsAlMenos(versionMotor, [8, 0, 16])) return;
+  throw new Error(
+    `${MIGRACION_STOCK_NO_NEGATIVO} requiere TiDB 7.2+, MariaDB 10.2+ o MySQL 8.0.16+ con CHECK aplicado; motor en ${base}: ${versionMotor}`,
+  );
+}
+
 /** Lee el historial del destino y siempre desconecta el cliente administrativo temporal. */
 export async function inspeccionarHistorialMigracionTenant(
   credenciales: CredencialesBaseTenant,
@@ -92,6 +174,17 @@ export async function inspeccionarHistorialMigracionTenant(
       migracionesVersionadas,
       objetosPersistentes > 0,
     );
+
+    const checkStockPendiente = migracionesVersionadas.some(
+      (migracion) => migracion.nombre === MIGRACION_STOCK_NO_NEGATIVO,
+    ) && !historial.some((migracion) =>
+      migracion.nombre === MIGRACION_STOCK_NO_NEGATIVO &&
+      migracion.finalizada &&
+      !migracion.revertida,
+    );
+    if (checkStockPendiente) {
+      await verificarPrecondicionesCheckStock(cliente, credenciales.base);
+    }
 
     return {
       migracionesAplicadas: historial.filter((registro) => registro.finalizada && !registro.revertida).length,

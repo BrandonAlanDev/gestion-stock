@@ -11,6 +11,13 @@ export interface ItemResumenCheckout {
   subtotal: number;
 }
 
+export interface ProductoSinStockCheckout {
+  variantId: string;
+  nombre: string;
+  variante: string | null;
+  imagen: string | null;
+}
+
 export interface ResumenCheckout {
   items: ItemResumenCheckout[];
   subtotal: number;

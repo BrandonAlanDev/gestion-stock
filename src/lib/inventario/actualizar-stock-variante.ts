@@ -24,12 +24,24 @@ export async function actualizarVarianteConControlStock(
   entrada: DatosActualizacionStock,
   registrarMovimiento = true,
 ): Promise<void> {
+  if (!Number.isSafeInteger(entrada.stockOriginal)) {
+    throw new Error("El stock original de la variante no es válido.");
+  }
   const delta = entrada.stockNuevo - entrada.stockOriginal;
+  if (!Number.isSafeInteger(entrada.stockNuevo) || entrada.stockNuevo < 0) {
+    throw new Error("El stock de la variante no es válido.");
+  }
+
   const actualizado = await tx.garmentVariant.updateMany({
     where: {
       id: entrada.variantId,
       garmentId: entrada.garmentId,
-      ...(delta !== 0 ? { stock: entrada.stockOriginal } : {}),
+      ...(delta !== 0 ? {
+        stock: {
+          equals: entrada.stockOriginal,
+          ...(delta < 0 ? { gte: Math.abs(delta) } : {}),
+        },
+      } : {}),
     },
     data: {
       ...entrada.datos,

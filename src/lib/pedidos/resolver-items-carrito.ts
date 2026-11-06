@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { PrismaClient } from "@/../generated/prisma/client";
+import { mensajeStockNoDisponible } from "@/lib/inventario/stock-condicional";
+import type { ProductoSinStockCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 
 export type ItemParaCrearPedido = {
   clave?: string;
@@ -16,6 +18,7 @@ export class ErrorItemCarrito extends Error {
     readonly codigo: CodigoErrorItemCarrito,
     mensaje: string,
     readonly nombreProducto: string | null = null,
+    readonly productoSinStock: ProductoSinStockCheckout | null = null,
   ) {
     super(mensaje);
     this.name = "ErrorItemCarrito";
@@ -123,11 +126,22 @@ export async function resolverItemsCarrito(
         variante.garment.name,
       );
     }
+    const opciones = variante.optionValues.map(({ optionValue }) => ({
+      nombre: optionValue.option.name,
+      valor: optionValue.value,
+    }));
+    const varianteDetalle = opciones.map(({ nombre, valor }) => `${nombre}: ${valor}`).join(" · ") || null;
     if (variante.garment.controlaStock && item.cantidad > variante.stock) {
       throw new ErrorItemCarrito(
         "STOCK_INSUFICIENTE",
-        `Stock insuficiente para “${variante.garment.name}”. Quedan ${variante.stock} unidades disponibles.`,
+        mensajeStockNoDisponible(variante.garment.name),
         variante.garment.name,
+        {
+          variantId,
+          nombre: variante.garment.name,
+          variante: varianteDetalle,
+          imagen: variante.garment.images[0]?.srcImage ?? null,
+        },
       );
     }
 
@@ -135,16 +149,12 @@ export async function resolverItemsCarrito(
     const precioAnterior = variante.garment.maxPrice == null
       ? null
       : Number(variante.garment.maxPrice);
-    const opciones = variante.optionValues.map(({ optionValue }) => ({
-      nombre: optionValue.option.name,
-      valor: optionValue.value,
-    }));
     preparados.push({
       garmentId: item.productId,
       variantId,
       nombre: variante.garment.name,
       varianteNombre: opciones.map(({ valor }) => valor).join(" · ") || null,
-      varianteDetalle: opciones.map(({ nombre, valor }) => `${nombre}: ${valor}`).join(" · ") || null,
+      varianteDetalle,
       imagen: variante.garment.images[0]?.srcImage ?? null,
       precioUnitario,
       precioAnterior: precioAnterior !== null && precioAnterior > precioUnitario

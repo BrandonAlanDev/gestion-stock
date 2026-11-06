@@ -2,9 +2,14 @@ import type { PrismaClient } from "@/../generated/prisma/client";
 import type { ItemParaCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenMetodoPago } from "@/lib/pagos/obtener-metodos-disponibles";
 import { ErrorItemCarrito } from "@/lib/pedidos/resolver-items-carrito";
+import {
+  ErrorConflictoReservaStock,
+  ErrorStockInsuficiente,
+} from "@/lib/inventario/stock-condicional";
 import type { MetodoPagoId, PaymentProvider } from "@/lib/pagos/tipos";
 import { esMetodoPagoCompatibleConEntrega } from "@/lib/pagos/es-metodo-pago-compatible-entrega";
 import type { DatosEntrega } from "@/lib/pedidos/datos-entrega";
+import type { ProductoSinStockCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 import type { ResultadoCrearPedido } from "@/lib/pedidos/crear-pedido";
 import type { ResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
 import {
@@ -34,6 +39,7 @@ export type ResultadoIniciarPago =
         | "PRODUCTO_NO_DISPONIBLE"
         | "STOCK_INSUFICIENTE";
       resumen?: ResumenCheckout;
+      productoSinStock?: ProductoSinStockCheckout | null;
     };
 
 export interface DependenciasIniciarPago {
@@ -243,6 +249,23 @@ export function crearAccionIniciarPago(dependencias: DependenciasIniciarPago) {
           ok: false,
           codigo: error.codigo,
           error: error.message,
+          productoSinStock: error.productoSinStock,
+        };
+      }
+      if (error instanceof ErrorStockInsuficiente) {
+        return {
+          ok: false,
+          codigo: error.codigo,
+          error: error.message,
+          productoSinStock: error.productoSinStock,
+        };
+      }
+      if (error instanceof ErrorConflictoReservaStock) {
+        return {
+          ok: false,
+          codigo: "STOCK_INSUFICIENTE",
+          error: error.message,
+          productoSinStock: error.productoSinStock,
         };
       }
       return {

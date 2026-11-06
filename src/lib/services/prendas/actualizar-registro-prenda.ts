@@ -5,7 +5,10 @@ import { sincronizarOpciones } from "@/lib/services/prendas/sincronizar-opciones
 import { crearVinculosVariante } from "@/lib/services/prendas/crear-vinculos-variante";
 import { validarReferenciasVariantes } from "@/lib/services/prendas/validar-referencias-variantes";
 import { actualizarVarianteConControlStock } from "@/lib/inventario/actualizar-stock-variante";
-import { verificarVariantesEliminables } from "@/lib/inventario/variantes-transaccion";
+import {
+  bloquearVariantes,
+  verificarVariantesEliminables,
+} from "@/lib/inventario/variantes-transaccion";
 import { registrarAperturaStock } from "@/lib/inventario/registrar-apertura-stock";
 
 export async function actualizarRegistroPrendaConDetalles(
@@ -36,6 +39,18 @@ export async function actualizarRegistroPrendaConDetalles(
 
   await prisma.$transaction(
     async (tx) => {
+      const variantesBloqueo = await tx.garmentVariant.findMany({
+        where: { garmentId: id },
+        select: { id: true },
+      });
+      const idsBloqueados = await bloquearVariantes(
+        tx,
+        variantesBloqueo.map((variante) => variante.id),
+      );
+      if (idsBloqueados.length !== variantesBloqueo.length) {
+        throw new Error("El producto cambió mientras se actualizaba. Recargá la página.");
+      }
+
       const productoActualizado = await tx.garment.updateMany({
         where: { id, controlaStock: producto.controlaStock },
         data: {

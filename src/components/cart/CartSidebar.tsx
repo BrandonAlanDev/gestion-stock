@@ -40,6 +40,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     cartItems.reduce((acc: number, item) => acc + (Number(item.price) * item.qty), 0),
     [cartItems]
   );
+  const hayProductosSinStock = cartItems.some((item) => item.sinStock);
 
   const handleIrAlCheckout = () => {
     if (status !== "authenticated") {
@@ -104,12 +105,21 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             </div>
 
             <div className="border-t pt-4 mt-4 space-y-3" style={{ borderColor: "color-mix(in srgb, var(--texto-sobre-secundario) 12%, transparent)" }}>
+              {hayProductosSinStock && (
+                <p
+                  role="alert"
+                  className="text-sm"
+                  style={{ color: "hsl(var(--destructive))" }}
+                >
+                  Quitá o ajustá los productos sin stock para continuar con la compra.
+                </p>
+              )}
               <div className="flex justify-between font-bold mb-2">
                 <span>Total</span> <span>${subtotal.toLocaleString()}</span>
               </div>
               <button
                 onClick={handleIrAlCheckout}
-                disabled={cartItems.length === 0}
+                disabled={cartItems.length === 0 || hayProductosSinStock}
                 className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primario)", color: "var(--texto-sobre-primario)" }}
               >

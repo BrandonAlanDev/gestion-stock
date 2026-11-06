@@ -26,7 +26,11 @@ export async function actualizarPrenda(id: string, datos: Omit<z.input<typeof es
     return { error: error instanceof Error ? error.message : "No se pudieron leer las imágenes." };
   }
   const resultadoValidacion = esquemaPrenda.safeParse({ ...datos, images: imagenesRecibidas });
-  if (!resultadoValidacion.success) return { error: resultadoValidacion.error.format() };
+  if (!resultadoValidacion.success) {
+    return {
+      error: resultadoValidacion.error.issues[0]?.message ?? "Los datos del producto no son válidos.",
+    };
+  }
 
   const { name, price, maxPrice, cost, description, categoryId, subCategoryId, supplierId, variants, images, opciones, etiquetas, controlaStock, activo } = resultadoValidacion.data;
   const prendaExistente = await conPrisma((prisma) => prisma.garment.findFirst({

@@ -21,7 +21,11 @@ import {
   type MetodoEntregaCheckout,
   type OpcionesEntregaCheckout,
 } from "@/lib/pedidos/opciones-entrega";
-import type { ItemResumenCheckout, ResumenCheckout } from "@/lib/pedidos/tipos-resumen-checkout";
+import type {
+  ItemResumenCheckout,
+  ProductoSinStockCheckout,
+  ResumenCheckout,
+} from "@/lib/pedidos/tipos-resumen-checkout";
 import SelectorMetodoPago from "@/components/checkout/SelectorMetodoPago";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import PanelInstruccionesPago from "@/components/checkout/PanelInstruccionesPago";
@@ -36,7 +40,7 @@ export interface MetodoPagoDisponible {
 type DireccionCheckout = NonNullable<Awaited<ReturnType<typeof obtenerDatosCheckout>>>["direcciones"][number];
 
 export default function CheckoutCliente() {
-  const { cartItems, openCart } = useCart();
+  const { cartItems, marcarSinStock, openCart } = useCart();
   const { status } = useSession();
   const { pageConfig } = usePageConfig();
   const router = useRouter();
@@ -77,6 +81,7 @@ export default function CheckoutCliente() {
   const [errorResumenServidor, setErrorResumenServidor] = useState<{
     clave: string;
     error: string;
+    productoSinStock?: ProductoSinStockCheckout | null;
   } | null>(null);
   const [avisoPrecio, setAvisoPrecio] = useState<{
     clave: string;
@@ -136,6 +141,14 @@ export default function CheckoutCliente() {
   const avisoPrecioVisible = avisoPrecio?.clave === claveItemsParaResumen
     ? avisoPrecio.mensaje
     : null;
+  const productoSinStock = errorResumenServidor?.clave === claveItemsParaResumen
+    ? errorResumenServidor.productoSinStock ?? null
+    : null;
+
+  const revisarCarrito = () => {
+    if (productoSinStock) marcarSinStock(productoSinStock.variantId);
+    openCart();
+  };
 
   useEffect(() => {
     setResumenServidor(null);
@@ -288,8 +301,15 @@ export default function CheckoutCliente() {
           resultado.codigo === "PRODUCTO_NO_DISPONIBLE" ||
           resultado.codigo === "STOCK_INSUFICIENTE"
         ) {
-          setErrorResumenServidor({ clave: claveItemsParaResumen, error: resultado.error });
-          toast.error(resultado.error);
+          const productoSinStock = resultado.codigo === "STOCK_INSUFICIENTE"
+            ? resultado.productoSinStock
+            : null;
+          if (productoSinStock) marcarSinStock(productoSinStock.variantId);
+          setErrorResumenServidor({
+            clave: claveItemsParaResumen,
+            error: resultado.error,
+            productoSinStock,
+          });
           return;
         }
 
@@ -496,8 +516,9 @@ export default function CheckoutCliente() {
             moneda={resumenMostrado.moneda}
             modalidadEntrega={metodoEntrega}
             error={errorResumen}
+            productoSinStock={productoSinStock}
             avisoPrecio={avisoPrecioVisible}
-            alRevisarCarrito={openCart}
+            alRevisarCarrito={revisarCarrito}
           >
             <button
               onClick={manejarContinuarCompra}

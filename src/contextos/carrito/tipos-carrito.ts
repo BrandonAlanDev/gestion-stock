@@ -12,6 +12,7 @@ export interface ItemCarrito extends ProductoParaCarrito {
   qty: number;
   variantId?: string;
   varianteInfo?: Record<string, string>;
+  sinStock?: boolean;
   adicionesPendientes?: { token: string; cantidad: number }[];
 }
 
@@ -25,5 +26,6 @@ export interface ValorContextoCarrito {
   confirmarAdicion: (token: string, stock?: number) => void;
   revertirAdicion: (token: string) => void;
   updateQty: (uid: string, delta: number) => void;
+  marcarSinStock: (variantId: string) => void;
   removeItem: (uid: string) => void;
 }

@@ -132,6 +132,7 @@ model GarmentImage {
 model GarmentVariant {
   id            String                      @id @default(cuid())
   sku           String?
+  // La migración versionada aplica además GarmentVariant_stock_nonnegative_chk en motores compatibles.
   stock         Int                         @default(0)
   garmentId     String
   sizeId        String?

@@ -34,6 +34,15 @@ function leerEnteroPositivo(valor: string | undefined, predeterminado: number, m
   return numero > 0 && numero <= maximo ? numero : predeterminado;
 }
 
+function obtenerOpcionesModoTransaccionTiDB(): { sessionVariables?: { tidb_txn_mode: "pessimistic" } } {
+  const modo = process.env.TENANT_TIDB_TXN_MODE;
+  if (modo === undefined || modo === "") return {};
+  if (modo !== "pessimistic") {
+    throw new Error("TENANT_TIDB_TXN_MODE solo admite el valor pessimistic.");
+  }
+  return { sessionVariables: { tidb_txn_mode: "pessimistic" } };
+}
+
 async function crearClienteTenant(
   entry: TenantRegistryEntry,
   ttlInactividadMs: number,
@@ -56,6 +65,7 @@ async function crearClienteTenant(
     database: credenciales.base,
     ssl: credenciales.ssl ? { rejectUnauthorized: true } : false,
     ...crearOpcionesPoolTenant(ttlInactividadMs, limiteConexiones),
+    ...obtenerOpcionesModoTransaccionTiDB(),
     connectTimeout: 10_000,
   });
   const cliente = new PrismaClient({ adapter: adaptador });
